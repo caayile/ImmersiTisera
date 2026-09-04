@@ -1,0 +1,91 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+@source '../**/*.jsx';
+
+@theme {
+    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Fraunces', ui-serif, Georgia, serif;
+    --color-primary: #5ec69d;
+    --color-primary-dark: #3eaa84;
+    --color-secondary: #7dd8b5;
+    --color-ink: #1f2a28;
+    --color-muted: #5b6b66;
+    --color-line: #e4eee9;
+    --color-bg: #f6fbf8;
+}
+
+[x-cloak] { display: none !important; }
+
+.material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    font-size: 18px;
+    line-height: 1;
+    user-select: none;
+}
+
+body {
+    font-family: var(--font-sans);
+    background: var(--color-bg);
+    color: var(--color-ink);
+    -webkit-font-smoothing: antialiased;
+}
+
+.font-display {
+    font-family: var(--font-display);
+}
+
+.hero-grid {
+    background-color: #16352c;
+    background-image:
+        linear-gradient(rgba(94, 198, 157, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(94, 198, 157, 0.08) 1px, transparent 1px),
+        radial-gradient(circle at 80% 20%, rgba(125, 216, 181, 0.18), transparent 32%);
+    background-size: 42px 42px, 42px 42px, auto;
+}
+
+.auth-sky {
+    min-height: 100vh;
+    background-color: #8fb6c8;
+    background-image:
+        radial-gradient(ellipse 90% 50% at 50% -8%, #e4eef4 0%, transparent 58%),
+        radial-gradient(ellipse 55% 32% at 16% 26%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.18) 42%, transparent 70%),
+        radial-gradient(ellipse 60% 34% at 84% 16%, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.16) 46%, transparent 72%),
+        radial-gradient(ellipse 70% 28% at 48% 38%, rgba(255, 255, 255, 0.45) 0%, transparent 70%),
+        linear-gradient(180deg, #7aa6bb 0%, #b7cfdc 46%, #e3edf2 100%);
+}
+
+.auth-arcs {
+    background:
+        radial-gradient(circle at 50% 122%, transparent 10%, rgba(255, 255, 255, 0.3) 10.15%, rgba(255, 255, 255, 0.3) 10.7%, transparent 10.9%),
+        radial-gradient(circle at 50% 122%, transparent 20%, rgba(255, 255, 255, 0.24) 20.15%, rgba(255, 255, 255, 0.24) 20.7%, transparent 20.9%),
+        radial-gradient(circle at 50% 122%, transparent 30%, rgba(255, 255, 255, 0.18) 30.15%, rgba(255, 255, 255, 0.18) 30.7%, transparent 30.9%),
+        radial-gradient(circle at 50% 122%, transparent 40%, rgba(255, 255, 255, 0.13) 40.15%, rgba(255, 255, 255, 0.13) 40.7%, transparent 40.9%),
+        radial-gradient(circle at 50% 122%, transparent 50%, rgba(255, 255, 255, 0.09) 50.15%, rgba(255, 255, 255, 0.09) 50.7%, transparent 50.9%);
+}
+
+.auth-input {
+    width: 100%;
+    border-radius: 1rem;
+    background: #f4f4f5;
+    padding: 0.9rem 1rem 0.9rem 3rem;
+    font-size: 0.9rem;
+    color: #18181b;
+    outline: none;
+}
+
+.auth-input-password {
+    padding-right: 3rem;
+}
+
+.auth-input:focus {
+    background: #fafafa;
+    box-shadow: 0 0 0 3px rgba(24, 24, 27, 0.08);
+}
+
+.auth-input-plain {
+    padding-left: 1rem;
+}
