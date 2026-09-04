@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Agreement;
 use App\Models\Application;
 use App\Models\BusinessUnit;
 use App\Models\CollaborationPipeline;
@@ -133,11 +132,11 @@ class DatabaseSeeder extends Seeder
             'expertise' => ['Curriculum', 'Industry-Based Learning'],
         ]);
 
-        $andi = $this->participant('Dr. Andi Pratama', 'dosen@imersi.id', 'Informatika', ['AI', 'Machine Learning'], ['Predictive Analytics']);
-        $maya = $this->participant('Dr. Maya Kusuma', 'dosen2@imersi.id', 'Sistem Informasi', ['Cloud Computing', 'Software Engineering'], ['Digital Product']);
-        $raka = $this->participant('Dr. Raka Aditya', 'raka@imersi.id', 'Manajemen', ['Marketing Strategy'], ['Campaign']);
-        $sinta = $this->participant('Dr. Sinta Lestari', 'sinta@imersi.id', 'Akuntansi', ['Finance'], ['Process Improvement']);
-        $bima = $this->participant('Dr. Bima Nugraha', 'bima@imersi.id', 'Pendidikan', ['Curriculum Design'], ['Industry-Based Learning']);
+        $andi = $this->participant('Dr. Andi Pratama', 'dosen@imersi.id', 'Fakultas Teknik', 'Informatika', ['AI', 'Machine Learning'], ['Predictive Analytics']);
+        $maya = $this->participant('Dr. Maya Kusuma', 'dosen2@imersi.id', 'Fakultas Teknik', 'Sistem Informasi', ['Cloud Computing', 'Software Engineering'], ['Digital Product']);
+        $raka = $this->participant('Dr. Raka Aditya', 'raka@imersi.id', 'Fakultas Humaniora', 'Manajemen', ['Marketing Strategy'], ['Campaign']);
+        $sinta = $this->participant('Dr. Sinta Lestari', 'sinta@imersi.id', 'Sekolah Vokasi', 'Desain Produksi Tekstil', ['Uniform Design'], ['Textile Production']);
+        $bima = $this->participant('Dr. Bima Nugraha', 'bima@imersi.id', 'Fakultas Humaniora', 'PGSD', ['Curriculum Design'], ['Industry-Based Learning']);
 
         Application::create([
             'participant_id' => $maya->id,
@@ -310,6 +309,8 @@ class DatabaseSeeder extends Seeder
         $mentorUser->notify(new ImersiAlert('Logbook pending review', 'Ada logbook dari Dr. Andi Pratama.', '/mentor/logbooks'));
 
         $this->call(NewsSeeder::class);
+        $this->call(DepartmentK33WjlSeeder::class);
+        $this->call(DepartmentAhAlFirdausPuspaSeeder::class);
     }
 
     private function unit(Department $department, string $name, string $function, array $programs): BusinessUnit
@@ -328,7 +329,7 @@ class DatabaseSeeder extends Seeder
         ]);
     }
 
-    private function participant(string $name, string $email, string $prodi, array $expertise, array $competency): Participant
+    private function participant(string $name, string $email, string $faculty, string $prodi, array $expertise, array $competency): Participant
     {
         $user = User::create([
             'name' => $name,
@@ -342,6 +343,7 @@ class DatabaseSeeder extends Seeder
         return Participant::create([
             'user_id' => $user->id,
             'nidn' => '00'.substr(md5($email), 0, 8),
+            'faculty' => $faculty,
             'study_program' => $prodi,
             'expertise' => $expertise,
             'competency' => $competency,

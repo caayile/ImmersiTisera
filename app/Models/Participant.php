@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 
-#[Fillable(['user_id', 'nidn', 'study_program', 'expertise', 'competency', 'experience', 'motivation', 'profile_data'])]
+#[Fillable(['user_id', 'nidn', 'faculty', 'study_program', 'expertise', 'competency', 'experience', 'motivation', 'profile_data'])]
 class Participant extends Model
 {
     protected function casts(): array

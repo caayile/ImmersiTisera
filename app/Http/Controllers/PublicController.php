@@ -14,13 +14,27 @@ class PublicController extends Controller
             ->where('status', 'active')
             ->get();
 
-        $featuredUnits = BusinessUnit::with('department')
+        $featuredUnits = BusinessUnit::with(['department.businessUnits'])
             ->where('status', 'open')
-            ->whereIn('name', ['Digital Business', 'IT', 'Center Of Excellence'])
-            ->get();
+            ->whereIn('name', [
+                'Operation (Sales)',
+                'Production',
+                'Store Operation',
+                'SD Al-Firdaus',
+                'Puspa Holistic',
+                'Marketing',
+                'Finance Accounting & IT',
+                'Digital Business',
+                'IT',
+                'Center Of Excellence',
+            ])
+            ->get()
+            ->unique('name')
+            ->take(3)
+            ->values();
 
         if ($featuredUnits->count() < 3) {
-            $featuredUnits = BusinessUnit::with('department')
+            $featuredUnits = BusinessUnit::with(['department.businessUnits'])
                 ->where('status', 'open')
                 ->latest()
                 ->take(3)
@@ -35,15 +49,19 @@ class PublicController extends Controller
     public function departments()
     {
         $q = request('q');
-        $departments = Department::withCount(['businessUnits' => fn ($query) => $query->where('status', 'open')])
+        $departments = Department::with(['businessUnits' => fn ($query) => $query->where('status', 'open')])
+            ->withCount(['businessUnits' => fn ($query) => $query->where('status', 'open')])
             ->where('status', 'active')
             ->when($q, function ($query) use ($q) {
                 $query->where(function ($inner) use ($q) {
                     $inner->where('name', 'like', "%{$q}%")
                         ->orWhere('description', 'like', "%{$q}%")
+                        ->orWhere('area', 'like', "%{$q}%")
                         ->orWhereHas('businessUnits', fn ($units) => $units->where('name', 'like', "%{$q}%"));
                 });
             })
+            ->orderBy('area')
+            ->orderBy('name')
             ->get();
 
         return view('public.departments', compact('departments', 'q'));

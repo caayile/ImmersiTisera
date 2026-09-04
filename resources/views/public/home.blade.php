@@ -16,6 +16,11 @@
     ];
 
     $unitMeta = [
+        'Operation (Sales)' => ['area' => 'K33 · Operasi & Sales', 'image' => 'from-[#16352c] to-[#3eaa84]'],
+        'Production' => ['area' => 'WJL · Produksi', 'image' => 'from-[#1e3a5f] to-[#5ec69d]'],
+        'Marketing' => ['area' => 'WJL · Pemasaran', 'image' => 'from-[#2f4a3c] to-[#7dd8b5]'],
+        'Finance Accounting & IT' => ['area' => 'K33 · Keuangan & IT', 'image' => 'from-[#16352c] to-[#5ec69d]'],
+        'Human Resources Development' => ['area' => 'K33 · SDM', 'image' => 'from-[#1e3a5f] to-[#3eaa84]'],
         'Digital Business' => ['area' => 'Teknologi & Analitik', 'image' => 'from-[#16352c] to-[#3eaa84]'],
         'IT' => ['area' => 'Teknologi Informasi', 'image' => 'from-[#1e3a5f] to-[#5ec69d]'],
         'Center Of Excellence' => ['area' => 'Pembelajaran & Inovasi', 'image' => 'from-[#2f4a3c] to-[#7dd8b5]'],
@@ -86,9 +91,9 @@
     <div class="mx-auto max-w-7xl px-5">
         <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
-                <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary-dark">Unit Bisnis Tersedia</p>
+                <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary-dark">Mitra Imersi</p>
                 <h2 class="mt-2 text-3xl font-semibold tracking-tight">Departemen pilihan gelombang 2026</h2>
-                <p class="mt-2 max-w-xl text-sm text-muted">Pilih unit kerja yang selaras dengan rumpun keilmuan dan bidang riset spesifik Anda.</p>
+                <p class="mt-2 max-w-xl text-sm text-muted">Pilih departemen atau unit kerja yang selaras dengan rumpun keilmuan Anda.</p>
             </div>
             <a href="{{ route('departments.index') }}" class="inline-flex items-center gap-1 text-sm font-semibold text-primary-dark">
                 Lihat semua {{ $departments->count() }} departemen
@@ -99,9 +104,14 @@
         <div class="mt-8 grid gap-5 md:grid-cols-3">
             @foreach($featuredUnits as $unit)
                 @php
-                    $meta = $unitMeta[$unit->name] ?? ['area' => $unit->department?->area ?? 'Unit Bisnis', 'image' => 'from-[#16352c] to-primary'];
+                    $direct = $unit->department?->isDirectPlacement();
+                    $meta = $unitMeta[$unit->name] ?? ['area' => $unit->department?->area ?? 'Departemen', 'image' => 'from-[#16352c] to-primary'];
                     $prodi = collect($unit->relevant_programs ?? [])->take(3)->implode(', ') ?: 'Semua prodi relevan';
                     $quota = max(2, count($unit->relevant_programs ?? []) + 1);
+                    $detailUrl = $direct && $unit->department
+                        ? route('departments.show', $unit->department)
+                        : route('units.show', $unit);
+                    $detailLabel = $direct ? 'Detail departemen' : 'Detail unit bisnis';
                 @endphp
                 <article class="overflow-hidden rounded-2xl border border-line bg-white shadow-sm">
                     <div class="relative h-44 bg-gradient-to-br {{ $meta['image'] }} p-4">
@@ -121,7 +131,7 @@
                                 <dd class="text-right font-medium">{{ $prodi }}</dd>
                             </div>
                         </dl>
-                        <a href="{{ route('units.show', $unit) }}" class="mt-5 block rounded-xl bg-[#eef4f1] px-4 py-3 text-center text-sm font-semibold text-ink hover:bg-primary hover:text-white">Detail unit bisnis</a>
+                        <a href="{{ $detailUrl }}" class="mt-5 block rounded-xl bg-[#eef4f1] px-4 py-3 text-center text-sm font-semibold text-ink hover:bg-primary hover:text-white">{{ $detailLabel }}</a>
                     </div>
                 </article>
             @endforeach

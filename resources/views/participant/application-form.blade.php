@@ -2,17 +2,26 @@
 @section('title', 'Ajukan Program')
 @section('content')
 <h1 class="text-2xl font-semibold">Ajukan Program</h1>
-<p class="mt-1 text-sm text-muted">Pilih unit bisnis yang relevan dengan kompetensi Anda.</p>
+<p class="mt-1 text-sm text-muted">Pilih departemen atau unit bisnis yang relevan dengan kompetensi Anda.</p>
 <form method="POST" action="{{ route('participant.applications.store') }}" class="mt-6 max-w-2xl space-y-4 rounded-2xl border border-line bg-white p-6">
     @csrf
-    <label class="block text-xs font-semibold uppercase tracking-wide text-muted">Unit Bisnis
+    <label class="block text-xs font-semibold uppercase tracking-wide text-muted">Departemen / penempatan
         <select name="business_unit_id" class="mt-2 w-full rounded-lg border border-line px-4 py-2.5 text-sm" required>
             @foreach($departments as $department)
-                <optgroup label="{{ $department->name }}">
-                    @foreach($department->businessUnits as $unit)
-                        <option value="{{ $unit->id }}" @selected(old('business_unit_id', $prefill) == $unit->id)>{{ $unit->name }}</option>
-                    @endforeach
-                </optgroup>
+                @if($department->isDirectPlacement())
+                    @php $unit = $department->businessUnits->first(); @endphp
+                    @if($unit)
+                        <option value="{{ $unit->id }}" @selected(old('business_unit_id', $prefill) == $unit->id)>
+                            {{ $department->area ? $department->area.' · ' : '' }}{{ $department->name }}
+                        </option>
+                    @endif
+                @else
+                    <optgroup label="{{ $department->name }}">
+                        @foreach($department->businessUnits as $unit)
+                            <option value="{{ $unit->id }}" @selected(old('business_unit_id', $prefill) == $unit->id)>{{ $unit->name }}</option>
+                        @endforeach
+                    </optgroup>
+                @endif
             @endforeach
         </select>
     </label>

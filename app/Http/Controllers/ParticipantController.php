@@ -6,15 +6,15 @@ use App\Models\Application;
 use App\Models\BusinessUnit;
 use App\Models\Department;
 use App\Models\Evaluation;
-use App\Models\Logbook;
 use App\Models\Participant;
 use App\Models\Program;
-use App\Models\ProgramOutput;
 use App\Notifications\ImersiAlert;
 use App\Services\MatchingService;
 use App\Support\Status;
+use App\Support\StudyPrograms;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 class ParticipantController extends Controller
 {
@@ -34,7 +34,13 @@ class ParticipantController extends Controller
     {
         $participant = $request->user()->participant ?? Participant::create(['user_id' => $request->user()->id]);
 
-        return view('participant.profile', compact('participant'));
+        return view('participant.profile', [
+            'participant' => $participant,
+            'studyProgramCatalog' => StudyPrograms::catalog(),
+            'placementCatalog' => collect(StudyPrograms::allPrograms())
+                ->mapWithKeys(fn (string $program) => [$program => StudyPrograms::placementTargets($program)])
+                ->all(),
+        ]);
     }
 
     public function updateProfile(Request $request)
@@ -43,7 +49,16 @@ class ParticipantController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:30'],
             'nidn' => ['nullable', 'string', 'max:40'],
-            'study_program' => ['required', 'string', 'max:120'],
+            'faculty' => ['required', 'string', Rule::in(StudyPrograms::faculties())],
+            'study_program' => [
+                'required',
+                'string',
+                function (string $attribute, mixed $value, \Closure $fail) use ($request): void {
+                    if (! StudyPrograms::isValid((string) $request->input('faculty'), (string) $value)) {
+                        $fail('Program studi tidak valid untuk fakultas yang dipilih.');
+                    }
+                },
+            ],
             'expertise' => ['required', 'string'],
             'competency' => ['required', 'string'],
             'experience' => ['nullable', 'string'],
@@ -53,6 +68,7 @@ class ParticipantController extends Controller
         $request->user()->update(['name' => $data['name'], 'phone' => $data['phone'] ?? null]);
         $request->user()->participant()->updateOrCreate(['user_id' => $request->user()->id], [
             'nidn' => $data['nidn'] ?? null,
+            'faculty' => $data['faculty'],
             'study_program' => $data['study_program'],
             'expertise' => $this->csv($data['expertise']),
             'competency' => $this->csv($data['competency']),

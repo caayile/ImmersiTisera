@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', 'Dashboard') — Imersi</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/cdn.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -64,25 +64,28 @@
 @endphp
 
 @if($role === 'participant')
-<header class="sticky top-0 z-30 border-b border-line bg-white/95 backdrop-blur">
+<header class="sticky top-0 z-30 border-b border-line bg-white/90 backdrop-blur-md">
     <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-3">
-        <a href="{{ route('home') }}" class="shrink-0 font-semibold">
-            Imersi
-            <span class="block text-[10px] uppercase tracking-widest text-muted">TSU Industry Immersion</span>
+        <a href="{{ route('home') }}" class="flex shrink-0 items-center gap-2 font-semibold">
+            <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-sm font-bold text-white">I</span>
+            <span>
+                Imersi
+                <span class="block text-[10px] uppercase tracking-widest text-muted">TSU Industry Immersion</span>
+            </span>
         </a>
         <div class="flex items-center gap-3 text-sm">
-            <span class="hidden text-muted sm:inline">{{ auth()->user()->name }} · Peserta</span>
+            <span class="hidden rounded-full bg-bg px-3 py-1.5 text-muted sm:inline">{{ auth()->user()->name }} · Peserta</span>
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
-                <button class="text-muted hover:text-ink">Keluar</button>
+                <button class="rounded-full px-3 py-1.5 text-muted transition hover:bg-bg hover:text-ink">Keluar</button>
             </form>
-            <button class="rounded-lg border border-line px-3 py-1 lg:hidden" @click="open = !open">Menu</button>
+            <button class="rounded-xl border border-line px-3 py-1.5 lg:hidden" @click="open = !open">Menu</button>
         </div>
     </div>
-    <nav class="hidden border-t border-line lg:block">
+    <nav class="hidden border-t border-line bg-white/80 lg:block">
         <div class="mx-auto flex max-w-7xl flex-wrap items-center gap-1 px-5 py-2 text-sm">
             @foreach($menus as [$label, $name])
-                <a href="{{ route($name) }}" class="rounded-lg px-3 py-1.5 {{ request()->routeIs($name) ? 'bg-primary text-white' : 'text-muted hover:bg-secondary/30 hover:text-ink' }}">
+                <a href="{{ route($name) }}" class="rounded-full px-3.5 py-1.5 transition {{ request()->routeIs($name) ? 'bg-primary text-white shadow-sm' : 'text-muted hover:bg-bg hover:text-ink' }}">
                     {{ $label }}
                     @if($label === 'Notifikasi' && $unread)
                         <span class="ml-1 rounded-full bg-white px-1.5 text-[10px] font-semibold text-primary-dark">{{ $unread }}</span>

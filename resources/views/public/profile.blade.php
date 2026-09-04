@@ -43,6 +43,10 @@
 
                 @if($user->isParticipant())
                     <div class="rounded-2xl bg-bg p-5">
+                        <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Fakultas / sekolah</p>
+                        <p class="mt-1 font-medium">{{ $user->participant?->faculty ?: 'Belum diisi' }}</p>
+                    </div>
+                    <div class="rounded-2xl bg-bg p-5">
                         <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Program studi</p>
                         <p class="mt-1 font-medium">{{ $user->participant?->study_program ?: 'Belum diisi' }}</p>
                     </div>
