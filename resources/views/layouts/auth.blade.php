@@ -14,7 +14,7 @@
 
     <header class="relative z-10 px-6 py-5 sm:px-8">
         <a href="{{ url('/') }}" class="inline-flex items-center gap-2.5">
-            <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-sm font-semibold text-white shadow-sm">I</span>
+            <img src="{{ asset('images/logo-tsu.svg') }}" alt="TSU" class="site-logo site-logo--nav shadow-sm">
             <span>
                 <span class="block text-[15px] font-semibold leading-none text-zinc-800">Imersi</span>
                 <span class="mt-1 block text-[10px] font-medium uppercase tracking-[0.14em] text-zinc-500">TSU Industry Immersion</span>

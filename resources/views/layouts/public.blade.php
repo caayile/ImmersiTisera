@@ -10,6 +10,17 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/cdn.min.js"></script>
 </head>
 <body class="bg-white text-ink" x-data="{ open: false }">
+<div id="brand-splash" class="brand-splash" aria-label="Memuat Imersi" role="status">
+    <div class="brand-splash__glow"></div>
+    <div class="brand-splash__mark">
+        <img src="{{ asset('images/logo-tsu.svg') }}" alt="TSU" class="brand-splash__logo">
+    </div>
+    <div class="brand-splash__wordmark">
+        <span>IMERSI</span>
+        <small>TSU INDUSTRY IMMERSION</small>
+    </div>
+    <div class="brand-splash__line" aria-hidden="true"><span></span></div>
+</div>
 @php
     $nav = [
         ['Beranda', 'home'],
@@ -23,7 +34,7 @@
 <header class="sticky top-0 z-30 border-b border-line bg-white">
     <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-3">
         <a href="{{ route('home') }}" class="flex items-center gap-2 font-semibold">
-            <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-white">I</span>
+            <img src="{{ asset('images/logo-tsu.svg') }}" alt="TSU" class="site-logo site-logo--nav">
             <span>Imersi
                 <span class="block text-[10px] font-medium uppercase tracking-[0.14em] text-muted">TSU Industry Immersion</span>
             </span>
@@ -66,4 +77,22 @@
 <main>@yield('content')</main>
 <footer class="border-t border-line bg-white py-8 text-center text-sm text-muted">Imersi · Tiga Serangkai · TSU Industry Immersion</footer>
 </body>
+<script>
+    (() => {
+        const splash = document.getElementById('brand-splash');
+
+        if (!splash) {
+            return;
+        }
+
+        if (sessionStorage.getItem('imersi-splash-seen')) {
+            splash.remove();
+            return;
+        }
+
+        sessionStorage.setItem('imersi-splash-seen', 'true');
+        window.setTimeout(() => splash.classList.add('brand-splash--leaving'), 2200);
+        window.setTimeout(() => splash.remove(), 3000);
+    })();
+</script>
 </html>

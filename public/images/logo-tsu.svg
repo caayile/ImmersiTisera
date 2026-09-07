@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320" role="img" aria-labelledby="title desc">
+  <title id="title">TSU Industry Immersion</title>
+  <desc id="desc">Logo geometris TSU berwarna hijau toska</desc>
+  <rect width="320" height="320" fill="#ffffff"/>
+  <path fill="#087b78" d="M14 0 160 51 306 0v266l-146 54L14 266V0Z"/>
+  <path fill="#ffffff" d="M25 17 158 63v56l-67-23v145l-66-24V17Z"/>
+  <path fill="#ffffff" d="M183 68 287 12l-39 70c-12 22-18 40-18 55 0 14 7 25 21 33l21 12c12 7 18 17 17 30-1 15-9 32-25 52l-96 36V69l15-8Z"/>
+</svg>

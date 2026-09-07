@@ -68,7 +68,7 @@
 <header class="sticky top-0 z-30 border-b border-line bg-white/95 backdrop-blur-md">
     <div class="mx-auto flex max-w-7xl items-center justify-between gap-3 px-5 py-3">
         <a href="{{ route('home') }}" class="flex shrink-0 items-center gap-2 font-semibold">
-            <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-sm font-bold text-white">I</span>
+            <img src="{{ asset('images/logo-tsu.svg') }}" alt="TSU" class="site-logo site-logo--nav">
             <span class="hidden sm:block">
                 Imersi
                 <span class="block text-[10px] uppercase tracking-widest text-muted">TSU Industry Immersion</span>
@@ -134,8 +134,11 @@
 <div class="min-h-screen lg:grid lg:grid-cols-[250px_1fr]">
     <div x-show="open" x-cloak class="fixed inset-0 z-30 bg-black/30 lg:hidden" @click="open = false"></div>
     <aside class="fixed inset-y-0 left-0 z-40 w-64 -translate-x-full border-r border-line bg-white p-5 transition lg:static lg:translate-x-0" :class="open && 'translate-x-0'">
-        <a href="{{ route('home') }}" class="block font-semibold">Imersi
+        <a href="{{ route('home') }}" class="flex items-center gap-2 font-semibold">
+            <img src="{{ asset('images/logo-tsu.svg') }}" alt="TSU" class="site-logo site-logo--sidebar">
+            <span>Imersi
             <span class="block text-[10px] uppercase tracking-widest text-muted">TSU Industry Immersion</span>
+            </span>
         </a>
         <nav class="mt-6 space-y-1 text-sm">
             @foreach($menus as [$label, $name])
