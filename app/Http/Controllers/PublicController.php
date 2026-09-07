@@ -4,7 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\BusinessUnit;
 use App\Models\Department;
+use App\Models\HeroSetting;
+use App\Models\HeroSlide;
 use App\Models\News;
+use App\Support\DepartmentFilters;
+use App\Support\StudyPrograms;
 
 class PublicController extends Controller
 {
@@ -48,23 +52,59 @@ class PublicController extends Controller
 
     public function departments()
     {
-        $q = request('q');
-        $departments = Department::with(['businessUnits' => fn ($query) => $query->where('status', 'open')])
-            ->withCount(['businessUnits' => fn ($query) => $query->where('status', 'open')])
-            ->where('status', 'active')
-            ->when($q, function ($query) use ($q) {
-                $query->where(function ($inner) use ($q) {
-                    $inner->where('name', 'like', "%{$q}%")
-                        ->orWhere('description', 'like', "%{$q}%")
-                        ->orWhere('area', 'like', "%{$q}%")
-                        ->orWhereHas('businessUnits', fn ($units) => $units->where('name', 'like', "%{$q}%"));
-                });
-            })
-            ->orderBy('area')
-            ->orderBy('name')
-            ->get();
+        $filters = [
+            'q' => request('q'),
+            'sort' => request('sort', 'relevan'),
+            'area' => request('area', []),
+            'field' => request('field', []),
+            'placement' => request('placement', []),
+            'prodi' => request('prodi', []),
+        ];
 
-        return view('public.departments', compact('departments', 'q'));
+        $selected = [
+            'q' => trim((string) ($filters['q'] ?? '')),
+            'sort' => (string) ($filters['sort'] ?: 'relevan'),
+            'area' => DepartmentFilters::normalizeList($filters['area']),
+            'field' => DepartmentFilters::normalizeList($filters['field']),
+            'placement' => DepartmentFilters::normalizeList($filters['placement']),
+            'prodi' => DepartmentFilters::normalizeList($filters['prodi']),
+        ];
+
+        $query = Department::with(['businessUnits' => fn ($query) => $query->where('status', 'open')])
+            ->withCount(['businessUnits' => fn ($query) => $query->where('status', 'open')])
+            ->where('status', 'active');
+
+        DepartmentFilters::apply($query, $selected);
+
+        $departments = DepartmentFilters::filterPlacement($query->get(), $selected['placement']);
+
+        $hero = HeroSetting::forPage('departments');
+        $heroSlides = HeroSlide::forPage('departments')
+            ->active()
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get()
+            ->map(fn (HeroSlide $slide) => [
+                'id' => $slide->id,
+                'title' => $slide->title,
+                'subtitle' => $slide->subtitle,
+                'image' => $slide->imageUrl(),
+                'url' => $slide->link_url ?: route('departments.index'),
+            ])
+            ->values();
+
+        return view('public.departments', [
+            'departments' => $departments,
+            'q' => $selected['q'],
+            'selected' => $selected,
+            'filterAreas' => DepartmentFilters::availableAreas(),
+            'filterFields' => array_keys(DepartmentFilters::fields()),
+            'filterPlacements' => DepartmentFilters::placementTypes(),
+            'filterSorts' => DepartmentFilters::sortOptions(),
+            'filterProdis' => StudyPrograms::allPrograms(),
+            'hero' => $hero,
+            'heroSlides' => $heroSlides,
+        ]);
     }
 
     public function department(Department $department)

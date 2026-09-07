@@ -15,7 +15,7 @@ class ImersiSmokeTest extends TestCase
         $this->seed();
 
         $this->get('/')->assertOk()->assertSee('Imersi');
-        $this->get('/departments')->assertOk()->assertSee('TSPM')->assertSee('K33')->assertSee('WJL');
+        $this->get('/departments')->assertOk()->assertSee('TSPM')->assertSee('K33')->assertSee('WJL')->assertSee('Departemen Mitra');
         $this->get('/departments/tspm')->assertOk()->assertSee('Digital Business');
         $this->get('/berita')->assertOk()->assertSee('Semua berita');
         $this->get('/')
@@ -42,7 +42,10 @@ class ImersiSmokeTest extends TestCase
         $this->actingAs(User::where('email', 'dosen@imersi.id')->first())
             ->get('/participant/dashboard')
             ->assertOk()
-            ->assertSee('Digital Business');
+            ->assertSee('Digital Business')
+            ->assertSee('Pilih mitra imersi Anda')
+            ->assertSee('K33')
+            ->assertSee('WJL');
 
         $this->actingAs(User::where('email', 'mentor@imersi.id')->first())
             ->get('/mentor/dashboard')

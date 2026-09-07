@@ -58,23 +58,36 @@
             ['Alur Kolaborasi', 'admin.collaborations'],
             ['Laporan', 'admin.reports'],
             ['Berita', 'admin.news'],
+            ['Hero Departemen', 'admin.department-hero'],
             ['Pengaturan Sistem', 'admin.settings'],
         ],
     ][$role];
 @endphp
 
 @if($role === 'participant')
-<header class="sticky top-0 z-30 border-b border-line bg-white/90 backdrop-blur-md">
-    <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-3">
+<header class="sticky top-0 z-30 border-b border-line bg-white/95 backdrop-blur-md">
+    <div class="mx-auto flex max-w-7xl items-center justify-between gap-3 px-5 py-3">
         <a href="{{ route('home') }}" class="flex shrink-0 items-center gap-2 font-semibold">
             <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-sm font-bold text-white">I</span>
-            <span>
+            <span class="hidden sm:block">
                 Imersi
                 <span class="block text-[10px] uppercase tracking-widest text-muted">TSU Industry Immersion</span>
             </span>
         </a>
-        <div class="flex items-center gap-3 text-sm">
-            <span class="hidden rounded-full bg-bg px-3 py-1.5 text-muted sm:inline">{{ auth()->user()->name }} · Peserta</span>
+        <form action="{{ route('departments.index') }}" method="GET" class="hidden min-w-0 flex-1 max-w-xl md:block">
+            <label class="relative block">
+                <span class="material-symbols-outlined pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted">search</span>
+                <input
+                    type="search"
+                    name="q"
+                    value="{{ request('q') }}"
+                    placeholder="Cari mitra atau unit bisnis di sini..."
+                    class="w-full rounded-full border border-line bg-bg py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/15"
+                >
+            </label>
+        </form>
+        <div class="flex items-center gap-2 text-sm">
+            <span class="hidden rounded-full bg-bg px-3 py-1.5 text-muted lg:inline">{{ auth()->user()->name }}</span>
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
                 <button class="rounded-full px-3 py-1.5 text-muted transition hover:bg-bg hover:text-ink">Keluar</button>
@@ -82,10 +95,13 @@
             <button class="rounded-xl border border-line px-3 py-1.5 lg:hidden" @click="open = !open">Menu</button>
         </div>
     </div>
-    <nav class="hidden border-t border-line bg-white/80 lg:block">
+    <nav class="hidden border-t border-line bg-white/90 lg:block">
         <div class="mx-auto flex max-w-7xl flex-wrap items-center gap-1 px-5 py-2 text-sm">
             @foreach($menus as [$label, $name])
-                <a href="{{ route($name) }}" class="rounded-full px-3.5 py-1.5 transition {{ request()->routeIs($name) ? 'bg-primary text-white shadow-sm' : 'text-muted hover:bg-bg hover:text-ink' }}">
+                <a href="{{ route($name) }}" class="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 transition {{ request()->routeIs($name) ? 'bg-primary text-white shadow-sm' : 'text-muted hover:bg-bg hover:text-ink' }}">
+                    @if($label === 'Ringkasan')
+                        <span class="material-symbols-outlined text-[16px]">home</span>
+                    @endif
                     {{ $label }}
                     @if($label === 'Notifikasi' && $unread)
                         <span class="ml-1 rounded-full bg-white px-1.5 text-[10px] font-semibold text-primary-dark">{{ $unread }}</span>

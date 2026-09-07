@@ -109,5 +109,10 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/news', [AdminController::class, 'storeNews']);
     Route::put('/news/{news}', [AdminController::class, 'updateNews'])->name('news.update');
     Route::delete('/news/{news}', [AdminController::class, 'destroyNews'])->name('news.destroy');
+    Route::get('/department-hero', [AdminController::class, 'departmentHero'])->name('department-hero');
+    Route::post('/department-hero/background', [AdminController::class, 'updateDepartmentHeroBackground'])->name('department-hero.background');
+    Route::post('/department-hero/slides', [AdminController::class, 'storeDepartmentHeroSlide'])->name('department-hero.slides.store');
+    Route::put('/department-hero/slides/{heroSlide}', [AdminController::class, 'updateDepartmentHeroSlide'])->name('department-hero.slides.update');
+    Route::delete('/department-hero/slides/{heroSlide}', [AdminController::class, 'destroyDepartmentHeroSlide'])->name('department-hero.slides.destroy');
     Route::get('/settings', [AdminController::class, 'settings'])->name('settings');
 });

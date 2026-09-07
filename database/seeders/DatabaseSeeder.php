@@ -311,6 +311,7 @@ class DatabaseSeeder extends Seeder
         $this->call(NewsSeeder::class);
         $this->call(DepartmentK33WjlSeeder::class);
         $this->call(DepartmentAhAlFirdausPuspaSeeder::class);
+        $this->call(DepartmentHeroSeeder::class);
     }
 
     private function unit(Department $department, string $name, string $function, array $programs): BusinessUnit

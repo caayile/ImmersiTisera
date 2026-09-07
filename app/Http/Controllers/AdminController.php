@@ -8,18 +8,20 @@ use App\Models\BusinessUnit;
 use App\Models\CollaborationPipeline;
 use App\Models\Department;
 use App\Models\Evaluation;
+use App\Models\HeroSetting;
+use App\Models\HeroSlide;
 use App\Models\Logbook;
 use App\Models\Mentor;
 use App\Models\News;
 use App\Models\Participant;
 use App\Models\Program;
-use App\Models\ProgramOutput;
 use App\Models\User;
-use Illuminate\Support\Str;
 use App\Notifications\ImersiAlert;
 use App\Support\Status;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class AdminController extends Controller
@@ -287,6 +289,116 @@ class AdminController extends Controller
     public function settings()
     {
         return view('admin.settings');
+    }
+
+    public function departmentHero()
+    {
+        return view('admin.department-hero', [
+            'setting' => HeroSetting::forPage('departments'),
+            'slides' => HeroSlide::forPage('departments')->orderBy('sort_order')->orderBy('id')->get(),
+        ]);
+    }
+
+    public function updateDepartmentHeroBackground(Request $request)
+    {
+        $data = $request->validate([
+            'title' => ['required', 'string', 'max:120'],
+            'subtitle' => ['nullable', 'string', 'max:255'],
+            'background' => ['nullable', 'image', 'max:5120'],
+        ]);
+
+        $setting = HeroSetting::forPage('departments');
+        $payload = [
+            'title' => $data['title'],
+            'subtitle' => $data['subtitle'] ?? null,
+        ];
+
+        if ($request->hasFile('background')) {
+            $payload['background_path'] = $this->storeHeroUpload($request->file('background'), $setting->background_path);
+        }
+
+        $setting->update($payload);
+
+        return back()->with('status', 'Background hero departemen diperbarui.');
+    }
+
+    public function storeDepartmentHeroSlide(Request $request)
+    {
+        $data = $request->validate([
+            'title' => ['required', 'string', 'max:120'],
+            'subtitle' => ['nullable', 'string', 'max:255'],
+            'link_url' => ['nullable', 'string', 'max:255'],
+            'sort_order' => ['nullable', 'integer', 'min:0', 'max:999'],
+            'image' => ['required', 'image', 'max:5120'],
+        ]);
+
+        HeroSlide::create([
+            'page' => 'departments',
+            'title' => $data['title'],
+            'subtitle' => $data['subtitle'] ?? null,
+            'link_url' => $data['link_url'] ?? null,
+            'sort_order' => $data['sort_order'] ?? (HeroSlide::forPage('departments')->max('sort_order') + 1),
+            'image_path' => $this->storeHeroUpload($request->file('image')),
+            'is_active' => true,
+        ]);
+
+        return back()->with('status', 'Slide hero ditambahkan.');
+    }
+
+    public function updateDepartmentHeroSlide(Request $request, HeroSlide $heroSlide)
+    {
+        abort_unless($heroSlide->page === 'departments', 404);
+
+        $data = $request->validate([
+            'title' => ['required', 'string', 'max:120'],
+            'subtitle' => ['nullable', 'string', 'max:255'],
+            'link_url' => ['nullable', 'string', 'max:255'],
+            'sort_order' => ['nullable', 'integer', 'min:0', 'max:999'],
+            'is_active' => ['nullable', 'boolean'],
+            'image' => ['nullable', 'image', 'max:5120'],
+        ]);
+
+        $payload = [
+            'title' => $data['title'],
+            'subtitle' => $data['subtitle'] ?? null,
+            'link_url' => $data['link_url'] ?? null,
+            'sort_order' => $data['sort_order'] ?? $heroSlide->sort_order,
+            'is_active' => $request->boolean('is_active'),
+        ];
+
+        if ($request->hasFile('image')) {
+            $payload['image_path'] = $this->storeHeroUpload($request->file('image'), $heroSlide->image_path);
+        }
+
+        $heroSlide->update($payload);
+
+        return back()->with('status', 'Slide hero diperbarui.');
+    }
+
+    public function destroyDepartmentHeroSlide(HeroSlide $heroSlide)
+    {
+        abort_unless($heroSlide->page === 'departments', 404);
+
+        $this->deleteHeroUpload($heroSlide->image_path);
+        $heroSlide->delete();
+
+        return back()->with('status', 'Slide hero dihapus.');
+    }
+
+    private function storeHeroUpload($file, ?string $previous = null): string
+    {
+        $this->deleteHeroUpload($previous);
+
+        return $file->store('hero', 'public');
+    }
+
+    private function deleteHeroUpload(?string $path): void
+    {
+        if (! $path || str_starts_with($path, 'images/')) {
+            return;
+        }
+
+        Storage::disk('public')->delete($path);
     }
 
     public function news()

@@ -89,3 +89,53 @@ body {
 .auth-input-plain {
     padding-left: 1rem;
 }
+
+.partner-stage {
+    background-color: #16352c;
+    background-image:
+        radial-gradient(ellipse 80% 55% at 50% 110%, rgba(94, 198, 157, 0.35), transparent 55%),
+        radial-gradient(circle at 12% 20%, rgba(125, 216, 181, 0.18), transparent 28%),
+        radial-gradient(circle at 88% 18%, rgba(94, 198, 157, 0.16), transparent 30%),
+        linear-gradient(180deg, #0f2a24 0%, #16352c 42%, #1f4a3a 100%);
+}
+
+.partner-nav {
+    position: absolute;
+    top: 50%;
+    z-index: 30;
+    display: inline-flex;
+    height: 2.75rem;
+    width: 2.75rem;
+    translate: 0 -50%;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.9rem;
+    background: linear-gradient(180deg, #6fd4a8 0%, #3eaa84 100%);
+    color: white;
+    box-shadow: 0 10px 24px rgba(15, 42, 36, 0.35);
+    transition: filter 0.15s ease, box-shadow 0.15s ease;
+}
+
+.partner-nav:hover {
+    filter: brightness(1.08);
+    box-shadow: 0 12px 28px rgba(15, 42, 36, 0.42);
+}
+
+.partner-card {
+    will-change: transform, opacity;
+}
+
+.departments-hero {
+    background-color: #0f2a24;
+}
+
+.departments-hero__backdrop {
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(180deg, rgba(15, 42, 36, 0.72) 0%, rgba(15, 42, 36, 0.55) 45%, rgba(15, 42, 36, 0.82) 100%),
+        var(--hero-campus);
+    background-position: center;
+    background-size: cover;
+    transform: scale(1.02);
+}
