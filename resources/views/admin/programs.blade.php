@@ -10,7 +10,7 @@
         @endforeach
     </select>
     <select name="department_id" class="rounded-lg border border-line px-3 py-2 text-sm">
-        <option value="">Semua department</option>
+        <option value="">Semua unit bisnis</option>
         @foreach($departments as $department)
             <option value="{{ $department->id }}" @selected(request('department_id')==$department->id)>{{ $department->name }}</option>
         @endforeach
@@ -19,7 +19,7 @@
 </form>
 <div class="mt-6 overflow-x-auto rounded-2xl border border-line bg-white">
     <table class="min-w-full text-left text-sm">
-        <thead class="bg-bg text-xs uppercase text-muted"><tr><th class="px-4 py-3">Peserta</th><th class="px-4 py-3">Mentor</th><th class="px-4 py-3">Department</th><th class="px-4 py-3">Unit</th><th class="px-4 py-3">Status</th><th class="px-4 py-3"></th></tr></thead>
+        <thead class="bg-bg text-xs uppercase text-muted"><tr><th class="px-4 py-3">Peserta</th><th class="px-4 py-3">Mentor</th><th class="px-4 py-3">Unit Bisnis</th><th class="px-4 py-3">Departemen</th><th class="px-4 py-3">Status</th><th class="px-4 py-3"></th></tr></thead>
         <tbody>
         @foreach($programs as $program)
             <tr class="border-t border-line">

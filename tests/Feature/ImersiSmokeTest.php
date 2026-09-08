@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\BusinessUnit;
+use App\Models\Department;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -15,13 +17,13 @@ class ImersiSmokeTest extends TestCase
         $this->seed();
 
         $this->get('/')->assertOk()->assertSee('Imersi');
-        $this->get('/departments')->assertOk()->assertSee('TSPM')->assertSee('K33')->assertSee('WJL')->assertSee('Departemen Mitra');
+        $this->get('/departments')->assertOk()->assertSee('TSPM')->assertSee('K33')->assertSee('WJL')->assertSee('Unit Bisnis Mitra');
         $this->get('/departments/tspm')->assertOk()->assertSee('Digital Business');
         $this->get('/berita')->assertOk()->assertSee('Semua berita');
         $this->get('/')
             ->assertOk()
             ->assertSee('10 Kemampuan Inti Sistem')
-            ->assertSee('Departemen pilihan gelombang')
+            ->assertSee('Unit bisnis pilihan gelombang')
             ->assertSee('Berita Terbaru');
 
         $this->actingAs(User::where('email', 'dosen@imersi.id')->first())
@@ -53,6 +55,11 @@ class ImersiSmokeTest extends TestCase
             ->assertSee('Ringkasan Mentor');
 
         $this->actingAs(User::where('email', 'admin@imersi.id')->first())
+            ->get('/')
+            ->assertOk()
+            ->assertSee('Beranda');
+
+        $this->actingAs(User::where('email', 'admin@imersi.id')->first())
             ->get('/admin/dashboard')
             ->assertOk()
             ->assertSee('Pengelola Program');
@@ -66,6 +73,77 @@ class ImersiSmokeTest extends TestCase
     {
         $this->get('/')->assertOk()->assertDontSee('>Profil</a>', false);
         $this->get('/profil')->assertRedirect(route('login'));
+    }
+
+    public function test_admin_can_edit_business_units_and_departments(): void
+    {
+        $this->seed();
+        $admin = User::where('email', 'admin@imersi.id')->firstOrFail();
+        $businessUnit = Department::where('slug', 'tspm')->firstOrFail();
+        $department = BusinessUnit::where('department_id', $businessUnit->id)->where('name', 'IT')->firstOrFail();
+
+        $this->actingAs($admin)
+            ->post('/admin/departments', [
+                'name' => 'Unit Bisnis Baru',
+                'description' => 'Deskripsi awal',
+                'function' => 'Fungsi awal',
+                'area' => 'Area awal',
+            ])
+            ->assertRedirect();
+
+        $newBusinessUnit = Department::where('slug', 'unit-bisnis-baru')->firstOrFail();
+
+        $this->actingAs($admin)
+            ->put(route('admin.departments.update', $newBusinessUnit), [
+                'name' => 'Unit Bisnis Diperbarui',
+                'description' => 'Deskripsi diperbarui',
+                'function' => 'Fungsi diperbarui',
+                'area' => 'Area diperbarui',
+                'status' => 'active',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('departments', [
+            'id' => $newBusinessUnit->id,
+            'name' => 'Unit Bisnis Diperbarui',
+            'slug' => 'unit-bisnis-diperbarui',
+        ]);
+
+        $this->actingAs($admin)
+            ->put(route('admin.departments.update', $businessUnit), [
+                'name' => 'TSPM Updated',
+                'description' => 'Updated unit business',
+                'function' => 'Updated function',
+                'area' => 'Updated area',
+                'status' => 'active',
+            ])
+            ->assertRedirect();
+
+        $this->actingAs($admin)
+            ->put(route('admin.units.update', $department), [
+                'department_id' => $businessUnit->id,
+                'name' => 'IT Updated',
+                'description' => 'Updated department',
+                'function' => 'Updated function',
+                'work_done' => 'Updated work',
+                'example_activities' => 'Updated activities',
+                'requirements' => 'Updated requirements',
+                'relevant_programs' => 'Informatika, Sistem Informasi',
+                'period' => '8 minggu',
+                'status' => 'closed',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('departments', ['id' => $businessUnit->id, 'name' => 'TSPM Updated', 'area' => 'Updated area']);
+        $this->assertDatabaseHas('business_units', [
+            'id' => $department->id,
+            'name' => 'IT Updated',
+            'department_id' => $businessUnit->id,
+            'work_done' => 'Updated work',
+            'period' => '8 minggu',
+            'status' => 'closed',
+        ]);
+        $this->assertSame(['Informatika', 'Sistem Informasi'], $department->fresh()->relevant_programs);
     }
 
     public function test_admin_can_manage_news(): void

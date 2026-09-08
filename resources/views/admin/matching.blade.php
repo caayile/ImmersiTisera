@@ -2,7 +2,7 @@
 @section('title', 'Matching')
 @section('content')
 <h1 class="text-2xl font-semibold">Matching</h1>
-<p class="mt-1 text-sm text-muted">Participant → Prodi → Kompetensi → Department → Unit Bisnis → Mentor</p>
+<p class="mt-1 text-sm text-muted">Participant → Prodi → Kompetensi → Unit Bisnis → Departemen → Mentor</p>
 <div class="mt-6 space-y-4">
     @forelse($applications as $application)
         <article class="rounded-2xl border border-line bg-white p-5">

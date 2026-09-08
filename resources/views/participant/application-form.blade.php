@@ -2,10 +2,10 @@
 @section('title', 'Ajukan Program')
 @section('content')
 <h1 class="text-2xl font-semibold">Ajukan Program</h1>
-<p class="mt-1 text-sm text-muted">Pilih departemen atau unit bisnis yang relevan dengan kompetensi Anda.</p>
+<p class="mt-1 text-sm text-muted">Pilih unit bisnis dan departemen yang relevan dengan kompetensi Anda.</p>
 <form method="POST" action="{{ route('participant.applications.store') }}" class="mt-6 max-w-2xl space-y-4 rounded-2xl border border-line bg-white p-6">
     @csrf
-    <label class="block text-xs font-semibold uppercase tracking-wide text-muted">Departemen / penempatan
+    <label class="block text-xs font-semibold uppercase tracking-wide text-muted">Unit bisnis / departemen
         <select name="business_unit_id" class="mt-2 w-full rounded-lg border border-line px-4 py-2.5 text-sm" required>
             @foreach($departments as $department)
                 @if($department->isDirectPlacement())

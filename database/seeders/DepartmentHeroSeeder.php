@@ -13,7 +13,7 @@ class DepartmentHeroSeeder extends Seeder
         HeroSetting::updateOrCreate(
             ['page' => 'departments'],
             [
-                'title' => 'Departemen Mitra Imersi',
+                'title' => 'Unit Bisnis Mitra Imersi',
                 'subtitle' => 'Jelajahi lokasi industri dan pendidikan mitra TSU.',
                 'background_path' => 'images/hero/campus.jpg',
             ],
@@ -21,25 +21,53 @@ class DepartmentHeroSeeder extends Seeder
 
         $slides = [
             [
-                'title' => 'K33',
-                'subtitle' => 'Operasi gudang, seragam, dan rantai pasok industri.',
-                'image_path' => 'images/hero/k33.jpg',
-                'link_url' => '/departments/k33',
+                'title' => 'Tiga Serangkai Pustama Mandiri',
+                'subtitle' => 'Penerbitan, produksi, penjualan, dan layanan bisnis buku sekolah.',
+                'image_path' => 'images/hero/campus.jpg',
+                'link_url' => '/departments/tspm',
                 'sort_order' => 1,
             ],
             [
-                'title' => 'Assalaam Hypermarket',
-                'subtitle' => 'Retail modern: store operation hingga marketing.',
-                'image_path' => 'images/hero/assalaam.jpg',
-                'link_url' => '/departments?q=Assalaam',
+                'title' => 'Tiga Serangkai Inti Corpora',
+                'subtitle' => 'Pusat keunggulan, pengembangan orang, dan perencanaan inovasi.',
+                'image_path' => 'images/hero/campus.jpg',
+                'link_url' => '/departments/tsic',
                 'sort_order' => 2,
             ],
             [
-                'title' => 'SD Al-Firdaus',
+                'title' => 'K33',
+                'subtitle' => 'Operasi penjualan, SDM, keuangan, IT, dan rantai pasok industri.',
+                'image_path' => 'images/hero/k33.jpg',
+                'link_url' => '/departments/k33',
+                'sort_order' => 3,
+            ],
+            [
+                'title' => 'Wangsa Jastra Lestari',
+                'subtitle' => 'Produksi, marketing, finance, dan pengelolaan SDM.',
+                'image_path' => 'images/hero/k33.jpg',
+                'link_url' => '/departments/wjl',
+                'sort_order' => 4,
+            ],
+            [
+                'title' => 'Assalam Hypermart',
+                'subtitle' => 'Retail modern: store operation, trading, finance, IT, dan marketing.',
+                'image_path' => 'images/hero/assalaam.jpg',
+                'link_url' => '/departments/assalam-hypermarket',
+                'sort_order' => 5,
+            ],
+            [
+                'title' => 'Al - Firdaus',
                 'subtitle' => 'Mitra pendidikan dasar untuk prodi PGSD.',
                 'image_path' => 'images/hero/al-firdaus.jpg',
                 'link_url' => '/departments/sd-al-firdaus',
-                'sort_order' => 3,
+                'sort_order' => 6,
+            ],
+            [
+                'title' => 'Puspa Holistic Integrative Care',
+                'subtitle' => 'Pengembangan holistik, integratif, dan kesejahteraan manusia.',
+                'image_path' => 'images/hero/campus.jpg',
+                'link_url' => '/departments/puspa-holistic-integrative-care',
+                'sort_order' => 7,
             ],
         ];
 

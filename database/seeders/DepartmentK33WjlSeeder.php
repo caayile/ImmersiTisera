@@ -36,7 +36,8 @@ class DepartmentK33WjlSeeder extends Seeder
             ['Operation (Sales)', 'Sales operations', ['Manajemen']],
             ['Human Resources Development', 'People development', ['Manajemen', 'Psikologi']],
             ['General Affair & Industrial Relation', 'GA & industrial relations', ['Manajemen']],
-            ['Finance Accounting & IT', 'Finance, accounting, and IT', ['Sistem Informasi', 'Informatika', 'Teknologi Informasi']],
+            ['Finance Accounting', 'Finance and accounting', ['Sistem Informasi', 'Akuntansi', 'Manajemen']],
+            ['IT', 'Information technology', ['Sistem Informasi', 'Informatika', 'Teknologi Informasi']],
             ['Desain Seragam', 'Uniform design & production', ['Desain Produksi Tekstil', 'Desain Komunikasi Visual']],
             ['Souvenir', 'Merchandise & souvenir design', ['Desain Produksi Tekstil', 'Desain Komunikasi Visual']],
         ];
@@ -67,7 +68,7 @@ class DepartmentK33WjlSeeder extends Seeder
                 'name' => $name,
             ],
             [
-                'description' => "Unit {$name} pada departemen {$department->name} untuk immersion dosen TSU.",
+                'description' => "Departemen {$name} pada unit bisnis {$department->name} untuk immersion dosen TSU.",
                 'function' => $function,
                 'work_done' => "Operasional harian {$name}, kolaborasi lintas tim, dan improvement berkelanjutan.",
                 'example_activities' => 'Observasi, penugasan, riset terapan, dan diskusi mentoring 30 menit.',

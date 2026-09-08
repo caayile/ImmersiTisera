@@ -1,5 +1,5 @@
 @extends('layouts.public')
-@section('title', 'Departemen')
+@section('title', 'Unit Bisnis')
 @section('content')
 @php
     $background = $hero->backgroundUrl() ?: asset('images/hero/campus.jpg');
@@ -42,8 +42,8 @@
     <div class="relative mx-auto max-w-6xl px-5 pb-14 pt-10">
         <div class="mb-6 max-w-2xl text-white">
             <p class="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">Mitra Imersi</p>
-            <h1 class="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">{{ $hero->title ?: 'Departemen' }}</h1>
-            <p class="mt-2 text-sm leading-6 text-white/80">{{ $hero->subtitle ?: 'Pilih departemen mitra imersi.' }}</p>
+            <h1 class="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">{{ $hero->title ?: 'Unit Bisnis' }}</h1>
+            <p class="mt-2 text-sm leading-6 text-white/80">{{ $hero->subtitle ?: 'Pilih unit bisnis mitra imersi.' }}</p>
         </div>
 
         <div class="relative mx-auto max-w-5xl px-10 md:px-14">
@@ -79,7 +79,7 @@
 
                 <template x-if="! count">
                     <div class="flex h-full items-center justify-center rounded-3xl border border-white/20 bg-black/25 text-sm text-white/85 backdrop-blur">
-                        Belum ada banner mitra. Admin dapat menambahkannya di Hero Departemen.
+                        Belum ada banner mitra. Admin dapat menambahkannya di Hero Unit Bisnis.
                     </div>
                 </template>
             </div>
@@ -102,7 +102,7 @@
 <div class="mx-auto max-w-7xl px-5 py-12">
     <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-            <h2 class="text-2xl font-semibold">Daftar departemen</h2>
+            <h2 class="text-2xl font-semibold">Daftar unit bisnis</h2>
             <p class="mt-1 text-muted">Saring mitra berdasarkan bidang (IT, Finance, dll), area, atau prodi.</p>
         </div>
         <p class="text-sm text-muted">{{ $departments->count() }} hasil ditemukan</p>
@@ -120,7 +120,7 @@
             <div class="mt-4 space-y-6" :class="open ? 'block' : 'hidden lg:block'">
                 <label class="relative block">
                     <span class="material-symbols-outlined pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted">search</span>
-                    <input name="q" value="{{ $selected['q'] }}" placeholder="Cari departemen..." class="w-full rounded-xl border border-line bg-bg py-2.5 pl-10 pr-3 text-sm outline-none focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/15">
+                    <input name="q" value="{{ $selected['q'] }}" placeholder="Cari unit bisnis..." class="w-full rounded-xl border border-line bg-bg py-2.5 pl-10 pr-3 text-sm outline-none focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/15">
                 </label>
 
                 <div>
@@ -215,7 +215,7 @@
                             <span class="rounded-md bg-white/95 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-ink">
                                 {{ $department->isDirectPlacement() ? 'Langsung' : 'Unit bisnis' }}
                             </span>
-                            <p class="absolute bottom-4 left-4 right-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/90">{{ $department->area ?: 'Departemen' }}</p>
+                            <p class="absolute bottom-4 left-4 right-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/90">{{ $department->area ?: 'Unit Bisnis' }}</p>
                         </div>
                         <div class="flex flex-1 flex-col p-5">
                             <h3 class="text-lg font-semibold">{{ $department->name }}</h3>
@@ -225,14 +225,14 @@
                                 @if($department->isDirectPlacement())
                                     Penempatan langsung ke departemen
                                 @else
-                                    {{ $department->business_units_count }} unit bisnis
+                                    {{ $department->business_units_count }} departemen
                                 @endif
                             </p>
                             <a href="{{ route('departments.show', $department) }}" class="mt-4 inline-flex items-center justify-center rounded-xl bg-[#eef4f1] px-4 py-2.5 text-sm font-semibold text-ink hover:bg-primary hover:text-white">Lihat Detail</a>
                         </div>
                     </article>
                 @empty
-                    <p class="text-muted sm:col-span-2 xl:col-span-3">Tidak ada department yang cocok dengan filter ini.</p>
+                    <p class="text-muted sm:col-span-2 xl:col-span-3">Tidak ada unit bisnis yang cocok dengan filter ini.</p>
                 @endforelse
             </div>
         </div>

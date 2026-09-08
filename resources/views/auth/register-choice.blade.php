@@ -31,7 +31,7 @@
         <x-auth.input name="email" type="email" :value="old('email')" placeholder="Email" :icon="$mail" required />
         <x-auth.input name="phone" :value="old('phone')" placeholder="Telepon" />
         <select name="department_id" class="auth-input auth-input-plain" x-show="role === 'mentor'" x-cloak>
-            <option value="">Pilih department (opsional)</option>
+            <option value="">Pilih unit bisnis (opsional)</option>
             @foreach($departments as $department)
                 <option value="{{ $department->id }}" @selected(old('department_id') == $department->id)>{{ $department->name }}</option>
             @endforeach

@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Models\BusinessUnit;
 use App\Models\Department;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
 
 class DepartmentAhAlFirdausPuspaSeeder extends Seeder
 {
@@ -21,15 +20,19 @@ class DepartmentAhAlFirdausPuspaSeeder extends Seeder
             ['HR & GA', 'Sumber daya manusia dan general affair Assalaam Hypermarket.', 'People & general affairs', ['Manajemen', 'Psikologi']],
         ];
 
+        $assalam = Department::updateOrCreate(
+            ['slug' => 'assalam-hypermarket'],
+            [
+                'name' => 'Assalam Hypermarket',
+                'description' => 'Unit bisnis retail dengan departemen operasional, perdagangan, keuangan, teknologi, pemasaran, dan SDM.',
+                'function' => 'Retail operations and corporate services',
+                'area' => 'Assalaam Hypermarket (AH)',
+                'status' => 'active',
+            ],
+        );
+
         foreach ($ahDepartments as [$name, $description, $function, $programs]) {
-            $this->departmentWithDirectPlacement(
-                name: $name,
-                slug: 'ah-'.Str::slug($name),
-                description: $description,
-                function: $function,
-                area: 'Assalaam Hypermarket (AH)',
-                programs: $programs,
-            );
+            $this->unit($assalam, $name, $description, $function, $programs);
         }
 
         $this->departmentWithDirectPlacement(
@@ -42,8 +45,8 @@ class DepartmentAhAlFirdausPuspaSeeder extends Seeder
         );
 
         $this->departmentWithDirectPlacement(
-            name: 'Puspa Holistic',
-            slug: 'puspa-holistic',
+            name: 'Puspa Holistic Integrative Care',
+            slug: 'puspa-holistic-integrative-care',
             description: 'Mitra immersion bidang pengembangan holistik; direkomendasikan bagi prodi Psikologi.',
             function: 'Pengembangan holistik & kesejahteraan',
             area: 'Psikologi',
@@ -81,6 +84,23 @@ class DepartmentAhAlFirdausPuspaSeeder extends Seeder
                 'description' => $description,
                 'function' => $function,
                 'work_done' => "Kegiatan operasional {$name}.",
+                'example_activities' => 'Observasi, penugasan, riset terapan, dan diskusi mentoring 30 menit.',
+                'requirements' => 'Kompetensi relevan dan komitmen 8 minggu.',
+                'relevant_programs' => $programs,
+                'period' => '8 weeks / ±60 days',
+                'status' => 'open',
+            ],
+        );
+    }
+
+    private function unit(Department $department, string $name, string $description, string $function, array $programs): void
+    {
+        BusinessUnit::updateOrCreate(
+            ['department_id' => $department->id, 'name' => $name],
+            [
+                'description' => $description,
+                'function' => $function,
+                'work_done' => "Kegiatan departemen {$name} pada unit bisnis {$department->name}.",
                 'example_activities' => 'Observasi, penugasan, riset terapan, dan diskusi mentoring 30 menit.',
                 'requirements' => 'Kompetensi relevan dan komitmen 8 minggu.',
                 'relevant_programs' => $programs,

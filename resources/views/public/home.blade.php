@@ -7,8 +7,8 @@
         ['account_tree', 'Mesin Pencocokan Linear', 'Algoritma mencocokkan keahlian dosen dengan tantangan teknis unit bisnis secara terukur.', '02 / Pencocokan'],
         ['handshake', 'Perjanjian Imersi', 'Dokumen digital kesepakatan tiga pihak: dosen, kampus, dan industri sebelum program aktif.', '03 / Perjanjian'],
         ['calendar_month', 'Pemeriksaan 8 Minggu', 'Tonggak mingguan dari Temukan hingga Serahkan dengan target hasil yang jelas.', '04 / Tonggak'],
-        ['edit_note', 'Buku Catatan Harian', 'Form refleksi harian untuk merekam aktivitas, pembelajaran, dan bukti kerja.', '05 / Catatan'],
-        ['forum', 'Pendampingan Mingguan', 'Sesi 30 menit tiap minggu untuk menyelaraskan temuan, tugas, dan langkah berikutnya.', '06 / Mentor'],
+        ['edit_note', 'Logbook Harian', 'Form refleksi harian untuk merekam aktivitas, pembelajaran, dan bukti kerja.', '05 / Catatan'],
+        ['forum', 'Mentoring Mingguan', 'Sesi 30 menit tiap minggu untuk menyelaraskan temuan, tugas, dan langkah berikutnya.', '06 / Mentor'],
         ['folder_managed', 'Repositori Bukti', 'Penyimpanan aman untuk artefak, dokumen, dan hasil kerja selama imersi.', '07 / Bukti'],
         ['diversity_3', 'Evaluasi Multi Perspektif', 'Penilaian 360 dari industri, mentor, dan capaian hasil kerja dosen.', '08 / Evaluasi'],
         ['trending_up', 'Alur Kolaborasi 0–4', 'Kerangka formal dari tutup hingga perluas kemitraan setelah magang.', '09 / Alur'],
@@ -27,12 +27,12 @@
     ];
 @endphp
 
-<section class="hero-grid">
+<section class="hero-grid" data-reveal>
     <div class="mx-auto grid max-w-6xl items-center gap-10 px-5 py-16 lg:grid-cols-2">
         <div>
             <p class="inline-flex rounded-full bg-black/25 px-3 py-1 text-xs font-medium text-white">GELOMBANG 2026 · SEKARANG DIBUKA</p>
-            <h1 class="mt-5 text-4xl font-semibold leading-tight text-white md:text-5xl">Mulai imersi dari <span class="text-secondary">unit bisnis yang tepat</span> di sini.</h1>
-            <p class="mt-4 max-w-xl text-sm leading-6 text-white/80">Imersi menghubungkan dosen TSU dengan dunia industri secara terukur: pencocokan, perjanjian, buku catatan, pendampingan, hasil kerja, dan kolaborasi lanjutan.</p>
+            <h1 class="mt-5 text-4xl font-semibold leading-tight text-white md:text-5xl">Mulai kolaborasi dari <span class="text-secondary">unit bisnis yang tepat</span> di sini.</h1>
+            <p class="mt-4 max-w-xl text-sm leading-6 text-white/80">Program ini menghubungkan Dosen TSU dengan Unit Bisnis dengan TS Group.</p>
             <form action="{{ route('departments.index') }}" class="mt-8 flex max-w-xl overflow-hidden rounded-full bg-white p-1.5">
                 <input name="q" value="{{ request('q') }}" placeholder="Cari departemen atau unit bisnis" class="min-w-0 flex-1 px-4 text-sm outline-none">
                 <button class="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-white">Cari</button>
@@ -41,13 +41,13 @@
         <div class="grid gap-3 sm:grid-cols-2">
             @foreach([
                 ['Wawasan Industri', 'Memahami alur kerja dan keputusan bisnis secara langsung.'],
-                ['Mentor Profesional', 'Pendampingan 30 menit setiap minggu.'],
+                ['Mentor Profesional', 'Mentoring 30 menit setiap minggu.'],
                 ['Hasil Utama', 'Satu hasil kerja nyata untuk dosen dan unit bisnis.'],
                 ['Kolaborasi Lanjutan', 'Kuliah tamu, riset, hingga kurikulum.'],
-                ['Buku Catatan Harian', 'Rekaman aktivitas, pembelajaran, dan bukti kerja.'],
+                ['Logbook Harian', 'Rekaman aktivitas, pembelajaran, dan bukti kerja.'],
                 ['Evaluasi Terukur', 'Pemahaman, relasi, hasil, dan dampak.'],
             ] as [$title, $copy])
-                <article class="rounded-2xl bg-white p-4 shadow-lg">
+                <article class="rounded-2xl bg-white p-4 shadow-lg tap-feedback" data-reveal data-reveal-delay="{{ $loop->index % 4 }}">
                     <p class="font-semibold">{{ $title }}</p>
                     <p class="mt-1 text-sm text-muted">{{ $copy }}</p>
                 </article>
@@ -56,14 +56,14 @@
     </div>
 </section>
 
-<section class="bg-bg py-16">
+<section class="bg-bg py-16" data-reveal>
     <div class="mx-auto max-w-7xl px-5">
         <x-framework-phases />
         <x-program-timeline :current="1" class="mt-16" />
     </div>
 </section>
 
-<section class="bg-[#f4f8f6] py-16">
+<section class="bg-[#f4f8f6] py-16" data-reveal>
     <div class="mx-auto max-w-7xl px-5 text-center">
         <p class="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-dark">
             <span class="material-symbols-outlined text-[15px]">architecture</span>
@@ -74,7 +74,7 @@
 
         <div class="mt-10 grid gap-4 text-left sm:grid-cols-2 lg:grid-cols-5">
             @foreach($capabilities as [$icon, $title, $copy, $tag])
-                <article class="flex min-h-[220px] flex-col rounded-2xl border border-line bg-white p-5 shadow-sm">
+                <article class="flex min-h-[220px] flex-col rounded-2xl border border-line bg-white p-5 shadow-sm tap-feedback" data-reveal data-reveal-delay="{{ $loop->index % 4 }}">
                     <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary-dark">
                         <span class="material-symbols-outlined text-[22px]">{{ $icon }}</span>
                     </span>
@@ -87,16 +87,16 @@
     </div>
 </section>
 
-<section class="bg-bg py-16">
+<section class="bg-bg py-16" data-reveal>
     <div class="mx-auto max-w-7xl px-5">
         <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
                 <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary-dark">Mitra Imersi</p>
-                <h2 class="mt-2 text-3xl font-semibold tracking-tight">Departemen pilihan gelombang 2026</h2>
-                <p class="mt-2 max-w-xl text-sm text-muted">Pilih departemen atau unit kerja yang selaras dengan rumpun keilmuan Anda.</p>
+                <h2 class="mt-2 text-3xl font-semibold tracking-tight">Unit bisnis pilihan gelombang 2026</h2>
+                <p class="mt-2 max-w-xl text-sm text-muted">Pilih unit bisnis dan departemen yang selaras dengan rumpun keilmuan Anda.</p>
             </div>
             <a href="{{ route('departments.index') }}" class="inline-flex items-center gap-1 text-sm font-semibold text-primary-dark">
-                Lihat semua {{ $departments->count() }} departemen
+                Lihat semua {{ $departments->count() }} unit bisnis
                 <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
             </a>
         </div>
@@ -105,15 +105,15 @@
             @foreach($featuredUnits as $unit)
                 @php
                     $direct = $unit->department?->isDirectPlacement();
-                    $meta = $unitMeta[$unit->name] ?? ['area' => $unit->department?->area ?? 'Departemen', 'image' => 'from-[#16352c] to-primary'];
+                    $meta = $unitMeta[$unit->name] ?? ['area' => $unit->department?->area ?? 'Unit Bisnis', 'image' => 'from-[#16352c] to-primary'];
                     $prodi = collect($unit->relevant_programs ?? [])->take(3)->implode(', ') ?: 'Semua prodi relevan';
                     $quota = max(2, count($unit->relevant_programs ?? []) + 1);
                     $detailUrl = $direct && $unit->department
                         ? route('departments.show', $unit->department)
                         : route('units.show', $unit);
-                    $detailLabel = $direct ? 'Detail departemen' : 'Detail unit bisnis';
+                    $detailLabel = $direct ? 'Detail unit bisnis' : 'Detail departemen';
                 @endphp
-                <article class="overflow-hidden rounded-2xl border border-line bg-white shadow-sm">
+                <article class="overflow-hidden rounded-2xl border border-line bg-white shadow-sm tap-feedback" data-reveal data-reveal-delay="{{ $loop->index % 4 }}">
                     <div class="relative h-44 bg-gradient-to-br {{ $meta['image'] }} p-4">
                         <span class="absolute left-4 top-4 rounded-md bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-ink">Gelombang terbuka</span>
                         <p class="absolute bottom-4 left-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/90">{{ $meta['area'] }}</p>
@@ -149,7 +149,7 @@
                 </div>
                 <div class="flex flex-col gap-3 sm:flex-row lg:justify-end">
                     <a href="{{ route('departments.index') }}" class="inline-flex items-center justify-center gap-1 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white">
-                        Jelajahi semua departemen
+                        Jelajahi semua unit bisnis
                         <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
                     </a>
                     <a href="{{ route('program.info') }}" class="inline-flex items-center justify-center gap-1 rounded-full bg-white px-5 py-3 text-sm font-semibold text-ink">

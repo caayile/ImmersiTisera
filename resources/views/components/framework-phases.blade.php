@@ -20,7 +20,7 @@
             'no' => '03',
             'fase' => 'FASE 3',
             'title' => 'INTERAKSI',
-            'copy' => 'Pendampingan 30 menit setiap minggu plus buku catatan digital harian sebagai rekam jejak pembelajaran.',
+            'copy' => 'Mentoring 30 menit setiap minggu plus logbook digital harian sebagai rekam jejak pembelajaran.',
             'icon' => 'forum',
             'meta' => 'Pemeriksaan Mingguan 30 Menit',
         ],
@@ -45,14 +45,14 @@
 <section {{ $attributes->merge(['class' => 'text-center']) }}>
     <p class="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-dark">
         <span class="material-symbols-outlined text-[15px]">route</span>
-        Kerangka Imersi
+        Kerangka Magang Dosen
     </p>
     <h2 class="mt-4 text-3xl font-semibold tracking-tight">Konsep Utama Program</h2>
     <p class="mx-auto mt-2 max-w-2xl text-sm text-muted">Lima fase terukur dari pencocokan kompetensi hingga kolaborasi lanjutan setelah imersi.</p>
 
     <div class="mt-8 grid gap-3 text-left sm:grid-cols-2 lg:grid-cols-5">
         @foreach($phases as $phase)
-            <article class="flex min-h-[280px] flex-col rounded-2xl bg-[#eef4f1] p-5">
+            <article class="flex min-h-[280px] flex-col rounded-2xl bg-[#eef4f1] p-5 tap-feedback" data-reveal data-reveal-delay="{{ $loop->index % 4 }}">
                 <p class="text-2xl font-semibold tracking-tight text-primary-dark">{{ $phase['no'] }}</p>
                 <p class="mt-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">{{ $phase['fase'] }}</p>
                 <h3 class="mt-1 text-lg font-semibold tracking-tight">{{ $phase['title'] }}</h3>

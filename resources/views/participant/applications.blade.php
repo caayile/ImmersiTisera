@@ -4,7 +4,7 @@
 <div class="flex flex-wrap items-center justify-between gap-3">
     <div>
         <h1 class="text-2xl font-semibold">Program / Pendaftaran</h1>
-        <p class="mt-1 text-sm text-muted">Prodi → kompetensi → department → unit bisnis → mentor.</p>
+        <p class="mt-1 text-sm text-muted">Prodi → kompetensi → unit bisnis → departemen → mentor.</p>
     </div>
     <a href="{{ route('participant.applications.create') }}" class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white">Ajukan program</a>
 </div>
@@ -12,8 +12,8 @@
     <table class="min-w-full text-left text-sm">
         <thead class="bg-bg text-xs uppercase tracking-wide text-muted">
             <tr>
-                <th class="px-4 py-3">Department</th>
                 <th class="px-4 py-3">Unit Bisnis</th>
+                <th class="px-4 py-3">Departemen</th>
                 <th class="px-4 py-3">Mentor</th>
                 <th class="px-4 py-3">Skor</th>
                 <th class="px-4 py-3">Status</th>

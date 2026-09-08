@@ -1,5 +1,33 @@
 // Global Top Page Loader Bar & Navigation Management
 (() => {
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const revealElements = document.querySelectorAll('[data-reveal]');
+
+    if (reduceMotion || !('IntersectionObserver' in window)) {
+        revealElements.forEach((element) => element.classList.add('is-visible'));
+    } else {
+        const revealObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach((entry) => {
+                if (!entry.isIntersecting) return;
+                entry.target.classList.add('is-visible');
+                observer.unobserve(entry.target);
+            });
+        }, { threshold: 0.12, rootMargin: '0px 0px -40px' });
+
+        revealElements.forEach((element) => revealObserver.observe(element));
+    }
+
+    document.addEventListener('pointerdown', (event) => {
+        const target = event.target.closest('a, button');
+        if (!target || reduceMotion) return;
+
+        const bounds = target.getBoundingClientRect();
+        target.style.setProperty('--tap-x', `${event.clientX - bounds.left}px`);
+        target.style.setProperty('--tap-y', `${event.clientY - bounds.top}px`);
+        target.classList.add('is-tapped');
+        window.setTimeout(() => target.classList.remove('is-tapped'), 420);
+    });
+
     // 1. Create top page loader element if not present
     let loaderBar = document.getElementById('page-loader-bar');
     if (!loaderBar) {

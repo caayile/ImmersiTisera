@@ -1,10 +1,10 @@
 @extends('layouts.app')
-@section('title', 'Hero Departemen')
+@section('title', 'Hero Unit Bisnis')
 @section('content')
 <div class="max-w-5xl">
     <div>
-        <h1 class="text-2xl font-semibold">Hero Departemen</h1>
-        <p class="mt-1 text-sm text-muted">Atur foto kampus sebagai background dan banner mitra di atasnya (gaya carousel).</p>
+        <h1 class="text-2xl font-semibold">Hero Unit Bisnis</h1>
+        <p class="mt-1 text-sm text-muted">Atur gambar, judul, dan deskripsi unit bisnis pada carousel di halaman Unit Bisnis.</p>
     </div>
 
     <form method="POST" action="{{ route('admin.department-hero.background') }}" enctype="multipart/form-data" class="mt-6 space-y-4 rounded-2xl border border-line bg-white p-6">
@@ -32,7 +32,7 @@
         <h2 class="font-semibold md:col-span-2">Tambah banner mitra (slide atas)</h2>
         <input name="title" placeholder="Judul slide" class="rounded-lg border border-line px-3 py-2 text-sm" required>
         <input name="sort_order" type="number" min="0" placeholder="Urutan" class="rounded-lg border border-line px-3 py-2 text-sm">
-        <input name="subtitle" placeholder="Subtitle singkat" class="rounded-lg border border-line px-3 py-2 text-sm md:col-span-2">
+        <textarea name="subtitle" placeholder="Deskripsi singkat" class="rounded-lg border border-line px-3 py-2 text-sm md:col-span-2"></textarea>
         <input name="link_url" placeholder="Link (opsional, mis. /departments/k33)" class="rounded-lg border border-line px-3 py-2 text-sm md:col-span-2">
         <input type="file" name="image" accept="image/*" class="rounded-lg border border-line px-3 py-2 text-sm md:col-span-2" required>
         <button class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white">Tambah slide</button>
@@ -62,11 +62,11 @@
                     @csrf @method('PUT')
                     <input name="title" value="{{ $slide->title }}" class="rounded-lg border border-line px-3 py-2 text-sm" required>
                     <input name="sort_order" type="number" min="0" value="{{ $slide->sort_order }}" class="rounded-lg border border-line px-3 py-2 text-sm">
-                    <input name="subtitle" value="{{ $slide->subtitle }}" class="rounded-lg border border-line px-3 py-2 text-sm md:col-span-2">
+                    <textarea name="subtitle" class="rounded-lg border border-line px-3 py-2 text-sm md:col-span-2">{{ $slide->subtitle }}</textarea>
                     <input name="link_url" value="{{ $slide->link_url }}" class="rounded-lg border border-line px-3 py-2 text-sm md:col-span-2">
                     <label class="flex items-center gap-2 text-sm md:col-span-2">
                         <input type="checkbox" name="is_active" value="1" @checked($slide->is_active)>
-                        Tampilkan di halaman Departemen
+                        Tampilkan di halaman Unit Bisnis
                     </label>
                     <input type="file" name="image" accept="image/*" class="rounded-lg border border-line px-3 py-2 text-sm md:col-span-2">
                     <button class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white">Simpan slide</button>

@@ -12,7 +12,8 @@
             <x-badge :status="$program->status" />
         </div>
         <dl class="mt-4 grid gap-3 text-sm sm:grid-cols-2">
-            <div><dt class="text-muted">Department</dt><dd>{{ $program->department->name }}</dd></div>
+            <div><dt class="text-muted">Unit Bisnis</dt><dd>{{ $program->department->name }}</dd></div>
+            <div><dt class="text-muted">Departemen</dt><dd>{{ $program->businessUnit->name }}</dd></div>
             <div><dt class="text-muted">Mentor</dt><dd>{{ $program->mentor->user->name }}</dd></div>
             <div><dt class="text-muted">Periode</dt><dd>{{ $program->start_date?->format('d M Y') ?? '—' }} – {{ $program->end_date?->format('d M Y') ?? '—' }}</dd></div>
             <div><dt class="text-muted">Progress</dt><dd>{{ $program->progress }}% · Minggu {{ $program->current_week }}</dd></div>

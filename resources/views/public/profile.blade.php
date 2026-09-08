@@ -88,11 +88,11 @@
                         <p class="mt-1 font-medium">{{ $user->mentor?->position ?: 'Belum diisi' }}</p>
                     </div>
                     <div class="rounded-2xl bg-bg p-5">
-                        <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Departemen</p>
+                        <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Unit Bisnis</p>
                         <p class="mt-1 font-medium">{{ $user->mentor?->department?->name ?: 'Belum diisi' }}</p>
                     </div>
                     <div class="rounded-2xl bg-bg p-5">
-                        <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Unit bisnis</p>
+                        <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Departemen</p>
                         <p class="mt-1 font-medium">{{ $user->mentor?->businessUnit?->name ?: 'Belum diisi' }}</p>
                     </div>
                     <div class="rounded-2xl bg-bg p-5">
@@ -109,7 +109,7 @@
                 <h2 class="mt-2 text-xl font-semibold">{{ $program->businessUnit?->name }}</h2>
                 <div class="mt-4 grid gap-3 text-sm sm:grid-cols-3">
                     <div>
-                        <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Departemen</p>
+                        <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Unit Bisnis</p>
                         <p class="mt-1 font-medium">{{ $program->department?->name ?? '—' }}</p>
                     </div>
                     <div>

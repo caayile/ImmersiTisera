@@ -100,7 +100,7 @@ class AdminController extends Controller
         ]);
         Department::create([...$data, 'slug' => str($data['name'])->slug(), 'status' => 'active']);
 
-        return back()->with('status', 'Department dibuat.');
+        return back()->with('status', 'Unit bisnis dibuat.');
     }
 
     public function updateDepartment(Request $request, Department $department)
@@ -109,11 +109,15 @@ class AdminController extends Controller
             'name' => ['required', 'string'],
             'description' => ['nullable', 'string'],
             'function' => ['nullable', 'string'],
+            'area' => ['nullable', 'string'],
             'status' => ['required', Rule::in(['active', 'disabled'])],
         ]);
-        $department->update($data);
+        $department->update([
+            ...$data,
+            'slug' => Str::slug($data['name']),
+        ]);
 
-        return back()->with('status', 'Department diperbarui.');
+        return back()->with('status', 'Unit bisnis diperbarui.');
     }
 
     public function units()
@@ -132,10 +136,18 @@ class AdminController extends Controller
             'name' => ['required', 'string'],
             'description' => ['nullable', 'string'],
             'function' => ['nullable', 'string'],
+            'work_done' => ['nullable', 'string'],
+            'example_activities' => ['nullable', 'string'],
             'requirements' => ['nullable', 'string'],
+            'relevant_programs' => ['nullable', 'string'],
+            'period' => ['nullable', 'string', 'max:120'],
             'mentor_id' => ['nullable', 'exists:mentors,id'],
         ]);
-        $unit = BusinessUnit::create([...collect($data)->except('mentor_id')->toArray(), 'status' => 'open']);
+        $unit = BusinessUnit::create([
+            ...collect($data)->except('mentor_id', 'relevant_programs')->toArray(),
+            'relevant_programs' => $this->parseRelevantPrograms($data['relevant_programs'] ?? null),
+            'status' => 'open',
+        ]);
         if ($request->mentor_id) {
             Mentor::where('id', $request->mentor_id)->update([
                 'business_unit_id' => $unit->id,
@@ -143,17 +155,28 @@ class AdminController extends Controller
             ]);
         }
 
-        return back()->with('status', 'Unit bisnis dibuat.');
+        return back()->with('status', 'Departemen dibuat.');
     }
 
     public function updateUnit(Request $request, BusinessUnit $businessUnit)
     {
         $data = $request->validate([
+            'department_id' => ['required', 'exists:departments,id'],
             'name' => ['required', 'string'],
+            'description' => ['nullable', 'string'],
+            'function' => ['nullable', 'string'],
+            'work_done' => ['nullable', 'string'],
+            'example_activities' => ['nullable', 'string'],
+            'requirements' => ['nullable', 'string'],
+            'relevant_programs' => ['nullable', 'string'],
+            'period' => ['nullable', 'string', 'max:120'],
             'status' => ['required', Rule::in(['open', 'closed'])],
             'mentor_id' => ['nullable', 'exists:mentors,id'],
         ]);
-        $businessUnit->update(collect($data)->except('mentor_id')->toArray());
+        $businessUnit->update([
+            ...collect($data)->except('mentor_id', 'relevant_programs')->toArray(),
+            'relevant_programs' => $this->parseRelevantPrograms($data['relevant_programs'] ?? null),
+        ]);
         if ($request->mentor_id) {
             Mentor::where('id', $request->mentor_id)->update([
                 'business_unit_id' => $businessUnit->id,
@@ -161,7 +184,16 @@ class AdminController extends Controller
             ]);
         }
 
-        return back()->with('status', 'Unit diperbarui.');
+        return back()->with('status', 'Departemen diperbarui.');
+    }
+
+    private function parseRelevantPrograms(?string $programs): array
+    {
+        return collect(explode(',', (string) $programs))
+            ->map(fn (string $program): string => trim($program))
+            ->filter()
+            ->values()
+            ->all();
     }
 
     public function mentors()

@@ -16,8 +16,8 @@
     @foreach([
         'Peserta' => $program->participant->user->name,
         'Program Studi' => $program->participant->study_program,
-        'Department' => $program->department->name,
-        'Unit Bisnis' => $program->businessUnit->name,
+        'Unit Bisnis' => $program->department->name,
+        'Departemen' => $program->businessUnit->name,
         'Mentor' => $program->mentor->user->name,
         'Periode' => ($program->start_date?->format('d M Y') ?? '60 hari').' – '.($program->end_date?->format('d M Y') ?? ''),
     ] as $label => $value)

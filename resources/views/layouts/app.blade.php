@@ -44,10 +44,11 @@
             ['Notifikasi', 'mentor.notifications'],
         ],
         'admin' => [
+            ['Beranda', 'home'],
             ['Ringkasan', 'admin.dashboard'],
             ['Manajemen Pengguna', 'admin.users'],
-            ['Departemen', 'admin.departments'],
-            ['Unit Bisnis', 'admin.units'],
+            ['Unit Bisnis', 'admin.departments'],
+            ['Departemen', 'admin.units'],
             ['Mentor', 'admin.mentors'],
             ['Peserta', 'admin.participants'],
             ['Program', 'admin.programs'],
@@ -58,7 +59,7 @@
             ['Alur Kolaborasi', 'admin.collaborations'],
             ['Laporan', 'admin.reports'],
             ['Berita', 'admin.news'],
-            ['Hero Departemen', 'admin.department-hero'],
+            ['Hero Unit Bisnis', 'admin.department-hero'],
             ['Pengaturan Sistem', 'admin.settings'],
         ],
     ][$role];

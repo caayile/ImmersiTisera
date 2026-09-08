@@ -64,7 +64,7 @@
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">Gelombang 2026</p>
                     <h1 class="mt-1 text-2xl font-semibold tracking-tight text-white md:text-3xl">Pilih mitra imersi Anda</h1>
-                    <p class="mt-1 max-w-xl text-sm text-white/75">Geser kartu untuk melihat departemen mitra. Cover HD bisa ditambahkan nanti tanpa ubah kode.</p>
+                    <p class="mt-1 max-w-xl text-sm text-white/75">Geser kartu untuk melihat unit bisnis mitra. Cover HD bisa ditambahkan nanti tanpa ubah kode.</p>
                 </div>
                 <a href="{{ route('departments.index') }}" class="inline-flex items-center gap-1 self-start rounded-full bg-white/15 px-4 py-2 text-sm font-semibold text-white backdrop-blur hover:bg-white/25">
                     Semua mitra
@@ -140,11 +140,11 @@
 <div class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-white px-5 py-4 shadow-sm">
     <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
         <div>
-            <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">Departemen</p>
+            <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">Unit Bisnis</p>
             <p class="mt-0.5 font-medium">{{ $program?->department?->name ?? 'Belum dipilih' }}</p>
         </div>
         <div>
-            <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">Unit Bisnis</p>
+            <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">Departemen</p>
             <p class="mt-0.5 font-medium">{{ $program?->businessUnit?->name ?? 'Belum dipilih' }}</p>
         </div>
         <div>

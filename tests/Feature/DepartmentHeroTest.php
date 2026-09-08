@@ -20,13 +20,18 @@ class DepartmentHeroTest extends TestCase
 
         $this->get('/departments')
             ->assertOk()
-            ->assertSee('Departemen Mitra Imersi')
+            ->assertSee('Unit Bisnis Mitra Imersi')
+            ->assertSee('Tiga Serangkai Pustama Mandiri')
+            ->assertSee('Tiga Serangkai Inti Corpora')
             ->assertSee('K33')
+            ->assertSee('Wangsa Jastra Lestari')
             ->assertSee('Assalaam Hypermarket')
-            ->assertSee('SD Al-Firdaus')
+            ->assertSee('Al - Firdaus')
+            ->assertSee('Puspa Holistic Integrative Care')
             ->assertSee('Filter')
             ->assertSee('Bidang')
             ->assertSee('IT')
+            ->assertSee('sticky top-0 z-50 border-b border-line bg-white', false)
             ->assertSee('images/hero/campus.jpg', false);
 
         $this->get('/departments?field[]=IT')
@@ -45,7 +50,7 @@ class DepartmentHeroTest extends TestCase
         $this->actingAs($admin)
             ->get('/admin/department-hero')
             ->assertOk()
-            ->assertSee('Hero Departemen')
+            ->assertSee('Hero Unit Bisnis')
             ->assertSee('Background kampus');
 
         $this->actingAs($admin)
@@ -79,6 +84,24 @@ class DepartmentHeroTest extends TestCase
 
         $slide = HeroSlide::where('title', 'WJL')->firstOrFail();
         Storage::disk('public')->assertExists($slide->image_path);
+
+        $this->actingAs($admin)
+            ->put('/admin/department-hero/slides/'.$slide->id, [
+                'title' => 'Wangsa Jastra Lestari Updated',
+                'subtitle' => 'Deskripsi unit bisnis yang diperbarui.',
+                'link_url' => '/departments/wjl',
+                'sort_order' => 4,
+                'is_active' => 1,
+                'image' => UploadedFile::fake()->image('wjl-updated.jpg', 900, 500),
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('hero_slides', [
+            'id' => $slide->id,
+            'title' => 'Wangsa Jastra Lestari Updated',
+            'subtitle' => 'Deskripsi unit bisnis yang diperbarui.',
+        ]);
+        Storage::disk('public')->assertExists(HeroSlide::findOrFail($slide->id)->image_path);
 
         $this->get('/departments')->assertOk()->assertSee('WJL');
     }
