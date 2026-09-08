@@ -18,10 +18,13 @@
         if (reduceMotion || !('IntersectionObserver' in window)) {
             revealElements.forEach((element) => element.classList.add('is-visible'));
         } else {
+            revealElements.forEach((element) => element.classList.add('hidden-by-reveal'));
+
             const revealObserver = new IntersectionObserver((entries, observer) => {
                 entries.forEach((entry) => {
                     if (entry.isIntersecting) {
                         entry.target.classList.add('is-visible');
+                        entry.target.classList.remove('hidden-by-reveal');
                         observer.unobserve(entry.target);
                     }
                 });
@@ -35,6 +38,7 @@
                     const rect = element.getBoundingClientRect();
                     if (rect.top < window.innerHeight && rect.bottom > 0) {
                         element.classList.add('is-visible');
+                        element.classList.remove('hidden-by-reveal');
                         revealObserver.unobserve(element);
                     }
                 });
@@ -44,8 +48,11 @@
             window.addEventListener('resize', forceReveal, { passive: true });
             window.setTimeout(forceReveal, 400);
             window.setTimeout(() => {
-                revealElements.forEach((element) => element.classList.add('is-visible'));
-            }, 8000);
+                revealElements.forEach((element) => {
+                    element.classList.add('is-visible');
+                    element.classList.remove('hidden-by-reveal');
+                });
+            }, 4000);
         }
     }
 

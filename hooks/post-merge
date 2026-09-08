@@ -1,0 +1,13 @@
+#!/bin/sh
+# Post-merge hook: otomatis menjalankan migration + build asset setelah git pull/merge.
+# Dipicu lewat `git config core.hooksPath hooks` (lihat install-hooks.bat / install-hooks.sh).
+
+echo "[post-merge] Mengaktifkan perubahan setelah pull..."
+
+if [ -f sync-update.sh ]; then
+    bash sync-update.sh
+else
+    echo "[post-merge] sync-update.sh tidak ditemukan. Jalankan secara manual:"
+    echo "    Windows : sync-update.bat"
+    echo "    Mac/Linux: bash sync-update.sh"
+fi
