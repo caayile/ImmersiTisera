@@ -35,6 +35,9 @@
 [data-reveal][data-reveal-delay="2"] { transition-delay: 160ms; }
 [data-reveal][data-reveal-delay="3"] { transition-delay: 240ms; }
 
+[data-scroll-direction="up"] [data-reveal] { transition-duration: 0.7s; }
+[data-scroll-direction="down"] [data-reveal] { transition-duration: 0.8s; }
+
 .tap-feedback {
     position: relative;
     overflow: hidden;

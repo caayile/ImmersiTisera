@@ -1,6 +1,15 @@
 // Global Top Page Loader Bar & Navigation Management
 (() => {
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const motionCandidates = document.querySelectorAll('main > *, main article, main section, main form, main table, main [role="alert"]');
+
+    motionCandidates.forEach((element, index) => {
+        if (!element.hasAttribute('data-reveal')) {
+            element.setAttribute('data-reveal', '');
+            element.setAttribute('data-reveal-delay', String(index % 4));
+        }
+    });
+
     const revealElements = document.querySelectorAll('[data-reveal]');
 
     if (reduceMotion || !('IntersectionObserver' in window)) {
@@ -8,14 +17,14 @@
     } else {
         const revealObserver = new IntersectionObserver((entries, observer) => {
             entries.forEach((entry) => {
-                if (!entry.isIntersecting) return;
-                entry.target.classList.add('is-visible');
-                observer.unobserve(entry.target);
+                entry.target.classList.toggle('is-visible', entry.isIntersecting);
             });
         }, { threshold: 0.12, rootMargin: '0px 0px -40px' });
 
         revealElements.forEach((element) => revealObserver.observe(element));
     }
+
+    document.querySelectorAll('a, button').forEach((element) => element.classList.add('tap-feedback'));
 
     document.addEventListener('pointerdown', (event) => {
         const target = event.target.closest('a, button');
@@ -27,6 +36,23 @@
         target.classList.add('is-tapped');
         window.setTimeout(() => target.classList.remove('is-tapped'), 420);
     });
+
+    let previousScrollY = window.scrollY;
+    let scrollTicking = false;
+
+    window.addEventListener('scroll', () => {
+        if (scrollTicking) return;
+        scrollTicking = true;
+
+        window.requestAnimationFrame(() => {
+            const currentScrollY = window.scrollY;
+            if (Math.abs(currentScrollY - previousScrollY) > 2) {
+                document.documentElement.dataset.scrollDirection = currentScrollY > previousScrollY ? 'down' : 'up';
+                previousScrollY = currentScrollY;
+            }
+            scrollTicking = false;
+        });
+    }, { passive: true });
 
     // 1. Create top page loader element if not present
     let loaderBar = document.getElementById('page-loader-bar');

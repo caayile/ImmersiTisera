@@ -19,7 +19,11 @@ class ImersiSmokeTest extends TestCase
         $this->get('/')->assertOk()->assertSee('Imersi');
         $this->get('/departments')->assertOk()->assertSee('TSPM')->assertSee('K33')->assertSee('WJL')->assertSee('Unit Bisnis Mitra');
         $this->get('/departments/tspm')->assertOk()->assertSee('Digital Business');
-        $this->get('/berita')->assertOk()->assertSee('Semua berita');
+        $this->get('/berita')
+            ->assertOk()
+            ->assertSee('Semua berita')
+            ->assertSee('data-reveal', false)
+            ->assertSee('tap-feedback', false);
         $this->get('/')
             ->assertOk()
             ->assertSee('10 Kemampuan Inti Sistem')
