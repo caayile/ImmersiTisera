@@ -19,7 +19,7 @@
         'Operation (Sales)' => ['area' => 'K33 · Operasi & Sales', 'image' => 'from-[#16352c] to-[#3eaa84]'],
         'Production' => ['area' => 'WJL · Produksi', 'image' => 'from-[#1e3a5f] to-[#5ec69d]'],
         'Marketing' => ['area' => 'WJL · Pemasaran', 'image' => 'from-[#2f4a3c] to-[#7dd8b5]'],
-        'Finance Accounting & IT' => ['area' => 'K33 · Keuangan & IT', 'image' => 'from-[#16352c] to-[#5ec69d]'],
+        'Finance Accounting' => ['area' => 'K33 · Keuangan & IT', 'image' => 'from-[#16352c] to-[#5ec69d]'],
         'Human Resources Development' => ['area' => 'K33 · SDM', 'image' => 'from-[#1e3a5f] to-[#3eaa84]'],
         'Digital Business' => ['area' => 'Teknologi & Analitik', 'image' => 'from-[#16352c] to-[#3eaa84]'],
         'IT' => ['area' => 'Teknologi Informasi', 'image' => 'from-[#1e3a5f] to-[#5ec69d]'],
@@ -33,10 +33,10 @@
             <p class="inline-flex rounded-full bg-black/25 px-3 py-1 text-xs font-medium text-white">GELOMBANG 2026 · SEKARANG DIBUKA</p>
             <h1 class="mt-5 text-4xl font-semibold leading-tight text-white md:text-5xl">Mulai kolaborasi dari <span class="text-secondary">unit bisnis yang tepat</span> di sini.</h1>
             <p class="mt-4 max-w-xl text-sm leading-6 text-white/80">Program ini menghubungkan Dosen TSU dengan Unit Bisnis dengan TS Group.</p>
-            <form action="{{ route('departments.index') }}" class="mt-8 flex max-w-xl overflow-hidden rounded-full bg-white p-1.5">
-                <input name="q" value="{{ request('q') }}" placeholder="Cari departemen atau unit bisnis" class="min-w-0 flex-1 px-4 text-sm outline-none">
-                <button class="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-white">Cari</button>
-            </form>
+            <a href="{{ route('departments.index') }}" class="mt-8 inline-flex max-w-xl items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-semibold text-ink shadow-sm transition hover:bg-secondary hover:text-white">
+                Jelajahi unit bisnis
+                <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+            </a>
         </div>
         <div class="grid gap-3 sm:grid-cols-2">
             @foreach([

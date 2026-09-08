@@ -91,9 +91,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/departments', [AdminController::class, 'departments'])->name('departments');
     Route::post('/departments', [AdminController::class, 'storeDepartment']);
     Route::put('/departments/{department}', [AdminController::class, 'updateDepartment'])->name('departments.update');
+    Route::delete('/departments/{department}', [AdminController::class, 'destroyDepartment'])->name('departments.destroy');
     Route::get('/business-units', [AdminController::class, 'units'])->name('units');
     Route::post('/business-units', [AdminController::class, 'storeUnit']);
     Route::put('/business-units/{businessUnit}', [AdminController::class, 'updateUnit'])->name('units.update');
+    Route::delete('/business-units/{businessUnit}', [AdminController::class, 'destroyUnit'])->name('units.destroy');
     Route::get('/mentors', [AdminController::class, 'mentors'])->name('mentors');
     Route::get('/participants', [AdminController::class, 'participants'])->name('participants');
     Route::get('/programs', [AdminController::class, 'programs'])->name('programs');

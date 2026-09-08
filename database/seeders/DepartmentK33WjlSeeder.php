@@ -17,6 +17,7 @@ class DepartmentK33WjlSeeder extends Seeder
                 'description' => 'Departemen operasional dan pendukung di lokasi K33 untuk program Industry Immersion.',
                 'function' => 'Operations, people, finance, and IT services',
                 'area' => 'K33',
+                'image_path' => 'images/hero/k33.jpg',
                 'status' => 'active',
             ],
         );
@@ -28,6 +29,8 @@ class DepartmentK33WjlSeeder extends Seeder
                 'description' => 'Departemen produksi, pemasaran, dan administrasi di lokasi WJL untuk program Industry Immersion.',
                 'function' => 'Production, marketing, finance, and people services',
                 'area' => 'WJL',
+                'subtitle' => 'Wangsa Jastra Lestari',
+                'image_path' => 'images/hero/k33.jpg',
                 'status' => 'active',
             ],
         );
@@ -38,17 +41,13 @@ class DepartmentK33WjlSeeder extends Seeder
             ['General Affair & Industrial Relation', 'GA & industrial relations', ['Manajemen']],
             ['Finance Accounting', 'Finance and accounting', ['Sistem Informasi', 'Akuntansi', 'Manajemen']],
             ['IT', 'Information technology', ['Sistem Informasi', 'Informatika', 'Teknologi Informasi']],
-            ['Desain Seragam', 'Uniform design & production', ['Desain Produksi Tekstil', 'Desain Komunikasi Visual']],
-            ['Souvenir', 'Merchandise & souvenir design', ['Desain Produksi Tekstil', 'Desain Komunikasi Visual']],
         ];
 
         $wjlUnits = [
-            ['Production', 'Production operations', ['Manajemen', 'Desain Produksi Tekstil']],
+            ['Production', 'Production operations', ['Manajemen']],
             ['Marketing', 'Brand & campaign', ['Manajemen', 'Desain Komunikasi Visual']],
             ['Finance & Accounting', 'Finance and accounting', ['Manajemen', 'Sistem Informasi']],
             ['HR & GA', 'People & general affairs', ['Manajemen', 'Psikologi']],
-            ['Desain Seragam', 'Uniform design & production', ['Desain Produksi Tekstil', 'Desain Komunikasi Visual']],
-            ['Souvenir', 'Merchandise & souvenir design', ['Desain Produksi Tekstil', 'Desain Komunikasi Visual']],
         ];
 
         foreach ($k33Units as [$name, $function, $programs]) {
@@ -70,6 +69,7 @@ class DepartmentK33WjlSeeder extends Seeder
             [
                 'description' => "Departemen {$name} pada unit bisnis {$department->name} untuk immersion dosen TSU.",
                 'function' => $function,
+                'image_path' => $department->image_path,
                 'work_done' => "Operasional harian {$name}, kolaborasi lintas tim, dan improvement berkelanjutan.",
                 'example_activities' => 'Observasi, penugasan, riset terapan, dan diskusi mentoring 30 menit.',
                 'requirements' => 'Kompetensi relevan dengan fungsi unit dan komitmen 8 minggu.',

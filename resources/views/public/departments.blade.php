@@ -4,6 +4,8 @@
 @php
     $background = $hero->backgroundUrl() ?: asset('images/hero/campus.jpg');
     $slides = $heroSlides->all();
+    $slideImages = collect($slides)
+        ->mapWithKeys(fn ($slide) => [collect(explode('/', $slide['url']))->last() => $slide['image']]);
 @endphp
 
 <section
@@ -100,142 +102,31 @@
 </section>
 
 <div class="mx-auto max-w-7xl px-5 py-12">
-    <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-            <h2 class="text-2xl font-semibold">Daftar unit bisnis</h2>
-            <p class="mt-1 text-muted">Saring mitra berdasarkan bidang (IT, Finance, dll), area, atau prodi.</p>
-        </div>
-        <p class="text-sm text-muted">{{ $departments->count() }} hasil ditemukan</p>
+    <div>
+        <h2 class="text-2xl font-semibold">Daftar unit bisnis</h2>
+        <p class="mt-1 text-muted">Tujuh unit bisnis mitra TSU.</p>
     </div>
 
-    <form method="GET" action="{{ route('departments.index') }}" class="mt-8 grid gap-6 lg:grid-cols-[260px_1fr]" x-data="{ open: false }">
-        <aside class="rounded-2xl border border-line bg-white p-5 shadow-sm lg:sticky lg:top-24 lg:self-start">
-            <div class="flex items-center justify-between gap-3">
-                <h3 class="font-semibold">Filter</h3>
-                <button type="button" class="rounded-lg border border-line px-3 py-1 text-sm lg:hidden" @click="open = ! open">
-                    <span x-text="open ? 'Tutup' : 'Buka'"></span>
-                </button>
-            </div>
-
-            <div class="mt-4 space-y-6" :class="open ? 'block' : 'hidden lg:block'">
-                <label class="relative block">
-                    <span class="material-symbols-outlined pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted">search</span>
-                    <input name="q" value="{{ $selected['q'] }}" placeholder="Cari unit bisnis..." class="w-full rounded-xl border border-line bg-bg py-2.5 pl-10 pr-3 text-sm outline-none focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/15">
-                </label>
-
-                <div>
-                    <p class="text-sm font-semibold">Urutkan</p>
-                    <div class="mt-3 space-y-2">
-                        @foreach($filterSorts as $value => $label)
-                            <label class="flex cursor-pointer items-center gap-2.5 text-sm text-ink">
-                                <input type="radio" name="sort" value="{{ $value }}" class="h-4 w-4 accent-primary" @checked($selected['sort'] === $value)>
-                                <span>{{ $label }}</span>
-                            </label>
-                        @endforeach
-                    </div>
+    <div class="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+        @forelse($departments as $department)
+            @php
+                $image = $department->imageUrl() ?? ($slideImages[$department->slug] ?? $background);
+            @endphp
+            <article class="flex flex-col overflow-hidden rounded-2xl border border-line bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-primary hover:shadow-md">
+                <a href="{{ route('departments.show', $department) }}" class="relative block h-44 overflow-hidden bg-gradient-to-br from-[#16352c] to-primary">
+                    <img src="{{ $image }}" alt="{{ $department->name }}" class="absolute inset-0 h-full w-full object-cover transition duration-500 hover:scale-105">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent"></div>
+                    <span class="absolute bottom-3 left-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/90">{{ $department->area ?: 'Unit Bisnis' }}</span>
+                </a>
+                <div class="flex flex-1 flex-col p-5">
+                    <h3 class="text-lg font-semibold">{{ $department->name }}</h3>
+                    <p class="mt-2 flex-1 text-sm leading-6 text-muted">{{ \Illuminate\Support\Str::limit($department->description, 110) }}</p>
+                    <a href="{{ route('departments.show', $department) }}" class="mt-4 inline-flex items-center justify-center rounded-xl bg-[#eef4f1] px-4 py-2.5 text-sm font-semibold text-ink hover:bg-primary hover:text-white">Lihat Departemen</a>
                 </div>
-
-                <div>
-                    <p class="text-sm font-semibold">Bidang</p>
-                    <div class="mt-3 space-y-2">
-                        @foreach($filterFields as $field)
-                            <label class="flex cursor-pointer items-center gap-2.5 text-sm text-ink">
-                                <input type="checkbox" name="field[]" value="{{ $field }}" class="h-4 w-4 rounded border-line accent-primary" @checked(in_array($field, $selected['field'], true))>
-                                <span>{{ $field }}</span>
-                            </label>
-                        @endforeach
-                    </div>
-                </div>
-
-                <div>
-                    <p class="text-sm font-semibold">Mitra / area</p>
-                    <div class="mt-3 max-h-48 space-y-2 overflow-y-auto pr-1">
-                        @foreach($filterAreas as $area)
-                            <label class="flex cursor-pointer items-center gap-2.5 text-sm text-ink">
-                                <input type="checkbox" name="area[]" value="{{ $area }}" class="h-4 w-4 rounded border-line accent-primary" @checked(in_array($area, $selected['area'], true))>
-                                <span>{{ $area }}</span>
-                            </label>
-                        @endforeach
-                    </div>
-                </div>
-
-                <div>
-                    <p class="text-sm font-semibold">Jenis penempatan</p>
-                    <div class="mt-3 space-y-2">
-                        @foreach($filterPlacements as $value => $label)
-                            <label class="flex cursor-pointer items-center gap-2.5 text-sm text-ink">
-                                <input type="checkbox" name="placement[]" value="{{ $value }}" class="h-4 w-4 rounded border-line accent-primary" @checked(in_array($value, $selected['placement'], true))>
-                                <span>{{ $label }}</span>
-                            </label>
-                        @endforeach
-                    </div>
-                </div>
-
-                <div>
-                    <p class="text-sm font-semibold">Prodi relevan</p>
-                    <div class="mt-3 max-h-48 space-y-2 overflow-y-auto pr-1">
-                        @foreach($filterProdis as $prodi)
-                            <label class="flex cursor-pointer items-center gap-2.5 text-sm text-ink">
-                                <input type="checkbox" name="prodi[]" value="{{ $prodi }}" class="h-4 w-4 rounded border-line accent-primary" @checked(in_array($prodi, $selected['prodi'], true))>
-                                <span>{{ $prodi }}</span>
-                            </label>
-                        @endforeach
-                    </div>
-                </div>
-
-                <div class="flex flex-col gap-2 border-t border-line pt-4">
-                    <button class="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white">Terapkan filter</button>
-                    <a href="{{ route('departments.index') }}" class="rounded-xl border border-line px-4 py-2.5 text-center text-sm font-medium text-muted hover:bg-bg">Reset</a>
-                </div>
-            </div>
-        </aside>
-
-        <div>
-            @if($selected['q'] || $selected['area'] || $selected['field'] || $selected['placement'] || $selected['prodi'])
-                <div class="mb-4 flex flex-wrap gap-2">
-                    @if($selected['q'])
-                        <span class="rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold text-primary-dark">Cari: {{ $selected['q'] }}</span>
-                    @endif
-                    @foreach($selected['field'] as $item)
-                        <span class="rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold text-primary-dark">{{ $item }}</span>
-                    @endforeach
-                    @foreach($selected['area'] as $item)
-                        <span class="rounded-full bg-bg px-3 py-1 text-xs font-semibold text-ink ring-1 ring-line">{{ $item }}</span>
-                    @endforeach
-                    @foreach($selected['prodi'] as $item)
-                        <span class="rounded-full bg-bg px-3 py-1 text-xs font-semibold text-ink ring-1 ring-line">{{ $item }}</span>
-                    @endforeach
-                </div>
-            @endif
-
-            <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                @forelse($departments as $department)
-                    <article class="flex flex-col overflow-hidden rounded-2xl border border-line bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-primary hover:shadow-md">
-                        <div class="relative h-36 bg-gradient-to-br from-[#16352c] to-primary p-4">
-                            <span class="rounded-md bg-white/95 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-ink">
-                                {{ $department->isDirectPlacement() ? 'Langsung' : 'Unit bisnis' }}
-                            </span>
-                            <p class="absolute bottom-4 left-4 right-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/90">{{ $department->area ?: 'Unit Bisnis' }}</p>
-                        </div>
-                        <div class="flex flex-1 flex-col p-5">
-                            <h3 class="text-lg font-semibold">{{ $department->name }}</h3>
-                            <p class="mt-2 flex-1 text-sm leading-6 text-muted">{{ \Illuminate\Support\Str::limit($department->description, 110) }}</p>
-                            <p class="mt-3 text-xs text-muted">Fungsi: {{ $department->function }}</p>
-                            <p class="mt-1 text-xs text-muted">
-                                @if($department->isDirectPlacement())
-                                    Penempatan langsung ke departemen
-                                @else
-                                    {{ $department->business_units_count }} departemen
-                                @endif
-                            </p>
-                            <a href="{{ route('departments.show', $department) }}" class="mt-4 inline-flex items-center justify-center rounded-xl bg-[#eef4f1] px-4 py-2.5 text-sm font-semibold text-ink hover:bg-primary hover:text-white">Lihat Detail</a>
-                        </div>
-                    </article>
-                @empty
-                    <p class="text-muted sm:col-span-2 xl:col-span-3">Tidak ada unit bisnis yang cocok dengan filter ini.</p>
-                @endforelse
-            </div>
-        </div>
-    </form>
+            </article>
+        @empty
+            <p class="text-muted sm:col-span-2 xl:col-span-3">Belum ada unit bisnis.</p>
+        @endforelse
+    </div>
 </div>
 @endsection

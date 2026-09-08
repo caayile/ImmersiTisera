@@ -37,10 +37,7 @@ class StudyProgramCatalogTest extends TestCase
         $this->assertTrue(StudyPrograms::isValid('Sekolah Vokasi', 'Desain Produksi Tekstil'));
         $this->assertFalse(StudyPrograms::isValid('Fakultas Teknik', 'PGSD'));
 
-        $targets = StudyPrograms::placementTargets('Desain Produksi Tekstil');
-        $this->assertSame('Desain Seragam', $targets[0]['unit']);
-        $this->assertContains('K33', $targets[0]['departments']);
-        $this->assertSame('Souvenir', $targets[1]['unit']);
+        $this->assertSame([], StudyPrograms::placementTargets('Desain Produksi Tekstil'));
     }
 
     public function test_participant_profile_uses_catalog_dropdowns_not_free_text(): void
@@ -90,14 +87,14 @@ class StudyProgramCatalogTest extends TestCase
         ]);
     }
 
-    public function test_desain_produksi_tekstil_units_exist_at_k33_and_wjl(): void
+    public function test_desain_units_no_longer_exist_at_k33_and_wjl(): void
     {
         $this->seed();
 
-        $this->assertDatabaseHas('business_units', ['name' => 'Desain Seragam']);
-        $this->assertDatabaseHas('business_units', ['name' => 'Souvenir']);
+        $this->assertDatabaseMissing('business_units', ['name' => 'Desain Seragam']);
+        $this->assertDatabaseMissing('business_units', ['name' => 'Souvenir']);
 
-        $this->get('/departments/k33')->assertOk()->assertSee('Desain Seragam')->assertSee('Souvenir');
-        $this->get('/departments/wjl')->assertOk()->assertSee('Desain Seragam')->assertSee('Souvenir');
+        $this->get('/departments/k33')->assertOk()->assertSee('Operation (Sales)')->assertDontSee('Desain Seragam');
+        $this->get('/departments/wjl')->assertOk()->assertSee('Production')->assertDontSee('Desain Seragam');
     }
 }

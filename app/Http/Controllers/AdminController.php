@@ -87,18 +87,27 @@ class AdminController extends Controller
 
     public function departments()
     {
-        return view('admin.departments', ['departments' => Department::withCount('businessUnits')->get()]);
+        return view('admin.departments', [
+            'departments' => Department::with(['businessUnits.mentors.user'])->withCount('businessUnits')->orderBy('name')->get(),
+            'mentors' => Mentor::with('user')->get(),
+        ]);
     }
 
     public function storeDepartment(Request $request)
     {
         $data = $request->validate([
             'name' => ['required', 'string'],
+            'subtitle' => ['nullable', 'string'],
             'description' => ['nullable', 'string'],
-            'function' => ['nullable', 'string'],
             'area' => ['nullable', 'string'],
+            'image' => ['nullable', 'image', 'max:5120'],
         ]);
-        Department::create([...$data, 'slug' => str($data['name'])->slug(), 'status' => 'active']);
+        Department::create([
+            ...collect($data)->except('image')->toArray(),
+            'slug' => str($data['name'])->slug(),
+            'status' => 'active',
+            'image_path' => $request->hasFile('image') ? $this->storeDepartmentImage($request->file('image')) : null,
+        ]);
 
         return back()->with('status', 'Unit bisnis dibuat.');
     }
@@ -107,17 +116,51 @@ class AdminController extends Controller
     {
         $data = $request->validate([
             'name' => ['required', 'string'],
+            'subtitle' => ['nullable', 'string'],
             'description' => ['nullable', 'string'],
-            'function' => ['nullable', 'string'],
             'area' => ['nullable', 'string'],
             'status' => ['required', Rule::in(['active', 'disabled'])],
-        ]);
-        $department->update([
-            ...$data,
-            'slug' => Str::slug($data['name']),
+            'image' => ['nullable', 'image', 'max:5120'],
         ]);
 
+        $payload = collect($data)->except('image')->toArray();
+        $payload['slug'] = Str::slug($data['name']);
+
+        if ($request->hasFile('image')) {
+            $payload['image_path'] = $this->storeDepartmentImage($request->file('image'), $department->image_path);
+        }
+
+        $department->update($payload);
+
         return back()->with('status', 'Unit bisnis diperbarui.');
+    }
+
+    public function destroyDepartment(Department $department)
+    {
+        if ($department->businessUnits()->exists() || $department->programs()->exists()) {
+            return back()->withErrors(['department' => 'Unit bisnis masih memiliki departemen atau program, tidak dapat dihapus.']);
+        }
+
+        $this->deleteDepartmentImage($department->image_path);
+        $department->delete();
+
+        return back()->with('status', 'Unit bisnis dihapus.');
+    }
+
+    private function storeDepartmentImage($file, ?string $previous = null): string
+    {
+        $this->deleteDepartmentImage($previous);
+
+        return $file->store('departments', 'public');
+    }
+
+    private function deleteDepartmentImage(?string $path): void
+    {
+        if (! $path || str_starts_with($path, 'images/')) {
+            return;
+        }
+
+        Storage::disk('public')->delete($path);
     }
 
     public function units()
@@ -142,11 +185,13 @@ class AdminController extends Controller
             'relevant_programs' => ['nullable', 'string'],
             'period' => ['nullable', 'string', 'max:120'],
             'mentor_id' => ['nullable', 'exists:mentors,id'],
+            'image' => ['nullable', 'image', 'max:5120'],
         ]);
         $unit = BusinessUnit::create([
-            ...collect($data)->except('mentor_id', 'relevant_programs')->toArray(),
+            ...collect($data)->except('mentor_id', 'relevant_programs', 'image')->toArray(),
             'relevant_programs' => $this->parseRelevantPrograms($data['relevant_programs'] ?? null),
             'status' => 'open',
+            'image_path' => $request->hasFile('image') ? $this->storeBusinessUnitImage($request->file('image')) : null,
         ]);
         if ($request->mentor_id) {
             Mentor::where('id', $request->mentor_id)->update([
@@ -172,9 +217,17 @@ class AdminController extends Controller
             'period' => ['nullable', 'string', 'max:120'],
             'status' => ['required', Rule::in(['open', 'closed'])],
             'mentor_id' => ['nullable', 'exists:mentors,id'],
+            'image' => ['nullable', 'image', 'max:5120'],
         ]);
+
+        $payload = collect($data)->except('mentor_id', 'relevant_programs', 'image')->toArray();
+
+        if ($request->hasFile('image')) {
+            $payload['image_path'] = $this->storeBusinessUnitImage($request->file('image'), $businessUnit->image_path);
+        }
+
         $businessUnit->update([
-            ...collect($data)->except('mentor_id', 'relevant_programs')->toArray(),
+            ...$payload,
             'relevant_programs' => $this->parseRelevantPrograms($data['relevant_programs'] ?? null),
         ]);
         if ($request->mentor_id) {
@@ -185,6 +238,30 @@ class AdminController extends Controller
         }
 
         return back()->with('status', 'Departemen diperbarui.');
+    }
+
+    public function destroyUnit(BusinessUnit $businessUnit)
+    {
+        if ($businessUnit->programs()->exists()) {
+            return back()->withErrors(['business_unit' => 'Departemen masih memiliki program, tidak dapat dihapus.']);
+        }
+
+        if ($businessUnit->image_path && ! str_starts_with($businessUnit->image_path, 'images/')) {
+            Storage::disk('public')->delete($businessUnit->image_path);
+        }
+
+        $businessUnit->delete();
+
+        return back()->with('status', 'Departemen dihapus.');
+    }
+
+    private function storeBusinessUnitImage($file, ?string $previous = null): string
+    {
+        if ($previous && ! str_starts_with($previous, 'images/')) {
+            Storage::disk('public')->delete($previous);
+        }
+
+        return $file->store('departments', 'public');
     }
 
     private function parseRelevantPrograms(?string $programs): array

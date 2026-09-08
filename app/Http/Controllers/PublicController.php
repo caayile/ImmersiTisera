@@ -7,8 +7,6 @@ use App\Models\Department;
 use App\Models\HeroSetting;
 use App\Models\HeroSlide;
 use App\Models\News;
-use App\Support\DepartmentFilters;
-use App\Support\StudyPrograms;
 
 class PublicController extends Controller
 {
@@ -25,9 +23,9 @@ class PublicController extends Controller
                 'Production',
                 'Store Operation',
                 'SD Al-Firdaus',
-                'Puspa Holistic',
+                'Puspa Holistic Integrative Care',
                 'Marketing',
-                'Finance Accounting & IT',
+                'Finance Accounting',
                 'Digital Business',
                 'IT',
                 'Center Of Excellence',
@@ -52,31 +50,25 @@ class PublicController extends Controller
 
     public function departments()
     {
-        $filters = [
-            'q' => request('q'),
-            'sort' => request('sort', 'relevan'),
-            'area' => request('area', []),
-            'field' => request('field', []),
-            'placement' => request('placement', []),
-            'prodi' => request('prodi', []),
+        $slugs = [
+            'tspm',
+            'tsic',
+            'k33',
+            'wjl',
+            'assalam-hypermarket',
+            'sd-al-firdaus',
+            'puspa-holistic-integrative-care',
         ];
 
-        $selected = [
-            'q' => trim((string) ($filters['q'] ?? '')),
-            'sort' => (string) ($filters['sort'] ?: 'relevan'),
-            'area' => DepartmentFilters::normalizeList($filters['area']),
-            'field' => DepartmentFilters::normalizeList($filters['field']),
-            'placement' => DepartmentFilters::normalizeList($filters['placement']),
-            'prodi' => DepartmentFilters::normalizeList($filters['prodi']),
-        ];
+        $departments = Department::with(['businessUnits' => fn ($query) => $query->where('status', 'open')])
+            ->whereIn('slug', $slugs)
+            ->get()
+            ->keyBy('slug');
 
-        $query = Department::with(['businessUnits' => fn ($query) => $query->where('status', 'open')])
-            ->withCount(['businessUnits' => fn ($query) => $query->where('status', 'open')])
-            ->where('status', 'active');
-
-        DepartmentFilters::apply($query, $selected);
-
-        $departments = DepartmentFilters::filterPlacement($query->get(), $selected['placement']);
+        $departments = collect($slugs)
+            ->map(fn ($slug) => $departments[$slug] ?? null)
+            ->filter()
+            ->values();
 
         $hero = HeroSetting::forPage('departments');
         $heroSlides = HeroSlide::forPage('departments')
@@ -93,25 +85,15 @@ class PublicController extends Controller
             ])
             ->values();
 
-        return view('public.departments', [
-            'departments' => $departments,
-            'q' => $selected['q'],
-            'selected' => $selected,
-            'filterAreas' => DepartmentFilters::availableAreas(),
-            'filterFields' => array_keys(DepartmentFilters::fields()),
-            'filterPlacements' => DepartmentFilters::placementTypes(),
-            'filterSorts' => DepartmentFilters::sortOptions(),
-            'filterProdis' => StudyPrograms::allPrograms(),
-            'hero' => $hero,
-            'heroSlides' => $heroSlides,
-        ]);
+        return view('public.departments', compact('departments', 'hero', 'heroSlides'));
     }
 
     public function department(Department $department)
     {
         $department->load(['businessUnits' => fn ($q) => $q->where('status', 'open')]);
+        $hero = HeroSetting::forPage('departments');
 
-        return view('public.department', compact('department'));
+        return view('public.department', compact('department', 'hero'));
     }
 
     public function unit(BusinessUnit $businessUnit)

@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 
 #[Fillable([
-    'department_id', 'name', 'description', 'function', 'work_done', 'example_activities',
+    'department_id', 'name', 'description', 'function', 'image_path', 'work_done', 'example_activities',
     'requirements', 'relevant_programs', 'period', 'status',
 ])]
 class BusinessUnit extends Model
@@ -14,6 +14,11 @@ class BusinessUnit extends Model
     protected function casts(): array
     {
         return ['relevant_programs' => 'array'];
+    }
+
+    public function imageUrl(): ?string
+    {
+        return HeroSetting::resolveMediaUrl($this->image_path);
     }
 
     public function department()

@@ -6,9 +6,14 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['name', 'slug', 'description', 'function', 'area', 'status'])]
+#[Fillable(['name', 'slug', 'subtitle', 'description', 'function', 'area', 'image_path', 'status'])]
 class Department extends Model
 {
+    public function imageUrl(): ?string
+    {
+        return HeroSetting::resolveMediaUrl($this->image_path);
+    }
+
     public function businessUnits()
     {
         return $this->hasMany(BusinessUnit::class);

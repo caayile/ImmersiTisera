@@ -28,16 +28,17 @@ class DepartmentHeroTest extends TestCase
             ->assertSee('Assalaam Hypermarket')
             ->assertSee('Al - Firdaus')
             ->assertSee('Puspa Holistic Integrative Care')
-            ->assertSee('Filter')
-            ->assertSee('Bidang')
-            ->assertSee('IT')
+            ->assertDontSee('Filter')
+            ->assertDontSee('Bidang')
             ->assertSee('sticky top-0 z-50 border-b border-line bg-white', false)
             ->assertSee('images/hero/campus.jpg', false);
 
-        $this->get('/departments?field[]=IT')
+        $this->get('/departments')
             ->assertOk()
-            ->assertSee('IT')
-            ->assertDontSee('>Buyer</h3>', false);
+            ->assertSee('Assalam Hypermarket')
+            ->assertDontSee('Store Operation')
+            ->assertDontSee('Buyer')
+            ->assertDontSee('Desain Seragam');
     }
 
     public function test_admin_can_update_background_and_slides(): void

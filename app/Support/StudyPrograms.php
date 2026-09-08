@@ -68,10 +68,6 @@ class StudyPrograms
     public static function placementTargets(string $program): array
     {
         return match ($program) {
-            'Desain Produksi Tekstil' => [
-                ['unit' => 'Desain Seragam', 'departments' => ['K33', 'WJL']],
-                ['unit' => 'Souvenir', 'departments' => ['K33', 'WJL']],
-            ],
             'PGSD' => [
                 ['unit' => 'SD Al-Firdaus', 'departments' => ['SD Al-Firdaus']],
             ],

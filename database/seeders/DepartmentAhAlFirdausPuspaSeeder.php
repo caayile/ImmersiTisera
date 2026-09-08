@@ -27,6 +27,7 @@ class DepartmentAhAlFirdausPuspaSeeder extends Seeder
                 'description' => 'Unit bisnis retail dengan departemen operasional, perdagangan, keuangan, teknologi, pemasaran, dan SDM.',
                 'function' => 'Retail operations and corporate services',
                 'area' => 'Assalaam Hypermarket (AH)',
+                'image_path' => 'images/hero/assalaam.jpg',
                 'status' => 'active',
             ],
         );
@@ -41,6 +42,7 @@ class DepartmentAhAlFirdausPuspaSeeder extends Seeder
             description: 'Mitra immersion untuk pendidikan dasar; direkomendasikan bagi prodi PGSD.',
             function: 'Pendidikan dasar',
             area: 'Pendidikan',
+            imagePath: 'images/hero/al-firdaus.jpg',
             programs: ['PGSD'],
         );
 
@@ -50,6 +52,7 @@ class DepartmentAhAlFirdausPuspaSeeder extends Seeder
             description: 'Mitra immersion bidang pengembangan holistik; direkomendasikan bagi prodi Psikologi.',
             function: 'Pengembangan holistik & kesejahteraan',
             area: 'Psikologi',
+            imagePath: 'images/hero/campus.jpg',
             programs: ['Psikologi'],
         );
     }
@@ -60,6 +63,7 @@ class DepartmentAhAlFirdausPuspaSeeder extends Seeder
         string $description,
         string $function,
         string $area,
+        ?string $imagePath,
         array $programs,
     ): void {
         $department = Department::updateOrCreate(
@@ -69,6 +73,7 @@ class DepartmentAhAlFirdausPuspaSeeder extends Seeder
                 'description' => $description,
                 'function' => $function,
                 'area' => $area,
+                'image_path' => $imagePath,
                 'status' => 'active',
             ],
         );
@@ -83,6 +88,7 @@ class DepartmentAhAlFirdausPuspaSeeder extends Seeder
             [
                 'description' => $description,
                 'function' => $function,
+                'image_path' => $department->image_path,
                 'work_done' => "Kegiatan operasional {$name}.",
                 'example_activities' => 'Observasi, penugasan, riset terapan, dan diskusi mentoring 30 menit.',
                 'requirements' => 'Kompetensi relevan dan komitmen 8 minggu.',
@@ -100,6 +106,7 @@ class DepartmentAhAlFirdausPuspaSeeder extends Seeder
             [
                 'description' => $description,
                 'function' => $function,
+                'image_path' => $department->image_path,
                 'work_done' => "Kegiatan departemen {$name} pada unit bisnis {$department->name}.",
                 'example_activities' => 'Observasi, penugasan, riset terapan, dan diskusi mentoring 30 menit.',
                 'requirements' => 'Kompetensi relevan dan komitmen 8 minggu.',

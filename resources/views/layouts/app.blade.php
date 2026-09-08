@@ -9,7 +9,7 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/cdn.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
-<body class="bg-bg text-ink" x-data="{ open: false }">
+<body class="bg-bg text-ink" data-no-reveal x-data="{ open: false }">
 @php
     $role = auth()->user()->isAdmin() ? 'admin' : (auth()->user()->isMentor() ? 'mentor' : 'participant');
     $unread = auth()->user()->unreadNotifications()->count();
@@ -48,7 +48,6 @@
             ['Ringkasan', 'admin.dashboard'],
             ['Manajemen Pengguna', 'admin.users'],
             ['Unit Bisnis', 'admin.departments'],
-            ['Departemen', 'admin.units'],
             ['Mentor', 'admin.mentors'],
             ['Peserta', 'admin.participants'],
             ['Program', 'admin.programs'],

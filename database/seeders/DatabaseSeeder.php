@@ -24,18 +24,22 @@ class DatabaseSeeder extends Seeder
         $tspm = Department::create([
             'name' => 'TSPM',
             'slug' => 'tspm',
+            'subtitle' => 'Tiga Serangkai Pustaka Mandiri',
             'description' => 'Tiga Serangkai Pustaka Mandiri — penerbitan, distribusi, dan operasional bisnis buku sekolah serta digital.',
             'function' => 'Publishing, sales, operations, and corporate services',
             'area' => 'Publishing & Corporate',
+            'image_path' => 'images/hero/campus.jpg',
             'status' => 'active',
         ]);
 
         $tsic = Department::create([
             'name' => 'TSIC',
             'slug' => 'tsic',
+            'subtitle' => 'Tiga Serangkai Innovation Center',
             'description' => 'Tiga Serangkai Innovation Center — pengembangan orang, pusat unggulan, dan ekosistem pembelajaran.',
             'function' => 'Learning, talent, and innovation',
             'area' => 'Innovation & Learning',
+            'image_path' => 'images/hero/campus.jpg',
             'status' => 'active',
         ]);
 
@@ -321,6 +325,7 @@ class DatabaseSeeder extends Seeder
             'name' => $name,
             'description' => "Unit $name pada {$department->name} untuk immersion dosen TSU.",
             'function' => $function,
+            'image_path' => $department->image_path,
             'work_done' => "Operasional harian $name, kolaborasi lintas tim, dan improvement berkelanjutan.",
             'example_activities' => 'Observasi, penugasan, riset terapan, dan diskusi mentoring 30 menit.',
             'requirements' => 'Kompetensi relevan dengan fungsi unit dan komitmen 8 minggu.',

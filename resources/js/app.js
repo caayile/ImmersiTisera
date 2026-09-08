@@ -1,27 +1,31 @@
 // Global Top Page Loader Bar & Navigation Management
 (() => {
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const motionCandidates = document.querySelectorAll('main > *, main article, main section, main form, main table, main [role="alert"]');
+    const isBackend = document.body.hasAttribute('data-no-reveal');
 
-    motionCandidates.forEach((element, index) => {
-        if (!element.hasAttribute('data-reveal')) {
-            element.setAttribute('data-reveal', '');
-            element.setAttribute('data-reveal-delay', String(index % 4));
+    if (!isBackend) {
+        const motionCandidates = document.querySelectorAll('main > *, main article, main section, main form, main table, main [role="alert"]');
+
+        motionCandidates.forEach((element, index) => {
+            if (!element.hasAttribute('data-reveal')) {
+                element.setAttribute('data-reveal', '');
+                element.setAttribute('data-reveal-delay', String(index % 4));
+            }
+        });
+
+        const revealElements = document.querySelectorAll('[data-reveal]');
+
+        if (reduceMotion || !('IntersectionObserver' in window)) {
+            revealElements.forEach((element) => element.classList.add('is-visible'));
+        } else {
+            const revealObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach((entry) => {
+                    entry.target.classList.toggle('is-visible', entry.isIntersecting);
+                });
+            }, { threshold: 0.12, rootMargin: '0px 0px -40px' });
+
+            revealElements.forEach((element) => revealObserver.observe(element));
         }
-    });
-
-    const revealElements = document.querySelectorAll('[data-reveal]');
-
-    if (reduceMotion || !('IntersectionObserver' in window)) {
-        revealElements.forEach((element) => element.classList.add('is-visible'));
-    } else {
-        const revealObserver = new IntersectionObserver((entries, observer) => {
-            entries.forEach((entry) => {
-                entry.target.classList.toggle('is-visible', entry.isIntersecting);
-            });
-        }, { threshold: 0.12, rootMargin: '0px 0px -40px' });
-
-        revealElements.forEach((element) => revealObserver.observe(element));
     }
 
     document.querySelectorAll('a, button').forEach((element) => element.classList.add('tap-feedback'));
