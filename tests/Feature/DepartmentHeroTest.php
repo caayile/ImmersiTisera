@@ -41,6 +41,19 @@ class DepartmentHeroTest extends TestCase
             ->assertDontSee('Desain Seragam');
     }
 
+    public function test_departments_page_shows_all_seven_business_units(): void
+    {
+        $this->seed();
+
+        $html = $this->get('/departments')->assertOk()->getContent();
+
+        foreach (['TSPM', 'TSIC', 'K33', 'WJL', 'Assalam Hypermarket', 'SD Al-Firdaus', 'Puspa Holistic Integrative Care'] as $name) {
+            $this->assertStringContainsString($name, $html);
+        }
+
+        $this->assertSame(7, substr_count($html, 'Lihat Departemen'));
+    }
+
     public function test_admin_can_update_background_and_slides(): void
     {
         Storage::fake('public');

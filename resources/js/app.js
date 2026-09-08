@@ -20,11 +20,32 @@
         } else {
             const revealObserver = new IntersectionObserver((entries, observer) => {
                 entries.forEach((entry) => {
-                    entry.target.classList.toggle('is-visible', entry.isIntersecting);
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                        observer.unobserve(entry.target);
+                    }
                 });
-            }, { threshold: 0.12, rootMargin: '0px 0px -40px' });
+            }, { threshold: 0.08, rootMargin: '0px 0px -20px' });
 
             revealElements.forEach((element) => revealObserver.observe(element));
+
+            const forceReveal = () => {
+                revealElements.forEach((element) => {
+                    if (element.classList.contains('is-visible')) return;
+                    const rect = element.getBoundingClientRect();
+                    if (rect.top < window.innerHeight && rect.bottom > 0) {
+                        element.classList.add('is-visible');
+                        revealObserver.unobserve(element);
+                    }
+                });
+            };
+
+            window.addEventListener('scroll', forceReveal, { passive: true });
+            window.addEventListener('resize', forceReveal, { passive: true });
+            window.setTimeout(forceReveal, 400);
+            window.setTimeout(() => {
+                revealElements.forEach((element) => element.classList.add('is-visible'));
+            }, 8000);
         }
     }
 
