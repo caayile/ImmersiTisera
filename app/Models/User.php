@@ -69,7 +69,7 @@ class User extends Authenticatable
         return match (true) {
             $this->isAdmin() => 'admin.dashboard',
             $this->isMentor() => 'mentor.dashboard',
-            default => 'participant.dashboard',
+            default => 'home',
         };
     }
 

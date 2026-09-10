@@ -68,7 +68,7 @@
 @if($role === 'participant')
 <header class="sticky top-0 z-30 border-b border-line bg-white/95 backdrop-blur-md">
     <div class="mx-auto flex max-w-7xl items-center justify-between gap-3 px-5 py-3">
-        <a href="{{ route('participant.dashboard') }}" class="flex shrink-0 items-center gap-2 font-semibold">
+        <a href="{{ route('home') }}" class="flex shrink-0 items-center gap-2 font-semibold">
             <img src="{{ asset('images/logo-tsu.svg') }}" alt="TSU" class="site-logo site-logo--nav">
             <span class="hidden sm:block">
                 Imersi
@@ -87,13 +87,7 @@
                 >
             </label>
         </form>
-        <div class="flex items-center gap-2 text-sm">
-            <span class="hidden rounded-full bg-bg px-3 py-1.5 text-muted lg:inline">{{ auth()->user()->name }}</span>
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button class="rounded-full px-3 py-1.5 text-muted transition hover:bg-bg hover:text-ink">Keluar</button>
-            </form>
-        </div>
+        <x-user-menu />
     </div>
 </header>
 <main class="mx-auto max-w-7xl px-5 py-6">

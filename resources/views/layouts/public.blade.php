@@ -37,9 +37,6 @@
         ['Unit Bisnis', 'departments.index'],
         ['Berita', 'news.index'],
     ];
-    if (auth()->check()) {
-        $nav[] = ['Profil', 'profile.public'];
-    }
 @endphp
 <header class="sticky top-0 z-50 border-b border-line bg-white">
     <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-3">
@@ -56,11 +53,7 @@
         </nav>
         <div class="flex items-center gap-2 text-sm">
             @auth
-                <a href="{{ route(auth()->user()->homeRoute()) }}" class="hidden rounded-full px-4 py-2 font-medium text-ink hover:bg-bg sm:inline">Dasbor</a>
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button class="rounded-full border border-ink px-4 py-2 font-medium">Keluar</button>
-                </form>
+                <x-user-menu />
             @else
                 <a href="{{ route('register') }}" class="inline-flex items-center rounded-full border border-ink px-4 py-2 font-medium">+ Pendaftaran</a>
                 <a href="{{ route('login') }}" class="rounded-full bg-primary px-4 py-2 font-semibold text-white">Masuk</a>
@@ -72,13 +65,10 @@
         @foreach($nav as [$label, $name])
             <a href="{{ route($name) }}" class="tap-feedback block py-2">{{ $label }}</a>
         @endforeach
-        @auth
-            <a href="{{ route(auth()->user()->homeRoute()) }}" class="block py-2">Dasbor</a>
-            <form method="POST" action="{{ route('logout') }}">@csrf<button class="block py-2">Keluar</button></form>
-        @else
+        @guest
             <a href="{{ route('register') }}" class="block py-2">Pendaftaran</a>
             <a href="{{ route('login') }}" class="block py-2">Masuk</a>
-        @endauth
+        @endguest
     </div>
 </header>
 @if(session('status'))

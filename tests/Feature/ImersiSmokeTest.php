@@ -45,15 +45,26 @@ class ImersiSmokeTest extends TestCase
         $this->post('/login/user', ['email' => 'admin@imersi.id', 'password' => 'password'])
             ->assertRedirect(route('admin.dashboard'));
 
+        $this->post('/logout');
+
+        $this->post('/login/user', ['email' => 'dosen@imersi.id', 'password' => 'password'])
+            ->assertRedirect(route('home'));
+
         $this->actingAs(User::where('email', 'dosen@imersi.id')->first())
             ->get('/participant/dashboard')
+            ->assertRedirect(route('home'));
+
+        $this->actingAs(User::where('email', 'dosen@imersi.id')->first())
+            ->get('/')
             ->assertOk()
-            ->assertSee('Digital Business')
-            ->assertSee('Pilih mitra imersi Anda')
-            ->assertSee('K33')
-            ->assertSee('WJL')
-            ->assertDontSee('Laporan Akhir')
-            ->assertDontSee('Pendampingan');
+            ->assertSee('Beranda')
+            ->assertSee('Unit Bisnis')
+            ->assertSee('Unit bisnis pilihan gelombang')
+            ->assertSee('Dr. Andi')
+            ->assertSee('dosen@imersi.id')
+            ->assertSee('Riwayat Pendaftaran')
+            ->assertSee('Logbook')
+            ->assertDontSee('Pilih mitra imersi Anda');
 
         $this->actingAs(User::where('email', 'mentor@imersi.id')->first())
             ->get('/mentor/dashboard')

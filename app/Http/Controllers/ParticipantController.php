@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Application;
 use App\Models\BusinessUnit;
-use App\Models\Department;
 use App\Models\Evaluation;
 use App\Models\Participant;
 use App\Models\Program;
@@ -19,54 +18,9 @@ use Illuminate\Validation\Rule;
 
 class ParticipantController extends Controller
 {
-    public function dashboard(Request $request)
+    public function dashboard()
     {
-        $program = $this->currentProgram($request);
-        $program?->refreshProgress();
-        $application = Application::with(['department', 'businessUnit', 'mentor.user'])
-            ->where('participant_id', $request->user()->participant?->id)
-            ->latest()
-            ->first();
-
-        $gradients = [
-            'from-[#16352c] via-[#1f5a45] to-[#5ec69d]',
-            'from-[#1e3a5f] via-[#2a6b55] to-[#7dd8b5]',
-            'from-[#2f4a3c] via-[#3eaa84] to-[#a8e6cf]',
-            'from-[#0f2a24] via-[#256b52] to-[#5ec69d]',
-            'from-[#243d36] via-[#3e8f6d] to-[#8fd9b8]',
-        ];
-
-        $partners = Department::query()
-            ->where('status', 'active')
-            ->withCount(['businessUnits' => fn ($q) => $q->where('status', 'open')])
-            ->orderBy('area')
-            ->orderBy('name')
-            ->get()
-            ->values()
-            ->map(function (Department $department, int $index) use ($gradients) {
-                $imagePath = "images/partners/{$department->slug}.jpg";
-                $imageExists = is_file(public_path($imagePath));
-
-                return [
-                    'id' => $department->id,
-                    'name' => $department->name,
-                    'area' => $department->area ?: 'Mitra Imersi',
-                    'description' => $department->description,
-                    'slug' => $department->slug,
-                    'url' => route('departments.show', $department),
-                    'units' => $department->business_units_count,
-                    'image' => $imageExists ? asset($imagePath) : null,
-                    'gradient' => $gradients[$index % count($gradients)],
-                ];
-            });
-
-        return view('participant.dashboard', [
-            'participant' => $request->user()->participant,
-            'program' => $program?->fresh(['department', 'businessUnit', 'mentor.user', 'agreement', 'logbooks', 'timelines']),
-            'notifications' => $request->user()->unreadNotifications()->latest()->take(5)->get(),
-            'partners' => $partners,
-            'application' => $application,
-        ]);
+        return redirect()->route('home');
     }
 
     public function profile(Request $request)
