@@ -17,7 +17,10 @@ class AuthController extends Controller
 {
     public function showLogin()
     {
-        return view('auth.login-choice');
+        return view('auth.login-choice', [
+            'initialTab' => 'login',
+            'departments' => Department::where('status', 'active')->orderBy('name')->get(),
+        ]);
     }
 
     public function showUserLogin()
@@ -43,6 +46,7 @@ class AuthController extends Controller
     public function showRegister()
     {
         return view('auth.register-choice', [
+            'initialTab' => 'register',
             'departments' => Department::where('status', 'active')->orderBy('name')->get(),
         ]);
     }

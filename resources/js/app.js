@@ -20,12 +20,14 @@
         } else {
             revealElements.forEach((element) => element.classList.add('hidden-by-reveal'));
 
-            const revealObserver = new IntersectionObserver((entries, observer) => {
+            const revealObserver = new IntersectionObserver((entries) => {
                 entries.forEach((entry) => {
                     if (entry.isIntersecting) {
                         entry.target.classList.add('is-visible');
                         entry.target.classList.remove('hidden-by-reveal');
-                        observer.unobserve(entry.target);
+                    } else {
+                        entry.target.classList.remove('is-visible');
+                        entry.target.classList.add('hidden-by-reveal');
                     }
                 });
             }, { threshold: 0.08, rootMargin: '0px 0px -20px' });
@@ -39,7 +41,6 @@
                     if (rect.top < window.innerHeight && rect.bottom > 0) {
                         element.classList.add('is-visible');
                         element.classList.remove('hidden-by-reveal');
-                        revealObserver.unobserve(element);
                     }
                 });
             };
@@ -119,11 +120,24 @@
             !href.startsWith('mailto:') &&
             !href.startsWith('tel:') &&
             (!target || target === '_self') &&
-            link.origin === window.location.origin
+            link.origin === window.location.origin &&
+            !link.hasAttribute('download')
         ) {
+            if (document.documentElement.classList.contains('is-page-leaving')) return;
+
+            e.preventDefault();
             sessionStorage.setItem('is-page-transition', 'true');
             loaderBar.classList.remove('page-loader--done');
             loaderBar.classList.add('page-loader--loading');
+
+            document.documentElement.classList.add('is-page-leaving');
+            const navigate = () => window.location.assign(link.href);
+
+            if (reduceMotion) {
+                navigate();
+            } else {
+                window.setTimeout(navigate, 180);
+            }
         }
     });
 
