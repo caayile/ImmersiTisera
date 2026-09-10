@@ -85,7 +85,7 @@
 <body class="bg-grid-pattern font-sans text-white min-h-screen lg:h-screen lg:max-h-screen lg:overflow-hidden flex flex-col justify-between selection:bg-mint selection:text-forest">
 
     <!-- Header / Navbar -->
-    <header class="w-full max-w-7xl mx-auto px-4 sm:px-6 py-2.5 sm:py-3.5 flex justify-between items-center z-10 shrink-0">
+    <header class="w-full max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center z-10 shrink-0">
         <a href="{{ url('/') }}" class="flex items-center space-x-3 group">
             <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-mint flex items-center justify-center text-forest font-bold text-lg sm:text-xl shadow-lg shadow-mint/20 group-hover:scale-105 transition-transform">
                 <i class="fa-solid fa-graduation-cap"></i>
@@ -103,73 +103,26 @@
     </header>
 
     <!-- Main Content Container -->
-    <main class="w-full max-w-7xl mx-auto px-4 sm:px-6 py-1 lg:py-2 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center min-h-0 overflow-hidden">
+    <main class="w-full max-w-7xl mx-auto px-4 sm:px-6 py-2 lg:py-4 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center min-h-0 overflow-hidden">
         
-        <!-- Left Side: Branding, Tagline, & Info Cards -->
-        <div class="lg:col-span-7 flex flex-col justify-center space-y-3 sm:space-y-4">
+        <!-- Left Side: Branding & Tagline -->
+        <div class="lg:col-span-7 flex flex-col justify-center space-y-4 sm:space-y-6 lg:pr-6">
             <!-- Badge -->
-            <div class="inline-flex items-center space-x-2 glass-badge px-3 py-1 rounded-full text-xs font-medium text-mint w-fit">
+            <div class="inline-flex items-center space-x-2 glass-badge px-3.5 py-1.5 rounded-full text-xs font-medium text-mint w-fit">
                 <span class="w-1.5 h-1.5 rounded-full bg-mint animate-pulse"></span>
                 <span>Program Imersi Industri TS Group</span>
             </div>
 
             <!-- Title & Subtitle -->
-            <div class="space-y-2">
-                <h1 class="text-2xl sm:text-4xl lg:text-[42px] font-extrabold text-white leading-[1.15] tracking-tight">
+            <div class="space-y-3 sm:space-y-4">
+                <h1 class="text-3xl sm:text-5xl lg:text-[46px] font-extrabold text-white leading-[1.18] tracking-tight">
                     Mulai kolaborasi dari <br class="hidden sm:block"/>
-                    <span class="text-mint underline decoration-mint/30 decoration-wavy underline-offset-4">unit bisnis yang tepat</span><br class="hidden sm:block"/>
+                    <span class="text-mint">unit bisnis yang tepat</span><br class="hidden sm:block"/>
                     di sini.
                 </h1>
-                <p class="text-gray-300 text-xs sm:text-sm lg:text-[15px] max-w-xl font-normal leading-relaxed">
+                <p class="text-gray-300 text-sm sm:text-base lg:text-lg max-w-xl font-normal leading-relaxed">
                     Program khusus untuk menghubungkan <strong class="text-white font-semibold">Dosen TSU</strong> dan <strong class="text-white font-semibold">Mentor Profesional</strong> dengan ekosistem Unit Bisnis TS Group.
                 </p>
-            </div>
-
-            <!-- 4 Features Grid -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
-                <!-- Card 1 -->
-                <div class="bg-forest-card/80 border border-white/10 rounded-xl p-3 hover:border-mint/50 transition duration-300 backdrop-blur-sm group">
-                    <div class="flex items-center space-x-2.5 mb-1.5">
-                        <div class="w-7 h-7 rounded-lg bg-mint/10 text-mint flex items-center justify-center group-hover:bg-mint group-hover:text-forest transition duration-300 shrink-0">
-                            <i class="fa-solid fa-chart-line text-xs"></i>
-                        </div>
-                        <h3 class="font-bold text-white text-xs sm:text-sm">Wawasan Industri</h3>
-                    </div>
-                    <p class="text-[11px] text-gray-400 leading-snug">Memahami alur kerja dan keputusan bisnis secara langsung.</p>
-                </div>
-
-                <!-- Card 2 -->
-                <div class="bg-forest-card/80 border border-white/10 rounded-xl p-3 hover:border-mint/50 transition duration-300 backdrop-blur-sm group">
-                    <div class="flex items-center space-x-2.5 mb-1.5">
-                        <div class="w-7 h-7 rounded-lg bg-mint/10 text-mint flex items-center justify-center group-hover:bg-mint group-hover:text-forest transition duration-300 shrink-0">
-                            <i class="fa-solid fa-user-tie text-xs"></i>
-                        </div>
-                        <h3 class="font-bold text-white text-xs sm:text-sm">Mentor Profesional</h3>
-                    </div>
-                    <p class="text-[11px] text-gray-400 leading-snug">Mentoring rutin & bimbingan praktisi ahli industri.</p>
-                </div>
-
-                <!-- Card 3 -->
-                <div class="bg-forest-card/80 border border-white/10 rounded-xl p-3 hover:border-mint/50 transition duration-300 backdrop-blur-sm group">
-                    <div class="flex items-center space-x-2.5 mb-1.5">
-                        <div class="w-7 h-7 rounded-lg bg-mint/10 text-mint flex items-center justify-center group-hover:bg-mint group-hover:text-forest transition duration-300 shrink-0">
-                            <i class="fa-solid fa-handshake text-xs"></i>
-                        </div>
-                        <h3 class="font-bold text-white text-xs sm:text-sm">Kolaborasi Lanjutan</h3>
-                    </div>
-                    <p class="text-[11px] text-gray-400 leading-snug">Kuliah tamu, riset bersama, hingga penyusunan kurikulum.</p>
-                </div>
-
-                <!-- Card 4 -->
-                <div class="bg-forest-card/80 border border-white/10 rounded-xl p-3 hover:border-mint/50 transition duration-300 backdrop-blur-sm group">
-                    <div class="flex items-center space-x-2.5 mb-1.5">
-                        <div class="w-7 h-7 rounded-lg bg-mint/10 text-mint flex items-center justify-center group-hover:bg-mint group-hover:text-forest transition duration-300 shrink-0">
-                            <i class="fa-solid fa-clipboard-check text-xs"></i>
-                        </div>
-                        <h3 class="font-bold text-white text-xs sm:text-sm">Hasil & Evaluasi Terukur</h3>
-                    </div>
-                    <p class="text-[11px] text-gray-400 leading-snug">Rekaman aktivitas, bukti kerja nyata, dan rekognisi dampak.</p>
-                </div>
             </div>
         </div>
 
