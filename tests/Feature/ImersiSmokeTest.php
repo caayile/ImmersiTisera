@@ -51,7 +51,9 @@ class ImersiSmokeTest extends TestCase
             ->assertSee('Digital Business')
             ->assertSee('Pilih mitra imersi Anda')
             ->assertSee('K33')
-            ->assertSee('WJL');
+            ->assertSee('WJL')
+            ->assertDontSee('Laporan Akhir')
+            ->assertDontSee('Pendampingan');
 
         $this->actingAs(User::where('email', 'mentor@imersi.id')->first())
             ->get('/mentor/dashboard')

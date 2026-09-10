@@ -3,7 +3,7 @@
 @section('content')
 <h1 class="text-2xl font-semibold">Program Saya</h1>
 @unless($program)
-    <x-empty class="mt-6" title="Belum ada program" :action="route('participant.applications.create')" label="Daftar program">Pengajuan Anda akan menjadi program setelah matching disetujui.</x-empty>
+    <x-empty class="mt-6" title="Belum ada program" :action="route('departments.index')" label="Daftar program">Pengajuan Anda akan menjadi program setelah surat persetujuan disahkan admin.</x-empty>
 @else
 <div class="mt-6 grid gap-4 lg:grid-cols-3">
     <article class="rounded-2xl border border-line bg-white p-5 lg:col-span-2">

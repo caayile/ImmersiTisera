@@ -6,6 +6,7 @@
     @foreach([
         ['Peserta aktif', $programs->where('status','active')->count()],
         ['Program aktif', $programs->where('status','active')->count()],
+        ['Pendaftaran menunggu', $pendingApplications],
         ['Pending agreement', $pendingAgreements],
         ['Logbook perlu review', $pendingLogbooks],
         ['Output perlu validasi', $pendingOutputs],

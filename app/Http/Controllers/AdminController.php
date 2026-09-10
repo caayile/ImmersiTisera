@@ -17,6 +17,7 @@ use App\Models\Participant;
 use App\Models\Program;
 use App\Models\User;
 use App\Notifications\ImersiAlert;
+use App\Services\ApplicationApprovalService;
 use App\Support\Status;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
@@ -38,7 +39,7 @@ class AdminController extends Controller
                 'Unit Bisnis' => BusinessUnit::count(),
                 'Program aktif' => Program::where('status', 'active')->count(),
                 'Completed' => Program::where('status', 'completed')->count(),
-                'Pending approval' => Application::where('status', 'submitted')->count() + Agreement::where('status', 'submitted')->count(),
+                'Pending approval' => Application::whereIn('status', ['submitted', 'waiting_admin'])->count() + Agreement::where('status', 'submitted')->count(),
                 'Dengan output' => Program::whereHas('outputs')->count(),
             ],
             'statusCounts' => Program::selectRaw('status, count(*) as total')->groupBy('status')->pluck('total', 'status'),
@@ -307,40 +308,19 @@ class AdminController extends Controller
         ]);
     }
 
-    public function updateMatching(Request $request, Application $application)
+    public function updateMatching(Request $request, Application $application, ApplicationApprovalService $approvals)
     {
         $data = $request->validate([
             'status' => ['required', Rule::in(['approved', 'rejected', 'revision'])],
             'mentor_id' => ['nullable', 'exists:mentors,id'],
             'business_unit_id' => ['nullable', 'exists:business_units,id'],
             'matching_notes' => ['nullable', 'string'],
+            'revision_note' => ['nullable', 'string'],
         ]);
 
-        if ($data['business_unit_id'] ?? null) {
-            $unit = BusinessUnit::find($data['business_unit_id']);
-            $application->business_unit_id = $unit->id;
-            $application->department_id = $unit->department_id;
-        }
-        $application->fill($data)->save();
+        $approvals->adminReview($application, $data);
 
-        if ($data['status'] === 'approved') {
-            $program = Program::firstOrCreate(
-                ['application_id' => $application->id],
-                [
-                    'participant_id' => $application->participant_id,
-                    'mentor_id' => $application->mentor_id,
-                    'department_id' => $application->department_id,
-                    'business_unit_id' => $application->business_unit_id,
-                    'status' => 'submitted',
-                ]
-            );
-            $program->agreement()->firstOrCreate(['program_id' => $program->id], ['status' => 'draft']);
-            $application->participant->user->notify(new ImersiAlert('Matching disetujui', 'Lanjutkan ke Industry Immersion Agreement.', route('participant.agreement')));
-        } else {
-            $application->participant->user->notify(new ImersiAlert('Update matching', 'Status: '.$data['status'], route('participant.applications')));
-        }
-
-        return back()->with('status', 'Matching diperbarui.');
+        return back()->with('status', 'Keputusan pendaftaran disimpan.');
     }
 
     public function agreements()

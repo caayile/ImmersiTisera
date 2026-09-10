@@ -28,6 +28,6 @@
             {{ $businessUnit->mentors->pluck('user.name')->filter()->join(', ') ?: 'Akan ditugaskan' }}
         </p>
     </div>
-    <a href="{{ auth()->check() ? route('participant.applications.create', ['unit' => $businessUnit->id]) : route('register') }}" class="mt-6 inline-block rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-white">Daftar Program</a>
+    <a href="{{ route('participant.applications.create', ['unit' => $businessUnit->id]) }}" class="mt-6 inline-block rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-white">Daftar Program</a>
 </div>
 @endsection

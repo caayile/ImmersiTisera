@@ -32,4 +32,9 @@ class Mentor extends Model
     {
         return $this->hasMany(Program::class);
     }
+
+    public function applications()
+    {
+        return $this->hasMany(Application::class);
+    }
 }

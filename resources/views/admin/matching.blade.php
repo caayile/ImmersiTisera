@@ -1,8 +1,8 @@
 @extends('layouts.app')
 @section('title', 'Matching')
 @section('content')
-<h1 class="text-2xl font-semibold">Matching</h1>
-<p class="mt-1 text-sm text-muted">Participant → Prodi → Kompetensi → Unit Bisnis → Departemen → Mentor</p>
+<h1 class="text-2xl font-semibold">Pendaftaran & pencocokan</h1>
+<p class="mt-1 text-sm text-muted">Alur: dosen mengajukan → admin meninjau → mentor menyetujui → admin mengesahkan → dosen menerima hasil.</p>
 <div class="mt-6 space-y-4">
     @forelse($applications as $application)
         <article class="rounded-2xl border border-line bg-white p-5">
@@ -10,12 +10,18 @@
                 <p class="font-medium">{{ $application->participant->user->name }} · {{ $application->participant->study_program }}</p>
                 <x-badge :status="$application->status" />
             </div>
+            <p class="mt-1 text-xs text-muted">{{ $application->letter_number ?? 'Tanpa nomor surat' }} · {{ $application->currentStageLabel() }}</p>
             <p class="mt-2 text-sm">{{ $application->department->name }} → {{ $application->businessUnit->name }} · skor {{ $application->match_score }}%</p>
             @if($application->relevance_warning)
                 <p class="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">Warning: kompetensi/prodi peserta kurang relevan dengan unit yang dipilih.</p>
             @endif
-            <p class="mt-2 text-sm text-muted">{{ $application->motivation }}</p>
-            @if($application->status === 'submitted')
+            <div class="mt-4">
+                <x-approval-flow :application="$application" />
+            </div>
+            <div class="mt-4">
+                <x-approval-letter :application="$application" />
+            </div>
+            @if($application->isAwaitingAdmin())
             <form method="POST" action="{{ route('admin.matching.update', $application) }}" class="mt-4 grid gap-3 md:grid-cols-4">
                 @csrf
                 <select name="business_unit_id" class="rounded-lg border border-line px-3 py-2 text-sm">
@@ -28,9 +34,11 @@
                         <option value="{{ $mentor->id }}" @selected($mentor->id === $application->mentor_id)>{{ $mentor->user->name }}</option>
                     @endforeach
                 </select>
-                <input name="matching_notes" placeholder="Catatan matching" class="rounded-lg border border-line px-3 py-2 text-sm">
-                <div class="flex gap-2">
-                    <button name="status" value="approved" class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white">Approve</button>
+                <input name="matching_notes" placeholder="{{ $application->status === 'waiting_admin' ? 'Catatan pengesahan' : 'Catatan tinjauan' }}" class="rounded-lg border border-line px-3 py-2 text-sm">
+                <div class="flex flex-wrap gap-2">
+                    <button name="status" value="approved" class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white">
+                        {{ $application->status === 'waiting_admin' ? 'Sahkan' : 'Teruskan ke mentor' }}
+                    </button>
                     <button name="status" value="revision" class="rounded-lg border border-line px-4 py-2 text-sm">Revisi</button>
                     <button name="status" value="rejected" class="rounded-lg border border-line px-4 py-2 text-sm">Tolak</button>
                 </div>

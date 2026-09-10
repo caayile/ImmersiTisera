@@ -43,6 +43,9 @@ Route::middleware(['auth', 'role:participant'])->prefix('participant')->name('pa
     Route::get('/applications', [ParticipantController::class, 'applications'])->name('applications');
     Route::get('/applications/create', [ParticipantController::class, 'createApplication'])->name('applications.create');
     Route::post('/applications', [ParticipantController::class, 'storeApplication'])->name('applications.store');
+    Route::get('/applications/{application}', [ParticipantController::class, 'showApplication'])->name('applications.show');
+    Route::get('/applications/{application}/edit', [ParticipantController::class, 'editApplication'])->name('applications.edit');
+    Route::put('/applications/{application}', [ParticipantController::class, 'updateApplication'])->name('applications.update');
     Route::get('/program', [ParticipantController::class, 'program'])->name('program');
     Route::get('/agreement', [ParticipantController::class, 'agreement'])->name('agreement');
     Route::post('/agreement', [ParticipantController::class, 'updateAgreement']);
@@ -64,6 +67,8 @@ Route::middleware(['auth', 'role:participant'])->prefix('participant')->name('pa
 
 Route::middleware(['auth', 'role:mentor'])->prefix('mentor')->name('mentor.')->group(function () {
     Route::get('/dashboard', [MentorController::class, 'dashboard'])->name('dashboard');
+    Route::get('/applications', [MentorController::class, 'applications'])->name('applications');
+    Route::post('/applications/{application}', [MentorController::class, 'reviewApplication'])->name('applications.review');
     Route::get('/participants', [MentorController::class, 'participants'])->name('participants');
     Route::get('/participants/{program}', [MentorController::class, 'showParticipant'])->name('participants.show');
     Route::get('/programs', [MentorController::class, 'programs'])->name('programs');

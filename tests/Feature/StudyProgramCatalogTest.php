@@ -53,6 +53,10 @@ class StudyProgramCatalogTest extends TestCase
             ->assertSee('Sekolah Vokasi')
             ->assertSee('Desain Produksi Tekstil')
             ->assertSee('Fakultas dan program studi')
+            ->assertSee('Kembali ke beranda')
+            ->assertSee('Kembali ke profil')
+            ->assertSee(route('home'), false)
+            ->assertSee(route('profile.public'), false)
             ->assertDontSee('name="study_program" value=', false);
 
         $this->actingAs($dosen)

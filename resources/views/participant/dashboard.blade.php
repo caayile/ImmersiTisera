@@ -4,7 +4,18 @@
 @php
     $next = ['Lengkapi profil kompetensi Anda.', route('participant.profile')];
     if ($participant?->study_program) {
-        $next = ['Ajukan program ke unit bisnis yang relevan.', route('participant.applications.create')];
+        $next = ['Ajukan program ke unit bisnis yang relevan.', route('departments.index')];
+    }
+    if ($application && ! $program) {
+        $next = match ($application->status) {
+            'submitted' => ['Pendaftaran menunggu tinjauan admin.', route('participant.applications.show', $application)],
+            'waiting_mentor' => ['Menunggu persetujuan mentor industri.', route('participant.applications.show', $application)],
+            'waiting_admin' => ['Menunggu pengesahan akhir dari admin.', route('participant.applications.show', $application)],
+            'revision' => ['Perbaiki form pendaftaran sesuai catatan reviewer.', route('participant.applications.edit', $application)],
+            'rejected' => ['Pendaftaran ditolak. Ajukan program lain jika masih relevan.', route('participant.applications')],
+            'approved' => ['Pendaftaran disetujui. Lanjutkan ke perjanjian imersi.', route('participant.agreement')],
+            default => $next,
+        };
     }
     if ($program) {
         $next = match ($program->status) {

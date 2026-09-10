@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Agreement;
+use App\Models\Application;
 use App\Models\CollaborationPipeline;
 use App\Models\Evaluation;
 use App\Models\Logbook;
@@ -10,6 +11,7 @@ use App\Models\MentorSession;
 use App\Models\Program;
 use App\Models\ProgramOutput;
 use App\Notifications\ImersiAlert;
+use App\Services\ApplicationApprovalService;
 use App\Support\Status;
 use Illuminate\Http\Request;
 
@@ -23,6 +25,7 @@ class MentorController extends Controller
         return view('mentor.dashboard', [
             'mentor' => $mentor,
             'programs' => $programs,
+            'pendingApplications' => Application::where('mentor_id', $mentor?->id)->where('status', 'waiting_mentor')->count(),
             'pendingAgreements' => Agreement::whereHas('program', fn ($q) => $q->where('mentor_id', $mentor?->id))->whereIn('status', ['submitted', 'revision'])->count(),
             'pendingLogbooks' => Logbook::whereHas('program', fn ($q) => $q->where('mentor_id', $mentor?->id))->where('status', 'submitted')->count(),
             'pendingOutputs' => ProgramOutput::whereHas('program', fn ($q) => $q->where('mentor_id', $mentor?->id))->where('status', 'submitted')->count(),
@@ -46,6 +49,32 @@ class MentorController extends Controller
     public function programs(Request $request)
     {
         return view('mentor.programs', ['programs' => $this->mine($request)->with(['participant.user', 'businessUnit', 'agreement'])->get()]);
+    }
+
+    public function applications(Request $request)
+    {
+        $applications = Application::with(['participant.user', 'department', 'businessUnit'])
+            ->where('mentor_id', $request->user()->mentor?->id)
+            ->latest()
+            ->get();
+
+        return view('mentor.applications', compact('applications'));
+    }
+
+    public function reviewApplication(Request $request, Application $application, ApplicationApprovalService $approvals)
+    {
+        $data = $request->validate([
+            'decision' => ['required', 'in:approved,revision,rejected'],
+            'mentor_note' => ['nullable', 'string'],
+            'revision_note' => ['nullable', 'string'],
+        ]);
+
+        $mentor = $request->user()->mentor;
+        abort_unless($mentor, 403);
+
+        $approvals->mentorReview($application, $mentor, $data);
+
+        return back()->with('status', 'Keputusan pendaftaran disimpan.');
     }
 
     public function agreements(Request $request)

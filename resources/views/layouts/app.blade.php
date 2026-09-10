@@ -33,6 +33,7 @@
         'mentor' => [
             ['Ringkasan', 'mentor.dashboard'],
             ['Peserta', 'mentor.participants'],
+            ['Pendaftaran', 'mentor.applications'],
             ['Program Aktif', 'mentor.programs'],
             ['Perjanjian Imersi', 'mentor.agreements'],
             ['Linimasa & Pemeriksaan', 'mentor.timeline'],
@@ -67,7 +68,7 @@
 @if($role === 'participant')
 <header class="sticky top-0 z-30 border-b border-line bg-white/95 backdrop-blur-md">
     <div class="mx-auto flex max-w-7xl items-center justify-between gap-3 px-5 py-3">
-        <a href="{{ route('home') }}" class="flex shrink-0 items-center gap-2 font-semibold">
+        <a href="{{ route('participant.dashboard') }}" class="flex shrink-0 items-center gap-2 font-semibold">
             <img src="{{ asset('images/logo-tsu.svg') }}" alt="TSU" class="site-logo site-logo--nav">
             <span class="hidden sm:block">
                 Imersi
@@ -92,33 +93,7 @@
                 @csrf
                 <button class="rounded-full px-3 py-1.5 text-muted transition hover:bg-bg hover:text-ink">Keluar</button>
             </form>
-            <button class="rounded-xl border border-line px-3 py-1.5 lg:hidden" @click="open = !open">Menu</button>
         </div>
-    </div>
-    <nav class="hidden border-t border-line bg-white/90 lg:block">
-        <div class="mx-auto flex max-w-7xl flex-wrap items-center gap-1 px-5 py-2 text-sm">
-            @foreach($menus as [$label, $name])
-                <a href="{{ route($name) }}" class="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 transition {{ request()->routeIs($name) ? 'bg-primary text-white shadow-sm' : 'text-muted hover:bg-bg hover:text-ink' }}">
-                    @if($label === 'Ringkasan')
-                        <span class="material-symbols-outlined text-[16px]">home</span>
-                    @endif
-                    {{ $label }}
-                    @if($label === 'Notifikasi' && $unread)
-                        <span class="ml-1 rounded-full bg-white px-1.5 text-[10px] font-semibold text-primary-dark">{{ $unread }}</span>
-                    @endif
-                </a>
-            @endforeach
-        </div>
-    </nav>
-    <div x-show="open" x-cloak class="border-t border-line bg-white px-5 py-3 text-sm lg:hidden">
-        @foreach($menus as [$label, $name])
-            <a href="{{ route($name) }}" class="flex items-center justify-between py-2 {{ request()->routeIs($name) ? 'font-semibold text-primary-dark' : 'text-muted' }}">
-                <span>{{ $label }}</span>
-                @if($label === 'Notifikasi' && $unread)
-                    <span class="rounded-full bg-primary px-1.5 text-[10px] font-semibold text-white">{{ $unread }}</span>
-                @endif
-            </a>
-        @endforeach
     </div>
 </header>
 <main class="mx-auto max-w-7xl px-5 py-6">

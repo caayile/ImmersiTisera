@@ -9,11 +9,12 @@ use App\Models\Evaluation;
 use App\Models\Participant;
 use App\Models\Program;
 use App\Notifications\ImersiAlert;
-use App\Services\MatchingService;
+use App\Services\ApplicationApprovalService;
 use App\Support\Status;
 use App\Support\StudyPrograms;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class ParticipantController extends Controller
@@ -22,6 +23,10 @@ class ParticipantController extends Controller
     {
         $program = $this->currentProgram($request);
         $program?->refreshProgress();
+        $application = Application::with(['department', 'businessUnit', 'mentor.user'])
+            ->where('participant_id', $request->user()->participant?->id)
+            ->latest()
+            ->first();
 
         $gradients = [
             'from-[#16352c] via-[#1f5a45] to-[#5ec69d]',
@@ -60,6 +65,7 @@ class ParticipantController extends Controller
             'program' => $program?->fresh(['department', 'businessUnit', 'mentor.user', 'agreement', 'logbooks', 'timelines']),
             'notifications' => $request->user()->unreadNotifications()->latest()->take(5)->get(),
             'partners' => $partners,
+            'application' => $application,
         ]);
     }
 
@@ -124,44 +130,92 @@ class ParticipantController extends Controller
 
     public function createApplication(Request $request)
     {
-        $departments = Department::with(['businessUnits' => fn ($q) => $q->where('status', 'open')])->where('status', 'active')->get();
-        $prefill = $request->integer('unit');
+        $participant = $request->user()->participant;
+        if (! $participant?->study_program) {
+            return redirect()->route('participant.profile')->with('status', 'Lengkapi profil sebelum mendaftar program.');
+        }
 
-        return view('participant.application-form', compact('departments', 'prefill'));
+        $unit = BusinessUnit::with(['department', 'mentors.user'])->find($request->integer('unit'));
+        if (! $unit || $unit->status !== 'open') {
+            return redirect()->route('departments.index')->with('status', 'Pilih unit bisnis atau departemen terlebih dahulu.');
+        }
+
+        return view('participant.application-form', [
+            'participant' => $participant,
+            'unit' => $unit,
+            'application' => null,
+            'periodStart' => now()->toDateString(),
+            'periodEnd' => Application::periodEndFromStart(now())->toDateString(),
+        ]);
     }
 
-    public function storeApplication(Request $request, MatchingService $matching)
+    public function storeApplication(Request $request, ApplicationApprovalService $approvals)
     {
         $data = $request->validate([
             'business_unit_id' => ['required', 'exists:business_units,id'],
-            'motivation' => ['required', 'string'],
-            'preferred_period' => ['nullable', 'string', 'max:80'],
+            ...$this->registrationFieldRules($request),
         ]);
 
         $participant = $request->user()->participant;
-        abort_unless($participant?->study_program, 422, 'Lengkapi profil terlebih dahulu.');
-
-        $unit = BusinessUnit::with('mentors')->findOrFail($data['business_unit_id']);
-        $match = $matching->score($participant, $unit);
-        $mentor = $unit->mentors()->first();
-
-        $application = Application::create([
-            'participant_id' => $participant->id,
-            'department_id' => $unit->department_id,
-            'business_unit_id' => $unit->id,
-            'mentor_id' => $mentor?->id,
-            'motivation' => $data['motivation'],
-            'preferred_period' => $data['preferred_period'] ?? null,
-            'match_score' => $match['score'],
-            'relevance_warning' => $match['warning'],
-            'status' => 'submitted',
-        ]);
-
-        if ($mentor?->user) {
-            $mentor->user->notify(new ImersiAlert('Pengajuan baru', $request->user()->name.' mengajukan program di '.$unit->name, route('mentor.participants')));
+        if (! $participant?->study_program) {
+            return redirect()->route('participant.profile')->with('status', 'Lengkapi profil sebelum mendaftar program.');
         }
 
-        return redirect()->route('participant.applications')->with('status', 'Pengajuan terkirim. Skor matching '.$match['score'].'%.');
+        $data['cv_path'] = $request->file('cv')->store('application-cvs', 'public');
+
+        $unit = BusinessUnit::with('mentors')->findOrFail($data['business_unit_id']);
+        $application = $approvals->submit($participant, $unit, $data);
+
+        return redirect()
+            ->route('participant.applications.show', $application)
+            ->with('status', 'Pendaftaran dan surat persetujuan terkirim ke admin.');
+    }
+
+    public function showApplication(Request $request, Application $application)
+    {
+        $this->authorizeApplication($request, $application);
+
+        return view('participant.application-show', [
+            'application' => $application->load(['participant.user', 'department', 'businessUnit', 'mentor.user', 'program']),
+        ]);
+    }
+
+    public function editApplication(Request $request, Application $application)
+    {
+        $this->authorizeApplication($request, $application);
+        abort_unless($application->canBeRevisedByParticipant(), 403);
+
+        $start = $application->period_start ?? now();
+
+        return view('participant.application-form', [
+            'participant' => $request->user()->participant,
+            'unit' => $application->businessUnit()->with('department')->first(),
+            'application' => $application,
+            'periodStart' => $start->toDateString(),
+            'periodEnd' => ($application->period_end ?? Application::periodEndFromStart($start))->toDateString(),
+        ]);
+    }
+
+    public function updateApplication(Request $request, Application $application, ApplicationApprovalService $approvals)
+    {
+        $this->authorizeApplication($request, $application);
+
+        $data = $request->validate($this->registrationFieldRules($request, $application));
+        $data['business_unit_id'] = $application->business_unit_id;
+
+        if ($request->hasFile('cv')) {
+            if ($application->cv_path) {
+                Storage::disk('public')->delete($application->cv_path);
+            }
+
+            $data['cv_path'] = $request->file('cv')->store('application-cvs', 'public');
+        }
+
+        $approvals->resubmit($application, $data);
+
+        return redirect()
+            ->route('participant.applications.show', $application)
+            ->with('status', 'Pendaftaran dikirim ulang ke admin.');
     }
 
     public function program(Request $request)
@@ -343,6 +397,47 @@ class ParticipantController extends Controller
         $request->user()->update(['password' => Hash::make($data['password'])]);
 
         return back()->with('status', 'Kata sandi diperbarui.');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function registrationFieldRules(Request $request, ?Application $application = null): array
+    {
+        $rules = [];
+
+        foreach (Application::registrationQuestionKeys() as $key) {
+            $rules[$key] = ['required', 'string', 'min:20'];
+        }
+
+        return [
+            ...$rules,
+            'cv' => [
+                $application?->cv_path ? 'nullable' : 'required',
+                'file',
+                'mimes:pdf,doc,docx',
+                'max:5120',
+            ],
+            'period_start' => ['required', 'date'],
+            'period_end' => [
+                'required',
+                'date',
+                'after:period_start',
+                function (string $attribute, mixed $value, \Closure $fail) use ($request): void {
+                    $start = $request->date('period_start');
+                    $end = $request->date('period_end');
+                    if ($start && $end && ! Application::isTwoMonthPeriod($start, $end)) {
+                        $fail('Periode harus tepat 2 bulan.');
+                    }
+                },
+            ],
+            'declaration' => ['accepted'],
+        ];
+    }
+
+    private function authorizeApplication(Request $request, Application $application): void
+    {
+        abort_unless($application->participant_id === $request->user()->participant?->id, 403);
     }
 
     private function currentProgram(Request $request, bool $required = false): ?Program

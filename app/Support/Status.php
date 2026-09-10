@@ -4,10 +4,14 @@ namespace App\Support;
 
 class Status
 {
-    public const APPLICATION = ['draft', 'submitted', 'approved', 'revision', 'rejected'];
+    public const APPLICATION = ['draft', 'submitted', 'waiting_mentor', 'waiting_admin', 'approved', 'revision', 'rejected'];
+
     public const AGREEMENT = ['draft', 'submitted', 'revision', 'agreed'];
+
     public const PROGRAM = ['draft', 'submitted', 'revision', 'agreed', 'active', 'completed'];
+
     public const LOGBOOK = ['draft', 'submitted', 'reviewed', 'revision', 'approved'];
+
     public const OUTPUT = ['draft', 'submitted', 'revision', 'approved'];
 
     public const OUTPUT_TYPES = [
@@ -44,7 +48,9 @@ class Status
     {
         return match ($status) {
             'draft' => 'Draf',
-            'submitted' => 'Diajukan',
+            'submitted' => 'Menunggu admin',
+            'waiting_mentor' => 'Menunggu mentor',
+            'waiting_admin' => 'Menunggu pengesahan',
             'approved' => 'Disetujui',
             'revision' => 'Revisi',
             'rejected' => 'Ditolak',
@@ -61,7 +67,7 @@ class Status
     {
         return match ($status) {
             'approved', 'agreed', 'active', 'completed', 'open' => 'bg-emerald-50 text-emerald-700',
-            'submitted', 'reviewed' => 'bg-sky-50 text-sky-700',
+            'submitted', 'reviewed', 'waiting_mentor', 'waiting_admin' => 'bg-sky-50 text-sky-700',
             'revision', 'draft' => 'bg-amber-50 text-amber-700',
             'rejected' => 'bg-red-50 text-red-700',
             default => 'bg-slate-100 text-slate-600',
