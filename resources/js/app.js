@@ -26,11 +26,12 @@
                         entry.target.classList.add('is-visible');
                         entry.target.classList.remove('hidden-by-reveal');
                     } else {
-                        entry.target.classList.remove('is-visible');
-                        entry.target.classList.add('hidden-by-reveal');
+                        // Keep elements visible once they've been revealed for better UX
+                        // entry.target.classList.remove('is-visible');
+                        // entry.target.classList.add('hidden-by-reveal');
                     }
                 });
-            }, { threshold: 0.08, rootMargin: '0px 0px -20px' });
+            }, { threshold: 0.05, rootMargin: '0px 0px -50px' });
 
             revealElements.forEach((element) => revealObserver.observe(element));
 
@@ -47,13 +48,13 @@
 
             window.addEventListener('scroll', forceReveal, { passive: true });
             window.addEventListener('resize', forceReveal, { passive: true });
-            window.setTimeout(forceReveal, 400);
+            window.setTimeout(forceReveal, 500);
             window.setTimeout(() => {
                 revealElements.forEach((element) => {
                     element.classList.add('is-visible');
                     element.classList.remove('hidden-by-reveal');
                 });
-            }, 4000);
+            }, 5000);
         }
     }
 
@@ -67,7 +68,7 @@
         target.style.setProperty('--tap-x', `${event.clientX - bounds.left}px`);
         target.style.setProperty('--tap-y', `${event.clientY - bounds.top}px`);
         target.classList.add('is-tapped');
-        window.setTimeout(() => target.classList.remove('is-tapped'), 420);
+        window.setTimeout(() => target.classList.remove('is-tapped'), 480);
     });
 
     let previousScrollY = window.scrollY;
@@ -101,7 +102,7 @@
         loaderBar.classList.add('page-loader--done');
         setTimeout(() => {
             loaderBar.classList.remove('page-loader--loading', 'page-loader--done');
-        }, 500);
+        }, 700);
     });
 
     // 3. Listen to link clicks for internal page navigation
@@ -136,7 +137,7 @@
             if (reduceMotion) {
                 navigate();
             } else {
-                window.setTimeout(navigate, 180);
+                window.setTimeout(navigate, 250);
             }
         }
     });
@@ -150,4 +151,21 @@
             loaderBar.classList.add('page-loader--loading');
         }
     });
+
+    // 4. Handle login transition specifically
+    const isLoginPage = document.body.classList.contains('auth-sky') || 
+                       window.location.pathname.includes('/login') || 
+                       window.location.pathname.includes('/register');
+    
+    if (isLoginPage && !sessionStorage.getItem('login-transition')) {
+        sessionStorage.setItem('login-transition', 'true');
+        document.body.style.opacity = '0';
+        document.body.style.transform = 'translateY(20px)';
+        
+        window.addEventListener('load', () => {
+            document.body.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+            document.body.style.opacity = '1';
+            document.body.style.transform = 'translateY(0)';
+        });
+    }
 })();

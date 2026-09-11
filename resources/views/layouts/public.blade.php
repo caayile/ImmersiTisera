@@ -22,6 +22,14 @@
 <body class="bg-white text-ink" x-data="{ open: false }">
 <div id="brand-splash" class="brand-splash" aria-label="Memuat Magang Dosen" role="status">
     <div class="brand-splash__glow"></div>
+    <div class="brand-splash__particles">
+        <div class="brand-splash__particle"></div>
+        <div class="brand-splash__particle"></div>
+        <div class="brand-splash__particle"></div>
+        <div class="brand-splash__particle"></div>
+        <div class="brand-splash__particle"></div>
+        <div class="brand-splash__particle"></div>
+    </div>
     <div id="brand-splash-mark" class="brand-splash__mark">
         <img src="{{ asset('images/logo-tsu.svg') }}" alt="TSU" class="brand-splash__logo">
     </div>
@@ -144,7 +152,7 @@
                 splash.classList.add('brand-splash--morphing');
 
                 // Animate Logo
-                splashMark.style.transition = 'transform 1.15s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 1.0s cubic-bezier(0.22, 1, 0.36, 1), border-radius 1.0s cubic-bezier(0.22, 1, 0.36, 1), background-color 1.0s cubic-bezier(0.22, 1, 0.36, 1), padding 1.0s cubic-bezier(0.22, 1, 0.36, 1)';
+                splashMark.style.transition = 'transform 1.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 1.1s cubic-bezier(0.4, 0, 0.2, 1), border-radius 1.1s cubic-bezier(0.4, 0, 0.2, 1), background-color 1.1s cubic-bezier(0.4, 0, 0.2, 1), padding 1.1s cubic-bezier(0.4, 0, 0.2, 1)';
                 splashMark.style.transform = `translate3d(${dxLogo}px, ${dyLogo}px, 0) scale(${scaleLogo})`;
                 splashMark.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.08)';
                 splashMark.style.padding = '0';
@@ -157,19 +165,19 @@
                 }
 
                 // Animate Text
-                splashWordmark.style.transition = 'transform 1.15s cubic-bezier(0.22, 1, 0.36, 1)';
+                splashWordmark.style.transition = 'transform 1.3s cubic-bezier(0.4, 0, 0.2, 1)';
                 splashWordmark.style.transform = `translate3d(${dxText}px, ${dyText}px, 0) scale(${scaleText})`;
 
                 setTimeout(() => {
                     navLogo.style.opacity = '1';
                     navBrandText.style.opacity = '1';
                     splash.remove();
-                }, 1150);
+                }, 1300);
             } else {
                 splash.classList.add('brand-splash--leaving');
-                setTimeout(() => splash.remove(), 450);
+                setTimeout(() => splash.remove(), 600);
             }
-        }, 1800);
+        }, 2000);
     })();
 </script>
 </body>

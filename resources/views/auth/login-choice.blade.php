@@ -60,11 +60,13 @@
         .tab-content {
             display: none;
             opacity: 0;
-            transition: opacity 0.2s ease-in-out;
+            transform: translateY(10px);
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
         }
         .tab-content.active {
             display: block;
             opacity: 1;
+            transform: translateY(0);
         }
 
         ::-webkit-scrollbar {
@@ -370,33 +372,39 @@
             const loginLabels = document.querySelectorAll('.role-label-tab-login');
             const regLabels = document.querySelectorAll('.role-label-tab-reg');
 
-            if (tab === 'login') {
-                btnLogin.className = 'flex-1 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all duration-200 bg-white text-charcoal shadow-sm';
-                btnReg.className = 'flex-1 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all duration-200 text-gray-500 hover:text-charcoal';
-                
-                tabLogin.classList.add('active');
-                tabReg.classList.remove('active');
+            // Fade out current tab first
+            const currentTabEl = tab === 'login' ? tabReg : tabLogin;
+            const newTabEl = tab === 'login' ? tabLogin : tabReg;
+            
+            currentTabEl.classList.remove('active');
+            
+            setTimeout(() => {
+                if (tab === 'login') {
+                    btnLogin.className = 'flex-1 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all duration-300 bg-white text-charcoal shadow-sm';
+                    btnReg.className = 'flex-1 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all duration-300 text-gray-500 hover:text-charcoal';
+                    
+                    tabLogin.classList.add('active');
 
-                loginLabels.forEach(el => el.classList.remove('hidden'));
-                loginLabels.forEach(el => el.classList.add('inline'));
-                regLabels.forEach(el => el.classList.remove('inline'));
-                regLabels.forEach(el => el.classList.add('hidden'));
+                    loginLabels.forEach(el => el.classList.remove('hidden'));
+                    loginLabels.forEach(el => el.classList.add('inline'));
+                    regLabels.forEach(el => el.classList.remove('inline'));
+                    regLabels.forEach(el => el.classList.add('hidden'));
 
-                footerText.innerHTML = 'Belum memiliki akun kolaborasi? <button type="button" onclick="switchMainTab(\'register\')" class="font-bold text-forest hover:underline">Daftar sekarang</button>';
-            } else {
-                btnReg.className = 'flex-1 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all duration-200 bg-white text-charcoal shadow-sm';
-                btnLogin.className = 'flex-1 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all duration-200 text-gray-500 hover:text-charcoal';
+                    footerText.innerHTML = 'Belum memiliki akun kolaborasi? <button type="button" onclick="switchMainTab(\'register\')" class="font-bold text-forest hover:underline">Daftar sekarang</button>';
+                } else {
+                    btnReg.className = 'flex-1 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all duration-300 bg-white text-charcoal shadow-sm';
+                    btnLogin.className = 'flex-1 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all duration-300 text-gray-500 hover:text-charcoal';
 
-                tabReg.classList.add('active');
-                tabLogin.classList.remove('active');
+                    tabReg.classList.add('active');
 
-                loginLabels.forEach(el => el.classList.remove('inline'));
-                loginLabels.forEach(el => el.classList.add('hidden'));
-                regLabels.forEach(el => el.classList.remove('hidden'));
-                regLabels.forEach(el => el.classList.add('inline'));
+                    loginLabels.forEach(el => el.classList.remove('inline'));
+                    loginLabels.forEach(el => el.classList.add('hidden'));
+                    regLabels.forEach(el => el.classList.remove('hidden'));
+                    regLabels.forEach(el => el.classList.add('inline'));
 
-                footerText.innerHTML = 'Sudah memiliki akun terdaftar? <button type="button" onclick="switchMainTab(\'login\')" class="font-bold text-forest hover:underline">Masuk sekarang</button>';
-            }
+                    footerText.innerHTML = 'Sudah memiliki akun terdaftar? <button type="button" onclick="switchMainTab(\'login\')" class="font-bold text-forest hover:underline">Masuk sekarang</button>';
+                }
+            }, 150);
         }
 
         function updateRoleUI(role) {
@@ -409,29 +417,44 @@
             const containerMentorDept = document.getElementById('container-mentor-dept');
             const containerDosenInstansi = document.getElementById('container-dosen-instansi');
 
-            if (role === 'dosen') {
-                loginTitle.innerText = 'Masuk Portal Dosen';
-                regTitle.innerText = 'Pendaftaran Dosen TSU';
-                formLogin.action = routes.loginUser;
-                formReg.action = routes.registerUser;
-                btnRegText.innerText = 'Kirim Pendaftaran Dosen';
-                
-                containerMentorDept.classList.add('hidden');
-                containerMentorDept.classList.remove('block');
-                containerDosenInstansi.classList.add('block');
-                containerDosenInstansi.classList.remove('hidden');
-            } else {
-                loginTitle.innerText = 'Masuk Portal Mentor';
-                regTitle.innerText = 'Pendaftaran Mentor Industri';
-                formLogin.action = routes.loginMentor;
-                formReg.action = routes.registerMentor;
-                btnRegText.innerText = 'Kirim Pendaftaran Mentor';
+            // Add smooth transition
+            const animatedElements = [loginTitle, regTitle, btnRegText];
+            animatedElements.forEach(el => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(-5px)';
+                el.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
+            });
 
-                containerMentorDept.classList.add('block');
-                containerMentorDept.classList.remove('hidden');
-                containerDosenInstansi.classList.add('hidden');
-                containerDosenInstansi.classList.remove('block');
-            }
+            setTimeout(() => {
+                if (role === 'dosen') {
+                    loginTitle.innerText = 'Masuk Portal Dosen';
+                    regTitle.innerText = 'Pendaftaran Dosen TSU';
+                    formLogin.action = routes.loginUser;
+                    formReg.action = routes.registerUser;
+                    btnRegText.innerText = 'Kirim Pendaftaran Dosen';
+                    
+                    containerMentorDept.classList.add('hidden');
+                    containerMentorDept.classList.remove('block');
+                    containerDosenInstansi.classList.add('block');
+                    containerDosenInstansi.classList.remove('hidden');
+                } else {
+                    loginTitle.innerText = 'Masuk Portal Mentor';
+                    regTitle.innerText = 'Pendaftaran Mentor Industri';
+                    formLogin.action = routes.loginMentor;
+                    formReg.action = routes.registerMentor;
+                    btnRegText.innerText = 'Kirim Pendaftaran Mentor';
+
+                    containerMentorDept.classList.add('block');
+                    containerMentorDept.classList.remove('hidden');
+                    containerDosenInstansi.classList.add('hidden');
+                    containerDosenInstansi.classList.remove('block');
+                }
+
+                animatedElements.forEach(el => {
+                    el.style.opacity = '1';
+                    el.style.transform = 'translateY(0)';
+                });
+            }, 200);
         }
 
         function togglePassword(inputId, btn) {
