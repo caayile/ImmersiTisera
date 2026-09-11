@@ -1,5 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <rect width="64" height="64" rx="16" fill="#016e6f"/>
-  <path fill="#ffffff" d="M 16 16 L 16 28 L 24 32 L 24 52 L 32 55 L 32 35 L 36 36 L 36 22 L 32 20 L 16 16 Z"/>
-  <path fill="#ffffff" d="M 48 16 L 48 28 L 40 32 L 40 52 L 32 55 L 32 35 L 28 36 L 28 22 L 32 20 L 48 16 Z"/>
+  <!-- Open book shape -->
+  <path fill="#ffffff" d="M 8 16 L 8 44 L 32 48 L 32 20 L 8 16 Z"/>
+  <path fill="#ffffff" d="M 32 20 L 32 48 L 56 44 L 56 16 L 32 20 Z"/>
+  <!-- Book spine -->
+  <path fill="#016e6f" d="M 30 18 L 30 50 L 34 50 L 34 18 Z"/>
+  <!-- T letter -->
+  <text x="18" y="38" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#016e6f" text-anchor="middle">T</text>
+  <!-- S letter -->
+  <text x="46" y="38" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#016e6f" text-anchor="middle">S</text>
 </svg>
