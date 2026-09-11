@@ -101,10 +101,12 @@ class AdminController extends Controller
             'subtitle' => ['nullable', 'string'],
             'description' => ['nullable', 'string'],
             'area' => ['nullable', 'string'],
+            'map_url' => ['nullable', 'string', 'max:500'],
             'image' => ['nullable', 'image', 'max:5120'],
         ]);
         Department::create([
             ...collect($data)->except('image')->toArray(),
+            'map_url' => Department::embedMapUrl($data['map_url'] ?? null),
             'slug' => str($data['name'])->slug(),
             'status' => 'active',
             'image_path' => $request->hasFile('image') ? $this->storeDepartmentImage($request->file('image')) : null,
@@ -120,12 +122,14 @@ class AdminController extends Controller
             'subtitle' => ['nullable', 'string'],
             'description' => ['nullable', 'string'],
             'area' => ['nullable', 'string'],
+            'map_url' => ['nullable', 'string', 'max:500'],
             'status' => ['required', Rule::in(['active', 'disabled'])],
             'image' => ['nullable', 'image', 'max:5120'],
         ]);
 
         $payload = collect($data)->except('image')->toArray();
         $payload['slug'] = Str::slug($data['name']);
+        $payload['map_url'] = Department::embedMapUrl($data['map_url'] ?? null);
 
         if ($request->hasFile('image')) {
             $payload['image_path'] = $this->storeDepartmentImage($request->file('image'), $department->image_path);
@@ -167,8 +171,23 @@ class AdminController extends Controller
     public function units()
     {
         return view('admin.units', [
-            'units' => BusinessUnit::with(['department', 'mentors.user'])->get(),
-            'departments' => Department::orderBy('name')->get(),
+            'departments' => Department::withCount('businessUnits')->orderBy('name')->get(),
+        ]);
+    }
+
+    public function showDepartmentUnits(Department $department)
+    {
+        return view('admin.units-show', [
+            'department' => $department,
+            'units' => $department->businessUnits()->with(['mentors.user'])->orderBy('name')->get(),
+            'mentors' => Mentor::with('user')->get(),
+        ]);
+    }
+
+    public function editUnit(BusinessUnit $businessUnit)
+    {
+        return view('admin.units-edit', [
+            'businessUnit' => $businessUnit->load(['department', 'mentors.user']),
             'mentors' => Mentor::with('user')->get(),
         ]);
     }
@@ -185,6 +204,8 @@ class AdminController extends Controller
             'requirements' => ['nullable', 'string'],
             'relevant_programs' => ['nullable', 'string'],
             'period' => ['nullable', 'string', 'max:120'],
+            'registration_deadline' => ['nullable', 'date'],
+            'registration_start' => ['nullable', 'date'],
             'mentor_id' => ['nullable', 'exists:mentors,id'],
             'image' => ['nullable', 'image', 'max:5120'],
         ]);
@@ -216,6 +237,8 @@ class AdminController extends Controller
             'requirements' => ['nullable', 'string'],
             'relevant_programs' => ['nullable', 'string'],
             'period' => ['nullable', 'string', 'max:120'],
+            'registration_deadline' => ['nullable', 'date'],
+            'registration_start' => ['nullable', 'date'],
             'status' => ['required', Rule::in(['open', 'closed'])],
             'mentor_id' => ['nullable', 'exists:mentors,id'],
             'image' => ['nullable', 'image', 'max:5120'],

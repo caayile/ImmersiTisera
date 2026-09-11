@@ -98,6 +98,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::put('/departments/{department}', [AdminController::class, 'updateDepartment'])->name('departments.update');
     Route::delete('/departments/{department}', [AdminController::class, 'destroyDepartment'])->name('departments.destroy');
     Route::get('/business-units', [AdminController::class, 'units'])->name('units');
+    Route::get('/business-units/{department}', [AdminController::class, 'showDepartmentUnits'])->name('units.show');
+    Route::get('/business-units/{businessUnit}/edit', [AdminController::class, 'editUnit'])->name('units.edit');
     Route::post('/business-units', [AdminController::class, 'storeUnit']);
     Route::put('/business-units/{businessUnit}', [AdminController::class, 'updateUnit'])->name('units.update');
     Route::delete('/business-units/{businessUnit}', [AdminController::class, 'destroyUnit'])->name('units.destroy');
