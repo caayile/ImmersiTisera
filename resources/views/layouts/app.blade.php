@@ -49,6 +49,7 @@
             ['Ringkasan', 'admin.dashboard'],
             ['Manajemen Pengguna', 'admin.users'],
             ['Unit Bisnis', 'admin.departments'],
+            ['Departemen', 'admin.units'],
             ['Mentor', 'admin.mentors'],
             ['Peserta', 'admin.participants'],
             ['Program', 'admin.programs'],
