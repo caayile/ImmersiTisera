@@ -5,16 +5,10 @@
     $dept = $businessUnit->department;
     $location = $dept?->area ?: 'Solo, Indonesia';
 
-    $mapUrl = null;
-    if ($dept && $dept->map_url) {
-        $mapLink = trim($dept->map_url);
-        if (str_contains($mapLink, 'output=embed')) {
-            $mapUrl = $mapLink;
-        } elseif (preg_match('/@(-?[\d.]+),(-?[\d.]+)/', $mapLink, $m)) {
-            $mapUrl = 'https://maps.google.com/maps?q='.$m[1].','.$m[2].'&z=17&output=embed';
-        }
-    }
-    $mapUrl = $mapUrl ?: 'https://maps.google.com/maps?q=' . urlencode(($dept?->name ?: 'TSU') . ' ' . $location) . '&t=&z=14&output=embed';
+    $mapEmbed = $dept?->mapEmbedSrc()
+        ?: 'https://www.google.com/maps?q='.rawurlencode($location).'&z=15&hl=id&output=embed';
+    $mapOpen = $dept?->mapExternalUrl()
+        ?: 'https://www.google.com/maps/search/?api=1&query='.rawurlencode($location);
     $isOpen = $businessUnit->isOpen();
     $hasWindow = $businessUnit->isScheduled();
     $deadline = $businessUnit->registration_deadline
@@ -32,14 +26,12 @@
 
 <div class="mx-auto max-w-6xl px-5 py-12">
     @if($showHero)
-        <div class="relative h-52 overflow-hidden rounded-3xl bg-gradient-to-br from-[#16352c] to-primary sm:h-64">
-            <img src="{{ $image }}" alt="{{ $businessUnit->name }}" class="absolute inset-0 h-full w-full object-cover">
-            <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent"></div>
-            <div class="absolute inset-x-0 bottom-0 p-6 sm:p-8">
+        <x-fill-image :src="$image" :alt="$businessUnit->name" class="h-72 w-full rounded-3xl sm:h-80">
+            <div class="pointer-events-none absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/75 via-black/25 to-transparent p-6 sm:p-8">
                 <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-secondary">{{ $dept?->name ?: 'Unit Bisnis' }}</p>
                 <h1 class="mt-1 text-2xl font-semibold text-white sm:text-3xl">{{ $businessUnit->name }}</h1>
             </div>
-        </div>
+        </x-fill-image>
     @endif
 
     <div class="{{ $showHero ? 'mt-8 ' : '' }}gap-8 lg:grid lg:grid-cols-[1fr_400px] lg:items-start">
@@ -177,26 +169,11 @@
                 @endif
             </div>
 
-            {{-- MAP LOKASI --}}
-            <div class="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-                <div class="flex items-center justify-between gap-3 border-b border-gray-100 px-6 py-4">
-                    <h3 class="flex items-center gap-2 text-sm font-bold text-ink">
-                        <span class="material-symbols-outlined text-[18px] text-primary-dark">location_on</span>
-                        Lokasi Magang
-                    </h3>
-                    <span class="text-xs text-muted">{{ $location }}</span>
-                </div>
-                <div class="h-48 overflow-hidden lg:h-56">
-                    <iframe
-                        src="{{ $mapUrl }}"
-                        title="Lokasi {{ $dept?->name ?: 'unit bisnis' }}"
-                        class="h-full w-full border-0"
-                        loading="lazy"
-                        referrerpolicy="no-referrer-when-downgrade"
-                        allowfullscreen
-                    ></iframe>
-                </div>
-            </div>
+            <x-location-map
+                :embed="$mapEmbed"
+                :open="$mapOpen"
+                :name="$dept?->name ?: 'unit bisnis'"
+            />
         </aside>
     </div>
 </div>

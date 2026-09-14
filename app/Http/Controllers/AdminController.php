@@ -109,12 +109,12 @@ class AdminController extends Controller
             'subtitle' => ['nullable', 'string'],
             'description' => ['nullable', 'string'],
             'area' => ['nullable', 'string'],
-            'map_url' => ['nullable', 'string', 'max:500'],
+            'map_url' => ['nullable', 'string', 'max:8192'],
             'image' => ['nullable', 'image', 'max:5120'],
         ]);
         Department::create([
             ...collect($data)->except('image')->toArray(),
-            'map_url' => Department::embedMapUrl($data['map_url'] ?? null),
+            'map_url' => self::normalizedMapUrl($data['map_url'] ?? null),
             'slug' => str($data['name'])->slug(),
             'status' => 'active',
             'image_path' => $request->hasFile('image') ? $this->storeDepartmentImage($request->file('image')) : null,
@@ -130,14 +130,14 @@ class AdminController extends Controller
             'subtitle' => ['nullable', 'string'],
             'description' => ['nullable', 'string'],
             'area' => ['nullable', 'string'],
-            'map_url' => ['nullable', 'string', 'max:500'],
+            'map_url' => ['nullable', 'string', 'max:8192'],
             'status' => ['required', Rule::in(['active', 'disabled'])],
             'image' => ['nullable', 'image', 'max:5120'],
         ]);
 
         $payload = collect($data)->except('image')->toArray();
         $payload['slug'] = Str::slug($data['name']);
-        $payload['map_url'] = Department::embedMapUrl($data['map_url'] ?? null);
+        $payload['map_url'] = self::normalizedMapUrl($data['map_url'] ?? null);
 
         if ($request->hasFile('image')) {
             $payload['image_path'] = $this->storeDepartmentImage($request->file('image'), $department->image_path);
@@ -165,6 +165,13 @@ class AdminController extends Controller
         $this->deleteDepartmentImage($previous);
 
         return $file->store('departments', 'public');
+    }
+
+    private static function normalizedMapUrl(?string $url): ?string
+    {
+        $url = trim((string) $url);
+
+        return $url !== '' ? $url : null;
     }
 
     private function deleteDepartmentImage(?string $path): void

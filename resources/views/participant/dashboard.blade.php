@@ -95,7 +95,7 @@
                     <template x-for="(slide, i) in slides" :key="slide.id">
                         <a
                             :href="slide.url"
-                            class="partner-card absolute inset-y-0 left-1/2 w-[78%] max-w-3xl overflow-hidden rounded-3xl shadow-2xl transition-all duration-500 ease-out sm:w-[70%]"
+                            class="partner-card absolute inset-y-0 left-1/2 flex w-[88%] max-w-3xl items-center justify-center overflow-hidden rounded-3xl bg-[#0d241e] shadow-2xl transition-all duration-500 ease-out sm:w-[78%]"
                             :style="`
                                 transform: translateX(calc(-50% + ${offset(i) * 58}%)) scale(${offset(i) === 0 ? 1 : 0.86});
                                 z-index: ${20 - Math.abs(offset(i))};
@@ -107,8 +107,8 @@
                             <template x-if="slide.image">
                                 <img :src="slide.image" :alt="slide.name" class="absolute inset-0 h-full w-full object-cover">
                             </template>
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent"></div>
-                            <div class="absolute inset-x-0 bottom-0 p-5 sm:p-7">
+                            <div class="absolute inset-0 z-10 bg-gradient-to-t from-black/75 via-black/25 to-transparent"></div>
+                            <div class="absolute inset-x-0 bottom-0 z-20 p-5 sm:p-7">
                                 <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-secondary" x-text="slide.area"></p>
                                 <h2 class="mt-1 text-2xl font-semibold text-white sm:text-3xl" x-text="slide.name"></h2>
                                 <p class="mt-2 line-clamp-2 max-w-xl text-sm text-white/80" x-text="slide.description"></p>

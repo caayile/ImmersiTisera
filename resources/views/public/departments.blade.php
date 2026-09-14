@@ -56,11 +56,11 @@
                 <span class="material-symbols-outlined">chevron_right</span>
             </button>
 
-            <div class="relative mx-auto h-[220px] sm:h-[280px] md:h-[340px]">
+            <div class="relative mx-auto h-[240px] sm:h-[320px] md:h-[400px]">
                 <template x-for="(slide, i) in slides" :key="slide.id">
                     <a
                         :href="slide.url"
-                        class="partner-card absolute inset-y-0 left-1/2 w-[82%] max-w-3xl overflow-hidden rounded-3xl shadow-2xl transition-all duration-500 ease-out sm:w-[72%]"
+                        class="partner-card absolute inset-y-0 left-1/2 flex w-[88%] max-w-3xl items-center justify-center overflow-hidden rounded-3xl bg-[#0d241e] shadow-2xl transition-all duration-500 ease-out sm:w-[78%]"
                         :style="`
                             transform: translateX(calc(-50% + ${offset(i) * 58}%)) scale(${offset(i) === 0 ? 1 : 0.86});
                             z-index: ${20 - Math.abs(offset(i))};
@@ -71,8 +71,8 @@
                         <template x-if="slide.image">
                             <img :src="slide.image" :alt="slide.title" class="absolute inset-0 h-full w-full object-cover">
                         </template>
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-black/10"></div>
-                        <div class="absolute inset-x-0 bottom-0 p-5 sm:p-7">
+                        <div class="pointer-events-none absolute inset-0 z-10 bg-gradient-to-t from-black/80 via-black/10 to-transparent"></div>
+                        <div class="absolute inset-x-0 bottom-0 z-20 p-5 sm:p-7">
                             <h2 class="text-2xl font-semibold text-white sm:text-3xl" x-text="slide.title"></h2>
                             <p class="mt-2 line-clamp-2 max-w-xl text-sm text-white/85" x-text="slide.subtitle"></p>
                         </div>
@@ -113,10 +113,10 @@
                 $image = $department->imageUrl() ?? ($slideImages[$department->slug] ?? $background);
             @endphp
             <article class="flex flex-col overflow-hidden rounded-2xl border border-line bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-primary hover:shadow-md">
-                <a href="{{ route('departments.show', $department) }}" class="relative block h-44 overflow-hidden bg-gradient-to-br from-[#16352c] to-primary">
-                    <img src="{{ $image }}" alt="{{ $department->name }}" class="absolute inset-0 h-full w-full object-cover transition duration-500 hover:scale-105">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent"></div>
-                    <span class="absolute bottom-3 left-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/90">{{ $department->area ?: 'Unit Bisnis' }}</span>
+                <a href="{{ route('departments.show', $department) }}">
+                    <x-fill-image :src="$image" :alt="$department->name" class="h-52 w-full">
+                        <span class="absolute bottom-3 left-4 z-20 rounded-md bg-black/55 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-white">{{ $department->area ?: 'Unit Bisnis' }}</span>
+                    </x-fill-image>
                 </a>
                 <div class="flex flex-1 flex-col p-5">
                     <h3 class="text-lg font-semibold">{{ $department->name }}</h3>
