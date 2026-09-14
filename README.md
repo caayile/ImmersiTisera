@@ -9,7 +9,8 @@ Kerangka program: **IDENTIFY → IMMERSION → INTERACTION → IMPACT → INTEGR
 ## Stack
 
 - Laravel 13 (API + Blade) + React (Vite) + Tailwind CSS
-- MySQL (atau SQLite untuk development lokal)
+- PostgreSQL lokal (default), MySQL/SQL, dan Neon Postgres, bisa aktif bersamaan
+- SQLite hanya untuk tes otomatis
 - Session authentication + role middleware
 - Eloquent, validation, storage upload, database notifications, Chart.js
 
@@ -26,6 +27,25 @@ composer run dev
 ```
 
 Buka [http://127.0.0.1:8000](http://127.0.0.1:8000)
+
+## Database
+
+Default koneksi adalah **PostgreSQL lokal** (`DB_CONNECTION=pgsql`). MySQL (`mysql`) dan Neon (`neon`) tetap terdaftar dan bisa dipakai bersamaan.
+
+1. Buat database `imersi` di PostgreSQL dan/atau MySQL.
+2. Isi kredensial di `.env`:
+   - PostgreSQL lokal: `DB_HOST`, `DB_PORT=5432`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`
+   - MySQL: `MYSQL_HOST`, `MYSQL_PORT=3306`, `MYSQL_DATABASE`, `MYSQL_USERNAME`, `MYSQL_PASSWORD`
+   - Neon: `NEON_DATABASE_URL` (salin connection string pooled dari Neon Console; host mengandung `-pooler`)
+3. Jalankan migrate di koneksi yang dipakai:
+
+```bash
+php artisan migrate:fresh --seed
+php artisan migrate --database=mysql --force
+php artisan migrate --database=neon --force
+```
+
+Ganti default ke MySQL dengan `DB_CONNECTION=mysql`, atau ke Neon dengan `DB_CONNECTION=neon`. Jika MySQL jadi default, isi `PGSQL_*` agar koneksi PostgreSQL lokal tidak ikut memakai host/port MySQL.
 
 `composer run dev` menyalakan server Laravel dan Vite sekaligus. Satu terminal sudah cukup.
 
