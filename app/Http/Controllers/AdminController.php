@@ -94,6 +94,14 @@ class AdminController extends Controller
         ]);
     }
 
+    public function showDepartment(Department $department)
+    {
+        return view('admin.departments-show', [
+            'department' => $department->loadCount('businessUnits'),
+            'units' => $department->businessUnits()->orderBy('name')->get(),
+        ]);
+    }
+
     public function storeDepartment(Request $request)
     {
         $data = $request->validate([
