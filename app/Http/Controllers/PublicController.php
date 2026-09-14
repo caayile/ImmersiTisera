@@ -50,25 +50,10 @@ class PublicController extends Controller
 
     public function departments()
     {
-        $slugs = [
-            'tspm',
-            'tsic',
-            'k33',
-            'wjl',
-            'assalam-hypermarket',
-            'sd-al-firdaus',
-            'puspa-holistic-integrative-care',
-        ];
-
-        $departments = Department::with(['businessUnits' => fn ($query) => $query->where('status', 'open')])
-            ->whereIn('slug', $slugs)
-            ->get()
-            ->keyBy('slug');
-
-        $departments = collect($slugs)
-            ->map(fn ($slug) => $departments[$slug] ?? null)
-            ->filter()
-            ->values();
+        $departments = Department::query()
+            ->with(['businessUnits' => fn ($query) => $query->where('status', 'open')])
+            ->orderBy('id')
+            ->get();
 
         $hero = HeroSetting::forPage('departments');
         $heroSlides = HeroSlide::forPage('departments')
