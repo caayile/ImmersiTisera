@@ -39,7 +39,6 @@
         <input name="name" value="{{ $department->name }}" placeholder="Nama unit bisnis" class="rounded-lg border border-line px-3 py-2 text-sm" required>
         <input name="subtitle" value="{{ $department->subtitle }}" placeholder="Subtitle (nama lengkap, mis. Tiga Serangkai Pustaka Mandiri)" class="rounded-lg border border-line px-3 py-2 text-sm">
         <input name="area" value="{{ $department->area }}" placeholder="Area / Lokasi (mis. Surakarta)" class="rounded-lg border border-line px-3 py-2 text-sm">
-        <input name="map_url" value="{{ $department->map_url }}" placeholder="Link Google Maps / peta (opsional)" class="rounded-lg border border-line px-3 py-2 text-sm">
         <textarea name="description" placeholder="Deskripsi" class="rounded-lg border border-line px-3 py-2 text-sm md:col-span-2">{{ $department->description }}</textarea>
         <div class="flex items-center gap-3">
             <input type="file" name="image" accept="image/*" class="flex-1 rounded-lg border border-line px-3 py-2 text-sm">
@@ -55,23 +54,6 @@
                 <span class="material-symbols-outlined text-[18px]">save</span>
             </button>
         </div>
-    </form>
-</section>
-
-{{-- ===== PENGATURAN LOKASI ===== --}}
-<section class="mt-6 rounded-2xl border border-line bg-white p-5">
-    <h2 class="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-ink">
-        <span class="material-symbols-outlined text-[18px] text-primary-dark">location_on</span>
-        Pengaturan Lokasi
-    </h2>
-    <p class="mt-1 text-xs text-muted">Isi lokasi yang ditampilkan di peta halaman publik. Kosongkan peta untuk memakai pencarian area otomatis.</p>
-    <form method="POST" action="{{ route('admin.departments.update', $department) }}" enctype="multipart/form-data" class="mt-4 grid gap-3 sm:grid-cols-[1fr_2fr_auto]">
-        @csrf @method('PUT')
-        <input type="hidden" name="name" value="{{ $department->name }}">
-        <input type="hidden" name="status" value="{{ $department->status }}">
-        <input name="area" value="{{ $department->area }}" placeholder="Area / Lokasi (mis. Surakarta)" class="rounded-lg border border-line px-3 py-2 text-sm">
-        <input name="map_url" value="{{ $department->map_url }}" placeholder="Link Google Maps / peta (opsional)" class="rounded-lg border border-line px-3 py-2 text-sm">
-        <button class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white">Simpan lokasi</button>
     </form>
 </section>
 
