@@ -90,7 +90,7 @@ class PublicController extends Controller
 
     public function department(Department $department)
     {
-        $department->load(['businessUnits' => fn ($q) => $q->where('status', 'open')]);
+        $department->load('businessUnits');
         $hero = HeroSetting::forPage('departments');
 
         return view('public.department', compact('department', 'hero'));
