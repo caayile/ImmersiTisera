@@ -3,103 +3,101 @@
 namespace App\Http\Controllers;
 
 use App\Models\Agreement;
-use App\Models\Program;
+use App\Support\ApiPresenter;
 use Illuminate\Http\Request;
 
 class AgreementController extends Controller
 {
+    public function __construct(private ApiPresenter $presenter) {}
+
     public function show(Request $request, Agreement $agreement)
     {
         $this->authorizeAccess($request, $agreement);
 
-        return response()->json($agreement->load(['dosen.dosenProfile', 'mentor.mentorProfile', 'opportunity', 'program']));
+        return response()->json($this->presenter->agreement($agreement));
     }
 
     public function update(Request $request, Agreement $agreement)
     {
         $this->authorizeAccess($request, $agreement);
 
-        if (! in_array($agreement->status, ['draft', 'waiting_mentor', 'waiting_dosen'], true)) {
-            return response()->json(['message' => 'Agreement yang sudah confirmed tidak bisa diubah.'], 422);
+        if (! in_array($agreement->status, ['draft', 'submitted', 'revision'], true)) {
+            return response()->json(['message' => 'Perjanjian yang sudah disepakati tidak bisa diubah.'], 422);
         }
 
         $data = $request->validate([
             'shared_goal' => ['sometimes', 'string'],
             'problem_opportunity' => ['sometimes', 'string'],
-            'primary_activity' => ['sometimes', 'in:penugasan,observasi,riset'],
-            'supporting_activity' => ['nullable', 'in:penugasan,observasi,riset'],
+            'primary_activity' => ['sometimes', 'string'],
+            'supporting_activity' => ['nullable', 'string'],
             'promised_output' => ['sometimes', 'string'],
             'benefit_dosen' => ['sometimes', 'string'],
             'benefit_industry' => ['sometimes', 'string'],
             'success_indicator' => ['sometimes', 'string'],
             'potential_collaboration' => ['nullable', 'string'],
-            'period_start' => ['nullable', 'date'],
-            'period_end' => ['nullable', 'date'],
         ]);
+
+        $indicators = isset($data['success_indicator'])
+            ? array_values(array_filter(array_map('trim', explode(',', $data['success_indicator']))))
+            : $agreement->success_indicators;
 
         $agreement->update([
-            ...$data,
+            'objective' => $data['shared_goal'] ?? $agreement->objective,
+            'problem_statement' => $data['problem_opportunity'] ?? $agreement->problem_statement,
+            'activities' => trim(($data['primary_activity'] ?? $agreement->activities).' '.($data['supporting_activity'] ?? '')),
+            'main_output' => $data['promised_output'] ?? $agreement->main_output,
+            'participant_benefit' => $data['benefit_dosen'] ?? $agreement->participant_benefit,
+            'business_benefit' => $data['benefit_industry'] ?? $agreement->business_benefit,
+            'success_indicators' => $indicators,
+            'collaboration_potential' => $data['potential_collaboration'] ?? $agreement->collaboration_potential,
             'status' => 'draft',
+            'participant_approved_at' => null,
             'mentor_approved_at' => null,
-            'dosen_approved_at' => null,
         ]);
 
-        return response()->json($agreement->fresh(['dosen', 'mentor', 'opportunity']));
+        return response()->json($this->presenter->agreement($agreement->fresh()));
     }
 
     public function approve(Request $request, Agreement $agreement)
     {
         $this->authorizeAccess($request, $agreement);
         $user = $request->user();
+        $program = $agreement->program;
 
         if ($user->isMentor()) {
             $agreement->update([
                 'mentor_approved_at' => now(),
-                'status' => $agreement->dosen_approved_at ? 'agreed' : 'waiting_dosen',
+                'status' => $agreement->participant_approved_at ? 'agreed' : 'submitted',
             ]);
-        } elseif ($user->isUser()) {
-            if (! $agreement->mentor_approved_at) {
-                return response()->json(['message' => 'Menunggu persetujuan mentor terlebih dahulu.'], 422);
-            }
-
+        } elseif ($user->isParticipant()) {
             $agreement->update([
-                'dosen_approved_at' => now(),
-                'status' => 'agreed',
+                'participant_approved_at' => now(),
+                'status' => $agreement->mentor_approved_at ? 'agreed' : 'submitted',
             ]);
         }
 
         $agreement->refresh();
 
-        if ($agreement->status === 'agreed' && ! $agreement->program) {
-            $start = $agreement->period_start ?? now();
-            $end = $agreement->period_end ?? now()->addDays(60);
-
-            $program = Program::create([
-                'agreement_id' => $agreement->id,
-                'dosen_id' => $agreement->dosen_id,
-                'mentor_id' => $agreement->mentor_id,
-                'opportunity_id' => $agreement->opportunity_id,
+        if ($agreement->status === 'agreed' && $program) {
+            $program->update([
                 'status' => 'active',
-                'current_phase' => 'discover',
-                'start_date' => $start,
-                'end_date' => $end,
-                'maturity_level' => 1,
+                'start_date' => $program->start_date ?: now()->toDateString(),
+                'end_date' => $program->end_date ?: now()->addDays(60)->toDateString(),
             ]);
-
-            $agreement->update(['status' => 'active']);
-
-            return response()->json($agreement->fresh(['program', 'dosen', 'mentor', 'opportunity']));
+            $program->seedTimeline();
         }
 
-        return response()->json($agreement->fresh(['program', 'dosen', 'mentor', 'opportunity']));
+        return response()->json($this->presenter->agreement($agreement->fresh(['program'])));
     }
 
     private function authorizeAccess(Request $request, Agreement $agreement): void
     {
         $user = $request->user();
+        $program = $agreement->program;
+
         $allowed = $user->isAdmin()
-            || $agreement->dosen_id === $user->id
-            || $agreement->mentor_id === $user->id;
+            || $program?->participant?->user_id === $user->id
+            || $program?->mentor?->user_id === $user->id;
 
         abort_unless($allowed, 403);
     }

@@ -24,7 +24,10 @@ function Guard({ children, roles, allowUnverified = false }) {
     return <div className="grid min-h-screen place-items-center bg-cream text-moss">Memuat IMMERSI…</div>
   }
 
-  if (!user) return <Navigate to="/login" replace />
+  if (!user) {
+    window.location.href = '/login'
+    return null
+  }
   if (roles && !roles.includes(user.role)) return <Navigate to="/app" replace />
   if (!allowUnverified && user.role !== 'admin' && user.verification_status !== 'verified') {
     return <Navigate to="/app/profile" replace />

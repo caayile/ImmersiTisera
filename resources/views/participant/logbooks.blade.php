@@ -1,7 +1,8 @@
 @extends('layouts.app')
 @section('title', 'Logbook')
 @section('content')
-<h1 class="text-2xl font-semibold">Daily Logbook</h1>
+<x-back-link />
+<h1 class="mt-4 text-2xl font-semibold">Daily Logbook</h1>
 @unless($program)
     <x-empty class="mt-6" title="Logbook belum tersedia">Logbook dibuka setelah program ACTIVE.</x-empty>
 @else

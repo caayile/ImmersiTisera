@@ -69,7 +69,7 @@ function MentorHome() {
     <div>
       <PageHeader kicker="Match & Commit" title="Dasbor mentor" description="Review minat dosen, bentuk agreement, lalu dampingi 60 hari immersion." />
       <div className="grid gap-4 md:grid-cols-3">
-        <Card><p className="text-xs uppercase tracking-widest text-sage">Minat masuk</p><p className="mt-2 font-display text-4xl">{apps.filter((item) => item.status === 'pending').length}</p></Card>
+        <Card><p className="text-xs uppercase tracking-widest text-sage">Minat masuk</p><p className="mt-2 font-display text-4xl">{apps.filter((item) => item.status === 'waiting_mentor' || item.status === 'submitted').length}</p></Card>
         <Card><p className="text-xs uppercase tracking-widest text-sage">Program aktif</p><p className="mt-2 font-display text-4xl">{programs.filter((item) => item.status === 'active').length}</p></Card>
         <Card><p className="text-xs uppercase tracking-widest text-sage">Total aplikasi</p><p className="mt-2 font-display text-4xl">{apps.length}</p></Card>
       </div>

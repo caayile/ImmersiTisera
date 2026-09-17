@@ -8,12 +8,6 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   async function loadUser() {
-    const token = localStorage.getItem('immersi_token')
-    if (!token) {
-      setUser(null)
-      setLoading(false)
-      return
-    }
     try {
       const { data } = await api.get('/me')
       setUser(data)

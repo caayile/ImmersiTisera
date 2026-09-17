@@ -64,6 +64,7 @@ class ImersiSmokeTest extends TestCase
             ->assertSee('dosen@imersi.id')
             ->assertSee('Riwayat Pendaftaran')
             ->assertSee('Logbook')
+            ->assertSee('Dasbor program')
             ->assertDontSee('Pilih mitra imersi Anda');
 
         $this->actingAs(User::where('email', 'mentor@imersi.id')->first())

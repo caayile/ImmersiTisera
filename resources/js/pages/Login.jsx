@@ -4,16 +4,16 @@ import { useAuth } from '../context/AuthContext'
 import { Button, Field, inputClass } from '../components/ui'
 
 const demos = [
-  ['Dosen', 'dosen@immersi.id'],
-  ['Dosen 2', 'dosen2@immersi.id'],
-  ['Mentor', 'mentor@immersi.id'],
-  ['Admin', 'admin@immersi.id'],
+  ['Dosen', 'dosen@imersi.id'],
+  ['Dosen 2', 'dosen2@imersi.id'],
+  ['Mentor', 'mentor@imersi.id'],
+  ['Admin', 'admin@imersi.id'],
 ]
 
 export default function Login() {
   const { login } = useAuth()
   const navigate = useNavigate()
-  const [email, setEmail] = useState('dosen@immersi.id')
+  const [email, setEmail] = useState('dosen@imersi.id')
   const [password, setPassword] = useState('password')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)

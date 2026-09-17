@@ -2,61 +2,36 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Checkpoint;
+use App\Models\CollaborationPipeline;
 use App\Models\Evaluation;
 use App\Models\Logbook;
-use App\Models\Mentoring;
+use App\Models\MentorSession;
 use App\Models\Program;
-use App\Models\Report;
+use App\Models\ProgramOutput;
+use App\Models\Timeline;
+use App\Support\ApiPresenter;
 use Illuminate\Http\Request;
 
 class ProgramController extends Controller
 {
+    public function __construct(private ApiPresenter $presenter) {}
+
     public function index(Request $request)
     {
-        $user = $request->user();
-        $query = Program::with([
-            'dosen:id,name,email',
-            'mentor:id,name,email',
-            'opportunity',
-            'agreement',
-        ])->latest();
+        $query = Program::query()
+            ->with(['participant.user', 'mentor.user', 'businessUnit', 'agreement', 'collaboration'])
+            ->latest('id');
 
-        if ($user->isUser()) {
-            $query->where('dosen_id', $user->id);
-        } elseif ($user->isMentor()) {
-            $query->where('mentor_id', $user->id);
-        }
+        $this->scopePrograms($request, $query);
 
-        return response()->json($query->get()->map(fn (Program $program) => $this->present($program)));
+        return response()->json($query->get()->map(fn (Program $program) => $this->presenter->program($program)));
     }
 
     public function show(Request $request, Program $program)
     {
         $this->authorizeAccess($request, $program);
 
-        $program->load([
-            'dosen.dosenProfile',
-            'mentor.mentorProfile',
-            'opportunity',
-            'agreement',
-            'logbooks',
-            'mentorings',
-            'checkpoints',
-            'evaluations.user:id,name,role',
-            'report',
-            'outputs',
-        ]);
-
-        if ($program->current_phase !== $program->computedPhase()) {
-            $program->update(['current_phase' => $program->computedPhase()]);
-        }
-
-        return response()->json($this->present($program->fresh([
-            'dosen.dosenProfile', 'mentor.mentorProfile', 'opportunity', 'agreement',
-            'logbooks', 'mentorings', 'checkpoints', 'evaluations.user:id,name,role',
-            'report', 'outputs',
-        ]), true));
+        return response()->json($this->presenter->program($program, true));
     }
 
     public function updatePhaseNotes(Request $request, Program $program)
@@ -69,14 +44,20 @@ class ProgramController extends Controller
             'contribution_notes' => ['nullable', 'string'],
         ]);
 
-        $program->update($data);
+        $program->agreement()->updateOrCreate(
+            ['program_id' => $program->id],
+            [
+                'problem_statement' => $data['problem_statement'] ?? $data['industry_insight'] ?? null,
+                'activities' => $data['contribution_notes'] ?? null,
+            ]
+        );
 
-        return response()->json($this->present($program->fresh()));
+        return response()->json($this->presenter->program($program->fresh(['agreement', 'participant.user', 'mentor.user', 'businessUnit'])));
     }
 
     public function storeLogbook(Request $request, Program $program)
     {
-        $this->authorizeAccess($request, $program, 'user');
+        $this->authorizeAccess($request, $program, 'participant');
 
         $data = $request->validate([
             'entry_date' => ['required', 'date'],
@@ -87,21 +68,29 @@ class ProgramController extends Controller
             'output' => ['nullable', 'string'],
         ]);
 
-        $entry = $program->logbooks()->create($data);
+        $entry = $program->logbooks()->create([
+            'participant_id' => $program->participant_id,
+            'date' => $data['entry_date'],
+            'activity' => 'Logbook harian',
+            'what_i_did' => $data['what_did'],
+            'what_i_learned' => $data['what_learned'],
+            'what_i_found' => $data['what_found'],
+            'value' => $data['obstacles'] ?? null,
+            'next_action' => $data['output'] ?? null,
+            'status' => 'submitted',
+        ]);
 
-        return response()->json($entry, 201);
+        return response()->json($this->presenter->logbook($entry), 201);
     }
 
     public function verifyLogbook(Request $request, Program $program, Logbook $logbook)
     {
         $this->authorizeAccess($request, $program, 'mentor');
+        abort_unless($logbook->program_id === $program->id, 404);
 
-        $logbook->update([
-            'mentor_verified' => true,
-            'verified_at' => now(),
-        ]);
+        $logbook->update(['status' => 'approved']);
 
-        return response()->json($logbook);
+        return response()->json($this->presenter->logbook($logbook->fresh()));
     }
 
     public function storeMentoring(Request $request, Program $program)
@@ -117,9 +106,17 @@ class ProgramController extends Controller
             'mentor_feedback' => ['nullable', 'string'],
         ]);
 
-        $session = Mentoring::updateOrCreate(
+        $session = MentorSession::updateOrCreate(
             ['program_id' => $program->id, 'week' => $data['week']],
-            $data
+            [
+                'mentor_id' => $program->mentor_id,
+                'participant_id' => $program->participant_id,
+                'session_date' => $data['session_date'] ?? now()->toDateString(),
+                'findings' => $data['found'] ?? null,
+                'current_work' => $data['working_on'] ?? null,
+                'next_action' => $data['next_action'] ?? null,
+                'feedback' => $data['mentor_feedback'] ?? null,
+            ]
         );
 
         return response()->json($session);
@@ -136,9 +133,15 @@ class ProgramController extends Controller
             'mentor_notes' => ['nullable', 'string'],
         ]);
 
-        $checkpoint = Checkpoint::updateOrCreate(
+        $checkpoint = Timeline::updateOrCreate(
             ['program_id' => $program->id, 'week' => $data['week']],
-            $data
+            [
+                'phase' => $this->presenter->phase($data['week']),
+                'title' => 'Minggu '.$data['week'],
+                'description' => $data['dosen_progress'] ?? null,
+                'expected_output' => $data['mentor_notes'] ?? null,
+                'status' => ($data['mentor_status'] ?? null) === 'agree' ? 'done' : 'pending',
+            ]
         );
 
         return response()->json($checkpoint);
@@ -157,76 +160,54 @@ class ProgramController extends Controller
             'comments' => ['nullable', 'string'],
         ]);
 
-        $type = $request->user()->isMentor() ? 'mentor' : 'dosen_self';
-
         $evaluation = Evaluation::updateOrCreate(
-            ['program_id' => $program->id, 'user_id' => $request->user()->id],
-            [...$data, 'type' => $type]
-        );
-
-        $avg = round($program->evaluations()->get()->avg(fn (Evaluation $item) => $item->average()), 1);
-        $program->update(['collaboration_score' => $avg]);
-
-        return response()->json([
-            'evaluation' => $evaluation,
-            'collaboration_score' => $avg,
-        ]);
-    }
-
-    public function upsertReport(Request $request, Program $program)
-    {
-        $this->authorizeAccess($request, $program);
-
-        $data = $request->validate([
-            'content' => ['required', 'array'],
-            'status' => ['nullable', 'in:draft,submitted'],
-        ]);
-
-        $report = Report::updateOrCreate(
-            ['program_id' => $program->id],
+            ['program_id' => $program->id, 'evaluator_id' => $request->user()->id],
             [
-                'content' => $data['content'],
-                'status' => $data['status'] ?? 'draft',
+                'industry_understanding' => $data['industry_understanding'],
+                'relationship' => $data['relationship'],
+                'output' => $data['output_quality'],
+                'mutual_benefit' => $data['mutual_benefit'],
+                'collaboration_potential' => $data['collaboration_potential'],
+                'comments' => $data['comments'] ?? null,
             ]
         );
 
-        return response()->json($report);
+        return response()->json([
+            'evaluation' => $evaluation,
+            'collaboration_score' => round($program->evaluations()->get()->avg(fn (Evaluation $item) => $item->average()), 1),
+        ]);
     }
 
     public function generateReport(Request $request, Program $program)
     {
         $this->authorizeAccess($request, $program);
-        $program->load(['agreement', 'opportunity', 'logbooks', 'mentorings', 'outputs', 'evaluations']);
+
+        $program->load(['agreement', 'businessUnit', 'logbooks', 'mentorSessions', 'outputs', 'evaluations']);
 
         $content = [
-            'objectives' => $program->agreement?->shared_goal,
-            'industry_profile' => $program->opportunity?->title,
-            'shared_goals' => $program->agreement?->shared_goal,
-            'timeline' => $program->agreement?->timeline,
-            'industry_insight' => $program->industry_insight,
-            'problem_statement' => $program->problem_statement,
-            'contribution' => $program->contribution_notes,
-            'logbook_summary' => $program->logbooks->take(5)->map(fn ($item) => [
-                'date' => $item->entry_date?->toDateString(),
-                'found' => $item->what_found,
+            'objectives' => $program->agreement?->objective,
+            'industry_profile' => $program->businessUnit?->name,
+            'shared_goals' => $program->agreement?->objective,
+            'problem_statement' => $program->agreement?->problem_statement,
+            'logbook_summary' => $program->logbooks->take(5)->map(fn (Logbook $item) => [
+                'date' => $item->date?->toDateString(),
+                'found' => $item->what_i_found,
             ]),
-            'mentoring' => $program->mentorings->map(fn ($item) => [
-                'week' => $item->week,
-                'next_action' => $item->next_action,
-                'feedback' => $item->mentor_feedback,
-            ]),
-            'evaluation' => $program->collaboration_score,
-            'output' => $program->outputs->pluck('title'),
-            'recommendation' => $program->connect_notes,
-            'potential_collaboration' => $program->agreement?->potential_collaboration,
         ];
 
-        $report = Report::updateOrCreate(
-            ['program_id' => $program->id],
-            ['content' => $content, 'status' => 'draft']
+        $report = ProgramOutput::updateOrCreate(
+            ['program_id' => $program->id, 'is_final_report' => true],
+            [
+                'participant_id' => $program->participant_id,
+                'title' => 'Laporan akhir imersi',
+                'type' => 'Research Report',
+                'description' => json_encode($content),
+                'status' => 'draft',
+                'is_final_report' => true,
+            ]
         );
 
-        return response()->json($report);
+        return response()->json(['id' => $report->id, 'content' => $content, 'status' => $report->status]);
     }
 
     public function storeOutput(Request $request, Program $program)
@@ -234,12 +215,18 @@ class ProgramController extends Controller
         $this->authorizeAccess($request, $program);
 
         $data = $request->validate([
-            'category' => ['required', 'in:research,learning,industry'],
+            'category' => ['required', 'string', 'max:80'],
             'title' => ['required', 'string', 'max:180'],
             'description' => ['nullable', 'string'],
         ]);
 
-        $output = $program->outputs()->create($data);
+        $output = $program->outputs()->create([
+            'participant_id' => $program->participant_id,
+            'title' => $data['title'],
+            'type' => $data['category'],
+            'description' => $data['description'] ?? null,
+            'status' => 'submitted',
+        ]);
 
         return response()->json($output, 201);
     }
@@ -253,51 +240,54 @@ class ProgramController extends Controller
             'connect_notes' => ['nullable', 'string'],
         ]);
 
-        $maturity = match ($data['connect_decision']) {
-            'close' => 1,
+        $level = match ($data['connect_decision']) {
+            'close' => 0,
             'follow_up' => 1,
             'collaborate' => 2,
             'develop' => 3,
             'scale' => 4,
         };
 
-        $program->update([
-            ...$data,
-            'maturity_level' => $maturity,
-            'status' => $data['connect_decision'] === 'close' ? 'closed' : 'completed',
-            'current_phase' => 'connect',
-        ]);
+        CollaborationPipeline::updateOrCreate(
+            ['program_id' => $program->id],
+            [
+                'level' => $level,
+                'collaboration_type' => $data['connect_decision'],
+                'notes' => $data['connect_notes'] ?? null,
+            ]
+        );
 
-        return response()->json($this->present($program->fresh()));
+        $program->update(['status' => $data['connect_decision'] === 'close' ? 'completed' : $program->status]);
+
+        return response()->json($this->presenter->program($program->fresh(['collaboration', 'participant.user', 'mentor.user', 'businessUnit'])));
+    }
+
+    private function scopePrograms(Request $request, $query): void
+    {
+        $user = $request->user();
+
+        if ($user->isParticipant()) {
+            $query->where('participant_id', $user->participant?->id);
+        } elseif ($user->isMentor()) {
+            $query->where('mentor_id', $user->mentor?->id);
+        }
     }
 
     private function authorizeAccess(Request $request, Program $program, ?string $role = null): void
     {
         $user = $request->user();
-        $allowed = $user->isAdmin() || $program->dosen_id === $user->id || $program->mentor_id === $user->id;
+        $allowed = $user->isAdmin()
+            || $program->participant?->user_id === $user->id
+            || $program->mentor?->user_id === $user->id;
+
         abort_unless($allowed, 403);
 
-        if ($role === 'user') {
-            abort_unless($user->isUser() || $user->isAdmin(), 403);
+        if ($role === 'participant') {
+            abort_unless($user->isParticipant() || $user->isAdmin(), 403);
         }
 
         if ($role === 'mentor') {
             abort_unless($user->isMentor() || $user->isAdmin(), 403);
         }
-    }
-
-    private function present(Program $program, bool $full = false): array
-    {
-        $payload = [
-            ...$program->toArray(),
-            'computed_phase' => $program->computedPhase(),
-            'current_week' => $program->currentWeek(),
-        ];
-
-        if (! $full) {
-            unset($payload['logbooks'], $payload['mentorings'], $payload['checkpoints'], $payload['evaluations'], $payload['outputs']);
-        }
-
-        return $payload;
     }
 }

@@ -50,6 +50,11 @@ class User extends Authenticatable
         return in_array($this->role, ['participant', 'user'], true);
     }
 
+    public function isUser(): bool
+    {
+        return $this->isParticipant();
+    }
+
     public function isActive(): bool
     {
         return ($this->status ?? 'active') === 'active';
@@ -71,6 +76,11 @@ class User extends Authenticatable
             $this->isMentor() => 'mentor.dashboard',
             default => 'home',
         };
+    }
+
+    public function notificationsRoute(): string
+    {
+        return $this->isMentor() ? 'mentor.notifications' : 'participant.notifications';
     }
 
     public function toApiUser(): array

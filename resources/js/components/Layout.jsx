@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 const menus = {
@@ -33,14 +33,13 @@ const roleLabel = {
 
 export default function Layout() {
   const { user, logout } = useAuth()
-  const navigate = useNavigate()
   const items = menus[user?.role] || menus.user
   const isDosen = user?.role === 'user'
   const [open, setOpen] = useState(false)
 
   function signOut() {
     logout()
-    navigate('/')
+    window.location.href = '/'
   }
 
   if (isDosen) {

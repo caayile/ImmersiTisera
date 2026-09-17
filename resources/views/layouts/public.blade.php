@@ -62,6 +62,9 @@
         </nav>
         <div class="flex items-center gap-2 text-sm">
             @auth
+                @if(auth()->user()->isMentor() || auth()->user()->isParticipant())
+                    <x-notification-bell />
+                @endif
                 <x-user-menu />
             @else
                 <a href="{{ route('register') }}" class="inline-flex items-center rounded-full border border-ink px-4 py-2 font-medium">+ Pendaftaran</a>
@@ -74,10 +77,17 @@
         @foreach($nav as [$label, $name])
             <a href="{{ route($name) }}" class="tap-feedback block py-2">{{ $label }}</a>
         @endforeach
-        @guest
+        @auth
+            <p class="border-t border-line pt-2 text-xs text-muted">{{ auth()->user()->name }}</p>
+            <p class="pb-1 text-xs text-muted">{{ auth()->user()->email }}</p>
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button class="block py-2">Keluar</button>
+            </form>
+        @else
             <a href="{{ route('register') }}" class="block py-2">Pendaftaran</a>
             <a href="{{ route('login') }}" class="block py-2">Masuk</a>
-        @endguest
+        @endauth
     </div>
 </header>
 @if(session('status'))

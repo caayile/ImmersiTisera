@@ -36,7 +36,7 @@ export default function Applications() {
               <p className="mt-3 max-w-2xl text-sm">{item.proposed_shared_goal}</p>
             </div>
             <div className="flex flex-wrap gap-2">
-              {user.role === 'mentor' && item.status === 'pending' && (
+              {user.role === 'mentor' && item.status === 'waiting_mentor' && (
                 <>
                   <Button onClick={() => review(item.id, 'approved')}>Approve</Button>
                   <Button variant="ghost" onClick={() => review(item.id, 'rejected')}>Reject</Button>

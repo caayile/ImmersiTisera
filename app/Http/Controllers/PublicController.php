@@ -7,6 +7,8 @@ use App\Models\Department;
 use App\Models\HeroSetting;
 use App\Models\HeroSlide;
 use App\Models\News;
+use App\Support\ParticipantNextStep;
+use Illuminate\Http\Request;
 
 class PublicController extends Controller
 {
@@ -44,14 +46,28 @@ class PublicController extends Controller
         }
 
         $latestNews = News::published()->latest('published_at')->take(3)->get();
+        $user = auth()->user();
+        $nextStep = $user?->isParticipant()
+            ? ParticipantNextStep::for($user)
+            : null;
 
-        return view('public.home', compact('departments', 'featuredUnits', 'latestNews'));
+        return view('public.home', compact('departments', 'featuredUnits', 'latestNews', 'nextStep'));
     }
 
-    public function departments()
+    public function departments(Request $request)
     {
+        $search = trim((string) $request->string('q'));
+
         $departments = Department::query()
             ->with(['businessUnits' => fn ($query) => $query->where('status', 'open')])
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($inner) use ($search) {
+                    $inner->where('name', 'like', '%'.$search.'%')
+                        ->orWhere('description', 'like', '%'.$search.'%')
+                        ->orWhere('area', 'like', '%'.$search.'%')
+                        ->orWhereHas('businessUnits', fn ($units) => $units->where('name', 'like', '%'.$search.'%'));
+                });
+            })
             ->orderBy('id')
             ->get();
 

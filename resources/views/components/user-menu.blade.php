@@ -7,14 +7,18 @@
         ? $user->name
         : (in_array($parts[0], $titles, true) ? $parts->take(2)->implode(' ') : $parts[0]);
 
+    $avatar = filled($user->avatar) ? $user->avatar : null;
+
     $items = [
         ['Profil', route('profile.public'), 'person'],
     ];
 
     if ($user->isParticipant()) {
+        $items[] = ['Dasbor program', route('spa'), 'space_dashboard'];
         $items[] = ['Riwayat Pendaftaran', route('participant.applications'), 'history'];
         $items[] = ['Logbook', route('participant.logbooks'), 'menu_book'];
     } elseif ($user->isMentor()) {
+        $items[] = ['Dasbor program', route('spa'), 'space_dashboard'];
         $items[] = ['Pendaftaran', route('mentor.applications'), 'history'];
         $items[] = ['Logbook', route('mentor.logbooks'), 'menu_book'];
     } else {
@@ -30,8 +34,12 @@
         aria-haspopup="true"
         :aria-expanded="menu.toString()"
     >
-        <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-xs font-semibold text-primary-dark">{{ $initials }}</span>
-        <span class="hidden min-w-0 truncate text-sm font-medium sm:block">{{ $shortName }}</span>
+        @if($avatar)
+            <img src="{{ $avatar }}" alt="" width="32" height="32" class="h-8 w-8 shrink-0 rounded-full object-cover" referrerpolicy="no-referrer">
+        @else
+            <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-xs font-semibold text-primary-dark">{{ $initials }}</span>
+        @endif
+        <span class="min-w-0 truncate text-sm font-medium">{{ $shortName }}</span>
         <span class="material-symbols-outlined text-[18px] text-white/80">expand_more</span>
     </button>
 

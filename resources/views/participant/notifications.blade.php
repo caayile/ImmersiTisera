@@ -1,7 +1,8 @@
 @extends('layouts.app')
 @section('title', 'Notifikasi')
 @section('content')
-<h1 class="text-2xl font-semibold">Notifikasi</h1>
+<x-back-link />
+<h1 class="mt-4 text-2xl font-semibold">Notifikasi</h1>
 <div class="mt-6 space-y-3">
     @forelse($notifications as $item)
         <a href="{{ $item->data['url'] ?? '#' }}" class="block rounded-2xl border border-line bg-white p-4">

@@ -56,6 +56,10 @@
     </div>
 </section>
 
+@if($nextStep ?? null)
+    <x-next-step :step="$nextStep" />
+@endif
+
 <section class="bg-bg py-16" data-reveal>
     <div class="mx-auto max-w-7xl px-5">
         <x-framework-phases />

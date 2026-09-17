@@ -1,5 +1,20 @@
 <?php
 
+if (! function_exists('google_oauth_env')) {
+    function google_oauth_env(string $key, ?string $default = null): ?string
+    {
+        $value = env($key, $default);
+
+        if (! is_string($value)) {
+            return $default;
+        }
+
+        $value = trim($value, " \t\n\r\0\x0B\"'");
+
+        return $value === '' ? null : $value;
+    }
+}
+
 return [
 
     /*
@@ -36,9 +51,9 @@ return [
     ],
 
     'google' => [
-        'client_id' => env('GOOGLE_CLIENT_ID'),
-        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
-        'redirect' => env('GOOGLE_REDIRECT_URI', env('APP_URL', 'http://localhost:8000').'/auth/google/callback'),
+        'client_id' => google_oauth_env('GOOGLE_CLIENT_ID'),
+        'client_secret' => google_oauth_env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => google_oauth_env('GOOGLE_REDIRECT_URI') ?: google_oauth_env('GOOGLE_REDIRECT_URL') ?: '/auth/google/callback',
     ],
 
 ];

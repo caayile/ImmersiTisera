@@ -38,6 +38,11 @@ Route::middleware('guest')->group(function () {
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
+Route::view('/app/{any?}', 'spa')
+    ->where('any', '.*')
+    ->middleware('auth')
+    ->name('spa');
+
 Route::middleware(['auth', 'role:participant'])->prefix('participant')->name('participant.')->group(function () {
     Route::get('/dashboard', [ParticipantController::class, 'dashboard'])->name('dashboard');
     Route::get('/profile', [ParticipantController::class, 'profile'])->name('profile');

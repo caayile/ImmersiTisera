@@ -5,10 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\Mentor;
 use App\Models\Participant;
 use App\Models\User;
+use App\Support\ApiPresenter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class ApiAuthController extends Controller
 {
@@ -35,7 +37,7 @@ class ApiAuthController extends Controller
 
         return response()->json([
             'token' => $user->createToken('imersi')->plainTextToken,
-            'user' => $user->toApiUser(),
+            'user' => app(ApiPresenter::class)->user($user),
         ]);
     }
 
@@ -69,18 +71,22 @@ class ApiAuthController extends Controller
 
         return response()->json([
             'token' => $user->createToken('imersi')->plainTextToken,
-            'user' => $user->toApiUser(),
+            'user' => app(ApiPresenter::class)->user($user),
         ], 201);
     }
 
-    public function me(Request $request)
+    public function me(Request $request, ApiPresenter $presenter)
     {
-        return response()->json($request->user()->toApiUser());
+        return response()->json($presenter->user($request->user()));
     }
 
     public function logout(Request $request)
     {
-        $request->user()?->currentAccessToken()?->delete();
+        $token = $request->user()?->currentAccessToken();
+
+        if ($token instanceof PersonalAccessToken) {
+            $token->delete();
+        }
 
         return response()->json(['message' => 'Logged out']);
     }

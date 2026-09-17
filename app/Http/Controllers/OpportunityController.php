@@ -3,113 +3,98 @@
 namespace App\Http\Controllers;
 
 use App\Models\Application;
-use App\Models\Opportunity;
+use App\Models\BusinessUnit;
 use App\Services\MatchingService;
+use App\Support\ApiPresenter;
 use Illuminate\Http\Request;
 
 class OpportunityController extends Controller
 {
-    public function index(Request $request, MatchingService $matching)
+    public function __construct(private ApiPresenter $presenter, private MatchingService $matching) {}
+
+    public function index(Request $request)
     {
         $user = $request->user();
-        $query = Opportunity::with(['mentor.mentorProfile'])->latest();
+        $query = BusinessUnit::query()
+            ->with(['department', 'mentors.user'])
+            ->orderByDesc('id');
 
         if ($user->isMentor()) {
-            $query->where('mentor_id', $user->id);
+            $mentor = $user->mentor;
+            $query->where(function ($inner) use ($mentor) {
+                $inner->where('id', $mentor?->business_unit_id)
+                    ->orWhere('department_id', $mentor?->department_id);
+            });
         } else {
             $query->where('status', 'open');
         }
 
-        $items = $query->get()->map(function (Opportunity $opportunity) use ($user, $matching) {
-            $payload = $this->present($opportunity);
+        $units = $query->get()->unique('id')->values();
+        $participant = $user->participant;
+        $appliedIds = $participant
+            ? Application::query()->where('participant_id', $participant->id)->pluck('business_unit_id')->all()
+            : [];
 
-            if ($user->isUser() && $user->dosenProfile) {
-                $match = $matching->score($user->dosenProfile, $opportunity);
-                $payload['match_score'] = $match['score'];
-                $payload['match_label'] = $match['label'];
-                $payload['applied'] = Application::where('dosen_id', $user->id)
-                    ->where('opportunity_id', $opportunity->id)
-                    ->exists();
-            }
+        return response()->json($units->map(function (BusinessUnit $unit) use ($participant, $appliedIds) {
+            $match = $participant ? $this->matching->score($participant, $unit) : ['score' => 0];
 
-            return $payload;
-        });
-
-        if ($user->isUser()) {
-            $items = $items->sortByDesc('match_score')->values();
-        }
-
-        return response()->json($items);
+            return $this->presenter->opportunity($unit, $match, in_array($unit->id, $appliedIds, true));
+        }));
     }
 
     public function store(Request $request)
     {
-        $data = $this->validated($request);
-        $data['mentor_id'] = $request->user()->id;
-        $data['status'] = 'open';
+        abort_unless($request->user()->isMentor(), 403);
 
-        $opportunity = Opportunity::create($data);
+        $data = $request->validate([
+            'title' => ['required', 'string', 'max:180'],
+            'problem' => ['required', 'string'],
+            'opportunity' => ['required', 'string'],
+            'needed_expertise' => ['required', 'array', 'min:1'],
+            'expected_output' => ['required', 'string'],
+            'purpose' => ['nullable', 'string', 'max:120'],
+        ]);
 
-        return response()->json($this->present($opportunity->load('mentor.mentorProfile')), 201);
-    }
+        $mentor = $request->user()->mentor;
+        abort_unless($mentor?->department_id, 422, 'Lengkapi profil mentor dan pilih unit bisnis.');
 
-    public function show(Request $request, Opportunity $opportunity, MatchingService $matching)
-    {
-        $opportunity->load(['mentor.mentorProfile']);
-        $payload = $this->present($opportunity);
-        $user = $request->user();
+        $unit = $mentor->businessUnit ?: BusinessUnit::create([
+            'department_id' => $mentor->department_id,
+            'name' => $data['title'],
+            'status' => 'open',
+        ]);
 
-        if ($user->isUser() && $user->dosenProfile) {
-            $match = $matching->score($user->dosenProfile, $opportunity);
-            $payload['match_score'] = $match['score'];
-            $payload['match_label'] = $match['label'];
-            $payload['application'] = Application::with('agreement')
-                ->where('dosen_id', $user->id)
-                ->where('opportunity_id', $opportunity->id)
-                ->first();
+        $unit->update([
+            'name' => $data['title'],
+            'description' => $data['problem'],
+            'work_done' => $data['opportunity'],
+            'function' => $data['purpose'] ?? $unit->function,
+            'example_activities' => $data['expected_output'],
+            'relevant_programs' => $data['needed_expertise'],
+            'status' => 'open',
+        ]);
+
+        if (! $mentor->business_unit_id) {
+            $mentor->update(['business_unit_id' => $unit->id]);
         }
 
-        return response()->json($payload);
+        return response()->json($this->presenter->opportunity($unit->fresh(['department', 'mentors.user'])), 201);
     }
 
-    public function update(Request $request, Opportunity $opportunity)
+    public function show(Request $request, BusinessUnit $opportunity)
     {
-        abort_unless($opportunity->mentor_id === $request->user()->id || $request->user()->isAdmin(), 403);
-        $opportunity->update($this->validated($request, false));
+        $user = $request->user();
+        $participant = $user->participant;
+        $match = $participant ? $this->matching->score($participant, $opportunity) : ['score' => 0];
+        $application = $participant
+            ? Application::where('participant_id', $participant->id)->where('business_unit_id', $opportunity->id)->latest('id')->first()
+            : null;
 
-        return response()->json($this->present($opportunity->fresh('mentor.mentorProfile')));
-    }
-
-    private function validated(Request $request, bool $required = true): array
-    {
-        $rule = $required ? 'required' : 'sometimes';
-
-        return $request->validate([
-            'title' => [$rule, 'string', 'max:180'],
-            'field' => [$rule, 'string', 'max:120'],
-            'business_unit' => [$rule, 'string', 'max:120'],
-            'purpose' => [$rule, 'in:riset,observasi,pembelajaran,penugasan'],
-            'problem' => [$rule, 'string'],
-            'opportunity' => [$rule, 'string'],
-            'needed_expertise' => [$rule, 'array', 'min:1'],
-            'expected_output' => [$rule, 'string'],
-            'allowed_activities' => ['nullable', 'array'],
-            'timeline_start' => ['nullable', 'date'],
-            'timeline_end' => ['nullable', 'date'],
-            'status' => ['sometimes', 'in:open,closed'],
-        ]);
-    }
-
-    private function present(Opportunity $opportunity): array
-    {
-        return [
-            ...$opportunity->toArray(),
-            'mentor' => [
-                'id' => $opportunity->mentor?->id,
-                'name' => $opportunity->mentor?->name,
-                'company' => $opportunity->mentor?->mentorProfile?->company_name,
-                'job_title' => $opportunity->mentor?->mentorProfile?->job_title,
-            ],
-        ];
+        return response()->json($this->presenter->opportunity(
+            $opportunity,
+            $match,
+            (bool) $application,
+            $application,
+        ));
     }
 }

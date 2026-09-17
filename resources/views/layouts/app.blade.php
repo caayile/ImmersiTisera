@@ -89,7 +89,10 @@
                 >
             </label>
         </form>
-        <x-user-menu />
+        <div class="flex items-center gap-2">
+            <x-notification-bell />
+            <x-user-menu />
+        </div>
     </div>
 </header>
 <main class="mx-auto max-w-7xl px-5 py-6">
@@ -129,7 +132,12 @@
     <div>
         <header class="flex items-center justify-between border-b border-line bg-white px-5 py-3 lg:px-8">
             <button class="rounded-lg border border-line px-3 py-1 text-sm lg:hidden" @click="open = !open">Menu</button>
-            <p class="text-sm font-medium">{{ auth()->user()->name }} · {{ ucfirst($role) }}</p>
+            <div class="ml-auto flex items-center gap-2">
+                @if($role === 'mentor')
+                    <x-notification-bell />
+                @endif
+                <x-user-menu />
+            </div>
         </header>
         <main class="px-5 py-6 lg:px-8">
             @if(session('status'))
