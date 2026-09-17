@@ -158,11 +158,11 @@
                 splashMark.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.08)';
                 splashMark.style.padding = '0';
                 splashMark.style.backgroundColor = 'transparent';
-                splashMark.style.borderRadius = '0.55rem';
+                splashMark.style.borderRadius = '0';
 
                 const logoImg = splashMark.querySelector('img');
                 if (logoImg) {
-                    logoImg.style.borderRadius = '0.55rem';
+                    logoImg.style.borderRadius = '0';
                 }
 
                 // Animate Text

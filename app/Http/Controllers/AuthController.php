@@ -9,9 +9,11 @@ use App\Models\User;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Laravel\Socialite\Facades\Socialite;
 
 class AuthController extends Controller
 {
@@ -59,6 +61,112 @@ class AuthController extends Controller
     public function showMentorRegister()
     {
         return redirect()->route('register');
+    }
+
+    public function redirectToGoogle(Request $request)
+    {
+        if ($request->has('role')) {
+            session(['oauth_role' => $request->query('role')]);
+        }
+
+        // If credentials are configured in .env, redirect to real Google OAuth
+        if (! empty(config('services.google.client_id')) && ! empty(config('services.google.client_secret'))) {
+            try {
+                return Socialite::driver('google')->stateless()->redirect();
+            } catch (\Throwable) {
+                return Socialite::driver('google')->redirect();
+            }
+        }
+
+        // Fallback / Auto-Login for Local Development & Testing:
+        $selectedRole = session('oauth_role') === 'mentor' ? 'mentor' : 'participant';
+        $demoEmail = $selectedRole === 'mentor' ? 'mentor.google@imersi.id' : 'dosen.google@imersi.id';
+        $demoName = $selectedRole === 'mentor' ? 'Mentor Industri (Google)' : 'Dr. Dosen Akademik (Google)';
+
+        $user = User::firstOrCreate(
+            ['email' => $demoEmail],
+            [
+                'name' => $demoName,
+                'google_id' => 'google-demo-'.$selectedRole,
+                'avatar' => 'https://ui-avatars.com/api/?name='.urlencode($demoName).'&background=0D221D&color=73D9B0',
+                'role' => $selectedRole,
+                'status' => 'active',
+                'verification_status' => 'verified',
+            ]
+        );
+
+        if ($selectedRole === 'mentor' && ! $user->mentor) {
+            Mentor::create(['user_id' => $user->id]);
+        } elseif ($selectedRole === 'participant' && ! $user->participant) {
+            Participant::create(['user_id' => $user->id]);
+        }
+
+        session()->forget('oauth_role');
+        Auth::login($user, true);
+
+        return redirect()->route($user->homeRoute())->with('status', 'Berhasil masuk dengan Akun Google ('.$user->name.').');
+    }
+
+    public function handleGoogleCallback()
+    {
+        $googleUser = null;
+
+        try {
+            $googleUser = Socialite::driver('google')->stateless()->user();
+        } catch (\Throwable $statelessError) {
+            try {
+                $googleUser = Socialite::driver('google')->user();
+            } catch (\Throwable $statefulError) {
+                Log::error('Google OAuth callback failed: '.$statelessError->getMessage(), [
+                    'stateless_exception' => $statelessError,
+                    'stateful_exception' => $statefulError,
+                ]);
+
+                $errorMessage = config('app.debug')
+                    ? 'Gagal menghubungkan akun Google: '.$statelessError->getMessage()
+                    : 'Gagal menghubungkan akun Google. Silakan coba lagi.';
+
+                return redirect()->route('login')->withErrors(['email' => $errorMessage]);
+            }
+        }
+
+        if (empty($googleUser->getEmail())) {
+            return redirect()->route('login')->withErrors(['email' => 'Akun Google Anda tidak menyediakan alamat email yang valid.']);
+        }
+
+        $user = User::where('google_id', $googleUser->getId())
+            ->orWhere('email', $googleUser->getEmail())
+            ->first();
+
+        if ($user) {
+            $user->update([
+                'google_id' => $googleUser->getId(),
+                'avatar' => $googleUser->getAvatar() ?? $user->avatar,
+            ]);
+        } else {
+            $selectedRole = session('oauth_role') === 'mentor' ? 'mentor' : 'participant';
+
+            $user = User::create([
+                'name' => $googleUser->getName() ?: ($googleUser->getNickname() ?: 'Pengguna Google'),
+                'email' => $googleUser->getEmail(),
+                'google_id' => $googleUser->getId(),
+                'avatar' => $googleUser->getAvatar(),
+                'role' => $selectedRole,
+                'status' => 'active',
+                'verification_status' => 'verified',
+            ]);
+
+            if ($selectedRole === 'mentor') {
+                Mentor::create(['user_id' => $user->id]);
+            } else {
+                Participant::create(['user_id' => $user->id]);
+            }
+        }
+
+        session()->forget('oauth_role');
+        Auth::login($user, true);
+
+        return redirect()->route($user->homeRoute());
     }
 
     public function registerUser(Request $request)

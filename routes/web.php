@@ -26,6 +26,8 @@ Route::get('/register/user', [AuthController::class, 'showUserRegister'])->name(
 Route::post('/register/user', [AuthController::class, 'registerUser']);
 Route::get('/register/mentor', [AuthController::class, 'showMentorRegister'])->name('register.mentor');
 Route::post('/register/mentor', [AuthController::class, 'registerMentor']);
+Route::get('/auth/google', [AuthController::class, 'redirectToGoogle'])->name('login.google');
+Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback'])->name('login.google.callback');
 
 Route::middleware('guest')->group(function () {
     Route::get('/forgot-password', [AuthController::class, 'showForgot'])->name('password.request');
