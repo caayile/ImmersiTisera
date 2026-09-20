@@ -51,6 +51,7 @@
             ['Manajemen Pengguna', 'admin.users'],
             ['Unit Bisnis', 'admin.departments'],
             ['Departemen', 'admin.units'],
+            ['Lowongan', 'admin.lowongan'],
             ['Mentor', 'admin.mentors'],
             ['Peserta', 'admin.participants'],
             ['Program', 'admin.programs'],

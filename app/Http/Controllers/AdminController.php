@@ -20,6 +20,7 @@ use App\Notifications\ImersiAlert;
 use App\Services\ApplicationApprovalService;
 use App\Support\Status;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -337,10 +338,107 @@ class AdminController extends Controller
         ]);
     }
 
-    public function matching()
+    public function lowongan(Request $request)
     {
+        $query = BusinessUnit::with('department')->withCount('applications');
+
+        if ($request->filled('unit')) {
+            $query->where('id', $request->input('unit'));
+        }
+
+        $units = $query->orderBy('name')->get();
+
+        return view('admin.lowongan', [
+            'units' => $units,
+            'departments' => Department::orderBy('name')->get(),
+            'allOpen' => $units->isNotEmpty() && $units->every(fn (BusinessUnit $unit): bool => $unit->status === 'open'),
+            'batchDefault' => self::batchDefault(),
+        ]);
+    }
+
+    public function openAllLowongan(Request $request)
+    {
+        $data = $request->validate([
+            'batch' => ['nullable', 'string', 'max:120'],
+            'registration_start' => ['required', 'date'],
+            'registration_deadline' => ['required', 'date', 'after_or_equal:registration_start'],
+        ]);
+
+        BusinessUnit::query()->update([
+            'batch' => $data['batch'] ?: self::batchDefault(),
+            'registration_start' => Carbon::parse($data['registration_start'])->format('Y-m-d H:i:s'),
+            'registration_deadline' => Carbon::parse($data['registration_deadline'])->format('Y-m-d H:i:s'),
+            'status' => 'open',
+        ]);
+
+        return back()->with('status', 'Batch pembukaan diterapkan dan semua lowongan dibuka.');
+    }
+
+    public static function batchDefault(): string
+    {
+        return 'Batch '.now()->translatedFormat('F Y');
+    }
+
+    public function toggleAllLowongan(Request $request)
+    {
+        $data = $request->validate([
+            'status' => ['required', Rule::in(['open', 'closed'])],
+        ]);
+
+        if (BusinessUnit::whereNull('registration_start')->orWhereNull('registration_deadline')->exists()) {
+            return back()->withErrors([
+                'lowongan' => 'Masih ada lowongan tanpa periode pendaftaran. Setel tanggal buka dan tutup semua lowongan terlebih dahulu.',
+            ]);
+        }
+
+        BusinessUnit::query()->update(['status' => $data['status']]);
+
+        return back()->with('status', $data['status'] === 'open'
+            ? 'Semua lowongan dibuka.'
+            : 'Semua lowongan ditutup.');
+    }
+
+    public function toggleLowongan(Request $request, BusinessUnit $businessUnit)
+    {
+        $data = $request->validate([
+            'status' => ['required', Rule::in(['open', 'closed'])],
+        ]);
+
+        if (! $businessUnit->registration_start || ! $businessUnit->registration_deadline) {
+            return back()->withErrors([
+                'lowongan' => 'Atur periode pendaftaran (tanggal buka dan tutup) terlebih dahulu sebelum mengubah status lowongan.',
+            ]);
+        }
+
+        $businessUnit->update(['status' => $data['status']]);
+
+        return back()->with('status', $data['status'] === 'open'
+            ? 'Lowongan diaktifkan.'
+            : 'Lowongan ditutup.');
+    }
+
+    public function updateLowonganPeriod(Request $request, BusinessUnit $businessUnit)
+    {
+        $data = $request->validate([
+            'registration_start' => ['nullable', 'date'],
+            'registration_deadline' => ['nullable', 'date'],
+        ]);
+
+        $businessUnit->update($data);
+
+        return back()->with('status', 'Periode pendaftaran diperbarui.');
+    }
+
+    public function matching(Request $request)
+    {
+        $query = Application::with(['participant.user', 'department', 'businessUnit', 'mentor.user']);
+
+        if ($request->filled('unit')) {
+            $query->where('business_unit_id', $request->input('unit'));
+        }
+
         return view('admin.matching', [
-            'applications' => Application::with(['participant.user', 'department', 'businessUnit', 'mentor.user'])->latest()->get(),
+            'applications' => $query->latest()->get(),
             'mentors' => Mentor::with(['user', 'businessUnit'])->get(),
             'units' => BusinessUnit::with('department')->get(),
         ]);

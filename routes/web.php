@@ -111,6 +111,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/business-units', [AdminController::class, 'storeUnit']);
     Route::put('/business-units/{businessUnit}', [AdminController::class, 'updateUnit'])->name('units.update');
     Route::delete('/business-units/{businessUnit}', [AdminController::class, 'destroyUnit'])->name('units.destroy');
+    Route::get('/lowongan', [AdminController::class, 'lowongan'])->name('lowongan');
+    Route::post('/lowongan/{businessUnit}/toggle', [AdminController::class, 'toggleLowongan'])->name('lowongan.toggle');
+    Route::post('/lowongan/{businessUnit}/period', [AdminController::class, 'updateLowonganPeriod'])->name('lowongan.period');
+    Route::post('/lowongan/toggle-all', [AdminController::class, 'toggleAllLowongan'])->name('lowongan.toggle-all');
+    Route::post('/lowongan/open-all', [AdminController::class, 'openAllLowongan'])->name('lowongan.open-all');
     Route::get('/mentors', [AdminController::class, 'mentors'])->name('mentors');
     Route::get('/participants', [AdminController::class, 'participants'])->name('participants');
     Route::get('/programs', [AdminController::class, 'programs'])->name('programs');

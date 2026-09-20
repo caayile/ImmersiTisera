@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 #[Fillable([
     'department_id', 'name', 'description', 'function', 'image_path', 'work_done', 'example_activities',
-    'requirements', 'relevant_programs', 'period', 'registration_deadline', 'registration_start', 'status',
+    'requirements', 'relevant_programs', 'period', 'batch', 'registration_deadline', 'registration_start', 'status',
 ])]
 class BusinessUnit extends Model
 {
@@ -69,5 +69,10 @@ class BusinessUnit extends Model
     public function programs()
     {
         return $this->hasMany(Program::class);
+    }
+
+    public function applications()
+    {
+        return $this->hasMany(Application::class);
     }
 }
