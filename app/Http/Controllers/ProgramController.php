@@ -34,6 +34,35 @@ class ProgramController extends Controller
         return response()->json($this->presenter->program($program, true));
     }
 
+    public function history(Request $request)
+    {
+        $user = $request->user();
+        abort_unless($user->isParticipant() || $user->isAdmin(), 403);
+
+        $query = Program::query()
+            ->with(['businessUnit.department', 'department', 'mentor.user', 'logbooks'])
+            ->latest('id');
+
+        if ($user->isParticipant()) {
+            $query->where('participant_id', $user->participant?->id);
+        }
+
+        return response()->json($query->get()->map(fn (Program $program) => [
+            'id' => $program->id,
+            'status' => $program->status,
+            'current_week' => $program->current_week,
+            'start_date' => $program->start_date?->toDateString(),
+            'end_date' => $program->end_date?->toDateString(),
+            'department' => $program->department?->name ?? $program->businessUnit?->department?->name,
+            'opportunity' => $program->businessUnit?->name,
+            'mentor' => $program->mentor?->user?->name,
+            'logbooks' => $program->logbooks
+                ->sortByDesc('date')
+                ->map(fn (Logbook $item) => $this->presenter->logbook($item))
+                ->values(),
+        ]));
+    }
+
     public function updatePhaseNotes(Request $request, Program $program)
     {
         $this->authorizeAccess($request, $program);

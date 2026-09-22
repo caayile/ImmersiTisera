@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import api from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { CONNECT_OPTIONS, MATURITY, OUTPUT_CATEGORIES, PHASES, formatDate } from '../lib/constants'
@@ -10,8 +10,9 @@ const tabs = ['Perjalanan', 'Logbook', 'Mentoring', 'Checkpoint', 'Evaluasi', 'L
 export default function ProgramPage() {
   const { id } = useParams()
   const { user } = useAuth()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [program, setProgram] = useState(null)
-  const [tab, setTab] = useState('Perjalanan')
+  const [tab, setTab] = useState(searchParams.get('tab') || 'Perjalanan')
   const [message, setMessage] = useState('')
 
   async function load() {
@@ -20,6 +21,11 @@ export default function ProgramPage() {
   }
 
   useEffect(() => { load() }, [id])
+
+  function chooseTab(item) {
+    setTab(item)
+    setSearchParams(item === 'Perjalanan' ? {} : { tab: item }, { replace: true })
+  }
 
   if (!program) return null
 
@@ -33,7 +39,7 @@ export default function ProgramPage() {
       />
       <div className="mb-6 flex flex-wrap gap-2">
         {tabs.map((item) => (
-          <button key={item} onClick={() => setTab(item)} className={`rounded-lg px-4 py-2 text-sm font-medium ${tab === item ? 'bg-mint text-white' : 'bg-white text-ink'}`}>
+          <button key={item} onClick={() => chooseTab(item)} className={`rounded-lg px-4 py-2 text-sm font-medium ${tab === item ? 'bg-mint text-white' : 'bg-white text-ink'}`}>
             {item}
           </button>
         ))}

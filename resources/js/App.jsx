@@ -12,6 +12,8 @@ import Applications from './pages/Applications'
 import AgreementPage from './pages/AgreementPage'
 import ProgramList from './pages/ProgramList'
 import ProgramPage from './pages/ProgramPage'
+import Logbooks from './pages/Logbooks'
+import LogbookHistory from './pages/LogbookHistory'
 import MentorOpportunities from './pages/MentorOpportunities'
 import AdminUsers from './pages/admin/AdminUsers'
 import AdminNeeds from './pages/admin/AdminNeeds'
@@ -60,6 +62,8 @@ export default function App() {
             <Route path="agreements/:id" element={<Guard roles={['user', 'mentor', 'admin']}><AgreementPage /></Guard>} />
             <Route path="programs" element={<Guard roles={['user', 'mentor']}><ProgramList /></Guard>} />
             <Route path="programs/:id" element={<Guard roles={['user', 'mentor', 'admin']}><ProgramPage /></Guard>} />
+            <Route path="logbooks" element={<Guard roles={['user']}><Logbooks /></Guard>} />
+            <Route path="logbooks/history" element={<Guard roles={['user']}><LogbookHistory /></Guard>} />
             <Route path="mentor/opportunities" element={<Guard roles={['mentor']}><MentorOpportunities /></Guard>} />
             <Route path="admin/users" element={<Guard roles={['admin']}><AdminUsers /></Guard>} />
             <Route path="admin/needs" element={<Guard roles={['admin']}><AdminNeeds /></Guard>} />

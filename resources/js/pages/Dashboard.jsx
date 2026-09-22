@@ -38,9 +38,23 @@ function DosenHome() {
               </div>
             ))}
           </div>
-          <Link to={`/app/programs/${active.id}`} className="mt-5 inline-block text-sm font-semibold text-white">Buka ruang program →</Link>
+          <div className="mt-5 flex flex-wrap gap-4">
+            <Link to={`/app/programs/${active.id}`} className="text-sm font-semibold text-white">Buka ruang program →</Link>
+            <Link to="/app/logbooks" className="text-sm font-semibold text-white/90">Isi Logbook →</Link>
+          </div>
         </Card>
       )}
+      <Link to="/app/logbooks" className="mb-6 block rounded-2xl border border-mint/40 bg-white p-5 transition hover:border-mint hover:shadow-md">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h3 className="font-semibold">Logbook</h3>
+            <p className="mt-1 text-sm text-moss/80">
+              {active ? `Isi refleksi harian program aktif · Minggu ${active.current_week}` : 'Refleksi harian selama program imersi berlangsung'}
+            </p>
+          </div>
+          <span className="text-sm font-semibold text-copper">Buka logbook →</span>
+        </div>
+      </Link>
       <div className="grid gap-4 md:grid-cols-3">
         {opps.map((item) => (
           <Card key={item.id}>

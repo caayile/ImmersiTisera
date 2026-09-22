@@ -16,7 +16,6 @@
     if ($user->isParticipant()) {
         $items[] = ['Dasbor program', route('spa'), 'space_dashboard'];
         $items[] = ['Riwayat Pendaftaran', route('participant.applications'), 'history'];
-        $items[] = ['Logbook', route('participant.logbooks'), 'menu_book'];
     } elseif ($user->isMentor()) {
         $items[] = ['Dasbor program', route('spa'), 'space_dashboard'];
         $items[] = ['Pendaftaran', route('mentor.applications'), 'history'];

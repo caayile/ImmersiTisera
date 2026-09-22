@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import api from '../api/client'
 
 const menus = {
   user: [
@@ -8,6 +9,8 @@ const menus = {
     ['Opportunity', '/app/opportunities'],
     ['Minat saya', '/app/applications'],
     ['Program', '/app/programs'],
+    ['Logbook', '/app/logbooks'],
+    ['Riwayat Logbook', '/app/logbooks/history'],
     ['Profil', '/app/profile'],
   ],
   mentor: [
@@ -95,6 +98,16 @@ export default function Layout() {
   const items = menus[user?.role] || menus.user
   const isDosen = user?.role === 'user'
   const [open, setOpen] = useState(false)
+  const [hasActiveProgram, setHasActiveProgram] = useState(null)
+
+  useEffect(() => {
+    if (!isDosen) return
+
+    api
+      .get('/programs')
+      .then(({ data }) => setHasActiveProgram((Array.isArray(data) ? data : []).some((item) => item.status === 'active')))
+      .catch(() => setHasActiveProgram(false))
+  }, [isDosen])
 
   function signOut() {
     logout()
@@ -125,21 +138,38 @@ export default function Layout() {
         )}
 
         <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto">
-          {items.map(([label, to]) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={to === '/app'}
-              onClick={() => setOpen(false)}
-              className={({ isActive }) =>
-                `block rounded-xl px-4 py-2.5 text-sm font-medium transition ${
-                  isActive ? 'bg-mint text-white' : 'text-white/70 hover:bg-white/5 hover:text-white'
-                }`
-              }
-            >
-              {label}
-            </NavLink>
-          ))}
+          {items.map(([label, to]) => {
+            const disabled = label === 'Logbook' && hasActiveProgram === false
+
+            if (disabled) {
+              return (
+                <span
+                  key={to}
+                  aria-disabled="true"
+                  title="Tersedia saat program aktif"
+                  className="block cursor-not-allowed rounded-xl px-4 py-2.5 text-sm font-medium text-white/35"
+                >
+                  {label}
+                </span>
+              )
+            }
+
+            return (
+              <NavLink
+                key={to}
+                to={to}
+                end={to === '/app'}
+                onClick={() => setOpen(false)}
+                className={({ isActive }) =>
+                  `block rounded-xl px-4 py-2.5 text-sm font-medium transition ${
+                    isActive ? 'bg-mint text-white' : 'text-white/70 hover:bg-white/5 hover:text-white'
+                  }`
+                }
+              >
+                {label}
+              </NavLink>
+            )
+          })}
         </nav>
 
         {!isDosen && (

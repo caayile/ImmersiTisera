@@ -33,6 +33,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/programs', [ProgramController::class, 'index']);
     Route::get('/programs/{program}', [ProgramController::class, 'show']);
+    Route::get('/logbooks/history', [ProgramController::class, 'history']);
     Route::put('/programs/{program}/notes', [ProgramController::class, 'updatePhaseNotes']);
     Route::post('/programs/{program}/logbooks', [ProgramController::class, 'storeLogbook']);
     Route::post('/programs/{program}/logbooks/{logbook}/verify', [ProgramController::class, 'verifyLogbook'])->scopeBindings();
