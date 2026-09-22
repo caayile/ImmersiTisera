@@ -75,6 +75,10 @@ class AuthController extends Controller
         session(['oauth_role' => $role]);
 
         if ($this->googleOauthIsConfigured()) {
+            if (! $this->googleOauthPackageIsInstalled()) {
+                return $this->googleOauthMissingPackageRedirect();
+            }
+
             return Socialite::driver('google')->redirect();
         }
 
@@ -93,6 +97,10 @@ class AuthController extends Controller
             return redirect()->route('login')->withErrors([
                 'email' => 'Login Google dibatalkan. Silakan coba lagi.',
             ]);
+        }
+
+        if (! $this->googleOauthPackageIsInstalled()) {
+            return $this->googleOauthMissingPackageRedirect();
         }
 
         try {
@@ -300,6 +308,23 @@ class AuthController extends Controller
         return filled(config('services.google.client_id')) && filled(config('services.google.client_secret'));
     }
 
+    private function googleOauthPackageIsInstalled(): bool
+    {
+        return class_exists(Socialite::class);
+    }
+
+    private function googleOauthMissingPackageRedirect(): RedirectResponse
+    {
+        return redirect()->route('login')->withErrors([
+            'email' => $this->googleOauthMissingPackageMessage(),
+        ]);
+    }
+
+    private function googleOauthMissingPackageMessage(): string
+    {
+        return 'Paket login Google belum terpasang. Di folder proyek jalankan composer install, lalu muat ulang halaman login.';
+    }
+
     private function googleOauthRole(mixed $role): string
     {
         return $role === 'mentor' ? 'mentor' : 'participant';
@@ -361,6 +386,10 @@ class AuthController extends Controller
 
         if (str_contains($message, 'Invalid state')) {
             return 'Sesi login Google kedaluwarsa. Silakan klik Sambung dengan Google lagi.';
+        }
+
+        if (str_contains($message, 'Socialite') && str_contains($message, 'not found')) {
+            return $this->googleOauthMissingPackageMessage();
         }
 
         return 'Gagal menghubungkan akun Google. Silakan coba lagi.';

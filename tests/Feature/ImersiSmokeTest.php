@@ -52,7 +52,12 @@ class ImersiSmokeTest extends TestCase
 
         $this->actingAs(User::where('email', 'dosen@imersi.id')->first())
             ->get('/participant/dashboard')
-            ->assertRedirect(route('home'));
+            ->assertOk()
+            ->assertSee('Dr. Andi Pratama')
+            ->assertSee('Informatika')
+            ->assertSee('Fakultas Teknik')
+            ->assertSee('Pilih mitra imersi Anda')
+            ->assertDontSee('Universitas');
 
         $this->actingAs(User::where('email', 'dosen@imersi.id')->first())
             ->get('/')

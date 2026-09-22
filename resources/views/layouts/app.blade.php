@@ -12,8 +12,10 @@
 </head>
 <body class="bg-bg text-ink" data-no-reveal x-data="{ open: false }">
 @php
-    $role = auth()->user()->isAdmin() ? 'admin' : (auth()->user()->isMentor() ? 'mentor' : 'participant');
-    $unread = auth()->user()->unreadNotifications()->count();
+    $authUser = auth()->user();
+    $authUser->loadMissing('participant');
+    $role = $authUser->isAdmin() ? 'admin' : ($authUser->isMentor() ? 'mentor' : 'participant');
+    $unread = $authUser->unreadNotifications()->count();
     $menus = [
         'participant' => [
             ['Ringkasan', 'participant.dashboard'],
@@ -68,78 +70,64 @@
     ][$role];
 @endphp
 
-@if($role === 'participant')
-<header class="sticky top-0 z-30 border-b border-line bg-white/95 backdrop-blur-md">
-    <div class="mx-auto flex max-w-7xl items-center justify-between gap-3 px-5 py-3">
-        <a href="{{ route('home') }}" class="flex shrink-0 items-center gap-2 font-semibold">
-            <img src="{{ asset('images/logo-tsu.svg') }}" alt="TSU" class="site-logo site-logo--nav">
-            <span class="hidden sm:block">
-                Imersi
-                <span class="block text-[10px] uppercase tracking-widest text-muted">TSU Industry Immersion</span>
-            </span>
-        </a>
-        <form action="{{ route('departments.index') }}" method="GET" class="hidden min-w-0 flex-1 max-w-xl md:block">
-            <label class="relative block">
-                <span class="material-symbols-outlined pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted">search</span>
-                <input
-                    type="search"
-                    name="q"
-                    value="{{ request('q') }}"
-                    placeholder="Cari mitra atau unit bisnis di sini..."
-                    class="w-full rounded-full border border-line bg-bg py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/15"
-                >
-            </label>
-        </form>
-        <div class="flex items-center gap-2">
-            <x-notification-bell />
-            <x-user-menu />
-        </div>
-    </div>
-</header>
-<main class="mx-auto max-w-7xl px-5 py-6">
-    @if(session('status'))
-        <div class="mb-4 rounded-lg bg-primary/15 px-4 py-3 text-sm text-primary-dark">{{ session('status') }}</div>
-    @endif
-    @if($errors->any())
-        <div class="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{{ $errors->first() }}</div>
-    @endif
-    @yield('content')
-</main>
-@else
-<div class="min-h-screen lg:grid lg:grid-cols-[250px_1fr]">
+<div class="min-h-screen lg:grid lg:grid-cols-[280px_1fr]">
     <div x-show="open" x-cloak class="fixed inset-0 z-30 bg-black/30 lg:hidden" @click="open = false"></div>
-    <aside class="fixed inset-y-0 left-0 z-40 w-64 -translate-x-full border-r border-line bg-white p-5 transition lg:static lg:translate-x-0" :class="open && 'translate-x-0'">
-        <a href="{{ route('home') }}" class="flex items-center gap-2 font-semibold">
+    <aside class="fixed inset-y-0 left-0 z-40 flex w-[280px] -translate-x-full flex-col border-r border-line bg-[#f8faf9] p-5 transition lg:static lg:translate-x-0" :class="open && 'translate-x-0'">
+        <a href="{{ route('home') }}" class="flex shrink-0 items-center gap-2 font-semibold">
             <img src="{{ asset('images/logo-tsu.svg') }}" alt="TSU" class="site-logo site-logo--sidebar">
             <span>Imersi
             <span class="block text-[10px] uppercase tracking-widest text-muted">TSU Industry Immersion</span>
             </span>
         </a>
-        <nav class="mt-6 space-y-1 text-sm">
+
+        @if($role === 'participant')
+            <x-sidebar-profile-card class="mt-5 shrink-0" />
+        @endif
+
+        <nav class="mt-5 min-h-0 flex-1 space-y-1 overflow-y-auto text-sm">
             @foreach($menus as [$label, $name])
-                <a href="{{ route($name) }}" class="flex items-center justify-between rounded-lg px-3 py-2 {{ request()->routeIs($name) ? 'bg-primary text-white' : 'text-muted hover:bg-secondary/30 hover:text-ink' }}">
+                <a href="{{ route($name) }}" class="flex items-center justify-between rounded-lg px-3 py-2 {{ request()->routeIs($name) ? 'bg-white font-medium text-ink shadow-sm ring-1 ring-line' : 'text-muted hover:bg-white/70 hover:text-ink' }}">
                     <span>{{ $label }}</span>
                     @if($label === 'Notifikasi' && $unread)
-                        <span class="rounded-full bg-white px-1.5 text-[10px] font-semibold text-primary-dark">{{ $unread }}</span>
+                        <span class="rounded-full bg-primary px-1.5 text-[10px] font-semibold text-white">{{ $unread }}</span>
                     @endif
                 </a>
             @endforeach
         </nav>
-        <form method="POST" action="{{ route('logout') }}" class="mt-8">
+
+        <form method="POST" action="{{ route('logout') }}" class="mt-4 shrink-0 border-t border-line pt-4">
             @csrf
             <button class="text-sm text-muted hover:text-ink">Keluar</button>
         </form>
     </aside>
-    <div>
-        <header class="flex items-center justify-between border-b border-line bg-white px-5 py-3 lg:px-8">
-            <button class="rounded-lg border border-line px-3 py-1 text-sm lg:hidden" @click="open = !open">Menu</button>
+
+    <div class="min-w-0">
+        <header class="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-line bg-white/95 px-5 py-3 backdrop-blur-md lg:px-8">
+            <button type="button" class="rounded-lg border border-line px-3 py-1 text-sm lg:hidden" @click="open = !open">Menu</button>
+
+            @if($role === 'participant')
+                <form action="{{ route('departments.index') }}" method="GET" class="hidden min-w-0 flex-1 max-w-xl md:block">
+                    <label class="relative block">
+                        <span class="material-symbols-outlined pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted">search</span>
+                        <input
+                            type="search"
+                            name="q"
+                            value="{{ request('q') }}"
+                            placeholder="Cari mitra atau unit bisnis di sini..."
+                            class="w-full rounded-full border border-line bg-bg py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/15"
+                        >
+                    </label>
+                </form>
+            @endif
+
             <div class="ml-auto flex items-center gap-2">
-                @if($role === 'mentor')
+                @if(in_array($role, ['participant', 'mentor'], true))
                     <x-notification-bell />
                 @endif
                 <x-user-menu />
             </div>
         </header>
+
         <main class="px-5 py-6 lg:px-8">
             @if(session('status'))
                 <div class="mb-4 rounded-lg bg-primary/15 px-4 py-3 text-sm text-primary-dark">{{ session('status') }}</div>
@@ -151,6 +139,5 @@
         </main>
     </div>
 </div>
-@endif
 </body>
 </html>

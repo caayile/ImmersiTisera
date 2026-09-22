@@ -199,6 +199,21 @@ class GoogleAuthTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_google_callback_explains_missing_socialite_package(): void
+    {
+        Socialite::fake('google', function () {
+            throw new \Error('Class "Laravel\Socialite\Facades\Socialite" not found');
+        });
+
+        $this->get(route('login.google.callback'))
+            ->assertRedirect(route('login'))
+            ->assertSessionHasErrors([
+                'email' => 'Paket login Google belum terpasang. Di folder proyek jalankan composer install, lalu muat ulang halaman login.',
+            ]);
+
+        $this->assertGuest();
+    }
+
     public function test_google_callback_explains_invalid_client_secret(): void
     {
         Socialite::fake('google', function () {

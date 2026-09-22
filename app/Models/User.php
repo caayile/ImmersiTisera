@@ -89,6 +89,7 @@ class User extends Authenticatable
             'id' => $this->id,
             'name' => $this->name,
             'email' => $this->email,
+            'avatar' => $this->avatar,
             'role' => $this->isParticipant() ? 'user' : $this->role,
             'status' => $this->status ?? 'active',
             'verification_status' => $this->verification_status ?? 'verified',
