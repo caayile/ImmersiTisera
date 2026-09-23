@@ -70,10 +70,17 @@ class ProgramRegistrationTest extends TestCase
             ->assertSee('Detail Peserta')
             ->assertSee('Detail Lokasi')
             ->assertSee('Shared Goal')
-            ->assertSee('jenis aktivitas')
+            ->assertSee('Pilihan 1')
+            ->assertSee('Pilihan 2')
+            ->assertSee('Observasi')
+            ->assertSee('Riset')
+            ->assertDontSee('>Penugasan</', false)
+            ->assertSee('Unggah gambar')
             ->assertSee('Problem / Opportunity')
             ->assertSee('Main Output')
             ->assertSee('Success Indicators')
+            ->assertSee('Tambah indikator')
+            ->assertSee('Tanda tangan dosen')
             ->assertSee('Lanjut ke persetujuan pemagangan')
             ->assertSee('Kembali ke data diri')
             ->assertSee('Kirim pendaftaran')
@@ -86,7 +93,7 @@ class ProgramRegistrationTest extends TestCase
             ->assertDontSee('Unggah CV')
             ->assertDontSee('Ringkasan')
             ->assertDontSee('Linimasa')
-            ->assertDontSee('<select', false);
+            ->assertSee('<select', false);
     }
 
     public function test_registration_form_without_clicked_unit_redirects_to_mitra_list(): void
@@ -119,6 +126,7 @@ class ProgramRegistrationTest extends TestCase
                 'participant_benefit',
                 'business_benefit',
                 'success_indicators',
+                'participant_signature',
                 'period_start',
                 'period_end',
                 'declaration',
@@ -153,6 +161,8 @@ class ProgramRegistrationTest extends TestCase
         $this->assertSame('Dosen mendapat studi kasus nyata untuk bahan ajar dan riset terapan.', $application->participant_benefit);
         $this->assertSame('Unit bisnis mendapat sudut pandang akademik atas proses digitalnya.', $application->business_benefit);
         $this->assertSame(['Teaching case selesai dan divalidasi mentor', 'Modul kuliah baru dipakai satu semester'], $application->normalizedSuccessIndicators());
+        $this->assertNotNull($application->participant_signature);
+        $this->assertNotNull($application->participant_signed_at);
         $this->assertNull($application->cv_path);
         $this->assertNull($application->program);
 
@@ -357,6 +367,7 @@ class ProgramRegistrationTest extends TestCase
         $this->actingAs(User::where('email', 'mentor@imersi.id')->firstOrFail())
             ->post(route('mentor.applications.review', $application), [
                 'decision' => 'approved',
+                'mentor_signature' => $this->sampleSignature(),
             ])
             ->assertStatus(422);
     }
@@ -377,6 +388,7 @@ class ProgramRegistrationTest extends TestCase
         $this->actingAs(User::where('email', 'mentor-it@imersi.id')->firstOrFail())
             ->post(route('mentor.applications.review', $application), [
                 'decision' => 'approved',
+                'mentor_signature' => $this->sampleSignature(),
             ])
             ->assertForbidden();
     }
@@ -403,10 +415,13 @@ class ProgramRegistrationTest extends TestCase
             ->post(route('mentor.applications.review', $application), [
                 'decision' => 'approved',
                 'mentor_note' => 'Siap menerima dosen.',
+                'mentor_signature' => $this->sampleSignature(),
             ])
             ->assertRedirect();
 
         $this->assertSame('waiting_admin', $application->fresh()->status);
+        $this->assertNotNull($application->fresh()->mentor_signature);
+        $this->assertNotNull($application->fresh()->mentor_signed_at);
 
         $this->actingAs($admin)
             ->post(route('admin.matching.update', $application), [
@@ -444,14 +459,20 @@ class ProgramRegistrationTest extends TestCase
             ->assertRedirect();
 
         $this->actingAs($mentor->user)
-            ->post(route('mentor.applications.review', $application), ['decision' => 'approved'])
-            ->assertRedirect();
+            ->post(route('mentor.applications.review', $application), [
+                'decision' => 'approved',
+                'mentor_signature' => $this->sampleSignature(),
+            ])
+            ->assertRedirect(route('mentor.applications'));
 
         $this->assertSame('waiting_admin', $application->fresh()->status);
 
         $this->actingAs($mentor->user)
-            ->post(route('mentor.applications.review', $application), ['decision' => 'approved'])
-            ->assertRedirect()
+            ->post(route('mentor.applications.review', $application), [
+                'decision' => 'approved',
+                'mentor_signature' => $this->sampleSignature(),
+            ])
+            ->assertRedirect(route('mentor.applications.show', $application))
             ->assertSessionHas('status');
 
         $this->assertSame('waiting_admin', $application->fresh()->status);
@@ -535,13 +556,13 @@ class ProgramRegistrationTest extends TestCase
             ->assertRedirect(route('participant.applications.show', $application));
 
         $application->refresh();
-        $this->assertSame('submitted', $application->status);
+        $this->assertSame('waiting_mentor', $application->status);
         $this->assertCount(3, $application->normalizedSuccessIndicators());
         $this->assertSame('Setuju dengan usulan mentor, saya tambah satu indikator adopsi modul.', $application->indicator_feedback);
     }
 
     /**
-     * @return array{business_unit_id: int, shared_goal: string, activity_types: list<string>, problem_statement: string, main_output: string, participant_benefit: string, business_benefit: string, success_indicators: list<string>, period_start: string, period_end: string, declaration: string}
+     * @return array{business_unit_id: int, shared_goal: string, activity_types: list<string>, problem_statement: string, main_output: string, participant_benefit: string, business_benefit: string, success_indicators: list<string>, participant_signature: string, period_start: string, period_end: string, declaration: string}
      */
     private function validPayload(BusinessUnit $unit, ?string $problem = null): array
     {
@@ -554,10 +575,16 @@ class ProgramRegistrationTest extends TestCase
             'participant_benefit' => 'Dosen mendapat studi kasus nyata untuk bahan ajar dan riset terapan.',
             'business_benefit' => 'Unit bisnis mendapat sudut pandang akademik atas proses digitalnya.',
             'success_indicators' => ['Teaching case selesai dan divalidasi mentor', 'Modul kuliah baru dipakai satu semester'],
+            'participant_signature' => $this->sampleSignature(),
             'period_start' => '2026-09-10',
             'period_end' => '2026-11-10',
             'declaration' => '1',
         ];
+    }
+
+    private function sampleSignature(): string
+    {
+        return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
     }
 
     private function newDosen(): User

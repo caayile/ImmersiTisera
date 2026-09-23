@@ -6,7 +6,6 @@ export const PURPOSE = [
 ]
 
 export const ACTIVITIES = [
-  { value: 'penugasan', label: 'Penugasan' },
   { value: 'observasi', label: 'Observasi' },
   { value: 'riset', label: 'Riset' },
 ]

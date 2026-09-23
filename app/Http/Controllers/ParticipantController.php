@@ -210,9 +210,14 @@ class ParticipantController extends Controller
 
         $approvals->resubmit($application, $data);
 
+        $fresh = $application->fresh();
+        $message = $fresh->status === 'waiting_mentor'
+            ? 'Perbaikan dikirim ke mentor untuk ditinjau dan ditandatangani.'
+            : 'Pendaftaran dikirim ulang ke admin.';
+
         return redirect()
             ->route('participant.applications.show', $application)
-            ->with('status', 'Pendaftaran dikirim ulang ke admin.');
+            ->with('status', $message);
     }
 
     public function program(Request $request)
@@ -403,8 +408,8 @@ class ParticipantController extends Controller
     {
         return [
             'shared_goal' => ['required', 'string', 'min:20'],
-            'activity_types' => ['required', 'array', 'min:1'],
-            'activity_types.*' => ['required', 'string', Rule::in(Application::ACTIVITY_TYPES)],
+            'activity_types' => ['required', 'array', 'min:1', 'max:2'],
+            'activity_types.*' => ['nullable', 'string', Rule::in(Application::ACTIVITY_TYPES)],
             'problem_statement' => ['required', 'string', 'min:20'],
             'main_output' => ['required', 'string', 'min:10'],
             'participant_benefit' => ['required', 'string', 'min:20'],
@@ -412,12 +417,12 @@ class ParticipantController extends Controller
             'success_indicators' => [
                 'required',
                 'array',
-                'min:1',
-                'max:3',
+                'min:'.Application::MIN_SUCCESS_INDICATORS,
+                'max:'.Application::MAX_SUCCESS_INDICATORS,
                 function (string $attribute, mixed $value, \Closure $fail): void {
                     $filled = collect(is_array($value) ? $value : [])->map(fn ($item) => trim((string) $item))->filter();
-                    if ($filled->isEmpty()) {
-                        $fail('Tulis minimal 1 indikator keberhasilan.');
+                    if ($filled->count() < Application::MIN_SUCCESS_INDICATORS) {
+                        $fail('Tulis minimal '.Application::MIN_SUCCESS_INDICATORS.' indikator keberhasilan.');
 
                         return;
                     }
@@ -431,6 +436,16 @@ class ParticipantController extends Controller
             ],
             'success_indicators.*' => ['nullable', 'string', 'max:255'],
             'indicator_feedback' => ['nullable', 'string'],
+            'participant_signature' => [
+                'required',
+                'string',
+                'regex:/^data:image\/(png|jpeg|jpg|webp);base64,/i',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if (is_string($value) && strlen($value) > 900_000) {
+                        $fail('Tanda tangan terlalu besar. Hapus coretan lalu tanda tangani ulang, atau unggah gambar lebih kecil.');
+                    }
+                },
+            ],
             'period_start' => ['required', 'date'],
             'period_end' => [
                 'required',

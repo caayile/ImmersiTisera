@@ -53,7 +53,7 @@ class MentorController extends Controller
 
     public function applications(Request $request)
     {
-        $applications = Application::with(['participant.user', 'department', 'businessUnit'])
+        $applications = Application::with(['participant.user', 'department', 'businessUnit', 'mentor.user'])
             ->where('mentor_id', $request->user()->mentor?->id)
             ->latest()
             ->get();
@@ -61,26 +61,55 @@ class MentorController extends Controller
         return view('mentor.applications', compact('applications'));
     }
 
+    public function showApplication(Request $request, Application $application)
+    {
+        $mentor = $request->user()->mentor;
+        abort_unless($mentor && $application->mentor_id === $mentor->id, 403);
+
+        $application->load(['participant.user', 'department', 'businessUnit', 'mentor.user']);
+
+        return view('mentor.application-show', compact('application'));
+    }
+
     public function reviewApplication(Request $request, Application $application, ApplicationApprovalService $approvals)
     {
         $data = $request->validate([
-            'decision' => ['required', 'in:approved,revision,rejected'],
-            'mentor_note' => ['nullable', 'string'],
-            'revision_note' => ['nullable', 'string'],
-            'success_indicators' => ['sometimes', 'array', 'max:3'],
+            'decision' => ['required', 'in:approved,revision'],
+            'mentor_note' => ['required_if:decision,revision', 'nullable', 'string', 'min:10', 'max:2000'],
+            'revision_note' => ['nullable', 'string', 'max:2000'],
+            'success_indicators' => ['sometimes', 'array', 'max:'.Application::MAX_SUCCESS_INDICATORS],
             'success_indicators.*' => ['nullable', 'string', 'max:255'],
+            'mentor_signature' => [
+                'required_if:decision,approved',
+                'nullable',
+                'string',
+                'regex:/^data:image\/(png|jpeg|jpg|webp);base64,/i',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if (is_string($value) && strlen($value) > 900_000) {
+                        $fail('Tanda tangan mentor terlalu besar.');
+                    }
+                },
+            ],
         ]);
 
         $mentor = $request->user()->mentor;
         abort_unless($mentor, 403);
 
         if ($application->mentor_id === $mentor->id && $data['decision'] === 'approved' && $application->status === 'waiting_admin') {
-            return back()->with('status', 'Persetujuan ini sudah disetujui (status: '.$application->currentStageLabel().'). Muat ulang halaman untuk melihat status terbaru.');
+            return redirect()
+                ->route('mentor.applications.show', $application)
+                ->with('status', 'Persetujuan ini sudah disetujui (status: '.$application->currentStageLabel().'). Muat ulang halaman untuk melihat status terbaru.');
         }
 
         $approvals->mentorReview($application, $mentor, $data);
 
-        return back()->with('status', 'Keputusan pendaftaran disimpan.');
+        $message = $data['decision'] === 'revision'
+            ? 'Permintaan revisi dikirim ke dosen.'
+            : 'Surat persetujuan ditandatangani dan diteruskan ke admin.';
+
+        return redirect()
+            ->route('mentor.applications')
+            ->with('status', $message);
     }
 
     public function agreements(Request $request)

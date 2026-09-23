@@ -43,7 +43,6 @@
                         {{ $application->status === 'waiting_admin' ? 'Sahkan' : 'Teruskan ke mentor' }}
                     </button>
                     <button name="status" value="revision" class="rounded-lg border border-line px-4 py-2 text-sm">Revisi</button>
-                    <button name="status" value="rejected" class="rounded-lg border border-line px-4 py-2 text-sm">Tolak</button>
                 </div>
             </form>
             @endif

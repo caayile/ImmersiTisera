@@ -13,13 +13,18 @@ use Illuminate\Support\Facades\Storage;
     'learning_objectives', 'planned_activities', 'expected_output', 'campus_benefit', 'cv_path',
     'shared_goal', 'activity_types', 'problem_statement', 'main_output',
     'participant_benefit', 'business_benefit', 'success_indicators', 'indicator_feedback',
+    'participant_signature', 'mentor_signature', 'participant_signed_at', 'mentor_signed_at',
     'preferred_period', 'period_start', 'period_end', 'match_score', 'relevance_warning',
     'matching_notes', 'letter_number', 'mentor_note', 'revision_note', 'status',
     'admin_reviewed_at', 'mentor_reviewed_at', 'admin_finalized_at',
 ])]
 class Application extends Model
 {
-    public const ACTIVITY_TYPES = ['penugasan', 'observasi', 'riset'];
+    public const ACTIVITY_TYPES = ['observasi', 'riset'];
+
+    public const MIN_SUCCESS_INDICATORS = 2;
+
+    public const MAX_SUCCESS_INDICATORS = 10;
 
     protected function casts(): array
     {
@@ -29,6 +34,8 @@ class Application extends Model
             'success_indicators' => 'array',
             'period_start' => 'date',
             'period_end' => 'date',
+            'participant_signed_at' => 'datetime',
+            'mentor_signed_at' => 'datetime',
             'admin_reviewed_at' => 'datetime',
             'mentor_reviewed_at' => 'datetime',
             'admin_finalized_at' => 'datetime',
@@ -131,9 +138,9 @@ class Application extends Model
     public static function activityTypeLabel(string $value): string
     {
         return match ($value) {
-            'penugasan' => 'Penugasan',
             'observasi' => 'Observasi',
             'riset' => 'Riset',
+            'penugasan' => 'Penugasan',
             default => $value,
         };
     }
@@ -158,9 +165,19 @@ class Application extends Model
         return collect($this->success_indicators ?? [])
             ->map(fn ($item) => trim((string) $item))
             ->filter()
-            ->take(3)
+            ->take(self::MAX_SUCCESS_INDICATORS)
             ->values()
             ->all();
+    }
+
+    public function hasParticipantSignature(): bool
+    {
+        return filled($this->participant_signature);
+    }
+
+    public function hasMentorSignature(): bool
+    {
+        return filled($this->mentor_signature);
     }
 
     public function activityTypeLabels(): string

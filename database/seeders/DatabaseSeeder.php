@@ -152,6 +152,8 @@ class DatabaseSeeder extends Seeder
             'match_score' => 74,
             'relevance_warning' => false,
             'status' => 'submitted',
+            'participant_signature' => $this->sampleSignature(),
+            'participant_signed_at' => now()->subDay(),
         ]);
 
         $active = $this->program($andi, $mentor, $tspm, $units['Digital Business'], 'active', now()->subDays(12), now()->addDays(48), 48);
@@ -327,7 +329,7 @@ class DatabaseSeeder extends Seeder
             'function' => $function,
             'image_path' => $department->image_path,
             'work_done' => "Operasional harian $name, kolaborasi lintas tim, dan improvement berkelanjutan.",
-            'example_activities' => 'Observasi, penugasan, riset terapan, dan diskusi mentoring 30 menit.',
+            'example_activities' => 'Observasi, riset terapan, dan diskusi mentoring 30 menit.',
             'requirements' => 'Kompetensi relevan dengan fungsi unit dan komitmen 8 minggu.',
             'relevant_programs' => $programs,
             'period' => '8 weeks / ±60 days',
@@ -369,6 +371,13 @@ class DatabaseSeeder extends Seeder
             'preferred_period' => '8 weeks / 60 days',
             'match_score' => 88,
             'status' => 'approved',
+            'participant_signature' => $this->sampleSignature(),
+            'participant_signed_at' => now()->subDays(14),
+            'mentor_signature' => $this->sampleSignature(),
+            'mentor_signed_at' => now()->subDays(13),
+            'admin_reviewed_at' => now()->subDays(14),
+            'mentor_reviewed_at' => now()->subDays(13),
+            'admin_finalized_at' => now()->subDays(12),
         ]);
 
         $program = Program::create([
@@ -386,5 +395,10 @@ class DatabaseSeeder extends Seeder
         $program->agreement()->create(['status' => $status === 'active' ? 'agreed' : 'draft']);
 
         return $program->load('agreement');
+    }
+
+    private function sampleSignature(): string
+    {
+        return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
     }
 }

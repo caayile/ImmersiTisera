@@ -109,19 +109,31 @@
             </div>
         </div>
 
-        <div class="grid gap-4 sm:grid-cols-4">
-            @foreach([
-                ['Dosen', $dosen?->name, $application->created_at],
-                ['Admin', 'Pengelola program', $application->admin_reviewed_at],
-                ['Mentor', $mentor?->name, $application->mentor_reviewed_at],
-                ['Admin final', 'Pengesahan', $application->admin_finalized_at],
-            ] as [$role, $name, $at])
-                <div class="rounded-xl border border-dashed border-line p-3 text-center">
-                    <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">{{ $role }}</p>
-                    <p class="mt-2 font-medium">{{ $name ?: '—' }}</p>
-                    <p class="mt-1 text-xs text-muted">{{ $at?->format('d M Y H:i') ?? 'Belum paraf' }}</p>
-                </div>
-            @endforeach
+        <div class="grid gap-4 sm:grid-cols-2">
+            <div class="rounded-xl border border-dashed border-line p-4 text-center">
+                <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">Dosen</p>
+                <p class="mt-2 font-medium">{{ $dosen?->name ?: '—' }}</p>
+                @if($application->participant_signature)
+                    <img src="{{ $application->participant_signature }}" alt="Tanda tangan dosen" class="mx-auto mt-3 h-20 w-full max-w-[220px] object-contain">
+                    <p class="mt-2 text-xs text-muted">{{ $application->participant_signed_at?->format('d M Y H:i') ?? $application->created_at?->format('d M Y H:i') }}</p>
+                @else
+                    <div class="mx-auto mt-3 flex h-20 max-w-[220px] items-center justify-center rounded-lg border border-dashed border-line bg-bg px-3">
+                        <p class="text-xs text-muted">Belum ditandatangani — dosen mencoret tanda tangan saat mengisi form</p>
+                    </div>
+                @endif
+            </div>
+            <div class="rounded-xl border border-dashed border-line p-4 text-center">
+                <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">Mentor</p>
+                <p class="mt-2 font-medium">{{ $mentor?->name ?: '—' }}</p>
+                @if($application->mentor_signature)
+                    <img src="{{ $application->mentor_signature }}" alt="Tanda tangan mentor" class="mx-auto mt-3 h-20 w-full max-w-[220px] object-contain">
+                    <p class="mt-2 text-xs text-muted">{{ $application->mentor_signed_at?->format('d M Y H:i') ?? $application->mentor_reviewed_at?->format('d M Y H:i') }}</p>
+                @else
+                    <div class="mx-auto mt-3 flex h-20 max-w-[220px] items-center justify-center rounded-lg border border-dashed border-line bg-bg px-3">
+                        <p class="text-xs text-muted">Belum ditandatangani — mentor mencoret tanda tangan saat menyetujui</p>
+                    </div>
+                @endif
+            </div>
         </div>
 
         @if($application->revision_note)

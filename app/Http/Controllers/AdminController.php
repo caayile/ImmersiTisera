@@ -447,7 +447,7 @@ class AdminController extends Controller
     public function updateMatching(Request $request, Application $application, ApplicationApprovalService $approvals)
     {
         $data = $request->validate([
-            'status' => ['required', Rule::in(['approved', 'rejected', 'revision'])],
+            'status' => ['required', Rule::in(['approved', 'revision'])],
             'mentor_id' => ['nullable', 'exists:mentors,id'],
             'business_unit_id' => ['nullable', 'exists:business_units,id'],
             'matching_notes' => ['nullable', 'string'],
