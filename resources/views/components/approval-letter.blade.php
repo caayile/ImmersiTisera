@@ -10,7 +10,7 @@
         <div class="flex flex-wrap items-start justify-between gap-4">
             <div>
                 <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-dark">TSU Industry Immersion</p>
-                <h2 class="mt-1 text-xl font-semibold">Surat Persetujuan Program Imersi</h2>
+                <h2 class="mt-1 text-xl font-semibold">Persetujuan Pemagangan</h2>
                 <p class="mt-1 text-sm text-muted">Nomor {{ $application->letter_number ?? 'Menunggu nomor' }}</p>
             </div>
             <x-badge :status="$application->status" />
@@ -70,13 +70,43 @@
         </dl>
 
         <div class="space-y-4">
-            @foreach($application->registrationAnswers() as $index => $item)
+            <div>
+                <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 1 — Shared Goal</p>
+                <p class="mt-1">{{ $application->shared_goal ?: '—' }}</p>
+            </div>
+            <div>
+                <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 2 — Jenis Aktivitas</p>
+                <p class="mt-1 font-medium">{{ $application->activityTypeLabels() }}</p>
+            </div>
+            <div>
+                <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 3 — Problem / Opportunity</p>
+                <p class="mt-1">{{ $application->problem_statement ?: '—' }}</p>
+            </div>
+            <div>
+                <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 4 — Main Output</p>
+                <p class="mt-1">{{ $application->main_output ?: '—' }}</p>
+            </div>
+            <div class="grid gap-4 sm:grid-cols-2">
                 <div>
-                    <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Pertanyaan {{ $index + 1 }}</p>
-                    <p class="mt-1 font-medium">{{ $item['label'] }}</p>
-                    <p class="mt-1">{{ $item['answer'] !== '' ? $item['answer'] : '—' }}</p>
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 5 — Benefit Dosen / TSU</p>
+                    <p class="mt-1">{{ $application->participant_benefit ?: '—' }}</p>
                 </div>
-            @endforeach
+                <div>
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 5 — Benefit Unit Bisnis</p>
+                    <p class="mt-1">{{ $application->business_benefit ?: '—' }}</p>
+                </div>
+            </div>
+            <div>
+                <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 6 — Success Indicators</p>
+                @forelse($application->normalizedSuccessIndicators() as $index => $indicator)
+                    <p class="mt-1">{{ $index + 1 }}. {{ $indicator }}</p>
+                @empty
+                    <p class="mt-1">—</p>
+                @endforelse
+                @if($application->indicator_feedback)
+                    <p class="mt-2 text-muted"><b>Feedback indikator:</b> {{ $application->indicator_feedback }}</p>
+                @endif
+            </div>
         </div>
 
         <div class="grid gap-4 sm:grid-cols-4">

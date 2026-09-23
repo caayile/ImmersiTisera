@@ -18,7 +18,7 @@ class ApplicationApprovalService
     public function __construct(private MatchingService $matching) {}
 
     /**
-     * @param  array{motivation: string, learning_objectives: string, planned_activities: string, expected_output: string, campus_benefit: string, period_start: string, period_end: string, cv_path: string}  $data
+     * @param  array{shared_goal: string, activity_types: list<string>, problem_statement: string, main_output: string, participant_benefit: string, business_benefit: string, success_indicators: list<string>, indicator_feedback?: string|null, period_start: string, period_end: string, cv_path?: string}  $data
      */
     public function submit(Participant $participant, BusinessUnit $unit, array $data): Application
     {
@@ -46,7 +46,7 @@ class ApplicationApprovalService
             'mentor_id' => $mentor?->id,
             ...$this->questionnairePayload($data),
             ...$period,
-            'cv_path' => $data['cv_path'],
+            ...isset($data['cv_path']) ? ['cv_path' => $data['cv_path']] : [],
             'match_score' => $match['score'],
             'relevance_warning' => $match['warning'],
             'status' => 'submitted',
@@ -74,7 +74,7 @@ class ApplicationApprovalService
     }
 
     /**
-     * @param  array{motivation: string, learning_objectives: string, planned_activities: string, expected_output: string, campus_benefit: string, period_start: string, period_end: string, business_unit_id: int, cv_path?: string}  $data
+     * @param  array{shared_goal: string, activity_types: list<string>, problem_statement: string, main_output: string, participant_benefit: string, business_benefit: string, success_indicators: list<string>, indicator_feedback?: string|null, period_start: string, period_end: string, business_unit_id: int, cv_path?: string}  $data
      */
     public function resubmit(Application $application, array $data): Application
     {
@@ -120,7 +120,7 @@ class ApplicationApprovalService
     }
 
     /**
-     * @param  array{decision: string, mentor_note?: string|null, revision_note?: string|null}  $data
+     * @param  array{decision: string, mentor_note?: string|null, revision_note?: string|null, success_indicators?: list<string>|null}  $data
      */
     public function mentorReview(Application $application, Mentor $mentor, array $data): Application
     {
@@ -128,10 +128,14 @@ class ApplicationApprovalService
         abort_unless($application->status === 'waiting_mentor', 422, 'Pendaftaran ini tidak menunggu tinjauan mentor.');
 
         if ($data['decision'] === 'revision') {
+            $indicators = $this->cleanIndicators($data['success_indicators'] ?? null);
             $application->update([
                 'status' => 'revision',
                 'mentor_note' => $data['mentor_note'] ?? $application->mentor_note,
-                'revision_note' => $data['revision_note'] ?? $data['mentor_note'] ?? $application->revision_note,
+                'revision_note' => $data['revision_note']
+                    ?? $data['mentor_note']
+                    ?? ($indicators !== null ? 'Mentor mengusulkan perubahan indikator keberhasilan.' : $application->revision_note),
+                ...($indicators !== null ? ['success_indicators' => $indicators] : []),
                 'mentor_reviewed_at' => now(),
             ]);
             $application->participant->user->notify(new ImersiAlert(
@@ -292,7 +296,24 @@ class ApplicationApprovalService
                     'status' => 'submitted',
                 ]
             );
-            $program->agreement()->firstOrCreate(['program_id' => $program->id], ['status' => 'draft']);
+            $program->agreement()->firstOrCreate(
+                ['program_id' => $program->id],
+                [
+                    'status' => 'draft',
+                    'objective' => $application->shared_goal,
+                    'problem_statement' => $application->problem_statement,
+                    'activities' => $application->normalizedActivityTypes() === []
+                        ? null
+                        : 'Jenis aktivitas: '.implode(', ', array_map(
+                            fn (string $type) => Application::activityTypeLabel($type),
+                            $application->normalizedActivityTypes()
+                        )),
+                    'main_output' => $application->main_output,
+                    'participant_benefit' => $application->participant_benefit,
+                    'business_benefit' => $application->business_benefit,
+                    'success_indicators' => $application->normalizedSuccessIndicators(),
+                ]
+            );
 
             $application->participant->user->notify(new ImersiAlert(
                 'Pendaftaran disetujui',
@@ -306,12 +327,41 @@ class ApplicationApprovalService
 
     /**
      * @param  array<string, mixed>  $data
-     * @return array<string, string>
+     * @return array<string, mixed>
      */
     private function questionnairePayload(array $data): array
     {
-        return collect(Application::registrationQuestionKeys())
-            ->mapWithKeys(fn (string $key): array => [$key => $data[$key]])
+        return [
+            'shared_goal' => $data['shared_goal'],
+            'activity_types' => collect($data['activity_types'] ?? [])
+                ->map(fn ($item) => strtolower(trim((string) $item)))
+                ->filter(fn ($item) => in_array($item, Application::ACTIVITY_TYPES, true))
+                ->values()
+                ->all(),
+            'problem_statement' => $data['problem_statement'],
+            'main_output' => $data['main_output'],
+            'participant_benefit' => $data['participant_benefit'],
+            'business_benefit' => $data['business_benefit'],
+            'success_indicators' => $this->cleanIndicators($data['success_indicators'] ?? []) ?? [],
+            'indicator_feedback' => $data['indicator_feedback'] ?? null,
+        ];
+    }
+
+    /**
+     * @param  mixed  $value
+     * @return list<string>|null
+     */
+    private function cleanIndicators(mixed $value): ?array
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        return collect(is_array($value) ? $value : [$value])
+            ->map(fn ($item) => trim((string) $item))
+            ->filter()
+            ->take(3)
+            ->values()
             ->all();
     }
 

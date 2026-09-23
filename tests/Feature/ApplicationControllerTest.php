@@ -42,8 +42,13 @@ class ApplicationControllerTest extends TestCase
             'participant_id' => $dosen->participant->id,
             'business_unit_id' => $unit->id,
             'status' => 'submitted',
-            'planned_activities' => 'riset',
+            'shared_goal' => 'Menyusun teaching case dari proses digital bisnis.',
         ]);
+
+        $this->assertSame(
+            ['riset', 'observasi'],
+            \App\Models\Application::where('participant_id', $dosen->participant->id)->firstOrFail()->normalizedActivityTypes()
+        );
 
         Notification::assertSentTo(
             User::where('email', 'admin@imersi.id')->firstOrFail(),
@@ -63,7 +68,7 @@ class ApplicationControllerTest extends TestCase
             ->postJson('/api/applications', [
                 'opportunity_id' => $unit->id,
                 'primary_activity' => 'riset',
-                'proposed_shared_goal' => 'Belajar industri.',
+                'proposed_shared_goal' => 'Belajar praktik industri secara langsung di lapangan.',
             ])
             ->assertUnprocessable()
             ->assertJsonPath('message', 'Lengkapi profil terlebih dahulu.');

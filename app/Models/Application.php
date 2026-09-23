@@ -11,16 +11,22 @@ use Illuminate\Support\Facades\Storage;
 #[Fillable([
     'participant_id', 'department_id', 'business_unit_id', 'mentor_id', 'motivation',
     'learning_objectives', 'planned_activities', 'expected_output', 'campus_benefit', 'cv_path',
+    'shared_goal', 'activity_types', 'problem_statement', 'main_output',
+    'participant_benefit', 'business_benefit', 'success_indicators', 'indicator_feedback',
     'preferred_period', 'period_start', 'period_end', 'match_score', 'relevance_warning',
     'matching_notes', 'letter_number', 'mentor_note', 'revision_note', 'status',
     'admin_reviewed_at', 'mentor_reviewed_at', 'admin_finalized_at',
 ])]
 class Application extends Model
 {
+    public const ACTIVITY_TYPES = ['penugasan', 'observasi', 'riset'];
+
     protected function casts(): array
     {
         return [
             'relevance_warning' => 'boolean',
+            'activity_types' => 'array',
+            'success_indicators' => 'array',
             'period_start' => 'date',
             'period_end' => 'date',
             'admin_reviewed_at' => 'datetime',
@@ -120,6 +126,51 @@ class Application extends Model
 
             return $question;
         }, self::registrationQuestions());
+    }
+
+    public static function activityTypeLabel(string $value): string
+    {
+        return match ($value) {
+            'penugasan' => 'Penugasan',
+            'observasi' => 'Observasi',
+            'riset' => 'Riset',
+            default => $value,
+        };
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function normalizedActivityTypes(): array
+    {
+        return collect($this->activity_types ?? [])
+            ->map(fn ($item) => strtolower(trim((string) $item)))
+            ->filter(fn ($item) => in_array($item, self::ACTIVITY_TYPES, true))
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function normalizedSuccessIndicators(): array
+    {
+        return collect($this->success_indicators ?? [])
+            ->map(fn ($item) => trim((string) $item))
+            ->filter()
+            ->take(3)
+            ->values()
+            ->all();
+    }
+
+    public function activityTypeLabels(): string
+    {
+        $labels = array_map(
+            fn (string $type) => self::activityTypeLabel($type),
+            $this->normalizedActivityTypes()
+        );
+
+        return $labels === [] ? '—' : implode(', ', $labels);
     }
 
     public function generateLetterNumber(): string

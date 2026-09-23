@@ -14,7 +14,6 @@ use App\Support\Status;
 use App\Support\StudyPrograms;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class ParticipantController extends Controller
@@ -38,7 +37,8 @@ class ParticipantController extends Controller
 
         $partners = Department::query()
             ->where('status', 'active')
-            ->withCount(['businessUnits' => fn ($q) => $q->where('status', 'open')])
+            ->withCount('businessUnits')
+            ->withCount(['businessUnits as open_units_count' => fn ($q) => $q->where('status', 'open')])
             ->orderBy('area')
             ->orderBy('name')
             ->get()
@@ -55,6 +55,7 @@ class ParticipantController extends Controller
                     'slug' => $department->slug,
                     'url' => route('departments.show', $department),
                     'units' => $department->business_units_count,
+                    'openUnits' => $department->open_units_count,
                     'image' => $imageExists ? asset($imagePath) : null,
                     'gradient' => $gradients[$index % count($gradients)],
                 ];
@@ -161,9 +162,11 @@ class ParticipantController extends Controller
             return redirect()->route('participant.profile')->with('status', 'Lengkapi profil sebelum mendaftar program.');
         }
 
-        $data['cv_path'] = $request->file('cv')->store('application-cvs', 'public');
-
         $unit = BusinessUnit::with('mentors')->findOrFail($data['business_unit_id']);
+        if ($unit->status !== 'open') {
+            return redirect()->route('departments.index')->with('status', 'Lowongan departemen ini sudah ditutup.');
+        }
+
         $application = $approvals->submit($participant, $unit, $data);
 
         return redirect()
@@ -183,14 +186,15 @@ class ParticipantController extends Controller
     public function editApplication(Request $request, Application $application)
     {
         $this->authorizeApplication($request, $application);
-        abort_unless($application->canBeRevisedByParticipant(), 403);
 
+        $canEdit = $application->canBeRevisedByParticipant();
         $start = $application->period_start ?? now();
 
         return view('participant.application-form', [
             'participant' => $request->user()->participant,
             'unit' => $application->businessUnit()->with('department')->first(),
             'application' => $application,
+            'readOnly' => ! $canEdit,
             'periodStart' => $start->toDateString(),
             'periodEnd' => ($application->period_end ?? Application::periodEndFromStart($start))->toDateString(),
         ]);
@@ -199,17 +203,10 @@ class ParticipantController extends Controller
     public function updateApplication(Request $request, Application $application, ApplicationApprovalService $approvals)
     {
         $this->authorizeApplication($request, $application);
+        abort_unless($application->canBeRevisedByParticipant(), 403, 'Pendaftaran hanya dapat dikirim ulang saat status revisi.');
 
-        $data = $request->validate($this->registrationFieldRules($request, $application));
+        $data = $request->validate($this->registrationFieldRules($request));
         $data['business_unit_id'] = $application->business_unit_id;
-
-        if ($request->hasFile('cv')) {
-            if ($application->cv_path) {
-                Storage::disk('public')->delete($application->cv_path);
-            }
-
-            $data['cv_path'] = $request->file('cv')->store('application-cvs', 'public');
-        }
 
         $approvals->resubmit($application, $data);
 
@@ -402,22 +399,38 @@ class ParticipantController extends Controller
     /**
      * @return array<string, mixed>
      */
-    private function registrationFieldRules(Request $request, ?Application $application = null): array
+    private function registrationFieldRules(Request $request): array
     {
-        $rules = [];
-
-        foreach (Application::registrationQuestionKeys() as $key) {
-            $rules[$key] = ['required', 'string', 'min:20'];
-        }
-
         return [
-            ...$rules,
-            'cv' => [
-                $application?->cv_path ? 'nullable' : 'required',
-                'file',
-                'mimes:pdf,doc,docx',
-                'max:5120',
+            'shared_goal' => ['required', 'string', 'min:20'],
+            'activity_types' => ['required', 'array', 'min:1'],
+            'activity_types.*' => ['required', 'string', Rule::in(Application::ACTIVITY_TYPES)],
+            'problem_statement' => ['required', 'string', 'min:20'],
+            'main_output' => ['required', 'string', 'min:10'],
+            'participant_benefit' => ['required', 'string', 'min:20'],
+            'business_benefit' => ['required', 'string', 'min:20'],
+            'success_indicators' => [
+                'required',
+                'array',
+                'min:1',
+                'max:3',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    $filled = collect(is_array($value) ? $value : [])->map(fn ($item) => trim((string) $item))->filter();
+                    if ($filled->isEmpty()) {
+                        $fail('Tulis minimal 1 indikator keberhasilan.');
+
+                        return;
+                    }
+                    foreach ($filled as $item) {
+                        if (mb_strlen($item) < 10) {
+                            $fail('Setiap indikator keberhasilan minimal 10 karakter.');
+                            break;
+                        }
+                    }
+                },
             ],
+            'success_indicators.*' => ['nullable', 'string', 'max:255'],
+            'indicator_feedback' => ['nullable', 'string'],
             'period_start' => ['required', 'date'],
             'period_end' => [
                 'required',

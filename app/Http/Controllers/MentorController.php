@@ -67,10 +67,16 @@ class MentorController extends Controller
             'decision' => ['required', 'in:approved,revision,rejected'],
             'mentor_note' => ['nullable', 'string'],
             'revision_note' => ['nullable', 'string'],
+            'success_indicators' => ['sometimes', 'array', 'max:3'],
+            'success_indicators.*' => ['nullable', 'string', 'max:255'],
         ]);
 
         $mentor = $request->user()->mentor;
         abort_unless($mentor, 403);
+
+        if ($application->mentor_id === $mentor->id && $data['decision'] === 'approved' && $application->status === 'waiting_admin') {
+            return back()->with('status', 'Persetujuan ini sudah disetujui (status: '.$application->currentStageLabel().'). Muat ulang halaman untuk melihat status terbaru.');
+        }
 
         $approvals->mentorReview($application, $mentor, $data);
 

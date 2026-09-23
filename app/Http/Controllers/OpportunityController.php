@@ -25,8 +25,6 @@ class OpportunityController extends Controller
                 $inner->where('id', $mentor?->business_unit_id)
                     ->orWhere('department_id', $mentor?->department_id);
             });
-        } else {
-            $query->where('status', 'open');
         }
 
         $units = $query->get()->unique('id')->values();

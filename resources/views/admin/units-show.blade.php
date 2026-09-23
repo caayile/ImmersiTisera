@@ -101,8 +101,8 @@
                     @endif
                     <div class="min-w-0 flex-1">
                         <h3 class="font-semibold text-ink">{{ $unit->name }}</h3>
-                        <p class="mt-0.5 text-xs font-medium {{ $unit->isOpen() ? 'text-primary-dark' : ($unit->isScheduled() ? 'text-red-500' : 'text-muted') }}">
-                        {{ $unit->isOpen() ? 'Lowongan dibuka' : ($unit->isScheduled() ? 'Lowongan ditutup' : 'Belum dijadwalkan') }}
+                        <p class="mt-0.5 text-xs font-medium {{ $unit->status === 'open' ? 'text-primary-dark' : ($unit->isScheduled() ? 'text-red-500' : 'text-muted') }}">
+                        {{ $unit->status === 'open' ? 'Lowongan dibuka' : ($unit->isScheduled() ? 'Lowongan ditutup' : 'Belum dijadwalkan') }}
                     </p>
                         <p class="mt-0.5 truncate text-xs text-muted">{{ $unit->description ?: 'Belum ada deskripsi.' }}</p>
                     </div>

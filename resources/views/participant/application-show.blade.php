@@ -9,6 +9,7 @@
             <p class="mt-1 text-sm text-muted">{{ $application->currentStageLabel() }}</p>
         </div>
         <div class="flex flex-wrap gap-2">
+            <a href="{{ route('participant.applications.edit', $application) }}" class="rounded-lg border border-line bg-white px-4 py-2 text-sm font-semibold">Lihat data pendaftaran</a>
             @if($application->canBeRevisedByParticipant())
                 <a href="{{ route('participant.applications.edit', $application) }}" class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white">Perbaiki form</a>
             @endif
@@ -17,7 +18,10 @@
     </div>
 
     <div class="mt-6">
-        <x-approval-flow :application="$application" />
+        <x-approval-flow
+            :application="$application"
+            caption="Tahapan surat persetujuan — status diperbarui otomatis setelah tinjauan admin, mentor, dan pengesahan. Anda tetap bisa membuka data yang sudah dikirim, tetapi hanya bisa mengirim ulang saat status revisi."
+        />
     </div>
 
     <div class="mt-6">
