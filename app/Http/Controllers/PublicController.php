@@ -54,6 +54,47 @@ class PublicController extends Controller
         return view('public.home', compact('departments', 'featuredUnits', 'latestNews', 'nextStep'));
     }
 
+    public function searchApi(Request $request)
+    {
+        $search = trim((string) $request->string('q'));
+
+        if ($search === '') {
+            return response()->json([]);
+        }
+
+        $departments = Department::query()
+            ->where('status', 'active')
+            ->where(function ($query) use ($search) {
+                $query->where('name', 'like', '%' . $search . '%')
+                    ->orWhere('description', 'like', '%' . $search . '%')
+                    ->orWhere('area', 'like', '%' . $search . '%');
+            })
+            ->get()
+            ->map(function ($dept) {
+                return [
+                    'id' => $dept->id,
+                    'type' => 'Departemen',
+                    'name' => $dept->name,
+                    'url' => route('departments.show', $dept),
+                ];
+            });
+
+        $units = BusinessUnit::query()
+            ->where('status', 'open')
+            ->where('name', 'like', '%' . $search . '%')
+            ->get()
+            ->map(function ($unit) {
+                return [
+                    'id' => $unit->id,
+                    'type' => 'Unit Bisnis',
+                    'name' => $unit->name,
+                    'url' => route('units.show', $unit),
+                ];
+            });
+
+        return response()->json($departments->merge($units));
+    }
+
     public function departments(Request $request)
     {
         $search = trim((string) $request->string('q'));
