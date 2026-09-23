@@ -74,6 +74,10 @@ class MentorController extends Controller
         $mentor = $request->user()->mentor;
         abort_unless($mentor, 403);
 
+        if ($application->mentor_id === $mentor->id && $data['decision'] === 'approved' && $application->status === 'waiting_admin') {
+            return back()->with('status', 'Persetujuan ini sudah disetujui (status: '.$application->currentStageLabel().'). Muat ulang halaman untuk melihat status terbaru.');
+        }
+
         $approvals->mentorReview($application, $mentor, $data);
 
         return back()->with('status', 'Keputusan pendaftaran disimpan.');

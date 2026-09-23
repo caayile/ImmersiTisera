@@ -19,7 +19,7 @@
             </div>
             @if($application->isAwaitingMentor())
             @php $mentorIndicators = array_pad($application->normalizedSuccessIndicators(), 3, ''); @endphp
-            <form method="POST" action="{{ route('mentor.applications.review', $application) }}" class="mt-4 space-y-3">
+            <form method="POST" action="{{ route('mentor.applications.review', $application) }}" class="mt-4 space-y-3" onsubmit="if (this.dataset.submitted === '1') { return false; } this.dataset.submitted = '1';">
                 @csrf
                 <div class="rounded-xl border border-line bg-bg p-4">
                     <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 6 — Success Indicators (dapat diedit mentor)</p>

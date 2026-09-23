@@ -428,6 +428,35 @@ class ProgramRegistrationTest extends TestCase
         Notification::assertSentTo($dosen, ImersiAlert::class);
     }
 
+    public function test_mentor_reapprove_after_approve_redirects_with_info_instead_of_error(): void
+    {
+        $this->seed();
+
+        $application = $this->submittedApplication();
+        $mentor = Mentor::whereHas('user', fn ($q) => $q->where('email', 'mentor@imersi.id'))->firstOrFail();
+
+        $this->actingAs(User::where('email', 'admin@imersi.id')->firstOrFail())
+            ->post(route('admin.matching.update', $application), [
+                'status' => 'approved',
+                'mentor_id' => $mentor->id,
+                'business_unit_id' => $application->business_unit_id,
+            ])
+            ->assertRedirect();
+
+        $this->actingAs($mentor->user)
+            ->post(route('mentor.applications.review', $application), ['decision' => 'approved'])
+            ->assertRedirect();
+
+        $this->assertSame('waiting_admin', $application->fresh()->status);
+
+        $this->actingAs($mentor->user)
+            ->post(route('mentor.applications.review', $application), ['decision' => 'approved'])
+            ->assertRedirect()
+            ->assertSessionHas('status');
+
+        $this->assertSame('waiting_admin', $application->fresh()->status);
+    }
+
     public function test_admin_revision_lets_dosen_resubmit_to_admin(): void
     {
         $this->seed();
