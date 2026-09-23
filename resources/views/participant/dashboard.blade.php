@@ -114,7 +114,7 @@
                                 <p class="mt-2 line-clamp-2 max-w-xl text-sm text-white/80" x-text="slide.description"></p>
                                 <p class="mt-3 inline-flex items-center gap-1 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white backdrop-blur">
                                     <span class="material-symbols-outlined text-[14px]">apartment</span>
-                                    <span x-text="slide.units + ' penempatan terbuka'"></span>
+                                    <span x-text="slide.units + ' departemen' + (slide.openUnits ? ' · ' + slide.openUnits + ' lowongan dibuka' : ' · lowongan ditutup')"></span>
                                 </p>
                             </div>
                             <template x-if="! slide.image">

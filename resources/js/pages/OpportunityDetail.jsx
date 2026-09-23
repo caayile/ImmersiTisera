@@ -52,8 +52,15 @@ export default function OpportunityDetail() {
           </dl>
         </Card>
         <Card>
+          <div className="mb-4">
+            <Badge tone={item.status === 'open' ? 'sage' : 'copper'}>
+              {item.status === 'open' ? 'Lowongan dibuka' : 'Lowongan ditutup'}
+            </Badge>
+          </div>
           {item.application ? (
             <p>Minat sudah diajukan ({item.application.status}).</p>
+          ) : item.status !== 'open' ? (
+            <p className="text-sm text-moss/80">Pendaftaran pada departemen ini sedang ditutup. Silakan lihat lowongan lain.</p>
           ) : (
             <form className="space-y-4" onSubmit={apply}>
               <Field label="Aktivitas utama">

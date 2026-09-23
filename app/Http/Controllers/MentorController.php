@@ -67,6 +67,8 @@ class MentorController extends Controller
             'decision' => ['required', 'in:approved,revision,rejected'],
             'mentor_note' => ['nullable', 'string'],
             'revision_note' => ['nullable', 'string'],
+            'success_indicators' => ['sometimes', 'array', 'max:3'],
+            'success_indicators.*' => ['nullable', 'string', 'max:255'],
         ]);
 
         $mentor = $request->user()->mentor;

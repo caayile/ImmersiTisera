@@ -18,7 +18,12 @@ export default function Opportunities() {
           <Card key={item.id}>
             <div className="flex items-start justify-between gap-4">
               <div>
-                <Badge>{item.purpose}</Badge>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge>{item.purpose}</Badge>
+                  <Badge tone={item.status === 'open' ? 'sage' : 'copper'}>
+                    {item.status === 'open' ? 'Lowongan dibuka' : 'Lowongan ditutup'}
+                  </Badge>
+                </div>
                 <h2 className="mt-3 font-display text-3xl">{item.title}</h2>
                 <p className="mt-2 text-sm text-moss/80">{item.mentor?.company} · {item.business_unit}</p>
               </div>
@@ -26,7 +31,7 @@ export default function Opportunities() {
             </div>
             <p className="mt-4 text-sm">{item.problem}</p>
             <Link to={`/app/opportunities/${item.id}`} className="mt-5 inline-block font-semibold text-copper">
-              {item.applied ? 'Lihat pengajuan' : 'Lihat & apply'}
+              {item.applied ? 'Lihat pengajuan' : item.status === 'open' ? 'Lihat & apply' : 'Lihat detail'}
             </Link>
           </Card>
         ))}

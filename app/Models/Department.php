@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable(['name', 'slug', 'subtitle', 'description', 'function', 'area', 'map_url', 'image_path', 'status'])]
 class Department extends Model
@@ -42,11 +41,7 @@ class Department extends Model
     {
         $units = $this->relationLoaded('businessUnits')
             ? $this->businessUnits
-            : $this->businessUnits();
-
-        if ($units instanceof HasMany) {
-            return $units->where('status', 'open')->first();
-        }
+            : $this->businessUnits()->get();
 
         return $units->firstWhere('status', 'open') ?? $units->first();
     }

@@ -10,9 +10,7 @@ use App\Models\Program;
 use App\Models\User;
 use App\Notifications\ImersiAlert;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Notification;
-use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class ProgramRegistrationTest extends TestCase
@@ -53,21 +51,39 @@ class ProgramRegistrationTest extends TestCase
         $this->actingAs($dosen)
             ->get(route('participant.applications.create', ['unit' => $unit->id]))
             ->assertOk()
-            ->assertSee('Form pendaftaran program')
-            ->assertSee('surat persetujuan')
+            ->assertSee('Isi Formulir Registrasi')
+            ->assertSee('Persetujuan Pemagangan')
+            ->assertSee('Tahapan pendaftaran')
+            ->assertSee('Selesaikan 2 langkah berikut')
+            ->assertSee('Sedang mengisi')
+            ->assertDontSee('Dosen mengajukan')
+            ->assertDontSee('Tinjauan admin')
+            ->assertDontSee('Pengesahan admin')
+            ->assertDontSee('Hasil ke dosen')
             ->assertSee('TSPM')
             ->assertSee($unit->name)
             ->assertSee($dosen->name)
             ->assertSee('Tanggal mulai')
             ->assertSee('Tanggal selesai')
             ->assertSee('Durasi otomatis 2 bulan')
-            ->assertSee('Pertanyaan pendaftaran')
-            ->assertSee('Mengapa Anda tertarik mengikuti program imersi')
-            ->assertSee('Bagaimana hasil program akan bermanfaat')
+            ->assertSee('Informasi Program')
+            ->assertSee('Detail Peserta')
+            ->assertSee('Detail Lokasi')
+            ->assertSee('Shared Goal')
+            ->assertSee('jenis aktivitas')
+            ->assertSee('Problem / Opportunity')
+            ->assertSee('Main Output')
+            ->assertSee('Success Indicators')
+            ->assertSee('Lanjut ke persetujuan pemagangan')
+            ->assertSee('Kembali ke data diri')
+            ->assertSee('Kirim pendaftaran')
             ->assertSee('Profil dosen')
-            ->assertSee('Unggah CV')
-            ->assertSee('Analytics')
-            ->assertSee('AI')
+            ->assertDontSee('Pertanyaan pendaftaran')
+            ->assertDontSee('Mengapa Anda tertarik mengikuti program imersi')
+            ->assertDontSee('Kompetensi</dt>', false)
+            ->assertDontSee('Keahlian</dt>', false)
+            ->assertDontSee('Curriculum Vitae')
+            ->assertDontSee('Unggah CV')
             ->assertDontSee('Ringkasan')
             ->assertDontSee('Linimasa')
             ->assertDontSee('<select', false);
@@ -96,12 +112,13 @@ class ProgramRegistrationTest extends TestCase
             ->assertRedirect(route('participant.applications.create', ['unit' => $unit->id]))
             ->assertSessionHasErrors([
                 'business_unit_id',
-                'motivation',
-                'learning_objectives',
-                'planned_activities',
-                'expected_output',
-                'campus_benefit',
-                'cv',
+                'shared_goal',
+                'activity_types',
+                'problem_statement',
+                'main_output',
+                'participant_benefit',
+                'business_benefit',
+                'success_indicators',
                 'period_start',
                 'period_end',
                 'declaration',
@@ -129,13 +146,14 @@ class ProgramRegistrationTest extends TestCase
         $this->assertSame('2026-09-10', $application->period_start->toDateString());
         $this->assertSame('2026-11-10', $application->period_end->toDateString());
         $this->assertSame('10 Sep 2026 – 10 Nov 2026', $application->preferred_period);
-        $this->assertSame('Ingin membawa praktik industri ke kelas dan menyusun teaching case yang relevan.', $application->motivation);
-        $this->assertSame('Ingin memperdalam analitik produk digital dan proses pengambilan keputusan industri.', $application->learning_objectives);
-        $this->assertSame('Observasi workflow digital, diskusi mentoring, dan penyusunan insight kurikulum.', $application->planned_activities);
-        $this->assertSame('Teaching case dan modul kuliah berbasis proses industri yang diamati.', $application->expected_output);
-        $this->assertSame('Mahasiswa mendapat contoh nyata industri untuk tugas dan perancangan kurikulum prodi.', $application->campus_benefit);
-        $this->assertNotNull($application->cv_path);
-        Storage::disk('public')->assertExists($application->cv_path);
+        $this->assertSame('Selama 2 bulan, kami akan memetakan workflow digital untuk menghasilkan teaching case yang memberikan manfaat bagi mahasiswa Informatika.', $application->shared_goal);
+        $this->assertSame(['observasi', 'riset'], $application->normalizedActivityTypes());
+        $this->assertSame('Observasi workflow digital, diskusi mentoring, dan penyusunan insight kurikulum untuk riset terapan.', $application->problem_statement);
+        $this->assertSame('Research Report + Prototype Concept modul kuliah digital.', $application->main_output);
+        $this->assertSame('Dosen mendapat studi kasus nyata untuk bahan ajar dan riset terapan.', $application->participant_benefit);
+        $this->assertSame('Unit bisnis mendapat sudut pandang akademik atas proses digitalnya.', $application->business_benefit);
+        $this->assertSame(['Teaching case selesai dan divalidasi mentor', 'Modul kuliah baru dipakai satu semester'], $application->normalizedSuccessIndicators());
+        $this->assertNull($application->cv_path);
         $this->assertNull($application->program);
 
         Notification::assertSentTo($admin, ImersiAlert::class);
@@ -145,31 +163,59 @@ class ProgramRegistrationTest extends TestCase
             ->assertOk()
             ->assertSee($application->letter_number)
             ->assertSee('Menunggu tinjauan admin')
+            ->assertSee('Persetujuan Pemagangan')
+            ->assertSee('Shared Goal')
             ->assertSee('Observasi workflow digital')
-            ->assertSee('Mengapa Anda tertarik mengikuti program imersi')
-            ->assertSee('Mahasiswa mendapat contoh nyata industri')
-            ->assertSee('Unduh CV')
+            ->assertSee('Research Report + Prototype Concept')
+            ->assertSee('Teaching case selesai dan divalidasi mentor')
             ->assertSee('10 Sep 2026 – 10 Nov 2026')
             ->assertDontSee('Linimasa')
             ->assertDontSee('Laporan Akhir');
     }
 
-    public function test_registration_requires_a_curriculum_vitae(): void
+    public function test_dosen_can_reopen_submitted_application_to_view_data_but_cannot_resubmit(): void
     {
         $this->seed();
-        $dosen = $this->newDosen();
-        $unit = BusinessUnit::where('name', 'Digital Business')->firstOrFail();
-        $payload = $this->validPayload($unit);
-        unset($payload['cv']);
+        $application = $this->submittedApplication();
+        $dosen = $application->participant->user;
 
         $this->actingAs($dosen)
-            ->from(route('participant.applications.create', ['unit' => $unit->id]))
-            ->post(route('participant.applications.store'), $payload)
-            ->assertRedirect(route('participant.applications.create', ['unit' => $unit->id]))
-            ->assertSessionHasErrors('cv');
+            ->get(route('participant.applications.show', $application))
+            ->assertOk()
+            ->assertSee('Lihat data pendaftaran')
+            ->assertSee('Lihat data')
+            ->assertSee('Sedang berjalan');
+
+        $this->actingAs($dosen)
+            ->get(route('participant.applications.edit', $application))
+            ->assertOk()
+            ->assertSee('Data pendaftaran (hanya lihat)')
+            ->assertSee('Mode hanya baca')
+            ->assertSee('Pengiriman dikunci')
+            ->assertSee('Tahap sebelumnya dapat dilihat di bawah')
+            ->assertSee('2026-09-10')
+            ->assertSee('2026-11-10')
+            ->assertSee('Persetujuan Pemagangan')
+            ->assertSee('Shared Goal')
+            ->assertDontSee('Kirim pendaftaran')
+            ->assertDontSee('Kirim ulang ke admin');
     }
 
-    public function test_registration_rejects_non_document_curriculum_vitae(): void
+    public function test_dosen_cannot_resubmit_application_unless_admin_requests_revision(): void
+    {
+        $this->seed();
+        $application = $this->submittedApplication();
+        $dosen = $application->participant->user;
+        $unit = $application->businessUnit;
+
+        $this->actingAs($dosen)
+            ->put(route('participant.applications.update', $application), $this->validPayload($unit, 'Percobaan kirim ulang tanpa revisi.'))
+            ->assertForbidden();
+
+        $this->assertSame('submitted', $application->fresh()->status);
+    }
+
+    public function test_registration_rejects_short_persetujuan_answers(): void
     {
         $this->seed();
         $dosen = $this->newDosen();
@@ -179,26 +225,10 @@ class ProgramRegistrationTest extends TestCase
             ->from(route('participant.applications.create', ['unit' => $unit->id]))
             ->post(route('participant.applications.store'), [
                 ...$this->validPayload($unit),
-                'cv' => UploadedFile::fake()->image('foto.jpg', 200, 200),
+                'business_benefit' => 'Terlalu singkat',
             ])
             ->assertRedirect(route('participant.applications.create', ['unit' => $unit->id]))
-            ->assertSessionHasErrors('cv');
-    }
-
-    public function test_registration_rejects_short_questionnaire_answers(): void
-    {
-        $this->seed();
-        $dosen = $this->newDosen();
-        $unit = BusinessUnit::where('name', 'Digital Business')->firstOrFail();
-
-        $this->actingAs($dosen)
-            ->from(route('participant.applications.create', ['unit' => $unit->id]))
-            ->post(route('participant.applications.store'), [
-                ...$this->validPayload($unit),
-                'campus_benefit' => 'Terlalu singkat',
-            ])
-            ->assertRedirect(route('participant.applications.create', ['unit' => $unit->id]))
-            ->assertSessionHasErrors('campus_benefit');
+            ->assertSessionHasErrors('business_benefit');
     }
 
     public function test_registration_rejects_period_that_is_not_two_months(): void
@@ -241,9 +271,9 @@ class ProgramRegistrationTest extends TestCase
         $this->actingAs($dosen)
             ->post(route('participant.applications.store'), [
                 ...$this->validPayload($unit),
-                'motivation' => 'Motivasi <script>alert("xss")</script> untuk mengajar.',
-                'planned_activities' => 'Kegiatan <img src=x onerror=alert(1)> observasi lapangan.',
-                'expected_output' => 'Luaran <svg onload=alert(1)> teaching case industri.',
+                'shared_goal' => 'Tujuan <script>alert("xss")</script> untuk memetakan workflow.',
+                'problem_statement' => 'Kegiatan <img src=x onerror=alert(1)> observasi lapangan industri.',
+                'main_output' => 'Luaran <svg onload=alert(1)> teaching case industri digital.',
             ])
             ->assertRedirect();
 
@@ -252,7 +282,7 @@ class ProgramRegistrationTest extends TestCase
         $this->actingAs($dosen)
             ->get(route('participant.applications.show', $application))
             ->assertOk()
-            ->assertSee('Pertanyaan 1', false)
+            ->assertSee('Bagian 1', false)
             ->assertDontSee('<script>alert("xss")</script>', false)
             ->assertDontSee('<img src=x onerror=alert(1)>', false)
             ->assertDontSee('<svg onload=alert(1)>', false);
@@ -366,6 +396,9 @@ class ProgramRegistrationTest extends TestCase
         $this->assertNotNull($application->admin_finalized_at);
         $this->assertNotNull($application->program);
         $this->assertSame('draft', $application->program->agreement->status);
+        $this->assertSame($application->shared_goal, $application->program->agreement->objective);
+        $this->assertSame($application->problem_statement, $application->program->agreement->problem_statement);
+        $this->assertSame($application->normalizedSuccessIndicators(), $application->program->agreement->success_indicators);
         Notification::assertSentTo($dosen, ImersiAlert::class);
     }
 
@@ -388,30 +421,87 @@ class ProgramRegistrationTest extends TestCase
         $this->assertSame('revision', $application->fresh()->status);
 
         $this->actingAs($dosen)
-            ->put(route('participant.applications.update', $application), $this->validPayload($unit, 'Rencana kegiatan diperjelas untuk observasi dan riset terapan.'))
+            ->put(route('participant.applications.update', $application), $this->validPayload($unit, 'Rencana kegiatan diperjelas untuk observasi dan riset terapan di lapangan.'))
             ->assertRedirect(route('participant.applications.show', $application));
 
         $this->assertSame('submitted', $application->fresh()->status);
     }
 
-    /**
-     * @return array{business_unit_id: int, motivation: string, learning_objectives: string, planned_activities: string, expected_output: string, campus_benefit: string, period_start: string, period_end: string, declaration: string, cv: UploadedFile}
-     */
-    private function validPayload(BusinessUnit $unit, ?string $activities = null): array
+    public function test_mentor_can_edit_indicators_and_send_back_to_participant(): void
     {
-        Storage::fake('public');
+        $this->seed();
+        Notification::fake();
 
+        $application = $this->submittedApplication();
+        $dosen = $application->participant->user;
+        $unit = $application->businessUnit;
+        $admin = User::where('email', 'admin@imersi.id')->firstOrFail();
+        $mentor = Mentor::whereHas('user', fn ($q) => $q->where('email', 'mentor@imersi.id'))->firstOrFail();
+
+        $this->actingAs($admin)
+            ->post(route('admin.matching.update', $application), [
+                'status' => 'approved',
+                'mentor_id' => $mentor->id,
+                'business_unit_id' => $application->business_unit_id,
+            ])
+            ->assertRedirect();
+
+        $this->assertSame('waiting_mentor', $application->fresh()->status);
+
+        $proposed = ['Prototype tervalidasi bersama tim industri', 'Laporan riset selesai dan dipresentasikan'];
+
+        $this->actingAs($mentor->user)
+            ->post(route('mentor.applications.review', $application), [
+                'decision' => 'revision',
+                'mentor_note' => 'Indikator kurang terukur, saya usulkan versi baru.',
+                'success_indicators' => $proposed,
+            ])
+            ->assertRedirect();
+
+        $application->refresh();
+        $this->assertSame('revision', $application->status);
+        $this->assertSame($proposed, $application->normalizedSuccessIndicators());
+        $this->assertSame('Indikator kurang terukur, saya usulkan versi baru.', $application->revision_note);
+
+        Notification::assertSentTo($dosen, ImersiAlert::class);
+
+        $this->actingAs($dosen)
+            ->get(route('participant.applications.edit', $application))
+            ->assertOk()
+            ->assertSee('Prototype tervalidasi bersama tim industri')
+            ->assertSee('Feedback untuk usulan mentor');
+
+        $this->actingAs($dosen)
+            ->put(route('participant.applications.update', $application), [
+                ...$this->validPayload($unit),
+                'success_indicators' => [...$proposed, 'Modul kuliah baru dipakai satu semester penuh'],
+                'indicator_feedback' => 'Setuju dengan usulan mentor, saya tambah satu indikator adopsi modul.',
+            ])
+            ->assertRedirect(route('participant.applications.show', $application));
+
+        $application->refresh();
+        $this->assertSame('submitted', $application->status);
+        $this->assertCount(3, $application->normalizedSuccessIndicators());
+        $this->assertSame('Setuju dengan usulan mentor, saya tambah satu indikator adopsi modul.', $application->indicator_feedback);
+    }
+
+    /**
+     * @return array{business_unit_id: int, shared_goal: string, activity_types: list<string>, problem_statement: string, main_output: string, participant_benefit: string, business_benefit: string, success_indicators: list<string>, period_start: string, period_end: string, declaration: string}
+     */
+    private function validPayload(BusinessUnit $unit, ?string $problem = null): array
+    {
         return [
             'business_unit_id' => $unit->id,
-            'motivation' => 'Ingin membawa praktik industri ke kelas dan menyusun teaching case yang relevan.',
-            'learning_objectives' => 'Ingin memperdalam analitik produk digital dan proses pengambilan keputusan industri.',
-            'planned_activities' => $activities ?? 'Observasi workflow digital, diskusi mentoring, dan penyusunan insight kurikulum.',
-            'expected_output' => 'Teaching case dan modul kuliah berbasis proses industri yang diamati.',
-            'campus_benefit' => 'Mahasiswa mendapat contoh nyata industri untuk tugas dan perancangan kurikulum prodi.',
+            'shared_goal' => 'Selama 2 bulan, kami akan memetakan workflow digital untuk menghasilkan teaching case yang memberikan manfaat bagi mahasiswa Informatika.',
+            'activity_types' => ['observasi', 'riset'],
+            'problem_statement' => $problem ?? 'Observasi workflow digital, diskusi mentoring, dan penyusunan insight kurikulum untuk riset terapan.',
+            'main_output' => 'Research Report + Prototype Concept modul kuliah digital.',
+            'participant_benefit' => 'Dosen mendapat studi kasus nyata untuk bahan ajar dan riset terapan.',
+            'business_benefit' => 'Unit bisnis mendapat sudut pandang akademik atas proses digitalnya.',
+            'success_indicators' => ['Teaching case selesai dan divalidasi mentor', 'Modul kuliah baru dipakai satu semester'],
             'period_start' => '2026-09-10',
             'period_end' => '2026-11-10',
             'declaration' => '1',
-            'cv' => UploadedFile::fake()->create('cv-dosen.pdf', 120, 'application/pdf'),
         ];
     }
 

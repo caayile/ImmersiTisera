@@ -14,12 +14,11 @@ class PublicController extends Controller
 {
     public function home()
     {
-        $departments = Department::withCount(['businessUnits' => fn ($q) => $q->where('status', 'open')])
+        $departments = Department::withCount('businessUnits')
             ->where('status', 'active')
             ->get();
 
         $featuredUnits = BusinessUnit::with(['department.businessUnits'])
-            ->where('status', 'open')
             ->whereIn('name', [
                 'Operation (Sales)',
                 'Production',
@@ -39,7 +38,6 @@ class PublicController extends Controller
 
         if ($featuredUnits->count() < 3) {
             $featuredUnits = BusinessUnit::with(['department.businessUnits'])
-                ->where('status', 'open')
                 ->latest()
                 ->take(3)
                 ->get();
@@ -59,7 +57,7 @@ class PublicController extends Controller
         $search = trim((string) $request->string('q'));
 
         $departments = Department::query()
-            ->with(['businessUnits' => fn ($query) => $query->where('status', 'open')])
+            ->with('businessUnits')
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($inner) use ($search) {
                     $inner->where('name', 'like', '%'.$search.'%')

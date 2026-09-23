@@ -119,7 +119,7 @@
                 @endphp
                 <article class="overflow-hidden rounded-2xl border border-line bg-white shadow-sm tap-feedback" data-reveal data-reveal-delay="{{ $loop->index % 4 }}">
                     <div class="relative h-44 bg-gradient-to-br {{ $meta['image'] }} p-4">
-                        <span class="absolute left-4 top-4 rounded-md bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-ink">Gelombang terbuka</span>
+                        <span class="absolute left-4 top-4 rounded-md bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide {{ $unit->status === 'open' ? 'text-ink' : 'text-red-600' }}">{{ $unit->status === 'open' ? 'Gelombang terbuka' : 'Lowongan ditutup' }}</span>
                         <p class="absolute bottom-4 left-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/90">{{ $meta['area'] }}</p>
                     </div>
                     <div class="p-5">

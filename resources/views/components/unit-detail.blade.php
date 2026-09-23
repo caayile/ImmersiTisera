@@ -9,8 +9,11 @@
         ?: 'https://www.google.com/maps?q='.rawurlencode($location).'&z=15&hl=id&output=embed';
     $mapOpen = $dept?->mapExternalUrl()
         ?: 'https://www.google.com/maps/search/?api=1&query='.rawurlencode($location);
-    $isOpen = $businessUnit->isOpen();
+    $isOpen = $businessUnit->status === 'open';
     $hasWindow = $businessUnit->isScheduled();
+    $beforeStart = $isOpen
+        && $businessUnit->registration_start
+        && now()->lt($businessUnit->registration_start);
     $deadline = $businessUnit->registration_deadline
         ? \Carbon\Carbon::parse($businessUnit->registration_deadline)->locale('id')->translatedFormat('j F Y, H.i')
         : null;
@@ -131,14 +134,19 @@
                     <span class="material-symbols-outlined text-[16px]">{{ $isOpen ? 'lock_open' : ($hasWindow ? 'lock' : 'schedule') }}</span>
                     {{ $isOpen ? 'Terbuka' : ($hasWindow ? 'Tutup' : 'Akan diumumkan') }}
                 </span>
-                @if($isOpen || $hasWindow)
+                @if($isOpen && $beforeStart)
+                    <p class="mt-4 text-sm text-ink">Pendaftaran dibuka mulai</p>
+                    <p class="mt-1 text-xl font-bold text-ink">{{ $start }}</p>
+                @elseif($isOpen || $hasWindow)
                     <p class="mt-4 text-sm text-ink">Pendaftaran dibuka sampai</p>
                     <p class="mt-1 text-xl font-bold text-ink">{{ $deadline }}</p>
                 @else
                     <p class="mt-4 text-sm text-ink">Jadwal pendaftaran</p>
                     <p class="mt-1 text-xl font-bold text-ink">Akan diumumkan</p>
                 @endif
-                @if($start && !$businessUnit->isOpen() && $hasWindow && $businessUnit->registration_start > now())
+                @if($beforeStart && $deadline)
+                    <p class="mt-2 text-xs text-muted">Periode pendaftaran s/d <b>{{ $deadline }}</b></p>
+                @elseif($start && !$isOpen && $hasWindow && $businessUnit->registration_start > now())
                     <p class="mt-2 text-xs text-muted">Belum dibuka — pemberitahuan aktif sejak <b>{{ $start }}</b></p>
                 @endif
 

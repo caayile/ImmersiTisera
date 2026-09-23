@@ -23,12 +23,24 @@
 </section>
 
 <div class="mx-auto max-w-6xl px-5 py-12">
-    <h2 class="text-2xl font-semibold">Departemen</h2>
+    <div class="flex flex-wrap items-end justify-between gap-3">
+        <h2 class="text-2xl font-semibold">Departemen</h2>
+        <p class="text-sm text-muted">
+            {{ $department->businessUnits->where('status', 'open')->count() }} lowongan dibuka ·
+            {{ $department->businessUnits->count() }} departemen
+        </p>
+    </div>
     <div class="mt-5 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-        @forelse($department->businessUnits->where('status', 'open') as $unit)
+        @php
+            $units = $department->businessUnits
+                ->sortBy(fn ($unit) => [$unit->status !== 'open', $unit->name])
+                ->values();
+        @endphp
+        @forelse($units as $unit)
             @php
                 $unitImage = $unit->imageUrl()
                     ?? ($department->imageUrl() ?: asset('images/hero/campus.jpg'));
+                $isOpen = $unit->status === 'open';
             @endphp
             <article class="flex flex-col overflow-hidden rounded-2xl border border-line bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-primary hover:shadow-md">
                 <a href="{{ route('units.show', $unit) }}">
@@ -37,7 +49,12 @@
                     </x-fill-image>
                 </a>
                 <div class="flex flex-1 flex-col p-5">
-                    <h3 class="text-lg font-semibold">{{ $unit->name }}</h3>
+                    <div class="flex items-start justify-between gap-2">
+                        <h3 class="text-lg font-semibold">{{ $unit->name }}</h3>
+                        <span class="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold {{ $isOpen ? 'bg-primary/12 text-primary-dark' : 'bg-red-50 text-red-600' }}">
+                            {{ $isOpen ? 'Lowongan dibuka' : 'Lowongan ditutup' }}
+                        </span>
+                    </div>
                     <p class="mt-2 flex-1 text-sm leading-6 text-muted">{{ \Illuminate\Support\Str::limit($unit->description, 90) }}</p>
                     <a href="{{ route('units.show', $unit) }}" class="mt-4 inline-flex items-center justify-center rounded-xl bg-[#eef4f1] px-4 py-2.5 text-sm font-semibold text-ink hover:bg-primary hover:text-white">Lihat Detail</a>
                 </div>
