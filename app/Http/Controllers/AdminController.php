@@ -454,6 +454,10 @@ class AdminController extends Controller
             'revision_note' => ['nullable', 'string'],
         ]);
 
+        if ($data['status'] === 'approved' && in_array($application->status, ['waiting_mentor', 'approved'], true)) {
+            return back()->with('status', 'Pendaftaran ini sudah diteruskan (status: '.$application->currentStageLabel().'). Muat ulang halaman untuk melihat status terbaru.');
+        }
+
         $approvals->adminReview($application, $data);
 
         return back()->with('status', 'Keputusan pendaftaran disimpan.');

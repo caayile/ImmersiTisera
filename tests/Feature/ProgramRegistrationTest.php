@@ -323,6 +323,32 @@ class ProgramRegistrationTest extends TestCase
         Notification::assertSentTo($mentor->user, ImersiAlert::class);
     }
 
+    public function test_admin_reforward_after_forward_redirects_with_info_instead_of_error(): void
+    {
+        $this->seed();
+
+        $application = $this->submittedApplication();
+        $mentor = Mentor::whereHas('user', fn ($q) => $q->where('email', 'mentor@imersi.id'))->firstOrFail();
+        $payload = [
+            'status' => 'approved',
+            'mentor_id' => $mentor->id,
+            'business_unit_id' => $application->business_unit_id,
+        ];
+
+        $this->actingAs(User::where('email', 'admin@imersi.id')->firstOrFail())
+            ->post(route('admin.matching.update', $application), $payload)
+            ->assertRedirect();
+
+        $this->assertSame('waiting_mentor', $application->fresh()->status);
+
+        $this->actingAs(User::where('email', 'admin@imersi.id')->firstOrFail())
+            ->post(route('admin.matching.update', $application), $payload)
+            ->assertRedirect()
+            ->assertSessionHas('status');
+
+        $this->assertSame('waiting_mentor', $application->fresh()->status);
+    }
+
     public function test_mentor_cannot_review_before_admin_forwards_application(): void
     {
         $this->seed();
