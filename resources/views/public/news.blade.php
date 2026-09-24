@@ -3,7 +3,7 @@
 @section('content')
 <div class="bg-bg py-12" data-reveal>
     <div class="mx-auto max-w-6xl px-5">
-        <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary-dark">Berita Imersi</p>
+        <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary-dark">Berita Magang Dosen</p>
         <h1 class="mt-2 text-3xl font-semibold">Semua berita</h1>
         <p class="mt-2 max-w-2xl text-muted">Pengumuman gelombang, unit bisnis, panduan program, dan kolaborasi dosen × industri.</p>
 

@@ -9,7 +9,7 @@
         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
     </div>
     <h1 class="mt-5 text-xl font-semibold tracking-tight text-zinc-900">Forgot password?</h1>
-    <p class="mt-2 text-sm leading-relaxed text-zinc-400">Masukkan email akun Imersi. Kami kirim tautan untuk kata sandi baru.</p>
+    <p class="mt-2 text-sm leading-relaxed text-zinc-400">Masukkan email akun Magang Dosen. Kami kirim tautan untuk kata sandi baru.</p>
     @if($errors->any())
         <p class="mt-4 rounded-2xl bg-red-50 px-3 py-2 text-left text-sm text-red-700">{{ $errors->first() }}</p>
     @endif

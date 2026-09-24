@@ -2,10 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Models\Agreement;
 use App\Models\Application;
 use App\Models\BusinessUnit;
 use App\Models\Mentor;
 use App\Models\Participant;
+use App\Models\Program;
 use App\Models\User;
 use App\Notifications\ImersiAlert;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -66,17 +68,16 @@ class DigitalSignatureApprovalTest extends TestCase
             ->get(route('mentor.applications'))
             ->assertOk()
             ->assertSee('Tinjau', false)
-            ->assertSee('tandatangani', false)
+            ->assertSee('tinjau', false)
             ->assertDontSee('name="decision" value="rejected"', false);
 
         $this->actingAs($mentor)
             ->get(route('mentor.applications.show', $application))
             ->assertOk()
-            ->assertSee('Tinjau & tandatangani surat', false)
+            ->assertSee('Keputusan mentor', false)
             ->assertSee('Minta revisi ke dosen')
             ->assertSee('Setujui')
-            ->assertSee('tandatangani')
-            ->assertSee('Tanda tangan mentor')
+            ->assertSee('Setujui pendaftaran')
             ->assertSee('Komentar untuk dosen')
             ->assertDontSee('name="decision" value="rejected"', false);
     }
@@ -125,7 +126,7 @@ class DigitalSignatureApprovalTest extends TestCase
         $this->actingAs($mentor->user)
             ->get(route('mentor.applications.show', $application))
             ->assertOk()
-            ->assertSee('Tanda tangan mentor');
+            ->assertSee('Keputusan mentor');
 
         $this->actingAs($mentor->user)
             ->post(route('mentor.applications.review', $application), [
@@ -138,7 +139,7 @@ class DigitalSignatureApprovalTest extends TestCase
         $this->assertSame('Masih kurang detail pada indikator kedua, mohon diperbaiki lagi.', $application->fresh()->revision_note);
     }
 
-    public function test_mentor_cannot_approve_without_signature_and_can_approve_with_signature(): void
+    public function test_mentor_can_approve_registration_without_signature(): void
     {
         $this->seed();
         $application = $this->waitingMentorApplication();
@@ -149,23 +150,14 @@ class DigitalSignatureApprovalTest extends TestCase
             ->post(route('mentor.applications.review', $application), [
                 'decision' => 'approved',
             ])
-            ->assertRedirect(route('mentor.applications.show', $application))
-            ->assertSessionHasErrors('mentor_signature');
-
-        $this->actingAs($mentor->user)
-            ->post(route('mentor.applications.review', $application), [
-                'decision' => 'approved',
-                'mentor_signature' => $this->sampleSignature(),
-            ])
             ->assertRedirect(route('mentor.applications'));
 
-        $application->refresh();
-        $this->assertSame('waiting_admin', $application->status);
-        $this->assertNotNull($application->mentor_signature);
-        $this->assertNotNull($application->mentor_signed_at);
+        $this->assertSame('waiting_admin', $application->fresh()->status);
+        $this->assertNull($application->fresh()->mentor_signature);
+        $this->assertNull($application->mentor_signed_at);
     }
 
-    public function test_approval_letter_shows_only_dosen_and_mentor_signature_blocks(): void
+    public function test_approval_letter_shows_dosen_and_mentor_data_without_signature_blocks(): void
     {
         $this->seed();
         $application = $this->waitingMentorApplication();
@@ -175,6 +167,8 @@ class DigitalSignatureApprovalTest extends TestCase
             ->assertOk()
             ->assertSee('Dosen')
             ->assertSee('Mentor')
+            ->assertDontSee('Tanda tangan dosen')
+            ->assertDontSee('Tanda tangan mentor')
             ->assertDontSee('Admin final')
             ->assertDontSee('Pengelola program');
     }
@@ -197,8 +191,83 @@ class DigitalSignatureApprovalTest extends TestCase
             ->assertDontSee('value="rejected"', false);
     }
 
+    public function test_agreement_requires_both_signatures_and_generates_printable_letter(): void
+    {
+        $this->seed();
+        $dosen = $this->newDosen();
+        $mentor = Mentor::whereHas('user', fn ($q) => $q->where('email', 'mentor@imersi.id'))->firstOrFail();
+        $mentor->user->update(['phone' => '081234567890']);
+        $unit = BusinessUnit::where('name', 'Digital Business')->firstOrFail();
+
+        $program = Program::create([
+            'participant_id' => $dosen->participant->id,
+            'mentor_id' => $mentor->id,
+            'department_id' => $unit->department_id,
+            'business_unit_id' => $unit->id,
+            'status' => 'draft',
+        ]);
+        $agreement = Agreement::create([
+            'program_id' => $program->id,
+            'objective' => 'Menyusun teaching case bersama mentor industri.',
+            'activities' => 'Observasi dan diskusi mentoring.',
+            'problem_statement' => 'Perlu studi kasus workflow digital.',
+            'main_output' => 'Teaching case tervalidasi.',
+            'participant_benefit' => 'Bahan ajar berbasis praktik.',
+            'business_benefit' => 'Insight untuk unit bisnis.',
+            'success_indicators' => ['Teaching case selesai dan divalidasi'],
+            'status' => 'draft',
+        ]);
+
+        $this->actingAs($dosen)
+            ->get(route('participant.agreement'))
+            ->assertOk()
+            ->assertSee('Hubungi via WhatsApp')
+            ->assertSee('https://wa.me/6281234567890', false)
+            ->assertSee('Hubungi via WhatsApp');
+
+        $payload = [
+            'objective' => $agreement->objective,
+            'activities' => $agreement->activities,
+            'problem_statement' => $agreement->problem_statement,
+            'main_output' => $agreement->main_output,
+            'participant_benefit' => $agreement->participant_benefit,
+            'business_benefit' => $agreement->business_benefit,
+            'success_indicators' => $agreement->success_indicators,
+            'participant_signature' => $this->sampleSignature(),
+        ];
+
+        $this->actingAs($dosen)
+            ->post(route('participant.agreement'), $payload)
+            ->assertRedirect();
+
+        $this->assertNotNull($agreement->fresh()->participant_signature);
+
+        $this->actingAs($mentor->user)
+            ->from(route('mentor.agreements'))
+            ->post(route('mentor.agreements.review', $agreement), ['decision' => 'agreed'])
+            ->assertRedirect(route('mentor.agreements'))
+            ->assertSessionHasErrors('mentor_signature');
+
+        $this->actingAs($mentor->user)
+            ->post(route('mentor.agreements.review', $agreement), [
+                'decision' => 'agreed',
+                'mentor_signature' => $this->sampleSignature(),
+            ])
+            ->assertRedirect(route('mentor.agreements'));
+
+        $this->assertSame('agreed', $agreement->fresh()->status);
+        $this->assertNotNull($agreement->fresh()->mentor_signature);
+
+        $this->actingAs($dosen)
+            ->get(route('participant.agreement.print'))
+            ->assertOk()
+            ->assertSee('Pihak Pertama')
+            ->assertSee('Pihak Kedua')
+            ->assertSee('Cetak / Simpan PDF');
+    }
+
     /**
-     * @return array{business_unit_id: int, shared_goal: string, activity_types: list<string>, problem_statement: string, main_output: string, participant_benefit: string, business_benefit: string, success_indicators: list<string>, participant_signature: string, period_start: string, period_end: string, declaration: string}
+     * @return array{business_unit_id: int, shared_goal: string, activity_types: list<string>, problem_statement: string, main_output: string, participant_benefit: string, business_benefit: string, success_indicators: list<string>, period_start: string, period_end: string, declaration: string}
      */
     private function validPayload(BusinessUnit $unit, ?string $problem = null): array
     {
@@ -211,7 +280,6 @@ class DigitalSignatureApprovalTest extends TestCase
             'participant_benefit' => 'Dosen mendapat studi kasus nyata untuk bahan ajar dan riset terapan.',
             'business_benefit' => 'Unit bisnis mendapat sudut pandang akademik atas proses digitalnya.',
             'success_indicators' => ['Teaching case selesai dan divalidasi mentor', 'Modul kuliah baru dipakai satu semester'],
-            'participant_signature' => $this->sampleSignature(),
             'period_start' => '2026-09-10',
             'period_end' => '2026-11-10',
             'declaration' => '1',

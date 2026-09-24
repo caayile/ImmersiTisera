@@ -14,7 +14,7 @@
         <div class="pointer-events-none absolute inset-0 z-20 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
     </x-fill-image>
     <div class="relative mx-auto max-w-6xl pb-10 pt-8 text-white sm:pb-12">
-        <p class="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">{{ $department->area ?: 'Mitra Imersi' }}</p>
+        <p class="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">{{ $department->area ?: 'Mitra Magang Dosen' }}</p>
         <h1 class="mt-3 text-4xl font-semibold tracking-tight md:text-5xl">{{ $department->name }}</h1>
         @if($department->subtitle)
             <p class="mt-2 text-base text-white/80">{{ $department->subtitle }}</p>

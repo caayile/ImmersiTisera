@@ -46,11 +46,6 @@ class ApplicationController extends Controller
             'business_benefit' => ['nullable', 'string', 'min:20'],
             'success_indicators' => ['nullable', 'array', 'max:'.Application::MAX_SUCCESS_INDICATORS],
             'success_indicators.*' => ['nullable', 'string', 'max:255'],
-            'participant_signature' => [
-                'nullable',
-                'string',
-                'regex:/^data:image\/(png|jpeg|jpg|webp);base64,/i',
-            ],
         ]);
 
         $participant = $request->user()->participant;
@@ -78,7 +73,6 @@ class ApplicationController extends Controller
                     'Luaran program selesai dan divalidasi mentor',
                     'Ada rencana tindak lanjut kolaborasi',
                 ],
-                'participant_signature' => $data['participant_signature'] ?? null,
                 'period_start' => $start->toDateString(),
                 'period_end' => Application::periodEndFromStart($start)->toDateString(),
                 'cv_path' => null,
@@ -99,12 +93,6 @@ class ApplicationController extends Controller
             'mentor_note' => ['required_if:decision,revision', 'nullable', 'string', 'min:10'],
             'success_indicators' => ['sometimes', 'array', 'max:'.Application::MAX_SUCCESS_INDICATORS],
             'success_indicators.*' => ['nullable', 'string', 'max:255'],
-            'mentor_signature' => [
-                'required_if:decision,approved',
-                'nullable',
-                'string',
-                'regex:/^data:image\/(png|jpeg|jpg|webp);base64,/i',
-            ],
         ]);
 
         $mentor = $request->user()->mentor;
@@ -114,7 +102,6 @@ class ApplicationController extends Controller
             $application = $this->approvals->mentorReview($application, $mentor, [
                 'decision' => $data['decision'],
                 'mentor_note' => $data['mentor_note'] ?? null,
-                'mentor_signature' => $data['mentor_signature'] ?? null,
                 ...isset($data['success_indicators']) ? ['success_indicators' => $data['success_indicators']] : [],
             ]);
         } catch (ValidationException $exception) {

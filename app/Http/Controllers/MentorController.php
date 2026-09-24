@@ -79,17 +79,6 @@ class MentorController extends Controller
             'revision_note' => ['nullable', 'string', 'max:2000'],
             'success_indicators' => ['sometimes', 'array', 'max:'.Application::MAX_SUCCESS_INDICATORS],
             'success_indicators.*' => ['nullable', 'string', 'max:255'],
-            'mentor_signature' => [
-                'required_if:decision,approved',
-                'nullable',
-                'string',
-                'regex:/^data:image\/(png|jpeg|jpg|webp);base64,/i',
-                function (string $attribute, mixed $value, \Closure $fail): void {
-                    if (is_string($value) && strlen($value) > 900_000) {
-                        $fail('Tanda tangan mentor terlalu besar.');
-                    }
-                },
-            ],
         ]);
 
         $mentor = $request->user()->mentor;
@@ -122,12 +111,34 @@ class MentorController extends Controller
         return view('mentor.agreements', compact('agreements'));
     }
 
+    public function printAgreement(Request $request, Agreement $agreement)
+    {
+        $this->authorizeProgram($request, $agreement->program);
+        abort_unless($agreement->status === 'agreed', 404);
+
+        return view('participant.agreement-print', [
+            'program' => $agreement->program->load(['participant.user', 'mentor.user', 'department', 'businessUnit', 'agreement']),
+            'agreement' => $agreement,
+        ]);
+    }
+
     public function reviewAgreement(Request $request, Agreement $agreement)
     {
         $this->authorizeProgram($request, $agreement->program);
         $data = $request->validate([
             'decision' => ['required', 'in:agreed,revision'],
             'revision_note' => ['nullable', 'string'],
+            'mentor_signature' => [
+                'required_if:decision,agreed',
+                'nullable',
+                'string',
+                'regex:/^data:image\/(png|jpeg|jpg|webp);base64,/i',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if (is_string($value) && strlen($value) > 900_000) {
+                        $fail('Tanda tangan mentor terlalu besar.');
+                    }
+                },
+            ],
         ]);
 
         if ($data['decision'] === 'revision') {
@@ -135,7 +146,11 @@ class MentorController extends Controller
             $agreement->program->update(['status' => 'revision']);
             $agreement->program->participant->user->notify(new ImersiAlert('Agreement perlu revisi', $data['revision_note'] ?? 'Silakan perbaiki agreement.', route('participant.agreement')));
         } else {
-            $agreement->update(['status' => 'agreed', 'mentor_approved_at' => now()]);
+            $agreement->update([
+                'status' => 'agreed',
+                'mentor_approved_at' => now(),
+                'mentor_signature' => $data['mentor_signature'],
+            ]);
             $program = $agreement->program;
             $program->update([
                 'status' => 'active',

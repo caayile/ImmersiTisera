@@ -10,7 +10,7 @@
 @endphp
 
 <div x-data="{
-    step: {{ old('shared_goal') || old('declaration') || old('participant_signature') ? 2 : 1 }},
+    step: {{ old('shared_goal') || old('declaration') ? 2 : 1 }},
     periodStart: @js(old('period_start', $periodStart)),
     periodEnd: @js(old('period_end', $periodEnd)),
     addMonths(value, months) {
@@ -221,7 +221,7 @@
                 <span class="material-symbols-outlined text-[22px]">calendar_month</span>
             </span>
             <div>
-                <h2 class="text-lg font-semibold">Periode imersi</h2>
+                <h2 class="text-lg font-semibold">Periode magang dosen</h2>
                 <p class="mt-1 text-sm text-muted">Durasi otomatis 2 bulan. Ubah tanggal mulai atau selesai, yang lain akan menyesuaikan.</p>
             </div>
         </div>
@@ -301,10 +301,11 @@
             <div class="mt-5 space-y-4">
                 <div class="rounded-2xl border border-line bg-bg p-4">
                     <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 1 — Shared Goal</span>
-                    <p class="mt-1 text-sm text-muted">Selama 2 bulan, kami akan __________ untuk menghasilkan __________ yang memberikan manfaat bagi __________.</p>
+                    <p class="mt-1 text-sm text-muted">Rumus sederhana: <b>Selama 2 bulan, kami akan [aktivitas] untuk menghasilkan [luaran] yang memberikan manfaat bagi [penerima manfaat].</b></p>
                     <label class="mt-3 block">
                         <span class="text-sm font-medium">Shared Goal*</span>
-                        <textarea name="shared_goal" rows="3" placeholder="Selama 2 bulan, kami akan ... untuk menghasilkan ... yang memberikan manfaat bagi ..." class="mt-2 w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/15" {{ $disabled }} required minlength="20">{{ old('shared_goal', $application?->shared_goal) }}</textarea>
+                        <span class="mt-0.5 block text-xs text-muted">Tuliskan tujuan bersama dosen dan mentor secara spesifik dan terukur.</span>
+                        <textarea name="shared_goal" rows="3" placeholder="Template: Selama 2 bulan, kami akan [aktivitas] untuk menghasilkan [luaran] yang memberikan manfaat bagi [penerima manfaat].&#10;&#10;Contoh: Selama 2 bulan, kami akan memetakan alur kerja layanan digital untuk menghasilkan teaching case yang memberikan manfaat bagi mahasiswa Informatika." class="mt-2 w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/15" {{ $disabled }} required minlength="20">{{ old('shared_goal', $application?->shared_goal) }}</textarea>
                     </label>
                 </div>
 
@@ -340,7 +341,7 @@
                     <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 3 — Problem / Opportunity</span>
                     <label class="mt-1 block">
                         <span class="text-sm font-medium">Problem / Opportunity Statement*</span>
-                        <span class="mt-0.5 block text-xs text-muted">Jelaskan problem atau peluang yang akan menjadi fokus selama Industry Immersion.</span>
+                        <span class="mt-0.5 block text-xs text-muted">Jelaskan problem atau peluang yang akan menjadi fokus selama program magang dosen.</span>
                         <textarea name="problem_statement" rows="4" class="mt-2 w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/15" {{ $disabled }} required minlength="20">{{ old('problem_statement', $application?->problem_statement) }}</textarea>
                     </label>
                 </div>
@@ -443,15 +444,6 @@
             </label>
         </div>
 
-        <x-signature-pad
-            class="mt-4"
-            name="participant_signature"
-            label="Tanda tangan dosen"
-            hint="Setelah membaca ketentuan, coret tanda tangan di kotak atau unggah gambar PNG/JPG."
-            :required="true"
-            :value="old('participant_signature', $application?->participant_signature)"
-        />
-
         <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
             <button type="button" @click="back()" class="inline-flex items-center gap-1 rounded-full border border-line px-5 py-2.5 text-sm font-semibold">
                 <span class="material-symbols-outlined text-[18px]">arrow_back</span>
@@ -464,15 +456,6 @@
         </div>
         @else
         <div class="mt-4 space-y-4">
-            @if($application?->participant_signature)
-                <x-signature-pad
-                    name="participant_signature_preview"
-                    label="Tanda tangan dosen"
-                    hint="Tanda tangan yang sudah dikirim."
-                    :disabled="true"
-                    :value="$application->participant_signature"
-                />
-            @endif
             <div class="rounded-2xl border border-line bg-bg px-4 py-4 text-sm text-muted">
                 <p class="font-semibold text-ink">Pengiriman dikunci</p>
                 <p class="mt-1">Anda hanya dapat melihat data tahapan ini. Form dapat dikirim ulang hanya setelah admin meminta revisi.</p>

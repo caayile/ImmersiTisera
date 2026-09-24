@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@yield('title') — Imersi</title>
+    <title>@yield('title') — Magang Dosen</title>
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -17,8 +17,8 @@
         <a href="{{ url('/') }}" class="inline-flex items-center gap-2.5">
             <img src="{{ asset('images/logo-tsu.svg') }}" alt="TSU" class="site-logo site-logo--nav shadow-sm">
             <span>
-                <span class="block text-[15px] font-semibold leading-none text-zinc-800">Imersi</span>
-                <span class="mt-1 block text-[10px] font-medium uppercase tracking-[0.14em] text-zinc-500">TSU Industry Immersion</span>
+                <span class="block text-[15px] font-semibold leading-none text-zinc-800">Magang Dosen</span>
+                <span class="mt-1 block text-[10px] font-medium uppercase tracking-[0.14em] text-zinc-500">Program TSU</span>
             </span>
         </a>
     </header>

@@ -5,12 +5,12 @@
 <div class="mt-4">
     <p class="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">Immersion · Rekam jejak</p>
     <h1 class="text-2xl font-semibold">Logbook</h1>
-    <p class="mt-1 text-sm text-muted">Refleksi harian selama imersi. Diisi oleh peserta, lalu diverifikasi mentor.</p>
+    <p class="mt-1 text-sm text-muted">Refleksi harian selama program magang dosen. Diisi oleh peserta, lalu diverifikasi mentor.</p>
 </div>
 
 @unless($program)
     <x-empty class="mt-6" title="Logbook terbuka setelah program aktif">
-        Belum ada program imersi untuk Anda. Lengkapi profil lalu ajukan minat ke unit bisnis.
+        Belum ada program magang dosen untuk Anda. Lengkapi profil lalu ajukan minat ke unit bisnis.
     </x-empty>
 @else
     <div class="mt-6 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">

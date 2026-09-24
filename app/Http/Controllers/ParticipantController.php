@@ -234,6 +234,17 @@ class ParticipantController extends Controller
         return view('participant.agreement', ['program' => $program, 'agreement' => $program?->agreement]);
     }
 
+    public function printAgreement(Request $request)
+    {
+        $program = $this->currentProgram($request);
+        abort_unless($program?->agreement?->status === 'agreed', 404);
+
+        return view('participant.agreement-print', [
+            'program' => $program->load(['participant.user', 'mentor.user', 'department', 'businessUnit', 'agreement']),
+            'agreement' => $program->agreement,
+        ]);
+    }
+
     public function updateAgreement(Request $request)
     {
         $program = $this->currentProgram($request, true);
@@ -248,10 +259,26 @@ class ParticipantController extends Controller
             'participant_benefit' => ['required', 'string'],
             'business_benefit' => ['required', 'string'],
             'success_indicators' => ['required', 'array', 'max:3'],
+            'participant_signature' => [
+                'required',
+                'string',
+                'regex:/^data:image\/(png|jpeg|jpg|webp);base64,/i',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if (strlen((string) $value) > 900_000) {
+                        $fail('Tanda tangan dosen terlalu besar.');
+                    }
+                },
+            ],
             'collaboration_potential' => ['nullable', 'string'],
         ]);
 
-        $agreement->update([...$data, 'status' => 'submitted', 'participant_approved_at' => now()]);
+        $agreement->update([
+            ...$data,
+            'status' => 'submitted',
+            'participant_approved_at' => now(),
+            'mentor_approved_at' => null,
+            'mentor_signature' => null,
+        ]);
         $program->mentor->user->notify(new ImersiAlert('Agreement diajukan', 'Menunggu persetujuan mentor.', route('mentor.agreements')));
 
         return back()->with('status', 'Agreement diajukan ke mentor.');
@@ -452,16 +479,6 @@ class ParticipantController extends Controller
             ],
             'success_indicators.*' => ['nullable', 'string', 'max:255'],
             'indicator_feedback' => ['nullable', 'string'],
-            'participant_signature' => [
-                'required',
-                'string',
-                'regex:/^data:image\/(png|jpeg|jpg|webp);base64,/i',
-                function (string $attribute, mixed $value, \Closure $fail): void {
-                    if (is_string($value) && strlen($value) > 900_000) {
-                        $fail('Tanda tangan terlalu besar. Hapus coretan lalu tanda tangani ulang, atau unggah gambar lebih kecil.');
-                    }
-                },
-            ],
             'period_start' => ['required', 'date'],
             'period_end' => [
                 'required',

@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@yield('title', 'Magang Dosen') TSU Industry Immersion</title>
+    <title>@yield('title', 'Magang Dosen') Program TSU</title>
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
@@ -36,7 +36,7 @@
     </div>
     <div id="brand-splash-wordmark" class="brand-splash__wordmark">
         <span>Magang Dosen</span>
-        <small>TSU INDUSTRY IMMERSION</small>
+        <small>PROGRAM MAGANG DOSEN TSU</small>
     </div>
     <div class="brand-splash__line" aria-hidden="true"><span></span></div>
 </div>
@@ -52,7 +52,7 @@
         <a href="{{ route('home') }}" class="flex items-center gap-2 font-semibold">
             <img id="nav-logo" src="{{ asset('images/logo-tsu.svg') }}" alt="TSU" class="site-logo site-logo--nav">
             <span id="nav-brand-text">Magang Dosen
-                <span class="block text-[10px] font-medium uppercase tracking-[0.14em] text-muted">TSU Industry Immersion</span>
+                <span class="block text-[10px] font-medium uppercase tracking-[0.14em] text-muted">Program Magang Dosen</span>
             </span>
         </a>
         <nav class="hidden items-center gap-1 text-sm font-medium md:flex">
@@ -94,7 +94,7 @@
     <div class="bg-primary/15 px-5 py-3 text-center text-sm text-primary-dark">{{ session('status') }}</div>
 @endif
 <main>@yield('content')</main>
-<footer class="border-t border-line bg-white py-8 text-center text-sm text-muted">Magang Dosen · Tiga Serangkai · TSU Industry Immersion</footer>
+<footer class="border-t border-line bg-white py-8 text-center text-sm text-muted">Magang Dosen · Tiga Serangkai · TSU</footer>
 <script>
     (() => {
         const splash = document.getElementById('brand-splash');

@@ -43,9 +43,9 @@
     <div class="departments-hero__backdrop" aria-hidden="true"></div>
     <div class="relative mx-auto max-w-6xl px-5 pb-14 pt-10">
         <div class="mb-6 max-w-2xl text-white">
-            <p class="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">Mitra Imersi</p>
+            <p class="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">Mitra Magang Dosen</p>
             <h1 class="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">{{ $hero->title ?: 'Unit Bisnis' }}</h1>
-            <p class="mt-2 text-sm leading-6 text-white/80">{{ $hero->subtitle ?: 'Pilih unit bisnis mitra imersi.' }}</p>
+            <p class="mt-2 text-sm leading-6 text-white/80">{{ $hero->subtitle ?: 'Pilih unit bisnis mitra magang dosen.' }}</p>
         </div>
 
         <div class="relative mx-auto max-w-5xl px-10 md:px-14">

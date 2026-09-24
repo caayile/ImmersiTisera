@@ -18,7 +18,7 @@ class ApplicationApprovalService
     public function __construct(private MatchingService $matching) {}
 
     /**
-     * @param  array{shared_goal: string, activity_types: list<string>, problem_statement: string, main_output: string, participant_benefit: string, business_benefit: string, success_indicators: list<string>, indicator_feedback?: string|null, participant_signature: string, period_start: string, period_end: string, cv_path?: string}  $data
+     * @param  array{shared_goal: string, activity_types: list<string>, problem_statement: string, main_output: string, participant_benefit: string, business_benefit: string, success_indicators: list<string>, indicator_feedback?: string|null, period_start: string, period_end: string, cv_path?: string}  $data
      */
     public function submit(Participant $participant, BusinessUnit $unit, array $data): Application
     {
@@ -74,7 +74,7 @@ class ApplicationApprovalService
     }
 
     /**
-     * @param  array{shared_goal: string, activity_types: list<string>, problem_statement: string, main_output: string, participant_benefit: string, business_benefit: string, success_indicators: list<string>, indicator_feedback?: string|null, participant_signature: string, period_start: string, period_end: string, business_unit_id: int, cv_path?: string}  $data
+     * @param  array{shared_goal: string, activity_types: list<string>, problem_statement: string, main_output: string, participant_benefit: string, business_benefit: string, success_indicators: list<string>, indicator_feedback?: string|null, period_start: string, period_end: string, business_unit_id: int, cv_path?: string}  $data
      */
     public function resubmit(Application $application, array $data): Application
     {
@@ -164,18 +164,9 @@ class ApplicationApprovalService
             return $application->fresh(['participant.user', 'department', 'businessUnit', 'mentor.user']);
         }
 
-        $signature = trim((string) ($data['mentor_signature'] ?? ''));
-        if ($signature === '' || ! preg_match('/^data:image\/(png|jpeg|jpg|webp);base64,/i', $signature)) {
-            throw ValidationException::withMessages([
-                'mentor_signature' => 'Mentor wajib menandatangani secara digital saat menyetujui.',
-            ]);
-        }
-
         $application->update([
             'status' => 'waiting_admin',
             'mentor_note' => $data['mentor_note'] ?? $application->mentor_note,
-            'mentor_signature' => $signature,
-            'mentor_signed_at' => now(),
             'mentor_reviewed_at' => now(),
         ]);
 
@@ -255,6 +246,15 @@ class ApplicationApprovalService
             'Diteruskan ke mentor',
             'Admin sudah meninjau pendaftaran. Menunggu persetujuan mentor.',
             route('participant.applications.show', $application)
+        ));
+        $mentorPhone = preg_replace('/\D+/', '', (string) $application->mentor?->user?->phone);
+        if (str_starts_with($mentorPhone, '0')) {
+            $mentorPhone = '62'.substr($mentorPhone, 1);
+        }
+        $application->participant->user->notify(new ImersiAlert(
+            'Mentor dan kontak sudah ditetapkan',
+            'Mentor Anda adalah '.$application->mentor?->user?->name.'. WhatsApp: '.($mentorPhone ?: 'nomor belum tersedia').'. Silakan berkoordinasi sebelum melengkapi perjanjian.',
+            route('participant.agreement')
         ));
 
         return $application;

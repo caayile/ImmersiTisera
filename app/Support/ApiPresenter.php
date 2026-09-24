@@ -161,6 +161,8 @@ class ApiPresenter
             'benefit_industry' => $agreement->business_benefit,
             'success_indicator' => collect($agreement->success_indicators ?? [])->implode(', '),
             'potential_collaboration' => $agreement->collaboration_potential,
+            'participant_signature' => $agreement->participant_signature,
+            'mentor_signature' => $agreement->mentor_signature,
             'business_unit' => $program?->businessUnit?->name,
             'dosen' => $program?->participant?->user ? [
                 'id' => $program->participant->user->id,
@@ -169,6 +171,7 @@ class ApiPresenter
             'mentor' => $program?->mentor?->user ? [
                 'id' => $program->mentor->user->id,
                 'name' => $program->mentor->user->name,
+                'phone' => $program->mentor->user->phone,
             ] : null,
             'program' => $program ? ['id' => $program->id] : null,
         ];

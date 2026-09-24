@@ -5,7 +5,20 @@
     $index = route($user->notificationsRoute());
 @endphp
 
-<div {{ $attributes->merge(['class' => 'relative']) }} x-data="{ panel: false }" @click.outside="panel = false">
+<div {{ $attributes->merge(['class' => 'relative']) }} x-data="{ panel: false, toast: {{ $unread ? 'true' : 'false' }} }" @click.outside="panel = false">
+    @if($unread && $user->isParticipant() && $inbox->first())
+        <div x-show="toast" x-transition class="fixed right-5 top-20 z-[60] w-[min(24rem,calc(100vw-2rem))] rounded-2xl border border-[#b8e4ce] bg-white p-4 shadow-2xl shadow-[#173d32]/15" role="status">
+            <div class="flex items-start gap-3">
+                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#e5f8ee] text-primary-dark"><span class="material-symbols-outlined text-[20px]">campaign</span></span>
+                <div class="min-w-0 flex-1">
+                    <p class="text-sm font-semibold">{{ $inbox->first()->data['title'] ?? 'Notifikasi baru' }}</p>
+                    <p class="mt-1 text-xs leading-5 text-muted">{{ $inbox->first()->data['message'] ?? '' }}</p>
+                    <a href="{{ $inbox->first()->data['url'] ?? $index }}" class="mt-2 inline-flex text-xs font-semibold text-primary-dark">Buka detail</a>
+                </div>
+                <button type="button" @click="toast = false" class="text-muted hover:text-ink" aria-label="Tutup notifikasi"><span class="material-symbols-outlined text-[18px]">close</span></button>
+            </div>
+        </div>
+    @endif
     <button
         type="button"
         @click="panel = ! panel"

@@ -43,7 +43,7 @@
             <div class="flex flex-col gap-5 sm:flex-row sm:items-center">
                 <span class="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-white text-2xl font-semibold text-primary-dark shadow-sm">{{ $initials }}</span>
                 <div class="text-white">
-                    <p class="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">Profil dosen · Imersi</p>
+                    <p class="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">Profil dosen · Magang Dosen</p>
                     <h1 class="mt-1 text-3xl font-semibold tracking-tight md:text-4xl">{{ $user->name }}</h1>
                     <p class="mt-1 text-sm text-white/75">Lengkapi data akademik agar pencocokan unit bisnis lebih akurat.</p>
                 </div>

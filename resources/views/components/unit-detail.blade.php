@@ -161,7 +161,7 @@
                         Daftar Program
                         <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
                     </a>
-                    <p class="mt-3 text-center text-[11px] text-muted">Daftar untuk memulai proses imersi di unit ini.</p>
+                    <p class="mt-3 text-center text-[11px] text-muted">Daftar untuk memulai proses magang dosen di unit ini.</p>
                 @elseif($hasWindow)
                     <button type="button" disabled class="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-[#e4eee9] px-5 py-3.5 text-sm font-semibold text-muted">
                         <span class="material-symbols-outlined text-[18px]">lock</span>

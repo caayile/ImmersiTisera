@@ -5,11 +5,11 @@
     $capabilities = [
         ['person_add', 'Registrasi & Profil', 'Sinkronisasi data dosen, rekam publikasi, dan portofolio kompetensi untuk pencocokan yang akurat.', '01 / Sinkron Profil'],
         ['account_tree', 'Mesin Pencocokan Linear', 'Algoritma mencocokkan keahlian dosen dengan tantangan teknis unit bisnis secara terukur.', '02 / Pencocokan'],
-        ['handshake', 'Perjanjian Imersi', 'Dokumen digital kesepakatan tiga pihak: dosen, kampus, dan industri sebelum program aktif.', '03 / Perjanjian'],
+        ['handshake', 'Perjanjian Magang Dosen', 'Dokumen digital kesepakatan dosen dan mentor sebelum program aktif.', '03 / Perjanjian'],
         ['calendar_month', 'Pemeriksaan 8 Minggu', 'Tonggak mingguan dari Temukan hingga Serahkan dengan target hasil yang jelas.', '04 / Tonggak'],
         ['edit_note', 'Logbook Harian', 'Form refleksi harian untuk merekam aktivitas, pembelajaran, dan bukti kerja.', '05 / Catatan'],
         ['forum', 'Mentoring Mingguan', 'Sesi 30 menit tiap minggu untuk menyelaraskan temuan, tugas, dan langkah berikutnya.', '06 / Mentor'],
-        ['folder_managed', 'Repositori Bukti', 'Penyimpanan aman untuk artefak, dokumen, dan hasil kerja selama imersi.', '07 / Bukti'],
+        ['folder_managed', 'Repositori Bukti', 'Penyimpanan aman untuk artefak, dokumen, dan hasil kerja selama magang dosen.', '07 / Bukti'],
         ['diversity_3', 'Evaluasi Multi Perspektif', 'Penilaian 360 dari industri, mentor, dan capaian hasil kerja dosen.', '08 / Evaluasi'],
         ['trending_up', 'Alur Kolaborasi 0–4', 'Kerangka formal dari tutup hingga perluas kemitraan setelah magang.', '09 / Alur'],
         ['monitoring', 'Dasbor Eksekutif', 'Visibilitas real-time untuk pemantauan capaian program dan indikator kinerja.', '10 / Dasbor'],
@@ -95,7 +95,7 @@
     <div class="mx-auto max-w-7xl px-5">
         <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
-                <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary-dark">Mitra Imersi</p>
+                <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary-dark">Mitra Magang Dosen</p>
                 <h2 class="mt-2 text-3xl font-semibold tracking-tight">Unit bisnis pilihan gelombang 2026</h2>
                 <p class="mt-2 max-w-xl text-sm text-muted">Pilih unit bisnis dan departemen yang selaras dengan rumpun keilmuan Anda.</p>
             </div>
@@ -149,7 +149,7 @@
                         Pendaftaran gelombang terbaru telah dibuka
                     </p>
                     <h3 class="mt-4 text-2xl font-semibold tracking-tight md:text-3xl">Siap menemukan lingkungan industri yang tepat untuk bidang keahlian Anda?</h3>
-                    <p class="mt-3 max-w-xl text-sm leading-6 text-muted">Imersi menuntun dosen dari pencocokan hingga kolaborasi lanjutan dengan sistem yang terukur dan transparan.</p>
+                    <p class="mt-3 max-w-xl text-sm leading-6 text-muted">Magang Dosen menuntun peserta dari pencocokan hingga kolaborasi lanjutan dengan sistem yang terukur dan transparan.</p>
                 </div>
                 <div class="flex flex-col gap-3 sm:flex-row lg:justify-end">
                     <a href="{{ route('departments.index') }}" class="inline-flex items-center justify-center gap-1 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white">
@@ -172,7 +172,7 @@
             <div>
                 <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary-dark">Berita Terbaru</p>
                 <h2 class="mt-2 text-3xl font-semibold tracking-tight">Update program & kolaborasi</h2>
-                <p class="mt-2 text-sm text-muted">Tiga berita paling baru dari Imersi.</p>
+                <p class="mt-2 text-sm text-muted">Tiga berita paling baru dari Magang Dosen.</p>
             </div>
             <a href="{{ route('news.index') }}" class="inline-flex items-center gap-1 text-sm font-semibold text-primary-dark">
                 Lihat semua berita

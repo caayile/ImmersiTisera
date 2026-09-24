@@ -55,6 +55,7 @@ Route::middleware(['auth', 'role:participant'])->prefix('participant')->name('pa
     Route::put('/applications/{application}', [ParticipantController::class, 'updateApplication'])->name('applications.update');
     Route::get('/program', [ParticipantController::class, 'program'])->name('program');
     Route::get('/agreement', [ParticipantController::class, 'agreement'])->name('agreement');
+    Route::get('/agreement/print', [ParticipantController::class, 'printAgreement'])->name('agreement.print');
     Route::post('/agreement', [ParticipantController::class, 'updateAgreement']);
     Route::get('/timeline', [ParticipantController::class, 'timeline'])->name('timeline');
     Route::get('/logbooks', [ParticipantController::class, 'logbooks'])->name('logbooks');
@@ -82,6 +83,7 @@ Route::middleware(['auth', 'role:mentor'])->prefix('mentor')->name('mentor.')->g
     Route::get('/participants/{program}', [MentorController::class, 'showParticipant'])->name('participants.show');
     Route::get('/programs', [MentorController::class, 'programs'])->name('programs');
     Route::get('/agreements', [MentorController::class, 'agreements'])->name('agreements');
+    Route::get('/agreements/{agreement}/print', [MentorController::class, 'printAgreement'])->name('agreements.print');
     Route::post('/agreements/{agreement}', [MentorController::class, 'reviewAgreement'])->name('agreements.review');
     Route::get('/timeline', [MentorController::class, 'timeline'])->name('timeline');
     Route::get('/logbooks', [MentorController::class, 'logbooks'])->name('logbooks');

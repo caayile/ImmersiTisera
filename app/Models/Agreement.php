@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
     'program_id', 'objective', 'problem_statement', 'activities', 'main_output',
     'participant_benefit', 'business_benefit', 'success_indicators', 'collaboration_potential',
     'revision_note', 'status', 'participant_approved_at', 'mentor_approved_at',
+    'participant_signature', 'mentor_signature',
 ])]
 class Agreement extends Model
 {

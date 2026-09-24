@@ -75,12 +75,11 @@ class ProgramRegistrationTest extends TestCase
             ->assertSee('Observasi')
             ->assertSee('Riset')
             ->assertDontSee('>Penugasan</', false)
-            ->assertSee('Unggah gambar')
             ->assertSee('Problem / Opportunity')
             ->assertSee('Main Output')
             ->assertSee('Success Indicators')
             ->assertSee('Tambah indikator')
-            ->assertSee('Tanda tangan dosen')
+            ->assertDontSee('Tanda tangan dosen')
             ->assertSee('Lanjut ke persetujuan pemagangan')
             ->assertSee('Kembali ke data diri')
             ->assertSee('Kirim pendaftaran')
@@ -126,7 +125,6 @@ class ProgramRegistrationTest extends TestCase
                 'participant_benefit',
                 'business_benefit',
                 'success_indicators',
-                'participant_signature',
                 'period_start',
                 'period_end',
                 'declaration',
@@ -161,8 +159,8 @@ class ProgramRegistrationTest extends TestCase
         $this->assertSame('Dosen mendapat studi kasus nyata untuk bahan ajar dan riset terapan.', $application->participant_benefit);
         $this->assertSame('Unit bisnis mendapat sudut pandang akademik atas proses digitalnya.', $application->business_benefit);
         $this->assertSame(['Teaching case selesai dan divalidasi mentor', 'Modul kuliah baru dipakai satu semester'], $application->normalizedSuccessIndicators());
-        $this->assertNotNull($application->participant_signature);
-        $this->assertNotNull($application->participant_signed_at);
+        $this->assertNull($application->participant_signature);
+        $this->assertNull($application->participant_signed_at);
         $this->assertNull($application->cv_path);
         $this->assertNull($application->program);
 
@@ -420,8 +418,8 @@ class ProgramRegistrationTest extends TestCase
             ->assertRedirect();
 
         $this->assertSame('waiting_admin', $application->fresh()->status);
-        $this->assertNotNull($application->fresh()->mentor_signature);
-        $this->assertNotNull($application->fresh()->mentor_signed_at);
+        $this->assertNull($application->fresh()->mentor_signature);
+        $this->assertNull($application->fresh()->mentor_signed_at);
 
         $this->actingAs($admin)
             ->post(route('admin.matching.update', $application), [
@@ -562,7 +560,7 @@ class ProgramRegistrationTest extends TestCase
     }
 
     /**
-     * @return array{business_unit_id: int, shared_goal: string, activity_types: list<string>, problem_statement: string, main_output: string, participant_benefit: string, business_benefit: string, success_indicators: list<string>, participant_signature: string, period_start: string, period_end: string, declaration: string}
+     * @return array{business_unit_id: int, shared_goal: string, activity_types: list<string>, problem_statement: string, main_output: string, participant_benefit: string, business_benefit: string, success_indicators: list<string>, period_start: string, period_end: string, declaration: string}
      */
     private function validPayload(BusinessUnit $unit, ?string $problem = null): array
     {
@@ -575,7 +573,6 @@ class ProgramRegistrationTest extends TestCase
             'participant_benefit' => 'Dosen mendapat studi kasus nyata untuk bahan ajar dan riset terapan.',
             'business_benefit' => 'Unit bisnis mendapat sudut pandang akademik atas proses digitalnya.',
             'success_indicators' => ['Teaching case selesai dan divalidasi mentor', 'Modul kuliah baru dipakai satu semester'],
-            'participant_signature' => $this->sampleSignature(),
             'period_start' => '2026-09-10',
             'period_end' => '2026-11-10',
             'declaration' => '1',

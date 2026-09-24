@@ -110,7 +110,7 @@
 
         @if($program)
             <article class="mt-6 rounded-3xl border border-line bg-white p-6 md:p-8">
-                <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary-dark">Penempatan imersi</p>
+                <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary-dark">Penempatan magang dosen</p>
                 <h2 class="mt-2 text-xl font-semibold">{{ $program->businessUnit?->name }}</h2>
                 <div class="mt-4 grid gap-3 text-sm sm:grid-cols-3">
                     <div>

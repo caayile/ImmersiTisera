@@ -3,7 +3,7 @@
 @section('content')
 <x-back-link />
 <div class="mt-4">
-    <p class="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">Arsip imersi</p>
+    <p class="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">Arsip magang dosen</p>
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
             <h1 class="text-2xl font-semibold">Riwayat Logbook</h1>
@@ -24,7 +24,7 @@
                             <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary-dark">
                                 Batch {{ $program->start_date?->year ?? ($program->end_date?->year ?? '—') }}
                             </p>
-                            <h2 class="mt-1 font-semibold">{{ $program->businessUnit?->name ?? 'Program imersi' }}</h2>
+                            <h2 class="mt-1 font-semibold">{{ $program->businessUnit?->name ?? 'Program magang dosen' }}</h2>
                             <p class="mt-0.5 text-sm text-muted">{{ $program->department?->name ?? 'Unit bisnis belum ditentukan' }}</p>
                         </div>
                         <x-badge :status="$program->status" />

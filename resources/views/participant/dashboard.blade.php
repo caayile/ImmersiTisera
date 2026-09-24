@@ -13,13 +13,13 @@
             'waiting_admin' => ['Menunggu pengesahan akhir dari admin.', route('participant.applications.show', $application)],
             'revision' => ['Perbaiki form pendaftaran sesuai catatan reviewer.', route('participant.applications.edit', $application)],
             'rejected' => ['Pendaftaran ditolak. Ajukan program lain jika masih relevan.', route('participant.applications')],
-            'approved' => ['Pendaftaran disetujui. Lanjutkan ke perjanjian imersi.', route('participant.agreement')],
+            'approved' => ['Pendaftaran disetujui. Lanjutkan ke perjanjian magang dosen.', route('participant.agreement')],
             default => $next,
         };
     }
     if ($program) {
         $next = match ($program->status) {
-            'draft', 'submitted' => ['Lengkapi dan ajukan Perjanjian Imersi Industri.', route('participant.agreement')],
+            'draft', 'submitted' => ['Lengkapi dan ajukan Perjanjian Magang Dosen.', route('participant.agreement')],
             'revision' => ['Perbaiki perjanjian sesuai catatan mentor.', route('participant.agreement')],
             'agreed' => ['Menunggu program diaktifkan setelah perjanjian disepakati.', route('participant.agreement')],
             'active' => ['Isi logbook harian dan siapkan mentoring minggu ini.', route('participant.logbooks')],
@@ -74,7 +74,7 @@
             <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">Gelombang 2026</p>
-                    <h1 class="mt-1 text-2xl font-semibold tracking-tight text-white md:text-3xl">Pilih mitra imersi Anda</h1>
+                    <h1 class="mt-1 text-2xl font-semibold tracking-tight text-white md:text-3xl">Pilih mitra magang dosen Anda</h1>
                     <p class="mt-1 max-w-xl text-sm text-white/75">Geser kartu untuk melihat unit bisnis mitra. Cover HD bisa ditambahkan nanti tanpa ubah kode.</p>
                 </div>
                 <a href="{{ route('departments.index') }}" class="inline-flex items-center gap-1 self-start rounded-full bg-white/15 px-4 py-2 text-sm font-semibold text-white backdrop-blur hover:bg-white/25">
@@ -171,6 +171,28 @@
         <a href="{{ $next[1] }}" class="inline-flex rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white">Lanjutkan</a>
     </div>
 </div>
+
+@if($program?->mentor?->user)
+    @php
+        $mentorPhone = preg_replace('/\D+/', '', (string) $program->mentor->user->phone);
+        if (str_starts_with($mentorPhone, '0')) {
+            $mentorPhone = '62'.substr($mentorPhone, 1);
+        }
+    @endphp
+    <section class="mt-5 flex flex-col gap-4 rounded-2xl border border-[#cde8dc] bg-[#f1fbf6] p-5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.14em] text-primary-dark">Kontak pendamping</p>
+            <h2 class="mt-1 text-lg font-semibold">{{ $program->mentor->user->name }}</h2>
+            <p class="mt-1 text-sm text-muted">Mentor industri untuk program Anda. Silakan berkoordinasi langsung di luar sistem.</p>
+        </div>
+        @if($mentorPhone)
+            <a href="https://wa.me/{{ $mentorPhone }}" target="_blank" rel="noreferrer" class="inline-flex items-center justify-center gap-2 rounded-lg bg-[#159447] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#107c3a]">
+                <span class="material-symbols-outlined text-[19px]">chat</span>
+                Buka WhatsApp
+            </a>
+        @endif
+    </section>
+@endif
 
 <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
     @foreach([

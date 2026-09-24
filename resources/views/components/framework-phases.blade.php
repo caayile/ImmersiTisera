@@ -11,7 +11,7 @@
         [
             'no' => '02',
             'fase' => 'FASE 2',
-            'title' => 'IMERSI',
+            'title' => 'MAGANG DOSEN',
             'copy' => 'Delapan minggu di unit bisnis: observasi alur kerja, ikut keputusan, dan berkontribusi pada pekerjaan nyata.',
             'icon' => 'domain',
             'meta' => '60 Hari di Industri',
@@ -48,7 +48,7 @@
         Kerangka Magang Dosen
     </p>
     <h2 class="mt-4 text-3xl font-semibold tracking-tight">Konsep Utama Program</h2>
-    <p class="mx-auto mt-2 max-w-2xl text-sm text-muted">Lima fase terukur dari pencocokan kompetensi hingga kolaborasi lanjutan setelah imersi.</p>
+    <p class="mx-auto mt-2 max-w-2xl text-sm text-muted">Lima fase terukur dari pencocokan kompetensi hingga kolaborasi lanjutan setelah program magang dosen.</p>
 
     <div class="mt-8 grid gap-3 text-left sm:grid-cols-2 lg:grid-cols-5">
         @foreach($phases as $phase)

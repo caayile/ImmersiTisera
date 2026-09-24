@@ -37,7 +37,7 @@
 @if($application->isAwaitingMentor())
     <section class="mt-6 rounded-2xl border border-line bg-white p-5 md:p-6">
         <h2 class="text-lg font-semibold">Keputusan mentor</h2>
-        <p class="mt-1 text-sm text-muted">Jika belum puas, minta revisi ke dosen. Setelah dosen memperbaiki, surat kembali ke halaman ini untuk ditinjau dan ditandatangani.</p>
+        <p class="mt-1 text-sm text-muted">Jika belum puas, minta revisi ke dosen. Setelah disetujui, tanda tangan dilakukan pada perjanjian magang dosen.</p>
 
         <form
             method="POST"
@@ -46,13 +46,6 @@
             onsubmit="
                 if (this.dataset.submitted === '1') { return false; }
                 const decision = event.submitter && event.submitter.value;
-                if (decision === 'approved') {
-                    const signature = this.querySelector('[name=mentor_signature]');
-                    if (! signature || ! signature.value) {
-                        alert('Tanda tangan digital wajib diisi saat menyetujui.');
-                        return false;
-                    }
-                }
                 if (decision === 'revision') {
                     const note = this.querySelector('[name=mentor_note]');
                     if (! note || note.value.trim().length < 10) {
@@ -91,17 +84,6 @@
                 @enderror
             </label>
 
-            <x-signature-pad
-                name="mentor_signature"
-                label="Tanda tangan mentor"
-                hint="Coret di kotak atau unggah gambar. Wajib saat menyetujui surat persetujuan."
-                :required="false"
-                :value="old('mentor_signature')"
-            />
-            @error('mentor_signature')
-                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-            @enderror
-
             <div class="flex flex-wrap items-center justify-end gap-3 border-t border-line pt-4">
                 <button
                     type="submit"
@@ -117,7 +99,7 @@
                     value="approved"
                     class="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-dark"
                 >
-                    Setujui & tandatangani
+                    Setujui pendaftaran
                 </button>
             </div>
         </form>
@@ -128,10 +110,10 @@
         <p class="mt-1">{{ $application->revision_note ?: 'Dosen sedang memperbaiki pernyataan sesuai catatan Anda.' }}</p>
         <p class="mt-2 text-xs">Setelah dosen mengirim ulang, surat akan kembali ke sini untuk ditinjau dan ditandatangani.</p>
     </div>
-@elseif($application->hasMentorSignature())
+@elseif($application->status === 'waiting_admin')
     <div class="mt-6 rounded-2xl border border-line bg-bg px-5 py-4 text-sm text-muted">
         <p class="font-semibold text-ink">Sudah ditandatangani</p>
-        <p class="mt-1">Surat ini sudah Anda tandatangani{{ $application->mentor_signed_at ? ' pada '.$application->mentor_signed_at->format('d M Y H:i') : '' }}. Status saat ini: {{ $application->currentStageLabel() }}.</p>
+        <p class="mt-1">Pendaftaran ini sudah Anda setujui. Tanda tangan dilakukan pada perjanjian magang dosen setelah admin mengesahkan program.</p>
     </div>
 @endif
 @endsection

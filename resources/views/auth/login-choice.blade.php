@@ -130,7 +130,7 @@
             <div
                 class="inline-flex items-center space-x-2 glass-badge px-3.5 py-1.5 rounded-full text-xs font-medium text-mint w-fit">
                 <span class="w-1.5 h-1.5 rounded-full bg-mint animate-pulse"></span>
-                <span>Program Imersi Industri TS Group</span>
+                <span>Program Magang Dosen TS Group</span>
             </div>
 
             <!-- Title & Subtitle -->

@@ -9,7 +9,7 @@
     <div class="border-b border-line bg-[#f4f8f6] px-6 py-5 md:px-8">
         <div class="flex flex-wrap items-start justify-between gap-4">
             <div>
-                <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-dark">TSU Industry Immersion</p>
+                <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-dark">Program Magang Dosen TSU</p>
                 <h2 class="mt-1 text-xl font-semibold">Persetujuan Pemagangan</h2>
                 <p class="mt-1 text-sm text-muted">Nomor {{ $application->letter_number ?? 'Menunggu nomor' }}</p>
             </div>
@@ -18,7 +18,7 @@
     </div>
 
     <div class="space-y-5 px-6 py-6 text-sm leading-7 md:px-8">
-        <p>Yang bertanda tangan di bawah ini mengajukan dan menyetujui keikutsertaan dosen pada program Industry Immersion dengan data sebagai berikut.</p>
+        <p>Dosen mengajukan keikutsertaan pada Program Magang Dosen dengan data sebagai berikut.</p>
 
         <dl class="grid gap-4 sm:grid-cols-2">
             <div>
@@ -105,33 +105,6 @@
                 @endforelse
                 @if($application->indicator_feedback)
                     <p class="mt-2 text-muted"><b>Feedback indikator:</b> {{ $application->indicator_feedback }}</p>
-                @endif
-            </div>
-        </div>
-
-        <div class="grid gap-4 sm:grid-cols-2">
-            <div class="rounded-xl border border-dashed border-line p-4 text-center">
-                <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">Dosen</p>
-                <p class="mt-2 font-medium">{{ $dosen?->name ?: '—' }}</p>
-                @if($application->participant_signature)
-                    <img src="{{ $application->participant_signature }}" alt="Tanda tangan dosen" class="mx-auto mt-3 h-20 w-full max-w-[220px] object-contain">
-                    <p class="mt-2 text-xs text-muted">{{ $application->participant_signed_at?->format('d M Y H:i') ?? $application->created_at?->format('d M Y H:i') }}</p>
-                @else
-                    <div class="mx-auto mt-3 flex h-20 max-w-[220px] items-center justify-center rounded-lg border border-dashed border-line bg-bg px-3">
-                        <p class="text-xs text-muted">Belum ditandatangani — dosen mencoret tanda tangan saat mengisi form</p>
-                    </div>
-                @endif
-            </div>
-            <div class="rounded-xl border border-dashed border-line p-4 text-center">
-                <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">Mentor</p>
-                <p class="mt-2 font-medium">{{ $mentor?->name ?: '—' }}</p>
-                @if($application->mentor_signature)
-                    <img src="{{ $application->mentor_signature }}" alt="Tanda tangan mentor" class="mx-auto mt-3 h-20 w-full max-w-[220px] object-contain">
-                    <p class="mt-2 text-xs text-muted">{{ $application->mentor_signed_at?->format('d M Y H:i') ?? $application->mentor_reviewed_at?->format('d M Y H:i') }}</p>
-                @else
-                    <div class="mx-auto mt-3 flex h-20 max-w-[220px] items-center justify-center rounded-lg border border-dashed border-line bg-bg px-3">
-                        <p class="text-xs text-muted">Belum ditandatangani — mentor mencoret tanda tangan saat menyetujui</p>
-                    </div>
                 @endif
             </div>
         </div>
