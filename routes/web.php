@@ -58,6 +58,7 @@ Route::middleware(['auth', 'role:participant'])->prefix('participant')->name('pa
     Route::post('/agreement', [ParticipantController::class, 'updateAgreement']);
     Route::get('/timeline', [ParticipantController::class, 'timeline'])->name('timeline');
     Route::get('/logbooks', [ParticipantController::class, 'logbooks'])->name('logbooks');
+    Route::get('/logbooks/history', [ParticipantController::class, 'logbookHistory'])->name('logbooks.history');
     Route::post('/logbooks', [ParticipantController::class, 'storeLogbook']);
     Route::get('/mentoring', [ParticipantController::class, 'mentoring'])->name('mentoring');
     Route::get('/outputs', [ParticipantController::class, 'outputs'])->name('outputs');

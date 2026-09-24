@@ -176,7 +176,7 @@
     @foreach([
         ['person', 'Profil', 'Lengkapi prodi & kompetensi', route('participant.profile')],
         ['send', 'Pendaftaran', 'Ajukan ke unit mitra', route('participant.applications')],
-        ['edit_note', 'Buku Catatan', 'Isi refleksi harian', route('participant.logbooks')],
+        ['edit_note', 'Logbook', 'Isi refleksi harian', route('participant.logbooks')],
         ['calendar_month', 'Linimasa', 'Ikuti tonggak 8 minggu', route('participant.timeline')],
     ] as [$icon, $title, $copy, $url])
         <a href="{{ $url }}" class="rounded-2xl border border-line bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary hover:shadow-md">

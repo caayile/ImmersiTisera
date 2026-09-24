@@ -36,7 +36,9 @@ class ParticipantBackLinkTest extends TestCase
 
         $this->actingAs($dosen)
             ->get(route('participant.logbooks'))
+            ->assertOk()
             ->assertSee('Kembali')
+            ->assertSee('Logbook')
             ->assertSee(route('home'), false);
     }
 }

@@ -264,9 +264,23 @@ class ParticipantController extends Controller
 
     public function logbooks(Request $request)
     {
-        $program = $this->currentProgram($request);
+        return view('participant.logbooks', ['program' => $this->currentProgram($request)]);
+    }
 
-        return view('participant.logbooks', compact('program'));
+    public function logbookHistory(Request $request)
+    {
+        $participant = $request->user()->participant;
+
+        $programs = Program::query()
+            ->with(['department', 'businessUnit', 'mentor.user', 'logbooks'])
+            ->where('participant_id', $participant?->id)
+            ->latest('start_date')
+            ->get();
+
+        $years = $programs->groupBy(fn (Program $program) => $program->start_date?->year ?? ($program->end_date?->year ?? 'Tanpa periode'));
+        $totalEntries = $programs->sum(fn (Program $program) => $program->logbooks->count());
+
+        return view('participant.logbook-history', compact('years', 'totalEntries'));
     }
 
     public function storeLogbook(Request $request)
@@ -275,21 +289,23 @@ class ParticipantController extends Controller
         abort_unless($program && $program->status === 'active', 403);
 
         $data = $request->validate([
-            'date' => ['required', 'date'],
-            'activity' => ['required', 'string', 'max:180'],
-            'what_i_did' => ['required', 'string'],
-            'what_i_learned' => ['required', 'string'],
-            'what_i_found' => ['required', 'string'],
-            'value' => ['nullable', 'string'],
-            'next_action' => ['nullable', 'string'],
-            'attachment' => ['nullable', 'file', 'max:5120', 'mimes:pdf,jpg,jpeg,png,doc,docx'],
+            'entry_date' => ['required', 'date'],
+            'what_did' => ['required', 'string'],
+            'what_learned' => ['required', 'string'],
+            'what_found' => ['required', 'string'],
+            'obstacles' => ['nullable', 'string'],
+            'output' => ['nullable', 'string'],
         ]);
 
-        $path = $request->file('attachment')?->store('logbooks', 'public');
         $program->logbooks()->create([
-            ...collect($data)->except('attachment')->toArray(),
             'participant_id' => $program->participant_id,
-            'attachment_path' => $path,
+            'date' => $data['entry_date'],
+            'activity' => 'Logbook harian',
+            'what_i_did' => $data['what_did'],
+            'what_i_learned' => $data['what_learned'],
+            'what_i_found' => $data['what_found'],
+            'value' => $data['obstacles'] ?? null,
+            'next_action' => $data['output'] ?? null,
             'status' => 'submitted',
         ]);
         $program->mentor->user->notify(new ImersiAlert('Logbook baru', 'Ada logbook menunggu review.', route('mentor.logbooks')));

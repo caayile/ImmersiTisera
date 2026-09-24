@@ -24,7 +24,6 @@
             ['Program', 'participant.program'],
             ['Perjanjian', 'participant.agreement'],
             ['Linimasa', 'participant.timeline'],
-            ['Buku Catatan', 'participant.logbooks'],
             ['Pendampingan', 'participant.mentoring'],
             ['Hasil', 'participant.outputs'],
             ['Laporan Akhir', 'participant.final-report'],
