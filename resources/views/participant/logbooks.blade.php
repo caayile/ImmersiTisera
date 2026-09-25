@@ -8,6 +8,8 @@
     <p class="mt-1 text-sm text-muted">Refleksi harian selama program magang dosen. Diisi oleh peserta, lalu diverifikasi mentor.</p>
 </div>
 
+<x-logbook-nav active="logbook" class="mt-6" />
+
 @unless($program)
     <x-empty class="mt-6" title="Logbook terbuka setelah program aktif">
         Belum ada program magang dosen untuk Anda. Lengkapi profil lalu ajukan minat ke unit bisnis.

@@ -112,6 +112,19 @@ class ApiPresenter
         return [
             'id' => $application->id,
             'status' => $application->status,
+            'letter_number' => $application->letter_number,
+            'department' => $application->businessUnit?->department ? [
+                'id' => $application->businessUnit->department->id,
+                'name' => $application->businessUnit->department->name,
+            ] : null,
+            'business_unit' => $application->businessUnit ? [
+                'id' => $application->businessUnit->id,
+                'name' => $application->businessUnit->name,
+            ] : null,
+            'mentor' => $application->mentor?->user ? [
+                'id' => $application->mentor->user->id,
+                'name' => $application->mentor->user->name,
+            ] : null,
             'match_score' => $application->match_score,
             'match_label' => $this->matchLabel((int) $application->match_score),
             'primary_activity' => $application->normalizedActivityTypes()[0] ?? null,
@@ -152,6 +165,8 @@ class ApiPresenter
         return [
             'id' => $agreement->id,
             'status' => $agreement->status,
+            'letter_number' => $agreement->letter_number,
+            'letter_issued_at' => $agreement->letter_issued_at?->toIso8601String(),
             'shared_goal' => $agreement->objective,
             'problem_opportunity' => $agreement->problem_statement,
             'primary_activity' => $agreement->activities,

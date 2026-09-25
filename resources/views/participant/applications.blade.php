@@ -15,7 +15,7 @@
             <span class="material-symbols-outlined text-[22px]">edit_note</span>
         </span>
         <p class="mt-4 font-semibold">Logbook</p>
-        <p class="mt-1 text-sm text-muted">Kelola pendaftaran program magang dosen Anda.</p>
+        <p class="mt-1 text-sm text-muted">Isi dan kelola refleksi harian program magang dosen Anda.</p>
     </a>
     <a href="{{ route('participant.logbooks.history') }}" class="rounded-2xl border border-line bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary hover:shadow-md">
         <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary-dark">

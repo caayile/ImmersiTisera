@@ -56,7 +56,7 @@ class ImersiSmokeTest extends TestCase
             ->assertSee('Dr. Andi Pratama')
             ->assertSee('Informatika')
             ->assertSee('Fakultas Teknik')
-            ->assertSee('Pilih mitra imersi Anda')
+            ->assertSee('Pilih mitra magang dosen Anda')
             ->assertDontSee('Universitas');
 
         $this->actingAs(User::where('email', 'dosen@imersi.id')->first())
@@ -67,10 +67,9 @@ class ImersiSmokeTest extends TestCase
             ->assertSee('Unit bisnis pilihan gelombang')
             ->assertSee('Dr. Andi')
             ->assertSee('dosen@imersi.id')
-            ->assertSee('Riwayat Pendaftaran')
-            ->assertSee('Logbook')
+            ->assertDontSee('Riwayat Pendaftaran')
             ->assertSee('Dasbor program')
-            ->assertDontSee('Pilih mitra imersi Anda');
+            ->assertDontSee('Pilih mitra magang dosen Anda');
 
         $this->actingAs(User::where('email', 'mentor@imersi.id')->first())
             ->get('/mentor/dashboard')

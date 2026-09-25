@@ -116,10 +116,37 @@ class MentorController extends Controller
         $this->authorizeProgram($request, $agreement->program);
         abort_unless($agreement->status === 'agreed', 404);
 
+        if (blank($agreement->letter_number)) {
+            app(\App\Services\AgreementLetterService::class)->issue($agreement);
+            $agreement->refresh();
+        }
+
         return view('participant.agreement-print', [
-            'program' => $agreement->program->load(['participant.user', 'mentor.user', 'department', 'businessUnit', 'agreement']),
+            'program' => $agreement->program->load(['participant.user', 'mentor.user', 'department', 'businessUnit', 'agreement', 'application']),
             'agreement' => $agreement,
+            'pdf' => false,
         ]);
+    }
+
+    public function downloadAgreementPdf(Request $request, Agreement $agreement)
+    {
+        $this->authorizeProgram($request, $agreement->program);
+        abort_unless($agreement->status === 'agreed', 404);
+
+        if (blank($agreement->letter_number)) {
+            app(\App\Services\AgreementLetterService::class)->issue($agreement);
+            $agreement->refresh();
+        }
+
+        $program = $agreement->program->load(['participant.user', 'mentor.user', 'department', 'businessUnit', 'agreement', 'application']);
+
+        $filename = 'Perjanjian-Magang-'.preg_replace('/[^A-Za-z0-9]+/', '-', (string) ($agreement->letter_number ?? 'tanpa-nomor')).'.pdf';
+
+        return \Barryvdh\DomPDF\Facade\Pdf::loadView('participant.agreement-print', [
+            'program' => $program,
+            'agreement' => $agreement,
+            'pdf' => true,
+        ])->setPaper('a4', 'portrait')->download($filename);
     }
 
     public function reviewAgreement(Request $request, Agreement $agreement)
@@ -151,6 +178,7 @@ class MentorController extends Controller
                 'mentor_approved_at' => now(),
                 'mentor_signature' => $data['mentor_signature'],
             ]);
+            app(\App\Services\AgreementLetterService::class)->issue($agreement->fresh());
             $program = $agreement->program;
             $program->update([
                 'status' => 'active',

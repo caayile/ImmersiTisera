@@ -261,9 +261,11 @@ class DigitalSignatureApprovalTest extends TestCase
         $this->actingAs($dosen)
             ->get(route('participant.agreement.print'))
             ->assertOk()
-            ->assertSee('Pihak Pertama')
-            ->assertSee('Pihak Kedua')
-            ->assertSee('Cetak / Simpan PDF');
+            ->assertSee('PIHAK PERTAMA')
+            ->assertSee('PIHAK KEDUA')
+            ->assertSee('Cetak / Simpan PDF')
+            ->assertSee('MD/TSU/TS/')
+            ->assertSee('Unduh PDF');
     }
 
     /**

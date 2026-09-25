@@ -104,11 +104,20 @@
         <p><b>Output:</b> {{ $agreement?->main_output }}</p>
         <p>Persetujuan peserta: {{ $agreement?->participant_approved_at?->format('d M Y H:i') ?? '—' }}</p>
         <p>Persetujuan mentor: {{ $agreement?->mentor_approved_at?->format('d M Y H:i') ?? '—' }}</p>
+        @if(filled($agreement?->letter_number))
+            <p><b>Nomor surat:</b> {{ $agreement->letter_number }}</p>
+        @endif
         @if($agreement?->status === 'agreed')
-            <a href="{{ route('participant.agreement.print') }}" target="_blank" class="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 font-semibold text-white">
-                <span class="material-symbols-outlined text-[18px]">print</span>
-                Cetak / Simpan PDF
-            </a>
+            <div class="mt-4 flex flex-wrap gap-2">
+                <a href="{{ route('participant.agreement.print') }}" target="_blank" class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 font-semibold text-white">
+                    <span class="material-symbols-outlined text-[18px]">print</span>
+                    Cetak / Simpan PDF
+                </a>
+                <a href="{{ route('participant.agreement.download') }}" class="inline-flex items-center gap-2 rounded-lg bg-[#0f2a24] px-4 py-2.5 font-semibold text-white">
+                    <span class="material-symbols-outlined text-[18px]">download</span>
+                    Unduh PDF
+                </a>
+            </div>
         @endif
     </div>
 @endif

@@ -239,10 +239,37 @@ class ParticipantController extends Controller
         $program = $this->currentProgram($request);
         abort_unless($program?->agreement?->status === 'agreed', 404);
 
+        if (blank($program->agreement->letter_number)) {
+            app(\App\Services\AgreementLetterService::class)->issue($program->agreement);
+            $program->agreement->refresh();
+        }
+
         return view('participant.agreement-print', [
-            'program' => $program->load(['participant.user', 'mentor.user', 'department', 'businessUnit', 'agreement']),
+            'program' => $program->load(['participant.user', 'mentor.user', 'department', 'businessUnit', 'agreement', 'application']),
             'agreement' => $program->agreement,
+            'pdf' => false,
         ]);
+    }
+
+    public function downloadAgreementPdf(Request $request)
+    {
+        $program = $this->currentProgram($request);
+        abort_unless($program?->agreement?->status === 'agreed', 404);
+
+        if (blank($program->agreement->letter_number)) {
+            app(\App\Services\AgreementLetterService::class)->issue($program->agreement);
+        }
+
+        $program->load(['participant.user', 'mentor.user', 'department', 'businessUnit', 'agreement', 'application']);
+        $agreement = $program->agreement->fresh();
+
+        $filename = 'Perjanjian-Magang-'.preg_replace('/[^A-Za-z0-9]+/', '-', (string) ($agreement->letter_number ?? 'tanpa-nomor')).'.pdf';
+
+        return \Barryvdh\DomPDF\Facade\Pdf::loadView('participant.agreement-print', [
+            'program' => $program,
+            'agreement' => $agreement,
+            'pdf' => true,
+        ])->setPaper('a4', 'portrait')->download($filename);
     }
 
     public function updateAgreement(Request $request)

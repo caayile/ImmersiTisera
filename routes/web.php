@@ -56,6 +56,7 @@ Route::middleware(['auth', 'role:participant'])->prefix('participant')->name('pa
     Route::get('/program', [ParticipantController::class, 'program'])->name('program');
     Route::get('/agreement', [ParticipantController::class, 'agreement'])->name('agreement');
     Route::get('/agreement/print', [ParticipantController::class, 'printAgreement'])->name('agreement.print');
+    Route::get('/agreement/download-pdf', [ParticipantController::class, 'downloadAgreementPdf'])->name('agreement.download');
     Route::post('/agreement', [ParticipantController::class, 'updateAgreement']);
     Route::get('/timeline', [ParticipantController::class, 'timeline'])->name('timeline');
     Route::get('/logbooks', [ParticipantController::class, 'logbooks'])->name('logbooks');
@@ -84,6 +85,7 @@ Route::middleware(['auth', 'role:mentor'])->prefix('mentor')->name('mentor.')->g
     Route::get('/programs', [MentorController::class, 'programs'])->name('programs');
     Route::get('/agreements', [MentorController::class, 'agreements'])->name('agreements');
     Route::get('/agreements/{agreement}/print', [MentorController::class, 'printAgreement'])->name('agreements.print');
+    Route::get('/agreements/{agreement}/download-pdf', [MentorController::class, 'downloadAgreementPdf'])->name('agreements.download');
     Route::post('/agreements/{agreement}', [MentorController::class, 'reviewAgreement'])->name('agreements.review');
     Route::get('/timeline', [MentorController::class, 'timeline'])->name('timeline');
     Route::get('/logbooks', [MentorController::class, 'logbooks'])->name('logbooks');
@@ -127,6 +129,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/matching', [AdminController::class, 'matching'])->name('matching');
     Route::post('/matching/{application}', [AdminController::class, 'updateMatching'])->name('matching.update');
     Route::get('/agreements', [AdminController::class, 'agreements'])->name('agreements');
+    Route::get('/agreements/{agreement}/download-pdf', [AdminController::class, 'downloadAgreementPdf'])->name('agreements.download');
     Route::get('/monitoring', [AdminController::class, 'monitoring'])->name('monitoring');
     Route::get('/evaluations', [AdminController::class, 'evaluations'])->name('evaluations');
     Route::get('/collaborations', [AdminController::class, 'collaborations'])->name('collaborations');

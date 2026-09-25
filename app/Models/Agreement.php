@@ -8,7 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 #[Fillable([
     'program_id', 'objective', 'problem_statement', 'activities', 'main_output',
     'participant_benefit', 'business_benefit', 'success_indicators', 'collaboration_potential',
-    'revision_note', 'status', 'participant_approved_at', 'mentor_approved_at',
+    'revision_note', 'status', 'letter_number', 'letter_issued_at',
+    'participant_approved_at', 'mentor_approved_at',
     'participant_signature', 'mentor_signature',
 ])]
 class Agreement extends Model
@@ -17,6 +18,7 @@ class Agreement extends Model
     {
         return [
             'success_indicators' => 'array',
+            'letter_issued_at' => 'datetime',
             'participant_approved_at' => 'datetime',
             'mentor_approved_at' => 'datetime',
         ];

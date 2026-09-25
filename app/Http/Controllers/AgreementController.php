@@ -95,6 +95,11 @@ class AgreementController extends Controller
 
         $agreement->refresh();
 
+        if ($agreement->status === 'agreed') {
+            app(\App\Services\AgreementLetterService::class)->issue($agreement);
+            $agreement->refresh();
+        }
+
         if ($agreement->status === 'agreed' && $program) {
             $program->update([
                 'status' => 'active',

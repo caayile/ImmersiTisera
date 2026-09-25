@@ -11,11 +11,20 @@
             </div>
             <p class="mt-2 text-sm">{{ $agreement->objective }}</p>
             <p class="mt-1 text-sm text-muted">{{ $agreement->problem_statement }}</p>
+            @if(filled($agreement->letter_number))
+                <p class="mt-1 text-sm font-semibold">No. {{ $agreement->letter_number }}</p>
+            @endif
             @if($agreement->status === 'agreed')
-                <a href="{{ route('mentor.agreements.print', $agreement) }}" target="_blank" class="mt-3 inline-flex items-center gap-2 rounded-lg border border-line px-3 py-2 text-sm font-semibold text-primary-dark hover:bg-bg">
-                    <span class="material-symbols-outlined text-[18px]">print</span>
-                    Cetak / Simpan PDF
-                </a>
+                <div class="mt-3 flex flex-wrap gap-2">
+                    <a href="{{ route('mentor.agreements.print', $agreement) }}" target="_blank" class="inline-flex items-center gap-2 rounded-lg border border-line px-3 py-2 text-sm font-semibold text-primary-dark hover:bg-bg">
+                        <span class="material-symbols-outlined text-[18px]">print</span>
+                        Cetak / Simpan PDF
+                    </a>
+                    <a href="{{ route('mentor.agreements.download', $agreement) }}" class="inline-flex items-center gap-2 rounded-lg bg-[#0f2a24] px-3 py-2 text-sm font-semibold text-white">
+                        <span class="material-symbols-outlined text-[18px]">download</span>
+                        Unduh PDF
+                    </a>
+                </div>
             @endif
             @if(in_array($agreement->status, ['submitted','revision'], true))
             <form method="POST" action="{{ route('mentor.agreements.review', $agreement) }}" class="mt-4 grid gap-3 md:grid-cols-[1fr_auto_auto]">

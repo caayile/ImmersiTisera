@@ -13,6 +13,8 @@
     </div>
 </div>
 
+<x-logbook-nav active="history" class="mt-6" />
+
 @forelse($years as $year => $items)
     <section class="mt-6">
         <p class="text-xs font-semibold uppercase tracking-[0.18em] text-muted">Batch {{ $year }}</p>

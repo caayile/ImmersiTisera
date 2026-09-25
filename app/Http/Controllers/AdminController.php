@@ -468,6 +468,26 @@ class AdminController extends Controller
         return view('admin.agreements', ['agreements' => Agreement::with('program.participant.user')->latest()->get()]);
     }
 
+    public function downloadAgreementPdf(Agreement $agreement)
+    {
+        abort_unless($agreement->status === 'agreed', 404);
+
+        if (blank($agreement->letter_number)) {
+            app(\App\Services\AgreementLetterService::class)->issue($agreement);
+            $agreement->refresh();
+        }
+
+        $program = $agreement->program->load(['participant.user', 'mentor.user', 'department', 'businessUnit', 'agreement', 'application']);
+
+        $filename = 'Perjanjian-Magang-'.preg_replace('/[^A-Za-z0-9]+/', '-', (string) ($agreement->letter_number ?? 'tanpa-nomor')).'.pdf';
+
+        return \Barryvdh\DomPDF\Facade\Pdf::loadView('participant.agreement-print', [
+            'program' => $program,
+            'agreement' => $agreement,
+            'pdf' => true,
+        ])->setPaper('a4', 'portrait')->download($filename);
+    }
+
     public function monitoring()
     {
         $programs = Program::with(['participant.user', 'mentor.user', 'logbooks', 'outputs', 'evaluations', 'collaboration', 'agreement'])->latest()->get();

@@ -41,4 +41,46 @@ class ParticipantLogbookNavigationTest extends TestCase
             ->assertOk()
             ->assertSee('Riwayat Logbook');
     }
+
+    public function test_logbook_pages_show_logbook_and_history_cards(): void
+    {
+        $dosen = User::factory()->create(['role' => 'participant']);
+
+        foreach ([route('participant.logbooks'), route('participant.logbooks.history')] as $url) {
+            $this->actingAs($dosen)
+                ->get($url)
+                ->assertOk()
+                ->assertSee('Logbook')
+                ->assertSee('Riwayat Logbook')
+                ->assertSee(route('participant.logbooks'))
+                ->assertSee(route('participant.logbooks.history'));
+        }
+    }
+
+    public function test_participant_sidebar_has_logbook_and_history_links(): void
+    {
+        $this->seed();
+
+        $dosen = User::where('email', 'dosen@imersi.id')->firstOrFail();
+
+        $this->actingAs($dosen)
+            ->get(route('participant.dashboard'))
+            ->assertOk()
+            ->assertSee('Logbook')
+            ->assertSee('Riwayat Pendaftaran')
+            ->assertSee(route('participant.logbooks'));
+    }
+
+    public function test_participant_dropdown_links_dashboard_to_applications(): void
+    {
+        $this->seed();
+
+        $dosen = User::where('email', 'dosen@imersi.id')->firstOrFail();
+
+        $this->actingAs($dosen)
+            ->get(route('participant.dashboard'))
+            ->assertOk()
+            ->assertSee('Dasbor program')
+            ->assertSee(route('participant.applications'));
+    }
 }

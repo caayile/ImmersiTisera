@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../api/client'
 import { useAuth } from '../context/AuthContext'
-import { PHASES } from '../lib/constants'
-import { Badge, Card, PageHeader, ScoreRing } from '../components/ui'
+import { Badge, Card, PageHeader } from '../components/ui'
 
 export default function Dashboard() {
   const { user } = useAuth()
@@ -12,59 +11,85 @@ export default function Dashboard() {
   return <DosenHome />
 }
 
+const APPLICATION_STATUS_LABELS = {
+  draft: 'Draf',
+  submitted: 'Menunggu admin',
+  waiting_mentor: 'Menunggu mentor',
+  waiting_admin: 'Menunggu pengesahan',
+  approved: 'Disetujui',
+  revision: 'Revisi',
+  rejected: 'Ditolak',
+}
+
 function DosenHome() {
-  const [programs, setPrograms] = useState([])
-  const [opps, setOpps] = useState([])
+  const [items, setItems] = useState([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    api.get('/programs').then(({ data }) => setPrograms(data))
-    api.get('/opportunities').then(({ data }) => setOpps(data.slice(0, 3)))
+    api.get('/applications')
+      .then(({ data }) => setItems(Array.isArray(data) ? data : []))
+      .catch(() => setItems([]))
+      .finally(() => setLoading(false))
   }, [])
-
-  const active = programs.find((item) => item.status === 'active')
 
   return (
     <div>
-      <PageHeader kicker="Identify → Immersion" title="Dasbor dosen" description="Rekomendasi matching hanya saran. Keputusan tetap di agreement bersama mentor." />
-      {active && (
-        <Card className="mb-6 bg-mint text-white">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/80">Program aktif · Minggu {active.current_week}</p>
-          <h2 className="mt-2 text-2xl font-semibold">{active.opportunity?.title}</h2>
-          <div className="mt-6 grid gap-3 md:grid-cols-5">
-            {PHASES.map((phase) => (
-              <div key={phase.key} className={`rounded-xl p-3 ${active.computed_phase === phase.key ? 'bg-white text-ink' : 'bg-white/15'}`}>
-                <p className="text-xs opacity-80">{phase.week}</p>
-                <p className="font-semibold">{phase.title}</p>
-              </div>
+      <PageHeader
+        title="Program / Pendaftaran"
+        description="Form pendaftaran dan surat persetujuan: dosen → admin → mentor → admin → dosen."
+        action={
+          <Link to="/app/opportunities" className="rounded-lg bg-mint px-4 py-2 text-sm font-semibold text-white transition hover:bg-copper-dark">
+            Daftar program
+          </Link>
+        }
+      />
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Link to="/app/logbooks" className="block rounded-2xl border border-clay/80 bg-white p-5 shadow-[0_10px_30px_rgba(22,53,44,0.04)] transition hover:-translate-y-0.5 hover:shadow-md">
+          <p className="font-semibold text-ink">Logbook</p>
+          <p className="mt-1 text-sm text-moss/80">Isi dan kelola refleksi harian program magang dosen Anda.</p>
+        </Link>
+        <Link to="/app/logbooks/history" className="block rounded-2xl border border-clay/80 bg-white p-5 shadow-[0_10px_30px_rgba(22,53,44,0.04)] transition hover:-translate-y-0.5 hover:shadow-md">
+          <p className="font-semibold text-ink">Riwayat Logbook</p>
+          <p className="mt-1 text-sm text-moss/80">Daftar periode magang dan entri logbook per tahun.</p>
+        </Link>
+      </div>
+      <div className="mt-6 overflow-x-auto rounded-2xl border border-clay/80 bg-white">
+        <table className="min-w-full text-left text-sm">
+          <thead>
+            <tr className="bg-cream text-xs uppercase tracking-wide text-moss/70">
+              <th className="px-4 py-3">Nomor surat</th>
+              <th className="px-4 py-3">Unit Bisnis</th>
+              <th className="px-4 py-3">Departemen</th>
+              <th className="px-4 py-3">Mentor</th>
+              <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3"><span className="sr-only">Aksi</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr><td colSpan="6" className="px-4 py-10 text-center text-moss/70">Memuat pendaftaran…</td></tr>
+            ) : items.length === 0 ? (
+              <tr><td colSpan="6" className="px-4 py-10 text-center text-moss/70">Belum ada pengajuan.</td></tr>
+            ) : items.map((item) => (
+              <tr key={item.id} className="border-t border-clay/60">
+                <td className="px-4 py-3">{item.letter_number || '—'}</td>
+                <td className="px-4 py-3">{item.department?.name || '—'}</td>
+                <td className="px-4 py-3">{item.business_unit?.name || '—'}</td>
+                <td className="px-4 py-3">{item.mentor?.name || '—'}</td>
+                <td className="px-4 py-3">
+                  <Badge tone={item.status === 'approved' ? 'sage' : 'copper'}>
+                    {APPLICATION_STATUS_LABELS[item.status] || item.status}
+                  </Badge>
+                </td>
+                <td className="px-4 py-3">
+                  <Link to={item.agreement ? `/app/agreements/${item.agreement.id}` : '/app/applications'} className="font-semibold text-copper-dark">
+                    Lihat surat
+                  </Link>
+                </td>
+              </tr>
             ))}
-          </div>
-          <div className="mt-5 flex flex-wrap gap-4">
-            <Link to={`/app/programs/${active.id}`} className="text-sm font-semibold text-white">Buka ruang program →</Link>
-            <Link to="/app/logbooks" className="text-sm font-semibold text-white/90">Isi Logbook →</Link>
-          </div>
-        </Card>
-      )}
-      <Link to="/app/logbooks" className="mb-6 block rounded-2xl border border-mint/40 bg-white p-5 transition hover:border-mint hover:shadow-md">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <h3 className="font-semibold">Logbook</h3>
-            <p className="mt-1 text-sm text-moss/80">
-              {active ? `Isi refleksi harian program aktif · Minggu ${active.current_week}` : 'Refleksi harian selama program imersi berlangsung'}
-            </p>
-          </div>
-          <span className="text-sm font-semibold text-copper">Buka logbook →</span>
-        </div>
-      </Link>
-      <div className="grid gap-4 md:grid-cols-3">
-        {opps.map((item) => (
-          <Card key={item.id}>
-            <Badge>{item.purpose}</Badge>
-            <h3 className="mt-3 font-display text-2xl">{item.title}</h3>
-            <p className="mt-2 text-sm text-moss/80">{item.mentor?.company}</p>
-            <div className="mt-4"><ScoreRing score={item.match_score} label={item.match_label} /></div>
-            <Link to={`/app/opportunities/${item.id}`} className="mt-4 inline-block text-sm font-semibold text-copper">Lihat detail</Link>
-          </Card>
-        ))}
+          </tbody>
+        </table>
       </div>
     </div>
   )
