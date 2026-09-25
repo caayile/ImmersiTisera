@@ -10,7 +10,7 @@ class ParticipantLogbookNavigationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_applications_page_renders_logbook_cards(): void
+    public function test_applications_page_has_no_logbook_cards(): void
     {
         $this->seed();
 
@@ -19,10 +19,9 @@ class ParticipantLogbookNavigationTest extends TestCase
         $this->actingAs($dosen)
             ->get(route('participant.applications'))
             ->assertOk()
-            ->assertSee('Logbook')
-            ->assertSee('Riwayat Logbook')
-            ->assertSee(route('participant.logbooks'))
-            ->assertSee(route('participant.logbooks.history'))
+            ->assertSee('Program / Pendaftaran')
+            ->assertDontSee('Riwayat Logbook')
+            ->assertDontSee(route('participant.logbooks.history'))
             ->assertDontSee('/app/logbooks')
             ->assertDontSee('Buku Catatan');
     }

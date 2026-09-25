@@ -9,22 +9,6 @@
     </div>
     <a href="{{ route('departments.index') }}" class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white">Daftar program</a>
 </div>
-<div class="mt-6 grid gap-4 sm:grid-cols-2">
-    <a href="{{ route('participant.logbooks') }}" class="rounded-2xl border border-line bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary hover:shadow-md">
-        <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary-dark">
-            <span class="material-symbols-outlined text-[22px]">edit_note</span>
-        </span>
-        <p class="mt-4 font-semibold">Logbook</p>
-        <p class="mt-1 text-sm text-muted">Isi dan kelola refleksi harian program magang dosen Anda.</p>
-    </a>
-    <a href="{{ route('participant.logbooks.history') }}" class="rounded-2xl border border-line bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary hover:shadow-md">
-        <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary-dark">
-            <span class="material-symbols-outlined text-[22px]">history_edu</span>
-        </span>
-        <p class="mt-4 font-semibold">Riwayat Logbook</p>
-        <p class="mt-1 text-sm text-muted">Daftar periode magang dan entri logbook per tahun.</p>
-    </a>
-</div>
 <div class="mt-6 overflow-x-auto rounded-2xl border border-line bg-white">
     <table class="min-w-full text-left text-sm">
         <thead class="bg-bg text-xs uppercase tracking-wide text-muted">
