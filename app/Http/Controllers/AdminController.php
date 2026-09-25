@@ -17,8 +17,10 @@ use App\Models\Participant;
 use App\Models\Program;
 use App\Models\User;
 use App\Notifications\ImersiAlert;
+use App\Services\AgreementLetterService;
 use App\Services\ApplicationApprovalService;
 use App\Support\Status;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Response;
@@ -473,7 +475,7 @@ class AdminController extends Controller
         abort_unless($agreement->status === 'agreed', 404);
 
         if (blank($agreement->letter_number)) {
-            app(\App\Services\AgreementLetterService::class)->issue($agreement);
+            app(AgreementLetterService::class)->issue($agreement);
             $agreement->refresh();
         }
 
@@ -481,18 +483,37 @@ class AdminController extends Controller
 
         $filename = 'Perjanjian-Magang-'.preg_replace('/[^A-Za-z0-9]+/', '-', (string) ($agreement->letter_number ?? 'tanpa-nomor')).'.pdf';
 
-        return \Barryvdh\DomPDF\Facade\Pdf::loadView('participant.agreement-print', [
+        return Pdf::loadView('participant.agreement-print', [
             'program' => $program,
             'agreement' => $agreement,
             'pdf' => true,
         ])->setPaper('a4', 'portrait')->download($filename);
     }
 
-    public function monitoring()
+    public function monitoring(Request $request)
     {
-        $programs = Program::with(['participant.user', 'mentor.user', 'logbooks', 'outputs', 'evaluations', 'collaboration', 'agreement'])->latest()->get();
+        $query = Program::with(['participant.user', 'department', 'businessUnit', 'logbooks'])
+            ->when($request->filled('q'), fn ($query) => $query->whereHas('participant.user', fn ($q) => $q->where('name', 'like', '%'.$request->string('q').'%')))
+            ->when($request->filled('department_id'), fn ($query) => $query->where('department_id', $request->input('department_id')))
+            ->when($request->filled('business_unit_id'), fn ($query) => $query->where('business_unit_id', $request->input('business_unit_id')))
+            ->when($request->filled('status'), fn ($query) => $query->whereHas('logbooks', fn ($q) => $q->where('status', $request->input('status'))));
 
-        return view('admin.monitoring', compact('programs'));
+        $programs = $query->latest()->get();
+
+        return view('admin.monitoring', [
+            'programs' => $programs,
+            'departments' => $programs->pluck('department')->filter()->unique('id')->sortBy('name'),
+            'businessUnits' => $programs->pluck('businessUnit')->filter()->unique('id')->sortBy('name'),
+        ]);
+    }
+
+    public function showMonitoringLogbooks(Program $program)
+    {
+        return view('logbooks.show', [
+            'program' => $program->load(['participant.user', 'department', 'businessUnit', 'logbooks']),
+            'backRoute' => 'admin.monitoring',
+            'canReview' => false,
+        ]);
     }
 
     public function evaluations()

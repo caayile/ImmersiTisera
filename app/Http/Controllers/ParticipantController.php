@@ -9,9 +9,11 @@ use App\Models\Evaluation;
 use App\Models\Participant;
 use App\Models\Program;
 use App\Notifications\ImersiAlert;
+use App\Services\AgreementLetterService;
 use App\Services\ApplicationApprovalService;
 use App\Support\Status;
 use App\Support\StudyPrograms;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -240,7 +242,7 @@ class ParticipantController extends Controller
         abort_unless($program?->agreement?->status === 'agreed', 404);
 
         if (blank($program->agreement->letter_number)) {
-            app(\App\Services\AgreementLetterService::class)->issue($program->agreement);
+            app(AgreementLetterService::class)->issue($program->agreement);
             $program->agreement->refresh();
         }
 
@@ -257,7 +259,7 @@ class ParticipantController extends Controller
         abort_unless($program?->agreement?->status === 'agreed', 404);
 
         if (blank($program->agreement->letter_number)) {
-            app(\App\Services\AgreementLetterService::class)->issue($program->agreement);
+            app(AgreementLetterService::class)->issue($program->agreement);
         }
 
         $program->load(['participant.user', 'mentor.user', 'department', 'businessUnit', 'agreement', 'application']);
@@ -265,7 +267,7 @@ class ParticipantController extends Controller
 
         $filename = 'Perjanjian-Magang-'.preg_replace('/[^A-Za-z0-9]+/', '-', (string) ($agreement->letter_number ?? 'tanpa-nomor')).'.pdf';
 
-        return \Barryvdh\DomPDF\Facade\Pdf::loadView('participant.agreement-print', [
+        return Pdf::loadView('participant.agreement-print', [
             'program' => $program,
             'agreement' => $agreement,
             'pdf' => true,
@@ -387,7 +389,7 @@ class ParticipantController extends Controller
 
         $data = $request->validate([
             'title' => ['required', 'string', 'max:180'],
-            'type' => ['required', 'string'],
+            'type' => ['required', Rule::in(Status::OUTPUT_TYPES)],
             'description' => ['nullable', 'string'],
             'is_main_output' => ['sometimes', 'boolean'],
             'is_final_report' => ['sometimes', 'boolean'],

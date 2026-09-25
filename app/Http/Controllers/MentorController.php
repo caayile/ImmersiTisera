@@ -11,8 +11,10 @@ use App\Models\MentorSession;
 use App\Models\Program;
 use App\Models\ProgramOutput;
 use App\Notifications\ImersiAlert;
+use App\Services\AgreementLetterService;
 use App\Services\ApplicationApprovalService;
 use App\Support\Status;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 
 class MentorController extends Controller
@@ -117,7 +119,7 @@ class MentorController extends Controller
         abort_unless($agreement->status === 'agreed', 404);
 
         if (blank($agreement->letter_number)) {
-            app(\App\Services\AgreementLetterService::class)->issue($agreement);
+            app(AgreementLetterService::class)->issue($agreement);
             $agreement->refresh();
         }
 
@@ -134,7 +136,7 @@ class MentorController extends Controller
         abort_unless($agreement->status === 'agreed', 404);
 
         if (blank($agreement->letter_number)) {
-            app(\App\Services\AgreementLetterService::class)->issue($agreement);
+            app(AgreementLetterService::class)->issue($agreement);
             $agreement->refresh();
         }
 
@@ -142,7 +144,7 @@ class MentorController extends Controller
 
         $filename = 'Perjanjian-Magang-'.preg_replace('/[^A-Za-z0-9]+/', '-', (string) ($agreement->letter_number ?? 'tanpa-nomor')).'.pdf';
 
-        return \Barryvdh\DomPDF\Facade\Pdf::loadView('participant.agreement-print', [
+        return Pdf::loadView('participant.agreement-print', [
             'program' => $program,
             'agreement' => $agreement,
             'pdf' => true,
@@ -178,7 +180,7 @@ class MentorController extends Controller
                 'mentor_approved_at' => now(),
                 'mentor_signature' => $data['mentor_signature'],
             ]);
-            app(\App\Services\AgreementLetterService::class)->issue($agreement->fresh());
+            app(AgreementLetterService::class)->issue($agreement->fresh());
             $program = $agreement->program;
             $program->update([
                 'status' => 'active',
@@ -199,12 +201,40 @@ class MentorController extends Controller
 
     public function logbooks(Request $request)
     {
-        $logbooks = Logbook::with(['program.participant.user'])
-            ->whereHas('program', fn ($q) => $q->where('mentor_id', $request->user()->mentor?->id))
-            ->latest()
-            ->get();
+        $query = $this->mine($request)->with(['participant.user', 'department', 'businessUnit', 'logbooks']);
 
-        return view('mentor.logbooks', compact('logbooks'));
+        if ($request->filled('q')) {
+            $query->whereHas('participant.user', fn ($q) => $q->where('name', 'like', '%'.$request->string('q').'%'));
+        }
+
+        foreach (['department_id', 'business_unit_id'] as $filter) {
+            if ($request->filled($filter)) {
+                $query->where($filter, $request->input($filter));
+            }
+        }
+
+        if ($request->filled('status')) {
+            $query->whereHas('logbooks', fn ($q) => $q->where('status', $request->input('status')));
+        }
+
+        $programs = $query->get();
+
+        return view('mentor.logbooks', [
+            'programs' => $programs,
+            'departments' => $programs->pluck('department')->filter()->unique('id')->sortBy('name'),
+            'businessUnits' => $programs->pluck('businessUnit')->filter()->unique('id')->sortBy('name'),
+        ]);
+    }
+
+    public function showLogbooks(Request $request, Program $program)
+    {
+        $this->authorizeProgram($request, $program);
+
+        return view('logbooks.show', [
+            'program' => $program->load(['participant.user', 'department', 'businessUnit', 'logbooks']),
+            'backRoute' => 'mentor.logbooks',
+            'canReview' => true,
+        ]);
     }
 
     public function reviewLogbook(Request $request, Logbook $logbook)

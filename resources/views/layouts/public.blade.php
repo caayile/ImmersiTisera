@@ -94,7 +94,38 @@
     <div class="bg-primary/15 px-5 py-3 text-center text-sm text-primary-dark">{{ session('status') }}</div>
 @endif
 <main>@yield('content')</main>
-<footer class="border-t border-line bg-white py-8 text-center text-sm text-muted">Magang Dosen · Tiga Serangkai · TSU</footer>
+<footer class="bg-[#173d32] text-white/75">
+    <div class="mx-auto grid max-w-6xl gap-10 px-5 py-14 md:grid-cols-[1.35fr_0.8fr_1fr] md:gap-16 md:py-16">
+        <div>
+            <div class="flex items-center gap-3 text-white">
+                <span class="flex h-11 w-11 items-center justify-center rounded-xl border border-white/25 bg-white/10 text-lg font-semibold">TS</span>
+                <div class="font-semibold leading-tight">Magang<br>Tiga Serangkai</div>
+            </div>
+            <p class="mt-5 max-w-sm text-sm leading-6">Program ini dikelola langsung oleh unit pembelajaran dan inovasi untuk mempertemukan dosen dengan pengalaman kerja nyata di dunia industri.</p>
+            <p class="mt-5 flex max-w-sm items-start gap-2 text-sm leading-6"><span class="material-symbols-outlined mt-0.5 text-[18px] text-secondary">location_on</span><span>Jl. Prof. DR. Supomo No.23, Sriwedari, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57141</span></p>
+        </div>
+        <div>
+            <h2 class="font-semibold text-white">Navigasi</h2>
+            <nav class="mt-5 flex flex-col gap-3 text-sm">
+                <a href="{{ route('home') }}" class="transition hover:text-secondary">Beranda</a>
+                <a href="{{ route('departments.index') }}" class="transition hover:text-secondary">Unit Bisnis</a>
+                <a href="{{ route('news.index') }}" class="transition hover:text-secondary">Berita</a>
+                <a href="{{ route('program.info') }}" class="transition hover:text-secondary">Pusat Informasi</a>
+            </nav>
+        </div>
+        <div>
+            <h2 class="font-semibold text-white">Kontak</h2>
+            <a href="mailto:info@tiga-serangkai.com" class="mt-5 flex items-center gap-2 text-sm transition hover:text-secondary"><span class="material-symbols-outlined text-[18px] text-secondary">mail</span>info@tiga-serangkai.com</a>
+            <div class="mt-6 flex items-center gap-4 text-white">
+                <a href="#" aria-label="LinkedIn" class="transition hover:text-secondary"><span class="material-symbols-outlined">business</span></a>
+                <a href="#" aria-label="Instagram" class="transition hover:text-secondary"><span class="material-symbols-outlined">photo_camera</span></a>
+                <a href="#" aria-label="Website" class="transition hover:text-secondary"><span class="material-symbols-outlined">language</span></a>
+                <a href="#" aria-label="TikTok" class="transition hover:text-secondary"><span class="material-symbols-outlined">music_note</span></a>
+            </div>
+        </div>
+    </div>
+    <div class="border-t border-white/15 px-5 py-5 text-center text-xs text-white/65">© {{ now()->year }} PT Tiga Serangkai. All rights reserved.</div>
+</footer>
 <script>
     (() => {
         const splash = document.getElementById('brand-splash');
