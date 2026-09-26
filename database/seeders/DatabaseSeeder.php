@@ -274,7 +274,7 @@ class DatabaseSeeder extends Seeder
         ProgramOutput::create([
             'program_id' => $done->id,
             'participant_id' => $bima->id,
-            'title' => 'Final Report Center of Excellence',
+            'title' => 'Laporan Akhir Center of Excellence',
             'type' => 'Research Report',
             'is_final_report' => true,
             'status' => 'approved',

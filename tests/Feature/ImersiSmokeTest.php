@@ -4,8 +4,12 @@ namespace Tests\Feature;
 
 use App\Models\BusinessUnit;
 use App\Models\Department;
+use App\Models\Program;
+use App\Models\ProgramOutput;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class ImersiSmokeTest extends TestCase
@@ -24,12 +28,221 @@ class ImersiSmokeTest extends TestCase
         $this->actingAs(User::where('email', 'dosen@imersi.id')->firstOrFail())
             ->get(route('participant.final-report'))
             ->assertOk()
-            ->assertSee('Final Report', false);
+            ->assertSee('Laporan Akhir', false);
 
         $this->actingAs(User::where('email', 'mentor@imersi.id')->firstOrFail())
             ->get(route('mentor.outputs'))
             ->assertOk()
             ->assertSee('Validasi Output', false);
+    }
+
+    public function test_outputs_pages_show_history_across_cycles(): void
+    {
+        $this->seed();
+
+        $dosen = User::where('email', 'dosen@imersi.id')->firstOrFail();
+        $current = $dosen->participant->programs()->latest()->firstOrFail();
+
+        $old = Program::create([
+            'participant_id' => $current->participant_id,
+            'mentor_id' => $current->mentor_id,
+            'department_id' => $current->department_id,
+            'business_unit_id' => $current->business_unit_id,
+            'start_date' => '2023-09-01',
+            'end_date' => '2023-11-01',
+            'status' => 'completed',
+        ]);
+        $old->created_at = now()->subYears(2);
+        $old->save();
+
+        ProgramOutput::create([
+            'program_id' => $old->id,
+            'participant_id' => $current->participant_id,
+            'title' => 'Riset Lapangan Terdahulu',
+            'type' => 'Insight',
+            'description' => 'Hasil magang dua tahun lalu.',
+            'status' => 'approved',
+        ]);
+        ProgramOutput::create([
+            'program_id' => $old->id,
+            'participant_id' => $current->participant_id,
+            'title' => 'Laporan Akhir — Siklus Lama',
+            'type' => 'Research Report',
+            'description' => 'Laporan penutup siklus lama.',
+            'link' => 'https://example.com/hasil-lama',
+            'is_final_report' => true,
+            'status' => 'approved',
+        ]);
+        ProgramOutput::create([
+            'program_id' => $old->id,
+            'participant_id' => $current->participant_id,
+            'title' => 'Hasil Utama Siklus Lama',
+            'type' => 'Prototype',
+            'description' => 'Luaran utama siklus lama.',
+            'is_main_output' => true,
+            'status' => 'approved',
+        ]);
+        $old->collaboration()->create([
+            'level' => 2,
+            'collaboration_type' => 'Guest Lecture',
+        ]);
+
+        $this->actingAs($dosen)
+            ->get(route('participant.outputs'))
+            ->assertOk()
+            ->assertSee('Riset Lapangan Terdahulu')
+            ->assertSee('Industry Insight: Teori vs Praktik Predictive Analytics')
+            ->assertSee('Riwayat hasil lintas magang');
+
+        $this->actingAs($dosen)
+            ->get(route('participant.final-report'))
+            ->assertOk()
+            ->assertSee('report-modal-open', false)
+            ->assertSee('Laporan Akhir — Siklus Lama')
+            ->assertSee('Unit Bisnis')
+            ->assertSee('Departement')
+            ->assertSee('Judul Laporan')
+            ->assertSee('Lihat Hasil')
+            ->assertSee('2023')
+            ->assertSee('https://example.com/hasil-lama', false)
+            ->assertSee('Collaborate');
+    }
+
+    public function test_final_report_form_saves_explicit_metadata_and_level(): void
+    {
+        Storage::fake('public');
+        $this->seed();
+
+        $dosen = User::where('email', 'dosen@imersi.id')->firstOrFail();
+        $program = $dosen->participant->programs()->latest()->firstOrFail();
+        $tsic = Department::where('name', 'TSIC')->firstOrFail();
+        $coe = BusinessUnit::where('name', 'Center Of Excellence')->firstOrFail();
+
+        $this->actingAs($dosen)
+            ->post(route('participant.final-report'), [
+                'title' => 'Laporan Akhir — Uji Metadata',
+                'type' => 'Research Report',
+                'description' => 'Ringkasan uji.',
+                'is_final_report' => '1',
+                'department_id' => $tsic->id,
+                'business_unit_id' => $coe->id,
+                'year' => '2026',
+                'link' => 'https://example.com/laporan-uji',
+                'level' => '3',
+                'laporan_link' => 'https://example.com/dokumen-uji',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('outputs', [
+            'program_id' => $program->id,
+            'title' => 'Laporan Akhir — Uji Metadata',
+            'is_final_report' => true,
+            'department_id' => $tsic->id,
+            'business_unit_id' => $coe->id,
+            'year' => '2026',
+            'link' => 'https://example.com/laporan-uji',
+            'laporan_link' => 'https://example.com/dokumen-uji',
+        ]);
+        $this->assertDatabaseHas('collaboration_pipelines', [
+            'program_id' => $program->id,
+            'level' => 3,
+        ]);
+
+        $this->actingAs($dosen)
+            ->get(route('participant.final-report'))
+            ->assertOk()
+            ->assertSee('Laporan Akhir — Uji Metadata')
+            ->assertSee('Menunggu mentor')
+            ->assertSee('Lihat Hasil')
+            ->assertSee('Lihat Laporan')
+            ->assertSee('Develop');
+    }
+
+    public function test_final_report_rejects_link_and_file_together(): void
+    {
+        Storage::fake('public');
+        $this->seed();
+
+        $dosen = User::where('email', 'dosen@imersi.id')->firstOrFail();
+
+        $this->actingAs($dosen)
+            ->from(route('participant.final-report'))
+            ->post(route('participant.final-report'), [
+                'title' => 'Laporan Akhir — Ganda',
+                'type' => 'Research Report',
+                'is_final_report' => '1',
+                'link' => 'https://example.com/hasil',
+                'hasil_file' => UploadedFile::fake()->create('hasil.pdf', 100, 'application/pdf'),
+            ])
+            ->assertRedirect()
+            ->assertSessionHasErrors('link');
+
+        $this->actingAs($dosen)
+            ->from(route('participant.final-report'))
+            ->post(route('participant.final-report'), [
+                'title' => 'Laporan Akhir — Ganda',
+                'type' => 'Research Report',
+                'is_final_report' => '1',
+                'file' => UploadedFile::fake()->create('laporan.pdf', 100, 'application/pdf'),
+                'laporan_link' => 'https://example.com/dokumen',
+            ])
+            ->assertRedirect()
+            ->assertSessionHasErrors('file');
+    }
+
+    public function test_final_report_file_replaces_link_and_removes_old_file(): void
+    {
+        Storage::fake('public');
+        $this->seed();
+
+        $dosen = User::where('email', 'dosen@imersi.id')->firstOrFail();
+        $program = $dosen->participant->programs()->latest()->firstOrFail();
+
+        $this->actingAs($dosen)
+            ->post(route('participant.final-report'), [
+                'title' => 'Laporan Akhir — Berkas',
+                'type' => 'Research Report',
+                'is_final_report' => '1',
+                'file' => UploadedFile::fake()->create('awal.pdf', 100, 'application/pdf'),
+            ])
+            ->assertRedirect();
+
+        $firstPath = ProgramOutput::where('program_id', $program->id)->where('is_final_report', true)->firstOrFail()->file_path;
+        $this->assertNotNull($firstPath);
+        Storage::disk('public')->assertExists($firstPath);
+
+        $this->actingAs($dosen)
+            ->post(route('participant.final-report'), [
+                'title' => 'Laporan Akhir — Berkas',
+                'type' => 'Research Report',
+                'is_final_report' => '1',
+                'file' => UploadedFile::fake()->create('revisi.pdf', 100, 'application/pdf'),
+            ])
+            ->assertRedirect();
+
+        $this->assertSame(1, ProgramOutput::where('program_id', $program->id)->where('is_final_report', true)->count());
+        Storage::disk('public')->assertMissing($firstPath);
+    }
+
+    public function test_final_report_resubmit_updates_same_record(): void
+    {
+        $this->seed();
+
+        $dosen = User::where('email', 'dosen@imersi.id')->firstOrFail();
+        $program = $dosen->participant->programs()->latest()->firstOrFail();
+
+        $payload = [
+            'title' => 'Laporan Akhir — Revisi',
+            'type' => 'Research Report',
+            'description' => 'Ringkasan revisi.',
+            'is_final_report' => '1',
+        ];
+
+        $this->actingAs($dosen)->post(route('participant.final-report'), $payload)->assertRedirect();
+        $this->actingAs($dosen)->post(route('participant.final-report'), $payload)->assertRedirect();
+
+        $this->assertSame(1, ProgramOutput::where('program_id', $program->id)->where('is_final_report', true)->count());
+        $this->assertSame('submitted', ProgramOutput::where('program_id', $program->id)->where('is_final_report', true)->firstOrFail()->status);
     }
 
     public function test_public_and_role_homes_render(): void

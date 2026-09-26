@@ -228,7 +228,7 @@ class ProgramController extends Controller
             ['program_id' => $program->id, 'is_final_report' => true],
             [
                 'participant_id' => $program->participant_id,
-                'title' => 'Laporan akhir imersi',
+                'title' => 'Laporan akhir magang dosen',
                 'type' => 'Research Report',
                 'description' => json_encode($content),
                 'status' => 'draft',

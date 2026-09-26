@@ -279,7 +279,7 @@ function ReportTab({ program, onSaved }) {
   return (
     <Card>
       <div className="flex items-center justify-between">
-        <h3 className="font-display text-2xl">Final report</h3>
+        <h3 className="font-display text-2xl">Laporan akhir</h3>
         <Button onClick={generate}>Generate dari data program</Button>
       </div>
       <p className="mt-2 text-sm text-moss/70">Report adalah dokumentasi. Output tetap hasil nyata di tab Output.</p>

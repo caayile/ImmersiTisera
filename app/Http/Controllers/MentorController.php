@@ -16,6 +16,7 @@ use App\Services\ApplicationApprovalService;
 use App\Support\Status;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 
 class MentorController extends Controller
 {
@@ -230,11 +231,30 @@ class MentorController extends Controller
     {
         $this->authorizeProgram($request, $program);
 
+        $program->load(['participant.user', 'department', 'businessUnit', 'logbooks']);
+
         return view('logbooks.show', [
-            'program' => $program->load(['participant.user', 'department', 'businessUnit', 'logbooks']),
+            'program' => $program,
+            'month' => $this->showMonth($request, $program),
+            'byDate' => $program->logbooks->sortBy(['date', 'id'])->groupBy(fn (Logbook $log) => $log->date->toDateString()),
             'backRoute' => 'mentor.logbooks',
             'canReview' => true,
         ]);
+    }
+
+    private function showMonth(Request $request, Program $program): Carbon
+    {
+        try {
+            $parsed = trim((string) $request->string('month'));
+
+            if ($parsed !== '') {
+                return Carbon::createFromFormat('Y-m', $parsed)->startOfMonth();
+            }
+        } catch (\Exception) {
+            // Fall through to the program-based default below.
+        }
+
+        return $program->start_date?->copy()->startOfMonth() ?? today()->startOfMonth();
     }
 
     public function reviewLogbook(Request $request, Logbook $logbook)

@@ -14,7 +14,10 @@
         <a href="{{ route('mentor.logbooks.show', $program) }}" class="block rounded-2xl border border-line bg-white p-4 text-sm transition hover:border-primary hover:shadow-sm">
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <div><p class="font-semibold">{{ $program->participant->user->name }}</p><p class="mt-1 text-xs text-muted">{{ $program->businessUnit?->name ?? '-' }} · {{ $program->department?->name ?? '-' }}</p></div>
-                <span class="text-xs font-semibold text-primary-dark">{{ $program->logbooks->count() }} entri · Buka detail</span>
+                <div class="flex items-center gap-3">
+                    <span class="text-xs text-muted">{{ $program->logbooks->count() }} entri</span>
+                    <span class="rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white">Lihat detail</span>
+                </div>
             </div>
         </a>
     @empty

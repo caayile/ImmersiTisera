@@ -23,6 +23,7 @@ class LogbookReviewTest extends TestCase
             ->assertSee('Dr. Andi Pratama')
             ->assertSee('Digital Business')
             ->assertSee('TSPM')
+            ->assertSee('Lihat detail')
             ->assertDontSee('Dr. Maya Kusuma');
 
         $program = Program::whereHas('participant.user', fn ($query) => $query->where('name', 'Dr. Andi Pratama'))->firstOrFail();
@@ -31,7 +32,25 @@ class LogbookReviewTest extends TestCase
             ->get(route('mentor.logbooks.show', $program))
             ->assertOk()
             ->assertSee('Orientation Digital Business')
-            ->assertSee('Feedback / next action');
+            ->assertSee('Tulis feedback')
+            ->assertSee('Hadir disetujui');
+    }
+
+    public function test_mentor_logbook_detail_shows_calendar_and_indonesian_review_form(): void
+    {
+        $this->seed();
+
+        $mentor = User::where('email', 'mentor@imersi.id')->firstOrFail();
+        $program = Program::whereHas('participant.user', fn ($query) => $query->where('name', 'Dr. Andi Pratama'))->firstOrFail();
+        $monthParam = $program->start_date->copy()->format('Y-m');
+
+        $this->actingAs($mentor)
+            ->get(route('mentor.logbooks.show', [$program, 'month' => $monthParam]))
+            ->assertOk()
+            ->assertSee('Apa yang dilakukan')
+            ->assertSee('Minta revisi')
+            ->assertSee('Disetujui')
+            ->assertSee('Menunggu mentor');
     }
 
     public function test_admin_can_filter_and_open_participant_logbooks(): void

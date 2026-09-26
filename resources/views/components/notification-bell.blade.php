@@ -29,7 +29,7 @@
     >
         <span class="material-symbols-outlined text-[22px]">notifications</span>
         @if($unread)
-            <span class="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-white">{{ $unread > 9 ? '9+' : $unread }}</span>
+            <span class="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-none text-white">{{ $unread > 9 ? '9+' : $unread }}</span>
         @endif
     </button>
 

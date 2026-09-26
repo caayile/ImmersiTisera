@@ -7,22 +7,21 @@
         <article class="rounded-2xl border border-line bg-white p-5">
             <div class="flex flex-wrap items-center justify-between gap-2">
                 <p class="font-medium">{{ $output->title }} · {{ $output->program->participant->user->name }}</p>
-                <x-badge :status="$output->status" />
+                <x-badge :status="$output->status" :label="\App\Support\Status::outputLabel($output->status)" />
             </div>
-<<<<<<< HEAD
-            <p class="mt-2 text-sm text-muted">{{ $output->type }} @if($output->is_main_output)· Main @endif @if($output->is_final_report)· Final report @endif</p>
-=======
             <p class="mt-2 text-sm text-muted">{{ $output->type }}
                 @if($output->is_main_output)
                     · Main
                 @endif
                 @if($output->is_final_report)
-                    · Final report
+                    · Laporan akhir
                 @endif
             </p>
             <p class="mt-2 text-sm">{{ $output->description }}</p>
+            @if($output->linkUrl())<a href="{{ $output->linkUrl() }}" target="_blank" rel="noopener" class="mt-2 inline-block text-sm font-semibold text-primary-dark">Buka tautan hasil</a>@endif
+            @if($output->hasilFileUrl())<a href="{{ $output->hasilFileUrl() }}" target="_blank" rel="noopener" class="mt-2 inline-block text-sm font-semibold text-primary-dark">Unduh file hasil</a>@endif
+            @if($output->laporanLinkUrl())<a href="{{ $output->laporanLinkUrl() }}" target="_blank" rel="noopener" class="mt-2 inline-block text-sm font-semibold text-primary-dark">Buka tautan laporan</a>@endif
             @if($output->file_path)<a href="{{ asset('storage/'.$output->file_path) }}" target="_blank" rel="noopener" class="mt-2 inline-block text-sm font-semibold text-primary-dark">Lihat / unduh bukti</a>@else<p class="mt-2 text-xs text-muted">Belum ada file dilampirkan.</p>@endif
->>>>>>> 1cbc5e81bcaa8d3eb41e83d8653ce4c0b777ef9f
             <form method="POST" action="{{ route('mentor.outputs.review', $output) }}" class="mt-3 grid gap-2 md:grid-cols-[1fr_160px_auto]">
                 @csrf
                 <input name="mentor_feedback" value="{{ $output->mentor_feedback }}" class="rounded-lg border border-line px-3 py-2 text-sm">

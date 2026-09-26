@@ -538,10 +538,23 @@ class AdminController extends Controller
         ]);
     }
 
-    public function showMonitoringLogbooks(Program $program)
+    public function showMonitoringLogbooks(Request $request, Program $program)
     {
+        $program->load(['participant.user', 'department', 'businessUnit', 'logbooks']);
+
+        try {
+            $parsed = trim((string) $request->string('month'));
+            $month = $parsed !== ''
+                ? Carbon::createFromFormat('Y-m', $parsed)->startOfMonth()
+                : ($program->start_date?->copy()->startOfMonth() ?? today()->startOfMonth());
+        } catch (\Exception) {
+            $month = $program->start_date?->copy()->startOfMonth() ?? today()->startOfMonth();
+        }
+
         return view('logbooks.show', [
-            'program' => $program->load(['participant.user', 'department', 'businessUnit', 'logbooks']),
+            'program' => $program,
+            'month' => $month,
+            'byDate' => $program->logbooks->sortBy(['date', 'id'])->groupBy(fn (Logbook $log) => $log->date->toDateString()),
             'backRoute' => 'admin.monitoring',
             'canReview' => false,
         ]);
@@ -767,7 +780,7 @@ class AdminController extends Controller
 
     public function completeProgram(Program $program)
     {
-        abort_unless($program->canComplete(), 422, 'Main output, final report, dan evaluasi harus selesai.');
+        abort_unless($program->canComplete(), 422, 'Main output, laporan akhir, dan evaluasi harus selesai.');
         $program->update(['status' => 'completed', 'progress' => 100]);
         $program->participant->user->notify(new ImersiAlert('Program completed', 'Lanjutkan ke after-magang collaboration.', route('participant.collaboration')));
 

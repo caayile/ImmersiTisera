@@ -4,18 +4,24 @@ namespace App\Http\Controllers;
 
 use App\Models\Application;
 use App\Models\BusinessUnit;
+use App\Models\CollaborationPipeline;
 use App\Models\Department;
 use App\Models\Evaluation;
+use App\Models\Logbook;
 use App\Models\Participant;
 use App\Models\Program;
+use App\Models\ProgramOutput;
 use App\Notifications\ImersiAlert;
 use App\Services\AgreementLetterService;
 use App\Services\ApplicationApprovalService;
 use App\Support\Status;
 use App\Support\StudyPrograms;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -330,23 +336,56 @@ class ParticipantController extends Controller
 
     public function logbooks(Request $request)
     {
-        return view('participant.logbooks', ['program' => $this->currentProgram($request)]);
-    }
-
-    public function logbookHistory(Request $request)
-    {
+        $program = $this->currentProgram($request);
         $participant = $request->user()->participant;
+        $programs = $this->allPrograms($request);
 
-        $programs = Program::query()
-            ->with(['department', 'businessUnit', 'mentor.user', 'logbooks'])
+        $entries = Logbook::query()
+            ->with(['program.businessUnit', 'program.department'])
             ->where('participant_id', $participant?->id)
-            ->latest('start_date')
+            ->orderBy('date')
+            ->orderBy('id')
             ->get();
 
-        $years = $programs->groupBy(fn (Program $program) => $program->start_date?->year ?? ($program->end_date?->year ?? 'Tanpa periode'));
-        $totalEntries = $programs->sum(fn (Program $program) => $program->logbooks->count());
+        $month = $this->historyMonth($request, $programs);
+        $byDate = $entries->groupBy(fn (Logbook $log) => $log->date->toDateString());
+        $formDate = $this->historyDay($request, 'date')?->toDateString() ?? today()->toDateString();
+        $entryPrefill = $byDate->map(fn ($logs) => [
+            'attendance' => $logs->last()->attendance ?? 'Hadir',
+            'what_did' => (string) $logs->last()->what_i_did,
+            'what_learned' => (string) $logs->last()->what_i_learned,
+            'what_found' => (string) $logs->last()->what_i_found,
+            'obstacles' => (string) ($logs->last()->value ?? ''),
+            'output' => (string) ($logs->last()->next_action ?? ''),
+        ]);
 
-        return view('participant.logbook-history', compact('years', 'totalEntries'));
+        return view('participant.logbooks', compact('program', 'month', 'byDate', 'formDate', 'entryPrefill'));
+    }
+
+    private function historyMonth(Request $request, $programs): Carbon
+    {
+        $fallback = $programs->firstWhere(fn (Program $program) => $program->start_date)
+            ?->start_date->copy()->startOfMonth()
+            ?? today()->startOfMonth();
+
+        try {
+            $parsed = trim((string) $request->string('month'));
+
+            return $parsed === '' ? $fallback : Carbon::createFromFormat('Y-m', $parsed)->startOfMonth();
+        } catch (\Exception) {
+            return $fallback;
+        }
+    }
+
+    private function historyDay(Request $request, string $key = 'day'): ?Carbon
+    {
+        try {
+            $parsed = trim((string) $request->string($key));
+
+            return $parsed === '' ? null : Carbon::createFromFormat('Y-m-d', $parsed)->startOfDay();
+        } catch (\Exception) {
+            return null;
+        }
     }
 
     public function storeLogbook(Request $request)
@@ -356,6 +395,7 @@ class ParticipantController extends Controller
 
         $data = $request->validate([
             'entry_date' => ['required', 'date'],
+            'attendance' => ['required', 'in:Hadir,Izin,Sakit,Tanpa Keterangan'],
             'what_did' => ['required', 'string'],
             'what_learned' => ['required', 'string'],
             'what_found' => ['required', 'string'],
@@ -363,17 +403,31 @@ class ParticipantController extends Controller
             'output' => ['nullable', 'string'],
         ]);
 
-        $program->logbooks()->create([
+        // One entry per date: resubmitting updates the existing record
+        // and sends it back for mentor review.
+        $payload = [
             'participant_id' => $program->participant_id,
             'date' => $data['entry_date'],
             'activity' => 'Logbook harian',
+            'attendance' => $data['attendance'],
             'what_i_did' => $data['what_did'],
             'what_i_learned' => $data['what_learned'],
             'what_i_found' => $data['what_found'],
             'value' => $data['obstacles'] ?? null,
             'next_action' => $data['output'] ?? null,
             'status' => 'submitted',
-        ]);
+        ];
+
+        $existing = $program->logbooks()->whereDate('date', $data['entry_date'])->latest('id')->first();
+
+        if ($existing) {
+            $existing->update($payload);
+            $program->mentor->user->notify(new ImersiAlert('Logbook diperbarui', 'Ada perubahan logbook menunggu review.', route('mentor.logbooks')));
+
+            return back()->with('status', 'Logbook diperbarui.');
+        }
+
+        $program->logbooks()->create($payload);
         $program->mentor->user->notify(new ImersiAlert('Logbook baru', 'Ada logbook menunggu review.', route('mentor.logbooks')));
 
         return back()->with('status', 'Logbook dikirim.');
@@ -388,6 +442,7 @@ class ParticipantController extends Controller
     {
         return view('participant.outputs', [
             'program' => $this->currentProgram($request),
+            'programs' => $this->allPrograms($request),
             'types' => Status::OUTPUT_TYPES,
         ]);
     }
@@ -399,30 +454,105 @@ class ParticipantController extends Controller
 
         $data = $request->validate([
             'title' => ['required', 'string', 'max:180'],
-            'type' => ['required', Rule::in(Status::OUTPUT_TYPES)],
+            'type' => ['required', 'string'],
             'description' => ['nullable', 'string'],
+            'link' => ['nullable', 'string', 'max:2048'],
+            'hasil_file' => ['nullable', 'file', 'max:10240', 'mimes:pdf,jpg,jpeg,png,doc,docx,ppt,pptx,zip'],
+            'laporan_link' => ['nullable', 'string', 'max:2048'],
+            'department_id' => ['nullable', 'exists:departments,id'],
+            'business_unit_id' => ['nullable', 'exists:business_units,id'],
+            'year' => ['nullable', 'digits:4', 'integer', 'min:2000', 'max:2100'],
+            'level' => ['nullable', 'integer', 'min:0', 'max:4'],
             'is_main_output' => ['sometimes', 'boolean'],
             'is_final_report' => ['sometimes', 'boolean'],
             'file' => ['nullable', 'file', 'max:10240', 'mimes:pdf,jpg,jpeg,png,doc,docx,ppt,pptx,zip'],
         ]);
 
+        // One source per artifact: link xor file.
+        if (filled($data['link'] ?? null) && $request->hasFile('hasil_file')) {
+            throw ValidationException::withMessages([
+                'link' => 'Isi salah satu saja untuk Hasil: tautan atau file.',
+            ]);
+        }
+
+        if ($request->hasFile('file') && filled($data['laporan_link'] ?? null)) {
+            throw ValidationException::withMessages([
+                'file' => 'Isi salah satu saja untuk Laporan: file atau tautan.',
+            ]);
+        }
+
         if ($request->boolean('is_main_output')) {
             $program->outputs()->update(['is_main_output' => false]);
         }
 
-        $program->outputs()->create([
+        $payload = [
             'participant_id' => $program->participant_id,
             'title' => $data['title'],
             'type' => $data['type'],
-            'description' => $data['description'] ?? null,
+            'link' => $data['link'] ?? null,
+            'department_id' => $data['department_id'] ?? null,
+            'business_unit_id' => $data['business_unit_id'] ?? null,
+            'year' => $data['year'] ?? null,
             'is_main_output' => $request->boolean('is_main_output'),
             'is_final_report' => $request->boolean('is_final_report'),
-            'file_path' => $request->file('file')?->store('outputs', 'public'),
             'status' => 'submitted',
-        ]);
+        ];
+
+        // Only overwrite the description when the form actually sends it,
+        // so removing the field from a form never wipes stored data.
+        if (array_key_exists('description', $data)) {
+            $payload['description'] = $data['description'];
+        }
+
+        if ($request->file('file')) {
+            $payload['file_path'] = $request->file('file')->store('outputs', 'public');
+            $payload['laporan_link'] = null;
+        } elseif (array_key_exists('laporan_link', $data)) {
+            $payload['laporan_link'] = $data['laporan_link'];
+        }
+
+        if ($request->file('hasil_file')) {
+            $payload['hasil_file_path'] = $request->file('hasil_file')->store('outputs', 'public');
+            $payload['link'] = null;
+        }
+
+        // One final report per cycle: resubmitting updates the existing
+        // record instead of duplicating it.
+        $existingReport = $request->boolean('is_final_report')
+            ? $program->outputs()->where('is_final_report', true)->first()
+            : null;
+
+        if ($existingReport) {
+            $this->deleteReplacedOutputFiles($existingReport, $payload);
+            $output = tap($existingReport)->update($payload);
+        } else {
+            $output = $program->outputs()->create($payload);
+        }
+
+        if ($output->is_final_report && array_key_exists('level', $data) && $data['level'] !== null) {
+            CollaborationPipeline::updateOrCreate(
+                ['program_id' => $program->id],
+                ['level' => (int) $data['level']]
+            );
+        }
         $program->mentor->user->notify(new ImersiAlert('Output dikirim', $data['title'].' menunggu validasi.', route('mentor.outputs')));
 
         return back()->with('status', 'Output dikirim.');
+    }
+
+    /**
+     * Remove stored files replaced by a new upload or a link, so each
+     * artifact keeps exactly one source.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    private function deleteReplacedOutputFiles(ProgramOutput $output, array $payload): void
+    {
+        foreach (['file_path', 'hasil_file_path'] as $column) {
+            if (array_key_exists($column, $payload) && $output->{$column} && $output->{$column} !== $payload[$column]) {
+                Storage::disk('public')->delete($output->{$column});
+            }
+        }
     }
 
     public function evaluation(Request $request)
@@ -448,8 +578,14 @@ class ParticipantController extends Controller
 
     public function finalReport(Request $request)
     {
+        $programs = $this->allPrograms($request);
+        $programs->loadMissing(['outputs.department', 'outputs.businessUnit']);
+
         return view('participant.final-report', [
             'program' => $this->currentProgram($request),
+            'programs' => $programs,
+            'departments' => Department::orderBy('name')->get(['id', 'name']),
+            'businessUnits' => BusinessUnit::with('department:id,name')->orderBy('name')->get(['id', 'name', 'department_id']),
         ]);
     }
 
@@ -542,14 +678,31 @@ class ParticipantController extends Controller
 
     private function currentProgram(Request $request, bool $required = false): ?Program
     {
-        $program = Program::with([
-            'department', 'businessUnit', 'mentor.user', 'participant.user', 'agreement',
-            'timelines', 'logbooks', 'mentorSessions', 'outputs', 'evaluations.evaluator', 'collaboration',
-        ])->where('participant_id', $request->user()->participant?->id)->latest()->first();
+        $program = $this->programsQuery($request)->latest()->first();
 
         abort_if($required && ! $program, 404, 'Belum ada program aktif.');
 
         return $program;
+    }
+
+    /**
+     * All internship cycles of the participant, newest first, for
+     * cross-cycle history (outputs, final reports). Uploads still target
+     * the current program only.
+     *
+     * @return Collection<int, Program>
+     */
+    private function allPrograms(Request $request)
+    {
+        return $this->programsQuery($request)->latest()->get();
+    }
+
+    private function programsQuery(Request $request)
+    {
+        return Program::with([
+            'department', 'businessUnit', 'mentor.user', 'participant.user', 'agreement',
+            'timelines', 'logbooks', 'mentorSessions', 'outputs', 'evaluations.evaluator', 'collaboration',
+        ])->where('participant_id', $request->user()->participant?->id);
     }
 
     private function csv(string $value): array

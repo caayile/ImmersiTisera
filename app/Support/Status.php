@@ -33,6 +33,14 @@ class Status
         4 => 'Scale',
     ];
 
+    public const COLLABORATION_LEVEL_DESCRIPTIONS = [
+        0 => 'Selesai, tanpa tindak lanjut.',
+        1 => 'Perlu diskusi lanjutan.',
+        2 => 'Project bersama.',
+        3 => 'Prototype/research/ide dikembangkan.',
+        4 => 'Menjadi program strategis.',
+    ];
+
     public const TIMELINE = [
         1 => ['phase' => 'discover', 'title' => 'DISCOVER', 'output' => 'Industry Insight', 'description' => 'Orientation, business observation, understanding department, team, and workflow.'],
         2 => ['phase' => 'discover', 'title' => 'DISCOVER', 'output' => 'Industry Insight', 'description' => 'Continue observation and capture industry insight.'],
@@ -61,6 +69,15 @@ class Status
             'open' => 'Dibuka',
             default => str_replace('_', ' ', $status),
         };
+    }
+
+    /**
+     * Status label for outputs/final reports, reviewed by mentors
+     * (unlike applications, which wait for admin).
+     */
+    public static function outputLabel(string $status): string
+    {
+        return $status === 'submitted' ? 'Menunggu mentor' : self::label($status);
     }
 
     public static function badge(string $status): string

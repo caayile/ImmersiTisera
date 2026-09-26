@@ -1,3 +1,10 @@
+// Alpine.js is bundled locally (not via CDN) so dropdowns, modals and
+// toggles keep working even without access to external CDNs.
+import Alpine from 'alpinejs';
+
+window.Alpine = Alpine;
+Alpine.start();
+
 // Global Top Page Loader Bar & Navigation Management
 (() => {
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
