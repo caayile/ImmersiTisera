@@ -399,7 +399,7 @@ class ParticipantController extends Controller
 
         $data = $request->validate([
             'title' => ['required', 'string', 'max:180'],
-            'type' => ['required', 'string'],
+            'type' => ['required', Rule::in(Status::OUTPUT_TYPES)],
             'description' => ['nullable', 'string'],
             'is_main_output' => ['sometimes', 'boolean'],
             'is_final_report' => ['sometimes', 'boolean'],

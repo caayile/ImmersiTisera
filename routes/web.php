@@ -89,6 +89,7 @@ Route::middleware(['auth', 'role:mentor'])->prefix('mentor')->name('mentor.')->g
     Route::post('/agreements/{agreement}', [MentorController::class, 'reviewAgreement'])->name('agreements.review');
     Route::get('/timeline', [MentorController::class, 'timeline'])->name('timeline');
     Route::get('/logbooks', [MentorController::class, 'logbooks'])->name('logbooks');
+    Route::get('/logbooks/{program}', [MentorController::class, 'showLogbooks'])->name('logbooks.show');
     Route::post('/logbooks/{logbook}', [MentorController::class, 'reviewLogbook'])->name('logbooks.review');
     Route::get('/mentoring', [MentorController::class, 'mentoring'])->name('mentoring');
     Route::post('/mentoring', [MentorController::class, 'storeMentoring']);
@@ -131,6 +132,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/agreements', [AdminController::class, 'agreements'])->name('agreements');
     Route::get('/agreements/{agreement}/download-pdf', [AdminController::class, 'downloadAgreementPdf'])->name('agreements.download');
     Route::get('/monitoring', [AdminController::class, 'monitoring'])->name('monitoring');
+    Route::get('/monitoring/{program}', [AdminController::class, 'showMonitoringLogbooks'])->name('monitoring.show');
     Route::get('/evaluations', [AdminController::class, 'evaluations'])->name('evaluations');
     Route::get('/collaborations', [AdminController::class, 'collaborations'])->name('collaborations');
     Route::get('/reports', [AdminController::class, 'reports'])->name('reports');

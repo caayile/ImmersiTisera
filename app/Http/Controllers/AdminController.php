@@ -521,11 +521,30 @@ class AdminController extends Controller
         ])->setPaper('a4', 'portrait')->download($filename);
     }
 
-    public function monitoring()
+    public function monitoring(Request $request)
     {
-        $programs = Program::with(['participant.user', 'mentor.user', 'logbooks', 'outputs', 'evaluations', 'collaboration', 'agreement'])->latest()->get();
+        $query = Program::with(['participant.user', 'department', 'businessUnit', 'logbooks'])
+            ->when($request->filled('q'), fn ($query) => $query->whereHas('participant.user', fn ($q) => $q->where('name', 'like', '%'.$request->string('q').'%')))
+            ->when($request->filled('department_id'), fn ($query) => $query->where('department_id', $request->input('department_id')))
+            ->when($request->filled('business_unit_id'), fn ($query) => $query->where('business_unit_id', $request->input('business_unit_id')))
+            ->when($request->filled('status'), fn ($query) => $query->whereHas('logbooks', fn ($q) => $q->where('status', $request->input('status'))));
 
-        return view('admin.monitoring', compact('programs'));
+        $programs = $query->latest()->get();
+
+        return view('admin.monitoring', [
+            'programs' => $programs,
+            'departments' => $programs->pluck('department')->filter()->unique('id')->sortBy('name'),
+            'businessUnits' => $programs->pluck('businessUnit')->filter()->unique('id')->sortBy('name'),
+        ]);
+    }
+
+    public function showMonitoringLogbooks(Program $program)
+    {
+        return view('logbooks.show', [
+            'program' => $program->load(['participant.user', 'department', 'businessUnit', 'logbooks']),
+            'backRoute' => 'admin.monitoring',
+            'canReview' => false,
+        ]);
     }
 
     public function evaluations()

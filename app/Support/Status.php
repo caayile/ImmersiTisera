@@ -17,7 +17,7 @@ class Status
     public const OUTPUT_TYPES = [
         'Project', 'Improvement', 'SOP', 'Prototype', 'Design', 'Campaign',
         'Insight', 'Recommendation', 'Process Mapping', 'Research Report',
-        'Market Insight', 'Product Concept',
+        'Market Insight', 'Product Concept', 'Hasil', 'Bukti Dokumentasi',
     ];
 
     public const COLLABORATION_TYPES = [
