@@ -4,12 +4,13 @@ namespace App\Models;
 
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 
 #[Fillable([
-    'participant_id', 'department_id', 'business_unit_id', 'mentor_id', 'motivation',
+    'participant_id', 'department_id', 'business_unit_id', 'batch', 'mentor_id', 'motivation',
     'learning_objectives', 'planned_activities', 'expected_output', 'campus_benefit', 'cv_path',
     'shared_goal', 'activity_types', 'problem_statement', 'main_output',
     'participant_benefit', 'business_benefit', 'success_indicators', 'indicator_feedback',
@@ -65,6 +66,24 @@ class Application extends Model
     public function program()
     {
         return $this->hasOne(Program::class);
+    }
+
+    /**
+     * Applications occupying quota slots: not rejected and in the unit's
+     * current registration batch. Units without a batch set keep the
+     * legacy behaviour of counting batch-less applications.
+     */
+    public function scopeForQuota(Builder $query, BusinessUnit $unit): Builder
+    {
+        $query->where('status', '!=', 'rejected');
+
+        if ($unit->batch === null) {
+            $query->whereNull('batch');
+        } else {
+            $query->where('batch', $unit->batch);
+        }
+
+        return $query;
     }
 
     public static function periodEndFromStart(CarbonInterface $start): Carbon

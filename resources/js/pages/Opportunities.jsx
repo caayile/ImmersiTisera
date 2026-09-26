@@ -20,9 +20,12 @@ export default function Opportunities() {
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge>{item.purpose}</Badge>
-                  <Badge tone={item.status === 'open' ? 'sage' : 'copper'}>
-                    {item.status === 'open' ? 'Lowongan dibuka' : 'Lowongan ditutup'}
+                  <Badge tone={item.is_full || item.status !== 'open' ? 'copper' : 'sage'}>
+                    {item.is_full ? `Kuota penuh (${item.applicants_count}/${item.quota})` : item.status === 'open' ? 'Lowongan dibuka' : 'Lowongan ditutup'}
                   </Badge>
+                  {typeof item.applicants_count === 'number' && (
+                    <Badge>Terisi {item.applicants_count}/{item.quota ?? 2}</Badge>
+                  )}
                 </div>
                 <h2 className="mt-3 font-display text-3xl">{item.title}</h2>
                 <p className="mt-2 text-sm text-moss/80">{item.mentor?.company} · {item.business_unit}</p>
@@ -31,7 +34,7 @@ export default function Opportunities() {
             </div>
             <p className="mt-4 text-sm">{item.problem}</p>
             <Link to={`/app/opportunities/${item.id}`} className="mt-5 inline-block font-semibold text-copper">
-              {item.applied ? 'Lihat pengajuan' : item.status === 'open' ? 'Lihat & apply' : 'Lihat detail'}
+              {item.applied ? 'Lihat pengajuan' : item.is_full ? 'Kuota penuh – Lihat detail' : item.status === 'open' ? 'Lihat & apply' : 'Lihat detail'}
             </Link>
           </Card>
         ))}

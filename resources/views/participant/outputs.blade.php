@@ -24,7 +24,7 @@
                 <h2 class="font-medium">{{ $output->title }}</h2>
                 <x-badge :status="$output->status" />
             </div>
-            <p class="mt-2 text-muted">{{ $output->type }} @if($output->is_main_output)· Main output@endif</p>
+            <p class="mt-2 text-muted">{{ $output->type }} @if($output->is_main_output)· Main output @endif</p>
             <p class="mt-2">{{ $output->description }}</p>
             @if($output->mentor_feedback)<p class="mt-2 text-primary-dark">{{ $output->mentor_feedback }}</p>@endif
             @if($output->file_path)<a href="{{ asset('storage/'.$output->file_path) }}" class="mt-2 inline-block text-primary-dark">Unduh file</a>@endif

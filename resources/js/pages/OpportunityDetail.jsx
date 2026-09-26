@@ -38,6 +38,8 @@ export default function OpportunityDetail() {
 
   if (!item) return null
 
+  const isFull = Boolean(item.is_full) && !item.application
+
   return (
     <div>
       <PageHeader kicker="Match & Commit" title={item.title} description={`${item.mentor?.company} · Mentor ${item.mentor?.name}`} />
@@ -52,13 +54,18 @@ export default function OpportunityDetail() {
           </dl>
         </Card>
         <Card>
-          <div className="mb-4">
-            <Badge tone={item.status === 'open' ? 'sage' : 'copper'}>
-              {item.status === 'open' ? 'Lowongan dibuka' : 'Lowongan ditutup'}
+          <div className="mb-4 flex flex-wrap gap-2">
+            <Badge tone={item.status === 'open' && !isFull ? 'sage' : 'copper'}>
+              {isFull ? `Kuota penuh (${item.applicants_count}/${item.quota})` : item.status === 'open' ? 'Lowongan dibuka' : 'Lowongan ditutup'}
             </Badge>
+            {typeof item.applicants_count === 'number' && (
+              <Badge>Terisi {item.applicants_count}/{item.quota ?? 2}</Badge>
+            )}
           </div>
           {item.application ? (
             <p>Minat sudah diajukan ({item.application.status}).</p>
+          ) : isFull ? (
+            <p className="text-sm text-moss/80">Kuota lowongan ini sudah penuh (2 pendaftar). Silakan pilih lowongan lain.</p>
           ) : item.status !== 'open' ? (
             <p className="text-sm text-moss/80">Pendaftaran pada departemen ini sedang ditutup. Silakan lihat lowongan lain.</p>
           ) : (

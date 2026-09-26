@@ -110,8 +110,9 @@
                 @php
                     $direct = $unit->department?->isDirectPlacement();
                     $meta = $unitMeta[$unit->name] ?? ['area' => $unit->department?->area ?? 'Unit Bisnis', 'image' => 'from-[#16352c] to-primary'];
-                    $prodi = collect($unit->relevant_programs ?? [])->take(3)->implode(', ') ?: 'Semua prodi relevan';
-                    $quota = max(2, count($unit->relevant_programs ?? []) + 1);
+                    $quota = \App\Models\BusinessUnit::MAX_APPLICANTS;
+                    $filled = (int) ($unit->active_applications_count ?? 0);
+                    $isFull = $filled >= $quota;
                     $detailUrl = $direct && $unit->department
                         ? route('departments.show', $unit->department)
                         : route('units.show', $unit);
@@ -119,22 +120,12 @@
                 @endphp
                 <article class="overflow-hidden rounded-2xl border border-line bg-white shadow-sm tap-feedback" data-reveal data-reveal-delay="{{ $loop->index % 4 }}">
                     <div class="relative h-44 bg-gradient-to-br {{ $meta['image'] }} p-4">
-                        <span class="absolute left-4 top-4 rounded-md bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide {{ $unit->status === 'open' ? 'text-ink' : 'text-red-600' }}">{{ $unit->status === 'open' ? 'Gelombang terbuka' : 'Lowongan ditutup' }}</span>
+                        <span class="absolute left-4 top-4 rounded-md bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide {{ $isFull || $unit->status !== 'open' ? 'text-red-600' : 'text-ink' }}">{{ $isFull ? 'Kuota penuh' : ($unit->status === 'open' ? 'Gelombang terbuka' : 'Lowongan ditutup') }}</span>
                         <p class="absolute bottom-4 left-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/90">{{ $meta['area'] }}</p>
                     </div>
                     <div class="p-5">
                         <h3 class="text-xl font-semibold">{{ $unit->name }}</h3>
                         <p class="mt-2 text-sm leading-6 text-muted">{{ $unit->description }}</p>
-                        <dl class="mt-4 space-y-2 text-sm">
-                            <div class="flex items-start justify-between gap-3">
-                                <dt class="text-muted">Kuota dosen</dt>
-                                <dd class="font-semibold">{{ $quota }} posisi</dd>
-                            </div>
-                            <div class="flex items-start justify-between gap-3">
-                                <dt class="shrink-0 text-muted">Rekomendasi prodi</dt>
-                                <dd class="text-right font-medium">{{ $prodi }}</dd>
-                            </div>
-                        </dl>
                         <a href="{{ $detailUrl }}" class="mt-5 block rounded-xl bg-[#eef4f1] px-4 py-3 text-center text-sm font-semibold text-ink hover:bg-primary hover:text-white">{{ $detailLabel }}</a>
                     </div>
                 </article>

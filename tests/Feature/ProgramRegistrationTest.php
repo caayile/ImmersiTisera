@@ -270,6 +270,63 @@ class ProgramRegistrationTest extends TestCase
             ->assertSessionHasErrors('business_unit_id');
     }
 
+    public function test_dosen_cannot_submit_when_unit_quota_is_full(): void
+    {
+        $this->seed();
+        $unit = BusinessUnit::where('name', 'Digital Business')->firstOrFail();
+
+        $first = $this->newDosen();
+        $this->actingAs($first)->post(route('participant.applications.store'), $this->validPayload($unit))->assertRedirect();
+
+        $this->assertSame(2, $unit->fresh()->activeApplicantsCount());
+        $this->assertTrue($unit->fresh()->isFull());
+
+        $third = $this->newDosen();
+        $this->actingAs($third)
+            ->from(route('participant.applications.create', ['unit' => $unit->id]))
+            ->post(route('participant.applications.store'), $this->validPayload($unit))
+            ->assertRedirect()
+            ->assertSessionHasErrors('business_unit_id');
+
+        $this->assertSame(2, $unit->fresh()->activeApplicantsCount());
+    }
+
+    public function test_opening_new_batch_frees_unit_quota(): void
+    {
+        $this->seed();
+        $unit = BusinessUnit::where('name', 'Digital Business')->firstOrFail();
+
+        $first = $this->newDosen();
+        $this->actingAs($first)->post(route('participant.applications.store'), $this->validPayload($unit))->assertRedirect();
+        $this->assertTrue($unit->fresh()->isFull());
+
+        $third = $this->newDosen();
+        $this->actingAs($third)
+            ->from(route('participant.applications.create', ['unit' => $unit->id]))
+            ->post(route('participant.applications.store'), $this->validPayload($unit))
+            ->assertRedirect()
+            ->assertSessionHasErrors('business_unit_id');
+
+        $this->actingAs(User::where('email', 'admin@imersi.id')->firstOrFail())
+            ->post(route('admin.lowongan.period', $unit), [
+                'batch' => 'Batch Baru 2026',
+                'registration_start' => '2026-10-01',
+                'registration_deadline' => '2026-10-31',
+            ])
+            ->assertRedirect();
+
+        $unit->refresh();
+        $this->assertSame('Batch Baru 2026', $unit->batch);
+        $this->assertSame(0, $unit->activeApplicantsCount());
+        $this->assertFalse($unit->isFull());
+
+        $this->actingAs($third)->post(route('participant.applications.store'), $this->validPayload($unit))->assertRedirect();
+
+        $application = Application::where('participant_id', $third->participant->id)->firstOrFail();
+        $this->assertSame('Batch Baru 2026', $application->batch);
+        $this->assertSame(1, $unit->fresh()->activeApplicantsCount());
+    }
+
     public function test_approval_letter_escapes_user_supplied_text(): void
     {
         $this->seed();

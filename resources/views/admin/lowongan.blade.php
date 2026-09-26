@@ -19,7 +19,7 @@
             <input type="hidden" name="status" value="closed">
         </form>
         <label class="relative inline-flex cursor-pointer items-center">
-            <input type="checkbox" id="bulk-toggle-checkbox" class="peer sr-only" @checked($allOpen || $hasOpenAllError) onchange="onBulkToggle(this.checked)">
+            <input type="checkbox" id="bulk-toggle" class="peer sr-only" @checked($allOpen || $hasOpenAllError)>
             <span class="relative inline-block h-6 w-11 rounded-full transition {{ $allOpen ? 'bg-primary' : 'bg-slate-300' }} peer-checked:bg-primary"></span>
             <span class="pointer-events-none absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition peer-checked:translate-x-5"></span>
         </label>
@@ -27,14 +27,14 @@
 </div>
 
 {{-- Modal: buka semua (set batch & periode) --}}
-<div id="bulk-open-modal" class="fixed inset-0 z-50 items-center justify-center bg-black/40 p-4" style="{{ $hasOpenAllError ? 'display:flex' : 'display:none' }}">
+<div id="bulk-open-modal" class="{{ $hasOpenAllError ? 'flex' : 'hidden' }} fixed inset-0 z-50 items-center justify-center bg-black/40 p-4">
     <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
         <div class="flex items-start justify-between gap-3">
             <div>
                 <h3 class="text-lg font-bold text-ink">Buka semua lowongan</h3>
                 <p class="mt-1 text-xs text-muted">Tentukan batch pembukaan beserta periode pendaftarannya.</p>
             </div>
-            <button type="button" onclick="closeBulkOpenModal()" class="flex h-8 w-8 items-center justify-center rounded-lg border border-line text-muted hover:text-ink">
+            <button type="button" id="bulk-modal-x" class="flex h-8 w-8 items-center justify-center rounded-lg border border-line text-muted hover:text-ink">
                 <span class="material-symbols-outlined text-[18px]">close</span>
             </button>
         </div>
@@ -42,23 +42,24 @@
             @csrf
             <div>
                 <label class="text-xs font-medium text-muted">Batch pembukaan</label>
-                <input name="batch" value="{{ $batchDefault }}" placeholder="Nama batch" class="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm">
+                <input name="batch" value="{{ old('batch', $batchDefault) }}" placeholder="Nama batch" class="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm">
             </div>
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label class="text-xs font-medium text-muted">Dibuka pada</label>
-                    <input type="datetime-local" name="registration_start" required class="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm">
+                    <input type="date" name="registration_start" value="{{ old('registration_start') }}" required class="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm">
                 </div>
                 <div>
                     <label class="text-xs font-medium text-muted">Ditutup pada</label>
-                    <input type="datetime-local" name="registration_deadline" required class="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm">
+                    <input type="date" name="registration_deadline" value="{{ old('registration_deadline') }}" required class="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm">
                 </div>
             </div>
+            <p class="text-xs leading-snug text-muted">Tanggal mulai berlaku pukul 00.00, tanggal tutup sampai pukul 23.59.</p>
             @if($errors->has('batch') || $errors->has('registration_start') || $errors->has('registration_deadline'))
                 <p class="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">{{ $errors->first() }}</p>
             @endif
             <div class="flex justify-end gap-3 pt-1">
-                <button type="button" onclick="closeBulkOpenModal()" class="rounded-lg border border-line px-4 py-2 text-sm font-semibold text-muted">Batal</button>
+                <button type="button" id="bulk-modal-cancel" class="rounded-lg border border-line px-4 py-2 text-sm font-semibold text-muted">Batal</button>
                 <button class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-dark">
                     <span class="material-symbols-outlined text-[18px]">lock_open</span>
                     Buka semua
@@ -69,26 +70,59 @@
 </div>
 
 <script>
-    function onBulkToggle(checked) {
-        const modal = document.getElementById('bulk-open-modal');
-        if (checked) {
-            modal.style.display = 'flex';
-        } else {
-            document.getElementById('bulk-close-form').submit();
-        }
+(function () {
+    var toggle = document.getElementById('bulk-toggle');
+    var modal = document.getElementById('bulk-open-modal');
+    var closeForm = document.getElementById('bulk-close-form');
+
+    function openModal() {
+        if (!modal) return;
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
     }
 
-    function closeBulkOpenModal() {
-        document.getElementById('bulk-open-modal').style.display = 'none';
-        document.getElementById('bulk-toggle-checkbox').checked = false;
+    function closeModal() {
+        if (!modal) return;
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        if (toggle) toggle.checked = false;
     }
-</script>
+
+    if (toggle && closeForm) {
+        toggle.addEventListener('change', function () {
+            if (toggle.checked) {
+                openModal();
+            } else {
+                closeForm.submit();
+            }
+        });
+    }
+
+    if (modal) {
+        modal.addEventListener('click', function (event) {
+            if (event.target === modal) closeModal();
+        });
+    }
+
+    var xButton = document.getElementById('bulk-modal-x');
+    if (xButton) xButton.addEventListener('click', closeModal);
+
+    var cancelButton = document.getElementById('bulk-modal-cancel');
+    if (cancelButton) cancelButton.addEventListener('click', closeModal);
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && modal && !modal.classList.contains('hidden')) closeModal();
+    });
+})();</script>
 
 <div class="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
     @forelse($units as $unit)
         @php
             $open = $unit->status === 'open';
             $scheduled = $unit->registration_start !== null && $unit->registration_deadline !== null;
+            $quota = \App\Models\BusinessUnit::MAX_APPLICANTS;
+            $filled = (int) ($unit->active_applications_count ?? $unit->applications_count ?? 0);
+            $isFull = $filled >= $quota;
         @endphp
         <article class="flex flex-col rounded-2xl border border-line bg-white p-5 shadow-sm transition hover:shadow-md">
             {{-- 1. Header Card --}}
@@ -99,19 +133,21 @@
                         <span class="rounded-full bg-bg px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted">{{ $unit->department->area }}</span>
                     @endif
                 </span>
-                @if($open)
-                    <span class="rounded-full bg-sky-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-sky-700">Buka</span>
+                @if($isFull)
+                    <span class="rounded-full bg-red-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-red-700">Penuh {{ $filled }}/{{ $quota }}</span>
+                @elseif($open)
+                    <span class="rounded-full bg-sky-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-sky-700">Buka · {{ $filled }}/{{ $quota }}</span>
                 @else
-                    <span class="rounded-full bg-red-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-red-700">Ditutup</span>
+                    <span class="rounded-full bg-red-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-red-700">Ditutup · {{ $filled }}/{{ $quota }}</span>
                 @endif
             </div>
 
             <h3 class="mt-3 text-lg font-bold leading-tight text-ink">{{ $unit->name }}</h3>
             <p class="mt-1 text-xs text-muted">
                 @if($unit->registration_start && $unit->registration_deadline)
-                    Dibuka {{ $unit->registration_start->format('d M Y') }} · ditutup {{ $unit->registration_deadline->format('d M Y') }}
+                    Dibuka {{ $unit->registration_start->format('d M Y') }} · ditutup {{ $unit->registration_deadline->format('d M Y') }} (23.59)
                 @elseif($unit->registration_deadline)
-                    Pendaftaran s/d {{ $unit->registration_deadline->format('d M Y') }}
+                    Pendaftaran s/d {{ $unit->registration_deadline->format('d M Y') }} (23.59)
                 @else
                     Belum dijadwalkan pendaftaran
                 @endif
@@ -153,17 +189,21 @@
                         </button>
                     </div>
                 </div>
+                <div class="mt-2">
+                    <label class="text-[11px] font-medium text-muted">Batch (ganti nama untuk mereset kuota 2 pendaftar)</label>
+                    <input type="text" name="batch" value="{{ old('batch', $unit->batch) }}" placeholder="cth. Batch Oktober 2026" class="mt-1 w-full rounded-lg border border-line px-2 py-1.5 text-xs">
+                </div>
                 <div class="mt-2 grid grid-cols-2 gap-2">
                     <div>
                         <label class="text-[11px] font-medium text-muted">Dibuka pada</label>
-                        <input type="datetime-local" name="registration_start" value="{{ $unit->registration_start?->format('Y-m-d\TH:i') }}" class="mt-1 w-full rounded-lg border border-line px-2 py-1.5 text-xs">
+                        <input type="date" name="registration_start" value="{{ $unit->registration_start?->format('Y-m-d') }}" class="mt-1 w-full rounded-lg border border-line px-2 py-1.5 text-xs">
                     </div>
                     <div>
                         <label class="text-[11px] font-medium text-muted">Ditutup pada</label>
-                        <input type="datetime-local" name="registration_deadline" value="{{ $unit->registration_deadline?->format('Y-m-d\TH:i') }}" class="mt-1 w-full rounded-lg border border-line px-2 py-1.5 text-xs">
+                        <input type="date" name="registration_deadline" value="{{ $unit->registration_deadline?->format('Y-m-d') }}" class="mt-1 w-full rounded-lg border border-line px-2 py-1.5 text-xs">
                     </div>
                 </div>
-                <p class="mt-2 text-[11px] leading-snug text-muted">Pendaftaran otomatis terbuka pada waktu dibuka dan tertutup setelah waktu ditutup.</p>
+                <p class="mt-2 text-[11px] leading-snug text-muted">Tanggal mulai berlaku pukul 00.00, tanggal tutup sampai pukul 23.59.</p>
             </form>
 
             {{-- 4. Toggle status lowongan --}}

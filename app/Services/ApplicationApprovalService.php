@@ -35,6 +35,17 @@ class ApplicationApprovalService
             ]);
         }
 
+        $filled = Application::query()
+            ->where('business_unit_id', $unit->id)
+            ->forQuota($unit)
+            ->count();
+
+        if ($filled >= BusinessUnit::MAX_APPLICANTS) {
+            throw ValidationException::withMessages([
+                'business_unit_id' => 'Kuota lowongan ini sudah penuh (2 pendaftar). Silakan pilih lowongan lain.',
+            ]);
+        }
+
         $match = $this->matching->score($participant, $unit);
         $mentor = $unit->mentors()->first();
         $period = $this->periodPayload($data);
@@ -43,6 +54,7 @@ class ApplicationApprovalService
             'participant_id' => $participant->id,
             'department_id' => $unit->department_id,
             'business_unit_id' => $unit->id,
+            'batch' => $unit->batch,
             'mentor_id' => $mentor?->id,
             ...$this->questionnairePayload($data),
             ...$period,
@@ -81,12 +93,28 @@ class ApplicationApprovalService
         abort_unless($application->status === 'revision', 403);
 
         $unit = BusinessUnit::with('mentors')->findOrFail($data['business_unit_id']);
+
+        if ((int) $unit->id !== (int) $application->business_unit_id) {
+            $filled = Application::query()
+                ->where('business_unit_id', $unit->id)
+                ->where('id', '!=', $application->id)
+                ->forQuota($unit)
+                ->count();
+
+            if ($filled >= BusinessUnit::MAX_APPLICANTS) {
+                throw ValidationException::withMessages([
+                    'business_unit_id' => 'Kuota lowongan tujuan sudah penuh (2 pendaftar). Silakan pilih lowongan lain.',
+                ]);
+            }
+        }
+
         $match = $this->matching->score($application->participant, $unit);
         $returnsToMentor = $application->mentor_reviewed_at !== null && $application->mentor_id;
 
         $application->update([
             'department_id' => $unit->department_id,
             'business_unit_id' => $unit->id,
+            'batch' => $unit->batch,
             'mentor_id' => $application->mentor_id ?: $unit->mentors()->first()?->id,
             ...$this->questionnairePayload($data),
             ...$this->periodPayload($data),
@@ -189,10 +217,24 @@ class ApplicationApprovalService
      */
     private function adminFirstReview(Application $application, array $data): Application
     {
-        if (($data['business_unit_id'] ?? null) !== null) {
+        if (($data['business_unit_id'] ?? null) !== null && (int) $data['business_unit_id'] !== (int) $application->business_unit_id) {
             $unit = BusinessUnit::findOrFail($data['business_unit_id']);
+
+            $filled = Application::query()
+                ->where('business_unit_id', $unit->id)
+                ->where('id', '!=', $application->id)
+                ->forQuota($unit)
+                ->count();
+
+            if ($filled >= BusinessUnit::MAX_APPLICANTS) {
+                throw ValidationException::withMessages([
+                    'business_unit_id' => 'Kuota lowongan tujuan sudah penuh (2 pendaftar).',
+                ]);
+            }
+
             $application->business_unit_id = $unit->id;
             $application->department_id = $unit->department_id;
+            $application->batch = $unit->batch;
         }
 
         if (($data['mentor_id'] ?? null) !== null) {

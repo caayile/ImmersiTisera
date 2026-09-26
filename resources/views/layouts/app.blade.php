@@ -118,8 +118,8 @@
 
 <div class="min-h-screen lg:grid lg:grid-cols-[280px_1fr]">
     <div x-show="open" x-cloak class="fixed inset-0 z-30 bg-black/30 lg:hidden" @click="open = false"></div>
-    <aside class="fixed inset-y-0 left-0 z-40 flex w-[280px] -translate-x-full flex-col border-r border-[#dcebe3] bg-gradient-to-b from-[#f7fcf9] via-[#f4faf7] to-[#edf7f2] p-4 transition lg:static lg:translate-x-0" :class="open && 'translate-x-0'">
-        <a href="{{ route('home') }}" class="group flex shrink-0 items-center gap-3 rounded-2xl border border-white/80 bg-white/75 px-3 py-3 shadow-sm transition hover:bg-white hover:shadow-md">
+    <aside class="fixed inset-y-0 left-0 z-40 flex max-h-screen w-[280px] -translate-x-full flex-col border-r border-[#dcebe3] bg-gradient-to-b from-[#f7fcf9] via-[#f4faf7] to-[#edf7f2] p-3 transition lg:sticky lg:top-0 lg:h-screen lg:translate-x-0" :class="open && 'translate-x-0'">
+        <a href="{{ route('home') }}" class="group flex shrink-0 items-center gap-3 rounded-2xl border border-white/80 bg-white/75 px-3 py-2.5 shadow-sm transition hover:bg-white hover:shadow-md">
             <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-[#0c7774] shadow-sm shadow-[#0c7774]/20">
                 <img src="{{ asset('images/logo-tsu.svg') }}" alt="TSU" class="site-logo h-9 w-9">
             </span>
@@ -128,7 +128,7 @@
             </span>
         </a>
 
-        <div class="mt-4 flex items-center gap-3 rounded-2xl bg-[#173d32] px-4 py-3 text-white shadow-lg shadow-[#173d32]/10">
+        <div class="mt-3 flex items-center gap-3 rounded-2xl bg-[#173d32] px-3 py-2.5 text-white shadow-lg shadow-[#173d32]/10">
             <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15">
                 <span class="material-symbols-outlined text-[20px]">{{ $role === 'admin' ? 'admin_panel_settings' : ($role === 'mentor' ? 'support_agent' : 'school') }}</span>
             </span>
@@ -142,9 +142,9 @@
             <x-sidebar-profile-card class="mt-5 shrink-0" />
         @endif
 
-        <nav class="mt-5 min-h-0 flex-1 space-y-1 overflow-y-auto pr-1 text-sm">
+        <nav id="sidebar-nav" class="mt-3 min-h-0 flex-1 space-y-0.5 overflow-y-auto pr-1 text-sm">
             @foreach($menus as [$label, $name])
-                <a href="{{ route($name) }}" class="group flex items-center justify-between rounded-xl border-l-2 px-3 py-2.5 transition {{ request()->routeIs($name) ? 'border-primary-dark bg-white font-semibold text-primary-dark shadow-sm ring-1 ring-[#dcebe3]' : 'border-transparent text-muted hover:border-primary/50 hover:bg-white/70 hover:text-ink' }}">
+                <a href="{{ route($name) }}" class="group flex items-center justify-between rounded-xl border-l-2 px-3 py-2 transition {{ request()->routeIs($name) ? 'border-primary-dark bg-white font-semibold text-primary-dark shadow-sm ring-1 ring-[#dcebe3]' : 'border-transparent text-muted hover:border-primary/50 hover:bg-white/70 hover:text-ink' }}">
                     <span class="flex min-w-0 items-center gap-3">
                         <span class="material-symbols-outlined text-[19px] {{ request()->routeIs($name) ? 'text-primary-dark' : 'text-muted/80 group-hover:text-primary-dark' }}">{{ $menuIcons[$name] ?? 'circle' }}</span>
                         <span class="truncate">{{ $label }}</span>
@@ -156,10 +156,33 @@
             @endforeach
         </nav>
 
-        <form method="POST" action="{{ route('logout') }}" class="mt-4 shrink-0 border-t border-line pt-4">
+        <form method="POST" action="{{ route('logout') }}" class="mt-3 shrink-0 border-t border-line pt-3">
             @csrf
             <button class="text-sm text-muted hover:text-ink">Keluar</button>
         </form>
+        <script>
+        (function () {
+            var nav = document.getElementById('sidebar-nav');
+            if (!nav) return;
+            var key = 'sidebar-nav-scroll';
+            try {
+                var saved = sessionStorage.getItem(key);
+                if (saved !== null) nav.scrollTop = parseInt(saved, 10) || 0;
+            } catch (e) {}
+            var save = function () {
+                try { sessionStorage.setItem(key, String(nav.scrollTop)); } catch (e) {}
+            };
+            var timer = null;
+            nav.addEventListener('scroll', function () {
+                clearTimeout(timer);
+                timer = setTimeout(save, 100);
+            }, { passive: true });
+            nav.addEventListener('click', function (event) {
+                if (event.target.closest('a')) save();
+            });
+            window.addEventListener('beforeunload', save);
+        })();
+        </script>
     </aside>
 
     <div class="min-w-0">

@@ -78,6 +78,9 @@ class ApiPresenter
         $unit->loadMissing(['department', 'mentors.user']);
         $mentor = $unit->mentors->first();
         $score = $match['score'] ?? 0;
+        $applicantsCount = $unit->activeApplicantsCount();
+        $quota = BusinessUnit::MAX_APPLICANTS;
+        $isFull = ! $applied && $applicantsCount >= $quota;
 
         return [
             'id' => $unit->id,
@@ -94,6 +97,10 @@ class ApiPresenter
             'match_label' => $this->matchLabel($score),
             'applied' => $applied,
             'application' => $application ? $this->application($application) : null,
+            'quota' => $quota,
+            'applicants_count' => $applicantsCount,
+            'remaining_slots' => max(0, $quota - $applicantsCount),
+            'is_full' => $isFull,
             'mentor' => $mentor?->user ? [
                 'id' => $mentor->user->id,
                 'name' => $mentor->user->name,
@@ -112,6 +119,7 @@ class ApiPresenter
         return [
             'id' => $application->id,
             'status' => $application->status,
+            'batch' => $application->batch,
             'letter_number' => $application->letter_number,
             'department' => $application->businessUnit?->department ? [
                 'id' => $application->businessUnit->department->id,

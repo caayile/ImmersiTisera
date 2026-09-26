@@ -15,16 +15,20 @@
         && $businessUnit->registration_start
         && now()->lt($businessUnit->registration_start);
     $deadline = $businessUnit->registration_deadline
-        ? \Carbon\Carbon::parse($businessUnit->registration_deadline)->locale('id')->translatedFormat('j F Y, H.i')
+        ? \Carbon\Carbon::parse($businessUnit->registration_deadline)->locale('id')->translatedFormat('j F Y').' (23.59)'
         : null;
     $start = $businessUnit->registration_start
-        ? \Carbon\Carbon::parse($businessUnit->registration_start)->locale('id')->translatedFormat('j F Y, H.i')
+        ? \Carbon\Carbon::parse($businessUnit->registration_start)->locale('id')->translatedFormat('j F Y')
         : null;
     $isRegistered = auth()->check() && auth()->user()->participant
         && auth()->user()->participant
             ->applications()
             ->where('business_unit_id', $businessUnit->id)
             ->exists();
+    $quota = \App\Models\BusinessUnit::MAX_APPLICANTS;
+    $applicantsCount = (int) ($businessUnit->active_applications_count ?? $businessUnit->applications()->forQuota($businessUnit)->count());
+    $remainingSlots = max(0, $quota - $applicantsCount);
+    $isFull = ! $isRegistered && $applicantsCount >= $quota;
 @endphp
 
 <div class="mx-auto max-w-6xl px-5 py-12">
@@ -150,12 +154,19 @@
                     <p class="mt-2 text-xs text-muted">Belum dibuka — pemberitahuan aktif sejak <b>{{ $start }}</b></p>
                 @endif
 
+                <p class="mt-3 text-center text-[11px] text-muted">Kuota {{ $applicantsCount }}/{{ $quota }} terisi · Sisa {{ $remainingSlots }} slot</p>
                 @if($isRegistered)
                     <button type="button" disabled class="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-[#e4eee9] px-5 py-3.5 text-sm font-semibold text-muted">
                         <span class="material-symbols-outlined text-[18px]">check_circle</span>
                         Sudah Terdaftar
                     </button>
                     <p class="mt-3 text-center text-[11px] text-muted">Anda telah mendaftar pada unit ini.</p>
+                @elseif($isFull)
+                    <button type="button" disabled class="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-[#e4eee9] px-5 py-3.5 text-sm font-semibold text-muted">
+                        <span class="material-symbols-outlined text-[18px]">group_off</span>
+                        Kuota Penuh ({{ $applicantsCount }}/{{ $quota }})
+                    </button>
+                    <p class="mt-3 text-center text-[11px] text-muted">Lowongan ini sudah diisi 2 pendaftar. Silakan pilih lowongan lain.</p>
                 @elseif($isOpen)
                     <a href="{{ route('participant.applications.create', ['unit' => $businessUnit->id]) }}" class="mt-6 flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(94,198,157,0.4)] transition hover:bg-primary-dark">
                         Daftar Program

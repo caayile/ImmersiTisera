@@ -112,7 +112,7 @@ class DatabaseSeeder extends Seeder
             'status' => 'active',
             'verification_status' => 'verified',
         ]);
-        Mentor::create([
+        $mentorIt = Mentor::create([
             'user_id' => $mentorItUser->id,
             'department_id' => $tspm->id,
             'business_unit_id' => $units['IT']->id,
@@ -145,9 +145,9 @@ class DatabaseSeeder extends Seeder
         Application::create([
             'participant_id' => $maya->id,
             'department_id' => $tspm->id,
-            'business_unit_id' => $units['Digital Business']->id,
-            'mentor_id' => $mentor->id,
-            'motivation' => 'Ingin mengamati workflow produk digital untuk case study kurikulum.',
+            'business_unit_id' => $units['IT']->id,
+            'mentor_id' => $mentorIt->id,
+            'motivation' => 'Ingin mengamati workflow infrastruktur IT untuk case study kurikulum.',
             'preferred_period' => '8 weeks / 60 days',
             'match_score' => 74,
             'relevance_warning' => false,

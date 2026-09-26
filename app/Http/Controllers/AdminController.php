@@ -17,8 +17,10 @@ use App\Models\Participant;
 use App\Models\Program;
 use App\Models\User;
 use App\Notifications\ImersiAlert;
+use App\Services\AgreementLetterService;
 use App\Services\ApplicationApprovalService;
 use App\Support\Status;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Response;
@@ -226,7 +228,7 @@ class AdminController extends Controller
             'image' => ['nullable', 'image', 'max:5120'],
         ]);
         $unit = BusinessUnit::create([
-            ...collect($data)->except('mentor_id', 'relevant_programs', 'image')->toArray(),
+            ...collect($this->normalizePeriod($data))->except('mentor_id', 'relevant_programs', 'image')->toArray(),
             'relevant_programs' => $this->parseRelevantPrograms($data['relevant_programs'] ?? null),
             'status' => 'open',
             'image_path' => $request->hasFile('image') ? $this->storeBusinessUnitImage($request->file('image')) : null,
@@ -260,7 +262,7 @@ class AdminController extends Controller
             'image' => ['nullable', 'image', 'max:5120'],
         ]);
 
-        $payload = collect($data)->except('mentor_id', 'relevant_programs', 'image')->toArray();
+        $payload = collect($this->normalizePeriod($data))->except('mentor_id', 'relevant_programs', 'image')->toArray();
 
         if ($request->hasFile('image')) {
             $payload['image_path'] = $this->storeBusinessUnitImage($request->file('image'), $businessUnit->image_path);
@@ -340,7 +342,7 @@ class AdminController extends Controller
 
     public function lowongan(Request $request)
     {
-        $query = BusinessUnit::with('department')->withCount('applications');
+        $query = BusinessUnit::with('department')->withCount('applications')->withQuotaCount();
 
         if ($request->filled('unit')) {
             $query->where('id', $request->input('unit'));
@@ -364,10 +366,12 @@ class AdminController extends Controller
             'registration_deadline' => ['required', 'date', 'after_or_equal:registration_start'],
         ]);
 
+        $period = self::normalizePeriod($data);
+
         BusinessUnit::query()->update([
             'batch' => $data['batch'] ?: self::batchDefault(),
-            'registration_start' => Carbon::parse($data['registration_start'])->format('Y-m-d H:i:s'),
-            'registration_deadline' => Carbon::parse($data['registration_deadline'])->format('Y-m-d H:i:s'),
+            'registration_start' => $period['registration_start'],
+            'registration_deadline' => $period['registration_deadline'],
             'status' => 'open',
         ]);
 
@@ -379,13 +383,37 @@ class AdminController extends Controller
         return 'Batch '.now()->translatedFormat('F Y');
     }
 
+    /**
+     * Registration uses dates only: the start applies from 00:00 and the
+     * deadline runs until 23:59 on the chosen dates.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private static function normalizePeriod(array $data): array
+    {
+        if (array_key_exists('registration_start', $data)) {
+            $data['registration_start'] = filled($data['registration_start'])
+                ? Carbon::parse($data['registration_start'])->startOfDay()->format('Y-m-d H:i:s')
+                : null;
+        }
+
+        if (array_key_exists('registration_deadline', $data)) {
+            $data['registration_deadline'] = filled($data['registration_deadline'])
+                ? Carbon::parse($data['registration_deadline'])->setTime(23, 59, 59)->format('Y-m-d H:i:s')
+                : null;
+        }
+
+        return $data;
+    }
+
     public function toggleAllLowongan(Request $request)
     {
         $data = $request->validate([
             'status' => ['required', Rule::in(['open', 'closed'])],
         ]);
 
-        if (BusinessUnit::whereNull('registration_start')->orWhereNull('registration_deadline')->exists()) {
+        if ($data['status'] === 'open' && BusinessUnit::whereNull('registration_start')->orWhereNull('registration_deadline')->exists()) {
             return back()->withErrors([
                 'lowongan' => 'Masih ada lowongan tanpa periode pendaftaran. Setel tanggal buka dan tutup semua lowongan terlebih dahulu.',
             ]);
@@ -404,9 +432,9 @@ class AdminController extends Controller
             'status' => ['required', Rule::in(['open', 'closed'])],
         ]);
 
-        if (! $businessUnit->registration_start || ! $businessUnit->registration_deadline) {
+        if ($data['status'] === 'open' && (! $businessUnit->registration_start || ! $businessUnit->registration_deadline)) {
             return back()->withErrors([
-                'lowongan' => 'Atur periode pendaftaran (tanggal buka dan tutup) terlebih dahulu sebelum mengubah status lowongan.',
+                'lowongan' => 'Atur periode pendaftaran (tanggal buka dan tutup) terlebih dahulu sebelum membuka lowongan.',
             ]);
         }
 
@@ -420,11 +448,16 @@ class AdminController extends Controller
     public function updateLowonganPeriod(Request $request, BusinessUnit $businessUnit)
     {
         $data = $request->validate([
+            'batch' => ['nullable', 'string', 'max:120'],
             'registration_start' => ['nullable', 'date'],
             'registration_deadline' => ['nullable', 'date'],
         ]);
 
-        $businessUnit->update($data);
+        if (array_key_exists('batch', $data) && trim((string) $data['batch']) === '') {
+            $data['batch'] = null;
+        }
+
+        $businessUnit->update(self::normalizePeriod($data));
 
         return back()->with('status', 'Periode pendaftaran diperbarui.');
     }
@@ -473,7 +506,7 @@ class AdminController extends Controller
         abort_unless($agreement->status === 'agreed', 404);
 
         if (blank($agreement->letter_number)) {
-            app(\App\Services\AgreementLetterService::class)->issue($agreement);
+            app(AgreementLetterService::class)->issue($agreement);
             $agreement->refresh();
         }
 
@@ -481,7 +514,7 @@ class AdminController extends Controller
 
         $filename = 'Perjanjian-Magang-'.preg_replace('/[^A-Za-z0-9]+/', '-', (string) ($agreement->letter_number ?? 'tanpa-nomor')).'.pdf';
 
-        return \Barryvdh\DomPDF\Facade\Pdf::loadView('participant.agreement-print', [
+        return Pdf::loadView('participant.agreement-print', [
             'program' => $program,
             'agreement' => $agreement,
             'pdf' => true,

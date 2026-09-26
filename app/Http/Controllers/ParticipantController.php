@@ -9,12 +9,15 @@ use App\Models\Evaluation;
 use App\Models\Participant;
 use App\Models\Program;
 use App\Notifications\ImersiAlert;
+use App\Services\AgreementLetterService;
 use App\Services\ApplicationApprovalService;
 use App\Support\Status;
 use App\Support\StudyPrograms;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class ParticipantController extends Controller
 {
@@ -141,6 +144,11 @@ class ParticipantController extends Controller
             return redirect()->route('departments.index')->with('status', 'Pilih unit bisnis atau departemen terlebih dahulu.');
         }
 
+        $alreadyApplied = $participant->applications()->where('business_unit_id', $unit->id)->exists();
+        if (! $alreadyApplied && $unit->isFull()) {
+            return redirect()->route('departments.index')->with('status', 'Kuota lowongan ini sudah penuh (2 pendaftar). Silakan pilih lowongan lain.');
+        }
+
         return view('participant.application-form', [
             'participant' => $participant,
             'unit' => $unit,
@@ -167,7 +175,11 @@ class ParticipantController extends Controller
             return redirect()->route('departments.index')->with('status', 'Lowongan departemen ini sudah ditutup.');
         }
 
-        $application = $approvals->submit($participant, $unit, $data);
+        try {
+            $application = $approvals->submit($participant, $unit, $data);
+        } catch (ValidationException $exception) {
+            return redirect()->back()->withErrors($exception->errors())->withInput();
+        }
 
         return redirect()
             ->route('participant.applications.show', $application)
@@ -240,7 +252,7 @@ class ParticipantController extends Controller
         abort_unless($program?->agreement?->status === 'agreed', 404);
 
         if (blank($program->agreement->letter_number)) {
-            app(\App\Services\AgreementLetterService::class)->issue($program->agreement);
+            app(AgreementLetterService::class)->issue($program->agreement);
             $program->agreement->refresh();
         }
 
@@ -257,7 +269,7 @@ class ParticipantController extends Controller
         abort_unless($program?->agreement?->status === 'agreed', 404);
 
         if (blank($program->agreement->letter_number)) {
-            app(\App\Services\AgreementLetterService::class)->issue($program->agreement);
+            app(AgreementLetterService::class)->issue($program->agreement);
         }
 
         $program->load(['participant.user', 'mentor.user', 'department', 'businessUnit', 'agreement', 'application']);
@@ -265,7 +277,7 @@ class ParticipantController extends Controller
 
         $filename = 'Perjanjian-Magang-'.preg_replace('/[^A-Za-z0-9]+/', '-', (string) ($agreement->letter_number ?? 'tanpa-nomor')).'.pdf';
 
-        return \Barryvdh\DomPDF\Facade\Pdf::loadView('participant.agreement-print', [
+        return Pdf::loadView('participant.agreement-print', [
             'program' => $program,
             'agreement' => $agreement,
             'pdf' => true,

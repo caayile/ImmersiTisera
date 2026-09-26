@@ -12,6 +12,26 @@ class ImersiSmokeTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_participant_outputs_and_final_report_pages_render(): void
+    {
+        $this->seed();
+
+        $this->actingAs(User::where('email', 'dosen@imersi.id')->firstOrFail())
+            ->get(route('participant.outputs'))
+            ->assertOk()
+            ->assertSee('Output & Evidence', false);
+
+        $this->actingAs(User::where('email', 'dosen@imersi.id')->firstOrFail())
+            ->get(route('participant.final-report'))
+            ->assertOk()
+            ->assertSee('Final Report', false);
+
+        $this->actingAs(User::where('email', 'mentor@imersi.id')->firstOrFail())
+            ->get(route('mentor.outputs'))
+            ->assertOk()
+            ->assertSee('Validasi Output', false);
+    }
+
     public function test_public_and_role_homes_render(): void
     {
         $this->seed();
