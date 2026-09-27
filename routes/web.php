@@ -38,11 +38,6 @@ Route::middleware('guest')->group(function () {
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
-Route::view('/app/{any?}', 'spa')
-    ->where('any', '.*')
-    ->middleware('auth')
-    ->name('spa');
-
 Route::middleware(['auth', 'role:participant'])->prefix('participant')->name('participant.')->group(function () {
     Route::get('/dashboard', [ParticipantController::class, 'dashboard'])->name('dashboard');
     Route::get('/profile', [ParticipantController::class, 'profile'])->name('profile');
@@ -59,6 +54,7 @@ Route::middleware(['auth', 'role:participant'])->prefix('participant')->name('pa
     Route::get('/agreement/download-pdf', [ParticipantController::class, 'downloadAgreementPdf'])->name('agreement.download');
     Route::post('/agreement', [ParticipantController::class, 'updateAgreement']);
     Route::get('/timeline', [ParticipantController::class, 'timeline'])->name('timeline');
+    Route::post('/timeline/{timeline}', [ParticipantController::class, 'updateTimeline'])->name('timeline.update');
     Route::get('/logbooks', [ParticipantController::class, 'logbooks'])->name('logbooks');
     Route::post('/logbooks', [ParticipantController::class, 'storeLogbook']);
     Route::get('/mentoring', [ParticipantController::class, 'mentoring'])->name('mentoring');
@@ -87,6 +83,8 @@ Route::middleware(['auth', 'role:mentor'])->prefix('mentor')->name('mentor.')->g
     Route::get('/agreements/{agreement}/download-pdf', [MentorController::class, 'downloadAgreementPdf'])->name('agreements.download');
     Route::post('/agreements/{agreement}', [MentorController::class, 'reviewAgreement'])->name('agreements.review');
     Route::get('/timeline', [MentorController::class, 'timeline'])->name('timeline');
+    Route::get('/timeline/{program}', [MentorController::class, 'showTimeline'])->name('timeline.show');
+    Route::post('/timeline/{timeline}', [MentorController::class, 'reviewTimeline'])->name('timeline.review');
     Route::get('/logbooks', [MentorController::class, 'logbooks'])->name('logbooks');
     Route::get('/logbooks/{program}', [MentorController::class, 'showLogbooks'])->name('logbooks.show');
     Route::post('/logbooks/{logbook}', [MentorController::class, 'reviewLogbook'])->name('logbooks.review');

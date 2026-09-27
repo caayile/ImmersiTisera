@@ -30,14 +30,6 @@
         }
     }"
 >
-    <div class="mb-4 flex flex-wrap items-center gap-4">
-        <a href="{{ route('home') }}" class="inline-flex items-center gap-1 text-sm font-semibold text-primary-dark">
-            <span class="material-symbols-outlined text-[18px]">arrow_back</span>
-            Kembali ke beranda
-        </a>
-        <a href="{{ route('profile.public') }}" class="text-sm font-semibold text-muted transition hover:text-ink">Kembali ke profil</a>
-    </div>
-
     <section class="overflow-hidden rounded-3xl border border-line bg-white shadow-sm">
         <div class="hero-grid px-6 py-8 md:px-10">
             <div class="flex flex-col gap-5 sm:flex-row sm:items-center">
@@ -183,10 +175,6 @@
 
             <div class="flex flex-col-reverse gap-3 border-t border-line pt-6 sm:flex-row sm:items-center sm:justify-between">
                 <div class="space-y-1">
-                    <a href="{{ route('home') }}" class="inline-flex items-center gap-1 text-sm font-semibold text-primary-dark">
-                        <span class="material-symbols-outlined text-[18px]">arrow_back</span>
-                        Kembali ke beranda
-                    </a>
                     <p class="text-sm text-muted">Perubahan langsung memengaruhi skor pencocokan program.</p>
                 </div>
                 <button class="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-dark">

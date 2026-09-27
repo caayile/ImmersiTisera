@@ -1,8 +1,7 @@
 @extends('layouts.app')
 @section('title', 'Pendaftaran')
 @section('content')
-<x-back-link />
-<div class="mt-4 flex flex-wrap items-center justify-between gap-3">
+<div class="flex flex-wrap items-center justify-between gap-3">
     <div>
         <h1 class="text-2xl font-semibold">Program / Pendaftaran</h1>
         <p class="mt-1 text-sm text-muted">Form pendaftaran dan surat persetujuan: dosen → admin → mentor → admin → dosen.</p>

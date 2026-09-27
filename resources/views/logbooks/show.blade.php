@@ -73,15 +73,17 @@
             @foreach($historyLogs as $log)
                 <x-logbook-entry :log="$log" />
                 @if($canReview)
-                    <form method="POST" action="{{ route('mentor.logbooks.review', $log) }}" class="grid gap-2 rounded-xl border border-line bg-bg/60 p-3 md:grid-cols-[1fr_180px_auto]">
+                    <form method="POST" action="{{ route('mentor.logbooks.review', $log) }}" class="grid gap-2 rounded-xl border border-line bg-bg/60 p-3">
                         @csrf
-                        <input name="mentor_feedback" value="{{ $log->mentor_feedback }}" placeholder="Tulis feedback / langkah berikutnya" class="rounded-lg border border-line px-3 py-2 text-sm">
-                        <select name="status" class="rounded-lg border border-line px-3 py-2 text-sm">
-                            <option value="reviewed" @selected($log->status === 'reviewed')>Ditinjau</option>
-                            <option value="revision" @selected($log->status === 'revision')>Minta revisi</option>
-                            <option value="approved" @selected($log->status === 'approved')>Disetujui</option>
-                        </select>
-                        <button class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white">Simpan</button>
+                        <input name="mentor_feedback" value="{{ $log->mentor_feedback }}" placeholder="Tulis feedback / langkah berikutnya" class="w-full rounded-lg border border-line px-3 py-2 text-sm">
+                        <div class="flex flex-col gap-2 sm:flex-row">
+                            <select name="status" class="w-full flex-1 rounded-lg border border-line px-3 py-2 text-sm">
+                                <option value="reviewed" @selected($log->status === 'reviewed')>Ditinjau</option>
+                                <option value="revision" @selected($log->status === 'revision')>Minta revisi</option>
+                                <option value="approved" @selected($log->status === 'approved')>Disetujui</option>
+                            </select>
+                            <button class="rounded-lg bg-primary px-6 py-2 text-sm font-semibold text-white transition hover:bg-primary-dark">Simpan</button>
+                        </div>
                     </form>
                 @elseif($log->mentor_feedback)
                     <div class="rounded-xl border border-line bg-bg/60 p-3 text-sm"><p class="font-semibold">Feedback mentor</p><p class="mt-1">{{ $log->mentor_feedback }}</p></div>

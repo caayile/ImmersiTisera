@@ -8,9 +8,11 @@ use App\Models\CollaborationPipeline;
 use App\Models\Department;
 use App\Models\Evaluation;
 use App\Models\Logbook;
+use App\Models\MentorSession;
 use App\Models\Participant;
 use App\Models\Program;
 use App\Models\ProgramOutput;
+use App\Models\Timeline;
 use App\Notifications\ImersiAlert;
 use App\Services\AgreementLetterService;
 use App\Services\ApplicationApprovalService;
@@ -36,46 +38,19 @@ class ParticipantController extends Controller
             ->latest()
             ->first();
 
-        $gradients = [
-            'from-[#16352c] via-[#1f5a45] to-[#5ec69d]',
-            'from-[#1e3a5f] via-[#2a6b55] to-[#7dd8b5]',
-            'from-[#2f4a3c] via-[#3eaa84] to-[#a8e6cf]',
-            'from-[#0f2a24] via-[#256b52] to-[#5ec69d]',
-            'from-[#243d36] via-[#3e8f6d] to-[#8fd9b8]',
-        ];
-
-        $partners = Department::query()
-            ->where('status', 'active')
-            ->withCount('businessUnits')
-            ->withCount(['businessUnits as open_units_count' => fn ($q) => $q->where('status', 'open')])
-            ->orderBy('area')
-            ->orderBy('name')
-            ->get()
-            ->values()
-            ->map(function (Department $department, int $index) use ($gradients) {
-                $imagePath = "images/partners/{$department->slug}.jpg";
-                $imageExists = is_file(public_path($imagePath));
-
-                return [
-                    'id' => $department->id,
-                    'name' => $department->name,
-                    'area' => $department->area ?: 'Mitra Imersi',
-                    'description' => $department->description,
-                    'slug' => $department->slug,
-                    'url' => route('departments.show', $department),
-                    'units' => $department->business_units_count,
-                    'openUnits' => $department->open_units_count,
-                    'image' => $imageExists ? asset($imagePath) : null,
-                    'gradient' => $gradients[$index % count($gradients)],
-                ];
-            });
+        $participantId = $request->user()->participant?->id;
 
         return view('participant.dashboard', [
             'participant' => $request->user()->participant,
             'program' => $program?->fresh(['department', 'businessUnit', 'mentor.user', 'agreement', 'logbooks', 'timelines']),
             'notifications' => $request->user()->unreadNotifications()->latest()->take(5)->get(),
-            'partners' => $partners,
             'application' => $application,
+            'stats' => [
+                'programs' => Program::where('participant_id', $participantId)->count(),
+                'logbooks' => Logbook::where('participant_id', $participantId)->count(),
+                'mentorings' => MentorSession::where('participant_id', $participantId)->count(),
+                'outputs' => ProgramOutput::where('participant_id', $participantId)->where('is_final_report', false)->count(),
+            ],
         ]);
     }
 
@@ -332,6 +307,31 @@ class ParticipantController extends Controller
     public function timeline(Request $request)
     {
         return view('participant.timeline', ['program' => $this->currentProgram($request)]);
+    }
+
+    public function updateTimeline(Request $request, Timeline $timeline)
+    {
+        $participantId = $request->user()->participant?->id;
+        abort_unless($timeline->program && (int) $timeline->program->participant_id === (int) $participantId, 403);
+
+        $data = $request->validate([
+            'title' => ['required', 'string', 'max:180'],
+            'description' => ['nullable', 'string'],
+            'expected_output' => ['nullable', 'string'],
+        ]);
+
+        $timeline->update([
+            ...$data,
+            'status' => 'submitted',
+        ]);
+
+        $timeline->program->mentor?->user?->notify(new ImersiAlert(
+            'Checkpoint diajukan',
+            'Minggu '.$timeline->week.' menunggu pengesahan.',
+            route('mentor.timeline')
+        ));
+
+        return back()->with('status', 'Checkpoint minggu '.$timeline->week.' dikirim untuk disahkan mentor.');
     }
 
     public function logbooks(Request $request)

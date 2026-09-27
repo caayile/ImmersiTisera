@@ -52,20 +52,16 @@ class ApiAuthControllerTest extends TestCase
             ->assertJsonPath('dosen_profile.prodi', 'Informatika');
     }
 
-    public function test_guest_is_redirected_to_login_for_spa(): void
-    {
-        $this->get('/app')->assertRedirect(route('login'));
-        $this->get('/app/opportunities')->assertRedirect(route('login'));
-    }
-
-    public function test_authenticated_user_receives_spa_shell(): void
+    public function test_legacy_spa_routes_are_gone(): void
     {
         $this->seed();
-        $this->withoutVite();
 
         $this->actingAs(User::where('email', 'dosen@imersi.id')->firstOrFail())
-            ->get(route('spa'))
-            ->assertOk()
-            ->assertSee('id="root"', false);
+            ->get('/app')
+            ->assertNotFound();
+
+        $this->actingAs(User::where('email', 'dosen@imersi.id')->firstOrFail())
+            ->get('/app/opportunities')
+            ->assertNotFound();
     }
 }

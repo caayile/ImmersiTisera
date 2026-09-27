@@ -524,7 +524,11 @@ class AdminController extends Controller
     public function monitoring(Request $request)
     {
         $query = Program::with(['participant.user', 'department', 'businessUnit', 'logbooks'])
-            ->when($request->filled('q'), fn ($query) => $query->whereHas('participant.user', fn ($q) => $q->where('name', 'like', '%'.$request->string('q').'%')))
+            ->when($request->filled('q'), function ($query) use ($request) {
+                $needle = mb_strtolower($request->string('q')->toString(), 'UTF-8');
+
+                return $query->whereHas('participant.user', fn ($q) => $q->whereRaw('LOWER(name) LIKE ?', ['%'.$needle.'%']));
+            })
             ->when($request->filled('department_id'), fn ($query) => $query->where('department_id', $request->input('department_id')))
             ->when($request->filled('business_unit_id'), fn ($query) => $query->where('business_unit_id', $request->input('business_unit_id')))
             ->when($request->filled('status'), fn ($query) => $query->whereHas('logbooks', fn ($q) => $q->where('status', $request->input('status'))));

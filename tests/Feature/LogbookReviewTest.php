@@ -65,6 +65,26 @@ class LogbookReviewTest extends TestCase
             ->assertSee('Dr. Andi Pratama')
             ->assertSee('Semua unit bisnis');
 
+        $this->actingAs($admin)
+            ->get(route('admin.monitoring', ['q' => 'andi']))
+            ->assertOk()
+            ->assertSee('Dr. Andi Pratama');
+
+        $this->actingAs(User::where('email', 'mentor@imersi.id')->firstOrFail())
+            ->get(route('mentor.logbooks', ['q' => 'andi']))
+            ->assertOk()
+            ->assertSee('Dr. Andi Pratama');
+
+        $this->actingAs(User::where('email', 'admin@imersi.id')->firstOrFail())
+            ->get(route('admin.monitoring', ['status' => 'approved']))
+            ->assertOk()
+            ->assertSee('Dr. Andi Pratama');
+
+        $this->actingAs(User::where('email', 'admin@imersi.id')->firstOrFail())
+            ->get(route('admin.monitoring', ['status' => 'revision']))
+            ->assertOk()
+            ->assertDontSee('Dr. Andi Pratama');
+
         $program = Program::whereHas('participant.user', fn ($query) => $query->where('name', 'Dr. Andi Pratama'))->firstOrFail();
 
         $this->actingAs($admin)

@@ -245,6 +245,31 @@ class ImersiSmokeTest extends TestCase
         $this->assertSame('submitted', ProgramOutput::where('program_id', $program->id)->where('is_final_report', true)->firstOrFail()->status);
     }
 
+    public function test_mentor_sees_participant_evaluation_feedback(): void
+    {
+        $this->seed();
+
+        $dosen = User::where('email', 'dosen@imersi.id')->firstOrFail();
+
+        $this->actingAs($dosen)
+            ->post(route('participant.evaluation'), [
+                'industry_understanding' => 5,
+                'relationship' => 4,
+                'output' => 4,
+                'mutual_benefit' => 5,
+                'collaboration_potential' => 4,
+                'comments' => 'Mentor sangat membantu.',
+            ])
+            ->assertRedirect();
+
+        $this->actingAs(User::where('email', 'mentor@imersi.id')->firstOrFail())
+            ->get(route('mentor.evaluations'))
+            ->assertOk()
+            ->assertSee('Feedback Dari Peserta')
+            ->assertSee('Feedback untuk peserta')
+            ->assertSee('Mentor sangat membantu.');
+    }
+
     public function test_public_and_role_homes_render(): void
     {
         $this->seed();
@@ -289,8 +314,12 @@ class ImersiSmokeTest extends TestCase
             ->assertSee('Dr. Andi Pratama')
             ->assertSee('Informatika')
             ->assertSee('Fakultas Teknik')
-            ->assertSee('Pilih mitra magang dosen Anda')
-            ->assertDontSee('Universitas');
+            ->assertSee('Lanjutkan')
+            ->assertSee('Total Magang')
+            ->assertSee('Entri Logbook')
+            ->assertSee('Sesi Mentoring')
+            ->assertDontSee('Universitas')
+            ->assertDontSee('Pilih mitra magang dosen Anda');
 
         $this->actingAs(User::where('email', 'dosen@imersi.id')->first())
             ->get('/')

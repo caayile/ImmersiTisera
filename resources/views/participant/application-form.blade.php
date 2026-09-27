@@ -52,12 +52,7 @@
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 }">
-    <a href="{{ $application ? route('participant.applications.show', $application) : ($unit ? route('units.show', $unit) : route('departments.index')) }}" class="inline-flex items-center gap-1 text-sm font-semibold text-primary-dark">
-        <span class="material-symbols-outlined text-[18px]">arrow_back</span>
-        Kembali
-    </a>
-
-    <section class="mt-5 overflow-hidden rounded-3xl border border-line bg-white shadow-sm">
+    <section class="overflow-hidden rounded-3xl border border-line bg-white shadow-sm">
         <div class="hero-grid px-6 py-8 md:px-8">
             <p class="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">Pendaftaran dosen</p>
             <h1 class="mt-2 text-3xl font-semibold tracking-tight text-white md:text-4xl">

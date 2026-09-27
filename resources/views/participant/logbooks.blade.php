@@ -1,9 +1,7 @@
 @extends('layouts.app')
 @section('title', 'Logbook')
 @section('content')
-<x-back-link />
 <div class="mt-4">
-    <p class="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">Immersion · Rekam jejak</p>
     <h1 class="text-2xl font-semibold">Logbook</h1>
     <p class="mt-1 text-sm text-muted">Refleksi harian selama program magang dosen. Diisi oleh peserta, lalu diverifikasi mentor.</p>
 </div>

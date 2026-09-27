@@ -39,7 +39,7 @@
             ['Program Aktif', 'mentor.programs'],
             ['Perjanjian Magang Dosen', 'mentor.agreements'],
             ['Linimasa & Pemeriksaan', 'mentor.timeline'],
-            ['Buku Catatan', 'mentor.logbooks'],
+            ['Review Logbook', 'mentor.logbooks'],
             ['Pendampingan', 'mentor.mentoring'],
             ['Hasil & Bukti', 'mentor.outputs'],
             ['Evaluasi', 'mentor.evaluations'],
@@ -58,7 +58,7 @@
             ['Program', 'admin.programs'],
             ['Pencocokan', 'admin.matching'],
             ['Perjanjian', 'admin.agreements'],
-            ['Pemantauan', 'admin.monitoring'],
+            ['Logbook Peserta', 'admin.monitoring'],
             ['Evaluasi', 'admin.evaluations'],
             ['Alur Kolaborasi', 'admin.collaborations'],
             ['Laporan', 'admin.reports'],
@@ -155,10 +155,6 @@
             @endforeach
         </nav>
 
-        <form method="POST" action="{{ route('logout') }}" class="mt-3 shrink-0 border-t border-line pt-3">
-            @csrf
-            <button class="text-sm text-muted hover:text-ink">Keluar</button>
-        </form>
         <script>
         (function () {
             var nav = document.getElementById('sidebar-nav');

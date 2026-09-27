@@ -10,6 +10,7 @@ use App\Models\Logbook;
 use App\Models\MentorSession;
 use App\Models\Program;
 use App\Models\ProgramOutput;
+use App\Models\Timeline;
 use App\Notifications\ImersiAlert;
 use App\Services\AgreementLetterService;
 use App\Services\ApplicationApprovalService;
@@ -197,7 +198,36 @@ class MentorController extends Controller
 
     public function timeline(Request $request)
     {
-        return view('mentor.timeline', ['programs' => $this->mine($request)->with('timelines')->get()]);
+        return view('mentor.timeline', ['programs' => $this->mine($request)->with(['participant.user', 'businessUnit', 'department', 'timelines'])->get()]);
+    }
+
+    public function showTimeline(Request $request, Program $program)
+    {
+        $this->authorizeProgram($request, $program);
+
+        return view('mentor.timeline-show', ['program' => $program->load(['participant.user', 'businessUnit', 'department', 'timelines'])]);
+    }
+
+    public function reviewTimeline(Request $request, Timeline $timeline)
+    {
+        $this->authorizeProgram($request, $timeline->program);
+
+        $data = $request->validate([
+            'status' => ['required', 'in:done,pending'],
+            'mentor_note' => ['required_if:status,pending', 'nullable', 'string'],
+        ]);
+
+        $timeline->update([
+            'status' => $data['status'],
+            'mentor_note' => $data['status'] === 'pending' ? $data['mentor_note'] : null,
+        ]);
+        $timeline->program->participant->user->notify(new ImersiAlert(
+            'Checkpoint minggu '.$timeline->week.' '.$data['status'],
+            $data['status'] === 'done' ? 'Mentor mengesahkan checkpoint.' : ($data['mentor_note'] ?? 'Mentor meminta perbaikan.'),
+            route('participant.timeline')
+        ));
+
+        return back()->with('status', 'Checkpoint diperbarui.');
     }
 
     public function logbooks(Request $request)
@@ -205,7 +235,8 @@ class MentorController extends Controller
         $query = $this->mine($request)->with(['participant.user', 'department', 'businessUnit', 'logbooks']);
 
         if ($request->filled('q')) {
-            $query->whereHas('participant.user', fn ($q) => $q->where('name', 'like', '%'.$request->string('q').'%'));
+            $needle = mb_strtolower($request->string('q')->toString(), 'UTF-8');
+            $query->whereHas('participant.user', fn ($q) => $q->whereRaw('LOWER(name) LIKE ?', ['%'.$needle.'%']));
         }
 
         foreach (['department_id', 'business_unit_id'] as $filter) {
@@ -332,7 +363,17 @@ class MentorController extends Controller
 
     public function evaluations(Request $request)
     {
-        return view('mentor.evaluations', ['programs' => $this->mine($request)->with(['participant.user', 'evaluations'])->get()]);
+        $programs = $this->mine($request)->with(['participant.user', 'businessUnit', 'evaluations.evaluator', 'evaluations.program.participant.user', 'evaluations.program.businessUnit'])->get();
+        $evaluatorId = $request->user()->id;
+
+        $given = $programs->flatMap(fn (Program $program) => $program->evaluations)
+            ->where('evaluator_id', $evaluatorId)
+            ->values();
+        $received = $programs->flatMap(fn (Program $program) => $program->evaluations)
+            ->whereNotIn('evaluator_id', [$evaluatorId])
+            ->values();
+
+        return view('mentor.evaluations', compact('programs', 'given', 'received'));
     }
 
     public function storeEvaluation(Request $request, Program $program)

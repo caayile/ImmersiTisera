@@ -6,7 +6,6 @@
 @endphp
 <div class="bg-bg py-12">
     <div class="mx-auto max-w-4xl px-5">
-        <x-back-link class="mb-4" />
         <div class="overflow-hidden rounded-3xl border border-line bg-white">
             <div class="hero-grid px-6 py-8 md:px-8">
                 <div class="flex flex-col gap-5 sm:flex-row sm:items-center">
