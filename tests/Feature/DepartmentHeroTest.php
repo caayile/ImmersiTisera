@@ -76,7 +76,7 @@ class DepartmentHeroTest extends TestCase
             ->get('/admin/department-hero')
             ->assertOk()
             ->assertSee('Hero Unit Bisnis')
-            ->assertSee('Background kampus');
+            ->assertSee('Latar belakang kampus');
 
         $this->actingAs($admin)
             ->post('/admin/department-hero/background', [

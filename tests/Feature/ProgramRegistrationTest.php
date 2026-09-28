@@ -75,7 +75,7 @@ class ProgramRegistrationTest extends TestCase
             ->assertSee('Observasi')
             ->assertSee('Riset')
             ->assertDontSee('>Penugasan</', false)
-            ->assertSee('Problem / Opportunity')
+            ->assertSee('Rumusan Masalah atau Peluang')
             ->assertSee('Hasil Utama')
             ->assertSee('Indikator Keberhasilan')
             ->assertSee('Tambah indikator')

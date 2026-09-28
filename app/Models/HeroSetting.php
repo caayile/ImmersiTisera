@@ -48,6 +48,12 @@ class HeroSetting extends Model
         }
 
         if (! Storage::disk('public')->exists($path)) {
+            // Last resort: relative path to a file that physically exists
+            // under public/ (e.g. legacy uploads).
+            if (is_file(public_path($path))) {
+                return asset($path);
+            }
+
             return null;
         }
 
