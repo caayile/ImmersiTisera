@@ -120,6 +120,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/lowongan/{businessUnit}/period', [AdminController::class, 'updateLowonganPeriod'])->name('lowongan.period');
     Route::post('/lowongan/toggle-all', [AdminController::class, 'toggleAllLowongan'])->name('lowongan.toggle-all');
     Route::post('/lowongan/open-all', [AdminController::class, 'openAllLowongan'])->name('lowongan.open-all');
+    Route::post('/lowongan/period-all', [AdminController::class, 'updateAllLowonganPeriod'])->name('lowongan.period-all');
     Route::get('/mentors', [AdminController::class, 'mentors'])->name('mentors');
     Route::get('/participants', [AdminController::class, 'participants'])->name('participants');
     Route::get('/programs', [AdminController::class, 'programs'])->name('programs');

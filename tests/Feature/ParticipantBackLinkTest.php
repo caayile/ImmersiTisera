@@ -10,35 +10,32 @@ class ParticipantBackLinkTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_profile_page_has_a_back_link_to_home(): void
+    public function test_profile_page_has_no_back_link(): void
     {
         $dosen = User::factory()->create(['role' => 'participant']);
 
         $this->actingAs($dosen)
             ->get(route('profile.public'))
-            ->assertSee('Kembali')
-            ->assertSee(route('home'), false);
+            ->assertDontSee('Kembali');
     }
 
-    public function test_registration_history_page_has_a_back_link_to_home(): void
+    public function test_registration_history_page_has_no_back_link(): void
     {
         $dosen = User::factory()->create(['role' => 'participant']);
 
         $this->actingAs($dosen)
             ->get(route('participant.applications'))
-            ->assertSee('Kembali')
-            ->assertSee(route('home'), false);
+            ->assertDontSee('Kembali');
     }
 
-    public function test_logbook_page_has_a_back_link_to_home(): void
+    public function test_logbook_page_has_no_back_link(): void
     {
         $dosen = User::factory()->create(['role' => 'participant']);
 
         $this->actingAs($dosen)
             ->get(route('participant.logbooks'))
             ->assertOk()
-            ->assertSee('Kembali')
-            ->assertSee('Logbook')
-            ->assertSee(route('home'), false);
+            ->assertDontSee('Kembali')
+            ->assertSee('Logbook');
     }
 }

@@ -462,6 +462,18 @@ class AdminController extends Controller
         return back()->with('status', 'Periode pendaftaran diperbarui.');
     }
 
+    public function updateAllLowonganPeriod(Request $request)
+    {
+        $data = $request->validate([
+            'registration_start' => ['nullable', 'date'],
+            'registration_deadline' => ['nullable', 'date', 'after_or_equal:registration_start'],
+        ]);
+
+        BusinessUnit::query()->update(self::normalizePeriod($data));
+
+        return back()->with('status', 'Periode semua lowongan diperbarui.');
+    }
+
     public function matching(Request $request)
     {
         $query = Application::with(['participant.user', 'department', 'businessUnit', 'mentor.user']);
