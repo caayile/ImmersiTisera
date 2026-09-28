@@ -165,7 +165,7 @@
                     <span class="rounded-full bg-bg px-1.5 text-[11px] font-bold text-muted">{{ $unit->applications_count }}</span>
                 </a>
                 <div class="ml-auto flex shrink-0 items-center gap-1.5">
-                    <a href="{{ route('admin.units.edit', $unit) }}" title="Edit" class="flex h-9 w-9 items-center justify-center rounded-lg border border-line text-muted transition hover:border-primary hover:text-primary-dark">
+                    <a href="{{ route('admin.units.edit', $unit) }}" title="Ubah" class="flex h-9 w-9 items-center justify-center rounded-lg border border-line text-muted transition hover:border-primary hover:text-primary-dark">
                         <span class="material-symbols-outlined text-[18px]">edit</span>
                     </a>
                     <button type="button" title="Hapus" onclick="if (confirm('Hapus lowongan ini?')) document.getElementById('delete-lowongan-{{ $unit->id }}').submit()" class="flex h-9 w-9 items-center justify-center rounded-lg border border-line text-muted transition hover:border-red-300 hover:text-red-600">

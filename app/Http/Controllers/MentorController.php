@@ -175,7 +175,7 @@ class MentorController extends Controller
         if ($data['decision'] === 'revision') {
             $agreement->update(['status' => 'revision', 'revision_note' => $data['revision_note'], 'mentor_approved_at' => null]);
             $agreement->program->update(['status' => 'revision']);
-            $agreement->program->participant->user->notify(new ImersiAlert('Agreement perlu revisi', $data['revision_note'] ?? 'Silakan perbaiki agreement.', route('participant.agreement')));
+            $agreement->program->participant->user->notify(new ImersiAlert('Perjanjian perlu revisi', $data['revision_note'] ?? 'Silakan perbaiki perjanjian.', route('participant.agreement')));
         } else {
             $agreement->update([
                 'status' => 'agreed',
@@ -190,10 +190,10 @@ class MentorController extends Controller
                 'end_date' => now()->addDays(60)->toDateString(),
             ]);
             $program->seedTimeline();
-            $program->participant->user->notify(new ImersiAlert('Program ACTIVE', 'Agreement disetujui. Immersion dimulai.', route('participant.program')));
+            $program->participant->user->notify(new ImersiAlert('Program aktif', 'Perjanjian disetujui. Masa magang dimulai.', route('participant.program')));
         }
 
-        return back()->with('status', 'Keputusan agreement disimpan.');
+        return back()->with('status', 'Keputusan perjanjian disimpan.');
     }
 
     public function timeline(Request $request)
@@ -296,7 +296,7 @@ class MentorController extends Controller
             'mentor_feedback' => ['nullable', 'string'],
         ]);
         $logbook->update($data);
-        $logbook->program->participant->user->notify(new ImersiAlert('Update logbook', 'Status logbook: '.$data['status'], route('participant.logbooks')));
+        $logbook->program->participant->user->notify(new ImersiAlert('Logbook diperbarui', 'Status logbook: '.Status::logbookLabel($data['status']), route('participant.logbooks')));
 
         return back()->with('status', 'Logbook diperbarui.');
     }
@@ -356,9 +356,9 @@ class MentorController extends Controller
             'mentor_feedback' => ['nullable', 'string'],
         ]);
         $output->update($data);
-        $output->program->participant->user->notify(new ImersiAlert('Output '.$data['status'], $output->title, route('participant.outputs')));
+        $output->program->participant->user->notify(new ImersiAlert('Hasil: '.Status::outputLabel($data['status']), $output->title, route('participant.outputs')));
 
-        return back()->with('status', 'Output divalidasi.');
+        return back()->with('status', 'Hasil berhasil divalidasi.');
     }
 
     public function evaluations(Request $request)
@@ -416,7 +416,7 @@ class MentorController extends Controller
         CollaborationPipeline::updateOrCreate(['program_id' => $program->id], $data);
         $program->participant->user->notify(new ImersiAlert('Kolaborasi diperbarui', Status::COLLABORATION_LEVELS[$data['level']], route('participant.collaboration')));
 
-        return back()->with('status', 'Pipeline kolaborasi disimpan.');
+        return back()->with('status', 'Rencana kolaborasi disimpan.');
     }
 
     public function notifications(Request $request)

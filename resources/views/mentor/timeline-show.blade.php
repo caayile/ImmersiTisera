@@ -1,9 +1,9 @@
 @extends('layouts.app')
-@section('title', 'Timeline')
+@section('title', 'Linimasa')
 @section('content')
 <div>
-    <a href="{{ route('mentor.timeline') }}" class="text-sm font-medium text-primary-dark">&larr; Kembali ke daftar timeline</a>
-    <h1 class="mt-3 text-2xl font-semibold">Timeline {{ $program->participant->user->name }}</h1>
+    <a href="{{ route('mentor.timeline') }}" class="text-sm font-medium text-primary-dark">&larr; Kembali ke daftar linimasa</a>
+    <h1 class="mt-3 text-2xl font-semibold">Linimasa {{ $program->participant->user->name }}</h1>
     <p class="mt-1 text-sm text-muted">{{ $program->businessUnit?->name ?? '-' }} · {{ $program->department?->name ?? '-' }}</p>
 </div>
     <section class="mt-6 rounded-2xl border border-line bg-white p-5">
@@ -11,15 +11,15 @@
             @foreach($program->timelines->sortBy('week') as $timeline)
                 <details class="rounded-xl border border-line p-4 text-sm {{ $timeline->status === 'submitted' ? 'border-amber-300 bg-amber-50/40' : '' }}" @if($timeline->status === 'submitted') open @endif>
                     <summary class="flex cursor-pointer flex-wrap items-center justify-between gap-2">
-                        <span><b>Minggu {{ $timeline->week }}</b> · {{ $timeline->title }}</span>
+                        <span><b>Minggu {{ $timeline->week }}</b> · {{ \App\Support\Status::timelineText($timeline->title) }}</span>
                         <x-badge :status="$timeline->status" />
                     </summary>
                     <div class="mt-3 space-y-1 text-sm">
                         @if($timeline->description)
-                            <p class="text-muted">{{ $timeline->description }}</p>
+                            <p class="text-muted">{{ \App\Support\Status::timelineText($timeline->description) }}</p>
                         @endif
                         @if($timeline->expected_output)
-                            <p><b>Target hasil:</b> {{ $timeline->expected_output }}</p>
+                            <p><b>Target hasil:</b> {{ \App\Support\Status::timelineText($timeline->expected_output) }}</p>
                         @endif
                     </div>
                     <form method="POST" action="{{ route('mentor.timeline.review', $timeline) }}" class="mt-3 grid gap-2 border-t border-line pt-3 md:grid-cols-[1fr_160px_auto]">

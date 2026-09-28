@@ -249,6 +249,6 @@ class GoogleAuthTest extends TestCase
         $this->get(route('login'))
             ->assertOk()
             ->assertSee(route('login.google', ['role' => 'dosen']), false)
-            ->assertSee('Sambung dengan Google');
+            ->assertSee('Masuk dengan Google');
     }
 }

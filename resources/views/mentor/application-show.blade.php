@@ -60,7 +60,7 @@
             @csrf
 
             <div class="rounded-xl border border-line bg-bg p-4">
-                <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 6 — Success Indicators</p>
+                <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 6 — Indikator Keberhasilan</p>
                 <p class="mt-1 text-xs text-muted">Anda boleh mengusulkan perbaikan teks indikator. Komentar revisi bisa dikirim berulang kali sampai Anda puas.</p>
                 <div class="mt-3 grid gap-2">
                     @foreach($mentorIndicators as $index => $indicator)
@@ -71,7 +71,7 @@
                     @endforeach
                 </div>
                 @if($application->indicator_feedback)
-                    <p class="mt-2 text-xs text-muted"><b>Feedback dosen:</b> {{ $application->indicator_feedback }}</p>
+                    <p class="mt-2 text-xs text-muted"><b>Tanggapan dosen:</b> {{ $application->indicator_feedback }}</p>
                 @endif
             </div>
 

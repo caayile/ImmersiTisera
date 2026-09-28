@@ -7,6 +7,7 @@ use App\Models\Department;
 use App\Models\HeroSetting;
 use App\Models\HeroSlide;
 use App\Models\MediaAsset;
+use App\Models\News;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -47,7 +48,8 @@ class MediaStorageService
         $isReferenced = Department::query()->where('image_path', $path)->exists()
             || BusinessUnit::query()->where('image_path', $path)->exists()
             || HeroSetting::query()->where('background_path', $path)->exists()
-            || HeroSlide::query()->where('image_path', $path)->exists();
+            || HeroSlide::query()->where('image_path', $path)->exists()
+            || News::query()->where('cover_image', $path)->exists();
 
         if (! $isReferenced) {
             MediaAsset::query()->whereKey($mediaId)->delete();

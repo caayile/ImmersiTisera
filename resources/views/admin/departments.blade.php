@@ -21,7 +21,7 @@
         <form method="POST" action="{{ route('admin.departments') }}" enctype="multipart/form-data" class="mt-4 grid gap-3 md:grid-cols-2">
             @csrf
             <input name="name" placeholder="Nama unit bisnis" class="rounded-lg border border-line px-3 py-2 text-sm" required>
-            <input name="subtitle" placeholder="Subtitle (nama lengkap, mis. Tiga Serangkai Pustaka Mandiri)" class="rounded-lg border border-line px-3 py-2 text-sm">
+            <input name="subtitle" placeholder="Subjudul (nama lengkap, mis. Tiga Serangkai Pustaka Mandiri)" class="rounded-lg border border-line px-3 py-2 text-sm">
             <input name="area" placeholder="Area / Lokasi (mis. Surakarta)" class="rounded-lg border border-line px-3 py-2 text-sm">
             <input type="file" name="image" accept="image/*" class="rounded-lg border border-line px-3 py-2 text-sm">
             <textarea name="description" placeholder="Deskripsi" class="rounded-lg border border-line px-3 py-2 text-sm md:col-span-2"></textarea>
@@ -45,7 +45,7 @@
                 <p class="mt-0.5 truncate text-xs text-muted">{{ $department->subtitle ?: ($department->area ?: 'Unit Bisnis Mitra') }}</p>
             </a>
             <div class="flex shrink-0 items-center gap-1.5">
-                <a href="{{ route('admin.departments.show', $department) }}" title="Edit" class="flex h-9 w-9 items-center justify-center rounded-lg border border-line text-muted transition hover:border-primary hover:text-primary-dark">
+                <a href="{{ route('admin.departments.show', $department) }}" title="Ubah" class="flex h-9 w-9 items-center justify-center rounded-lg border border-line text-muted transition hover:border-primary hover:text-primary-dark">
                     <span class="material-symbols-outlined text-[20px]">edit</span>
                 </a>
                 <button type="button" title="Hapus" onclick="if (confirm('Hapus unit bisnis ini?')) document.getElementById('delete-department-{{ $department->id }}').submit()" class="flex h-9 w-9 items-center justify-center rounded-lg border border-line text-muted transition hover:border-red-300 hover:text-red-600">

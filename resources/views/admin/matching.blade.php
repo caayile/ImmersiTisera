@@ -23,7 +23,7 @@
             <div x-show="open" x-cloak x-transition>
                 <p class="mt-4 text-xs text-muted">{{ $application->letter_number ?? 'Tanpa nomor surat' }} · {{ $application->currentStageLabel() }} · skor {{ $application->match_score }}%</p>
                 @if($application->relevance_warning)
-                    <p class="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">Warning: kompetensi/prodi peserta kurang relevan dengan unit yang dipilih.</p>
+                    <p class="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">Peringatan: kompetensi atau program studi peserta kurang sesuai dengan unit yang dipilih.</p>
                 @endif
                 <div class="mt-4"><x-approval-flow :application="$application" /></div>
                 <div class="mt-4"><x-approval-letter :application="$application" /></div>

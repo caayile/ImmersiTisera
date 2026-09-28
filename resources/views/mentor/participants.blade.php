@@ -11,9 +11,9 @@
                 <th class="px-4 py-3">Unit</th>
                 <th class="px-4 py-3">Periode</th>
                 <th class="px-4 py-3">Status</th>
-                <th class="px-4 py-3">Progress</th>
+                <th class="px-4 py-3">Kemajuan</th>
                 <th class="px-4 py-3">Logbook</th>
-                <th class="px-4 py-3">Output</th>
+                <th class="px-4 py-3">Hasil</th>
             </tr>
         </thead>
         <tbody>
@@ -25,8 +25,8 @@
                 <td class="px-4 py-3">{{ $program->start_date?->format('d M') ?? '—' }}</td>
                 <td class="px-4 py-3"><x-badge :status="$program->status" /></td>
                 <td class="px-4 py-3">{{ $program->progress }}%</td>
-                <td class="px-4 py-3">{{ $program->logbooks->where('status','submitted')->count() }} pending</td>
-                <td class="px-4 py-3">{{ $program->outputs->where('status','submitted')->count() }} pending</td>
+                <td class="px-4 py-3">{{ $program->logbooks->where('status','submitted')->count() }} menunggu</td>
+                <td class="px-4 py-3">{{ $program->outputs->where('status','submitted')->count() }} menunggu</td>
             </tr>
         @empty
             <tr><td colspan="8" class="px-4 py-10 text-center text-muted">Belum ada peserta pada unit Anda.</td></tr>

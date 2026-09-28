@@ -1,22 +1,22 @@
 @extends('layouts.app')
-@section('title', 'Output & Evidence')
+@section('title', 'Hasil dan Bukti')
 @section('content')
-<h1 class="text-2xl font-semibold">Output & Evidence</h1>
+<h1 class="text-2xl font-semibold">Hasil dan Bukti</h1>
 @unless($program)
-    <x-empty class="mt-6" title="Output belum tersedia" />
+    <x-empty class="mt-6" title="Hasil belum tersedia" />
 @else
-<p class="mt-2 text-sm text-muted">Setiap program wajib memiliki satu main output.</p>
+<p class="mt-2 text-sm text-muted">Setiap program wajib memiliki satu hasil utama.</p>
 <form method="POST" enctype="multipart/form-data" class="mt-6 space-y-4 rounded-2xl border border-line bg-white p-6">
     @csrf
-    <input name="title" placeholder="Judul output" class="w-full rounded-lg border border-line px-4 py-2.5 text-sm" required>
+    <input name="title" placeholder="Judul hasil" class="w-full rounded-lg border border-line px-4 py-2.5 text-sm" required>
     <select name="type" class="w-full rounded-lg border border-line px-4 py-2.5 text-sm">
-        @foreach($types as $type)<option>{{ $type }}</option> @endforeach
+        @foreach($types as $type)<option value="{{ $type }}">{{ \App\Support\Status::outputTypeLabel($type) }}</option> @endforeach
     </select>
     <textarea name="description" rows="3" placeholder="Deskripsi" class="w-full rounded-lg border border-line px-4 py-2.5 text-sm"></textarea>
     <input name="link" placeholder="Tautan hasil/dokumen (opsional, cth. https://...)" class="w-full rounded-lg border border-line px-4 py-2.5 text-sm">
     <input type="file" name="file" class="text-sm">
-    <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="is_main_output" value="1"> Jadikan main output</label>
-    <button class="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white">Upload evidence</button>
+    <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="is_main_output" value="1"> Jadikan hasil utama</label>
+    <button class="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white">Unggah bukti</button>
 </form>
 
 <div class="mt-10">
@@ -61,34 +61,35 @@
                             <li class="output-item px-5 py-4"
                                 data-title="{{ strtolower($output->title.' '.$output->description) }}"
                                 data-type="{{ $output->type }}"
+                                data-type-label="{{ \App\Support\Status::outputTypeLabel($output->type) }}"
                                 data-status="{{ $output->status }}"
                                 data-ts="{{ $output->created_at?->timestamp ?: 0 }}">
                                 <div class="flex items-start justify-between gap-3">
                                     <h4 class="flex min-w-0 items-center gap-2 font-medium">
                                         @if($output->is_main_output)
-                                            <span class="material-symbols-outlined shrink-0 text-[18px] text-amber-500" title="Main output">star</span>
+                                            <span class="material-symbols-outlined shrink-0 text-[18px] text-amber-500" title="Hasil utama">star</span>
                                         @endif
                                         <span class="min-w-0 truncate">{{ $output->title }}</span>
                                     </h4>
                                     <x-badge :status="$output->status" :label="\App\Support\Status::outputLabel($output->status)" />
                                 </div>
                                 <p class="mt-1 text-xs text-muted">
-                                    {{ $output->type }} · {{ $cycle->businessUnit?->name }} · diunggah {{ $output->created_at?->format('d M Y') }}
+                                    {{ \App\Support\Status::outputTypeLabel($output->type) }} · {{ $cycle->businessUnit?->name }} · diunggah {{ $output->created_at?->format('d M Y') }}
                                     @if($output->is_main_output)
-                                        · <span class="font-semibold text-amber-600">Main output</span>
+                                        · <span class="font-semibold text-amber-600">Hasil utama</span>
                                     @endif
                                 </p>
                                 <details class="mt-2 text-sm">
-                                    <summary class="cursor-pointer font-semibold text-primary-dark">Lihat detail</summary>
+                                    <summary class="cursor-pointer font-semibold text-primary-dark">Lihat rincian</summary>
                                     <p class="mt-2">{{ $output->description }}</p>
                                     @if($output->mentor_feedback)
-                                        <p class="mt-2 text-primary-dark">Feedback mentor: {{ $output->mentor_feedback }}</p>
+                                        <p class="mt-2 text-primary-dark">Masukan mentor: {{ $output->mentor_feedback }}</p>
                                     @endif
                                     @if($output->linkUrl())
                                         <a href="{{ $output->linkUrl() }}" target="_blank" rel="noopener" class="mt-2 inline-block font-semibold text-primary-dark">Buka tautan</a>
                                     @endif
                                     @if($output->file_path)
-                                        <a href="{{ asset('storage/'.$output->file_path) }}" class="mt-2 inline-block font-semibold text-primary-dark">Unduh file</a>
+                                        <a href="{{ asset('storage/'.$output->file_path) }}" class="mt-2 inline-block font-semibold text-primary-dark">Unduh berkas</a>
                                     @endif
                                 </details>
                             </li>
@@ -124,7 +125,7 @@
             types[item.dataset.type] = true;
             var option = document.createElement('option');
             option.value = item.dataset.type;
-            option.textContent = item.dataset.type;
+            option.textContent = item.dataset.typeLabel || item.dataset.type;
             typeFilter.appendChild(option);
         }
     });

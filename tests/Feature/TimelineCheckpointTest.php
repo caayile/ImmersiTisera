@@ -106,7 +106,7 @@ class TimelineCheckpointTest extends TestCase
             ->get(route('mentor.timeline'))
             ->assertOk()
             ->assertSee('Dr. Andi Pratama')
-            ->assertSee('Lihat detail');
+            ->assertSee('Lihat rincian');
 
         $this->actingAs($mentor)
             ->get(route('mentor.timeline.show', $program))

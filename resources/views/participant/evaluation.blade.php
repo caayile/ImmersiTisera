@@ -14,8 +14,8 @@
 @else
 <div class="mt-6" x-data="{ tab: 'mine' }">
     <div class="grid grid-cols-2 gap-1 rounded-xl border border-line bg-white p-1 text-sm font-semibold">
-        <button type="button" @click="tab = 'mine'" :class="tab === 'mine' ? 'rounded-lg bg-primary/12 text-primary-dark' : 'rounded-lg text-muted hover:text-ink'" class="px-4 py-2.5 transition">Feedback untuk mentor</button>
-        <button type="button" @click="tab = 'mentor'" :class="tab === 'mentor' ? 'rounded-lg bg-primary/12 text-primary-dark' : 'rounded-lg text-muted hover:text-ink'" class="px-4 py-2.5 transition">Feedback Dari Mentor</button>
+        <button type="button" @click="tab = 'mine'" :class="tab === 'mine' ? 'rounded-lg bg-primary/12 text-primary-dark' : 'rounded-lg text-muted hover:text-ink'" class="px-4 py-2.5 transition">Penilaian untuk mentor</button>
+        <button type="button" @click="tab = 'mentor'" :class="tab === 'mentor' ? 'rounded-lg bg-primary/12 text-primary-dark' : 'rounded-lg text-muted hover:text-ink'" class="px-4 py-2.5 transition">Penilaian dari mentor</button>
     </div>
 
     <div class="mt-4 flex flex-col gap-3 md:flex-row md:items-center">

@@ -17,8 +17,8 @@
         @csrf
         <input type="hidden" name="token" value="{{ $token }}">
         <x-auth.input name="email" type="email" :value="$email" placeholder="Email" :icon="$mail" required />
-        <x-auth.password placeholder="Password baru" />
-        <x-auth.password name="password_confirmation" placeholder="Konfirmasi password" />
+        <x-auth.password placeholder="Kata sandi baru" />
+        <x-auth.password name="password_confirmation" placeholder="Ulangi kata sandi baru" />
         <button class="w-full rounded-2xl bg-zinc-900 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800">Simpan</button>
     </form>
 </section>

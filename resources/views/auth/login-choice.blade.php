@@ -219,7 +219,7 @@
                         <h2 class="text-lg sm:text-xl font-extrabold text-charcoal tracking-tight" id="login-title">
                             {{ $defaultRole === 'mentor' ? 'Masuk Portal Mentor' : 'Masuk Portal Dosen' }}
                         </h2>
-                        <p class="text-[11px] text-gray-500 mt-0.5">Masukkan kredensial akun Anda untuk mengakses dashboard.</p>
+                        <p class="text-[11px] text-gray-500 mt-0.5">Masukkan email dan kata sandi untuk masuk ke akun Anda.</p>
                     </div>
 
                     <!-- Google Sign-In Button -->
@@ -231,12 +231,12 @@
                             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
                             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
                         </svg>
-                        <span>Sambung dengan Google</span>
+                        <span>Masuk dengan Google</span>
                     </a>
 
                     <div class="relative flex py-1 items-center mb-2.5">
                         <div class="flex-grow border-t border-gray-200"></div>
-                        <span class="flex-shrink mx-2 text-[10px] uppercase font-bold text-gray-400 tracking-wider">atau dengan email</span>
+                        <span class="flex-shrink mx-2 text-[10px] uppercase font-bold text-gray-400 tracking-wider">atau gunakan email</span>
                         <div class="flex-grow border-t border-gray-200"></div>
                     </div>
 
@@ -246,7 +246,7 @@
                         @csrf
                         <!-- Email Input -->
                         <div>
-                            <label class="block text-[11px] font-bold text-charcoal mb-1">Email Resmi</label>
+                            <label class="block text-[11px] font-bold text-charcoal mb-1">Email institusi</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
                                     <i class="fa-regular fa-envelope text-xs"></i>
@@ -290,7 +290,7 @@
                         <!-- Submit Button -->
                         <button type="submit"
                             class="w-full py-2.5 px-4 bg-forest hover:bg-forest-light text-white font-bold rounded-xl text-xs sm:text-sm transition duration-200 flex items-center justify-center space-x-2 shadow-lg shadow-forest/20 group mt-1">
-                            <span id="btn-login-text">Masuk ke Dashboard</span>
+                            <span id="btn-login-text">Masuk ke Ringkasan</span>
                             <i
                                 class="fa-solid fa-arrow-right text-xs group-hover:translate-x-1 transition-transform"></i>
                         </button>
@@ -316,7 +316,7 @@
                             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
                             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
                         </svg>
-                        <span>Daftar Cepat dengan Google</span>
+                        <span>Daftar dengan Google</span>
                     </a>
 
                     <div class="relative flex py-0.5 items-center mb-1.5">
@@ -385,7 +385,7 @@
                                 <label class="block text-[11px] font-bold text-charcoal mb-1">Kata Sandi</label>
                                 <div class="relative">
                                     <input type="password" id="reg-password" name="password" required
-                                        placeholder="Min. 6 karakter"
+                                        placeholder="Minimal 6 karakter"
                                         class="w-full pl-2.5 pr-7 py-1.5 sm:py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-charcoal placeholder-gray-400 focus:bg-white focus:outline-none focus:border-forest focus:ring-2 focus:ring-forest/10 transition">
                                     <button type="button" onclick="togglePassword('reg-password', this)"
                                         class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-gray-400 hover:text-charcoal">
@@ -407,7 +407,7 @@
                             </div>
                         </div>
 
-                        <!-- Agreement Checkbox -->
+                        <!-- Kotak persetujuan -->
                         <div class="flex items-center pt-0.5">
                             <input type="checkbox" required id="terms" checked
                                 class="w-3.5 h-3.5 text-forest border-gray-300 rounded focus:ring-forest shrink-0">
@@ -431,9 +431,9 @@
                 <div class="mt-3 pt-2.5 border-t border-gray-100 text-center">
                     <p class="text-[11px] text-gray-500" id="footer-switch-text">
                         @if ($defaultTab === 'login')
-                            Belum memiliki akun kolaborasi?
+                            Belum punya akun?
                             <button type="button" onclick="switchMainTab('register')"
-                                class="font-bold text-forest hover:underline">Daftar sekarang</button>
+                                class="font-bold text-forest hover:underline">Daftar di sini</button>
                         @else
                             Sudah memiliki akun terdaftar?
                             <button type="button" onclick="switchMainTab('login')"
@@ -451,7 +451,7 @@
     <footer
         class="w-full max-w-7xl mx-auto px-4 sm:px-6 py-2 sm:py-2.5 flex justify-center items-center text-[11px] sm:text-xs text-gray-400 shrink-0 text-center">
         <div>
-            &copy; 2026 TS Group & TSU Collaboration Program. All rights reserved.
+            &copy; 2026 Program Kolaborasi TS Group & TSU. Hak cipta dilindungi.
         </div>
     </footer>
 
@@ -498,7 +498,7 @@
                     regLabels.forEach(el => el.classList.add('hidden'));
 
                     footerText.innerHTML =
-                        'Belum memiliki akun kolaborasi? <button type="button" onclick="switchMainTab(\'register\')" class="font-bold text-forest hover:underline">Daftar sekarang</button>';
+                        'Belum punya akun? <button type="button" onclick="switchMainTab(\'register\')" class="font-bold text-forest hover:underline">Daftar di sini</button>';
                 } else {
                     btnReg.className =
                         'flex-1 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all duration-300 bg-white text-charcoal shadow-sm';

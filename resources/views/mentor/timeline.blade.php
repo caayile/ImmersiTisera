@@ -1,7 +1,7 @@
 @extends('layouts.app')
-@section('title', 'Timeline')
+@section('title', 'Linimasa')
 @section('content')
-<h1 class="text-2xl font-semibold">Timeline & Checkpoint</h1>
+<h1 class="text-2xl font-semibold">Linimasa dan Tonggak</h1>
 <p class="mt-1 text-sm text-muted">Pilih peserta untuk meninjau dan mengesahkan checkpoint mingguannya.</p>
 <div class="mt-6 overflow-hidden rounded-2xl border border-line bg-white">
     @forelse($programs as $program)
@@ -15,7 +15,7 @@
             @if($pendingCount)
                 <span class="shrink-0 rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700">{{ $pendingCount }} menunggu</span>
             @endif
-            <span class="shrink-0 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white">Lihat detail</span>
+                <span class="shrink-0 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white">Lihat rincian</span>
         </a>
     @empty
         <x-empty title="Tidak ada program" />

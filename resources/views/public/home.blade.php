@@ -174,8 +174,13 @@
         <div class="mt-8 grid gap-4 md:grid-cols-3">
             @forelse($latestNews as $item)
                 <article class="flex flex-col overflow-hidden rounded-2xl border border-line bg-white">
-                    <div class="flex h-32 items-end bg-gradient-to-br from-[#16352c] to-primary p-4">
-                        <span class="rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">{{ $item->category }}</span>
+                    @php
+                        $coverImage = \App\Models\HeroSetting::resolveMediaUrl($item->cover_image) ?: asset('images/hero/campus.jpg');
+                    @endphp
+                    <div class="relative flex h-32 items-end overflow-hidden bg-[#16352c] p-4">
+                        <img src="{{ $coverImage }}" alt="" class="absolute inset-0 h-full w-full object-cover" loading="lazy">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/65 to-transparent"></div>
+                        <span class="relative z-10 rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">{{ $item->category }}</span>
                     </div>
                     <div class="flex flex-1 flex-col p-5">
                         <p class="text-xs font-semibold text-primary-dark">{{ $item->published_at?->translatedFormat('d M Y') }}</p>

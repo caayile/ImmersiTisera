@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Edit '.$businessUnit->name)
+@section('title', 'Ubah '.$businessUnit->name)
 @section('content')
 @php $dept = $businessUnit->department; @endphp
 <a href="{{ route('admin.units.show', $dept) }}" class="inline-flex items-center gap-1.5 text-sm font-medium text-muted transition hover:text-primary-dark">
@@ -12,7 +12,7 @@
         <img src="{{ $businessUnit->imageUrl() }}" alt="{{ $businessUnit->name }}" class="h-14 w-20 rounded-xl object-cover">
     @endif
     <div>
-        <h1 class="text-2xl font-semibold">Edit Departemen</h1>
+        <h1 class="text-2xl font-semibold">Ubah Departemen</h1>
         <p class="text-sm text-muted">{{ $businessUnit->name }} · {{ $dept->name }}</p>
     </div>
 </div>

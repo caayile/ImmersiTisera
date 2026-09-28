@@ -71,7 +71,7 @@
 
         <div class="space-y-4">
             <div>
-                <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 1 — Shared Goal</p>
+                <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 1 — Tujuan Bersama</p>
                 <p class="mt-1">{{ $application->shared_goal ?: '—' }}</p>
             </div>
             <div>
@@ -79,32 +79,32 @@
                 <p class="mt-1 font-medium">{{ $application->activityTypeLabels() }}</p>
             </div>
             <div>
-                <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 3 — Problem / Opportunity</p>
+                <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 3 — Masalah atau Peluang</p>
                 <p class="mt-1">{{ $application->problem_statement ?: '—' }}</p>
             </div>
             <div>
-                <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 4 — Main Output</p>
+                <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 4 — Hasil Utama</p>
                 <p class="mt-1">{{ $application->main_output ?: '—' }}</p>
             </div>
             <div class="grid gap-4 sm:grid-cols-2">
                 <div>
-                    <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 5 — Benefit Dosen / TSU</p>
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 5 — Manfaat Dosen / TSU</p>
                     <p class="mt-1">{{ $application->participant_benefit ?: '—' }}</p>
                 </div>
                 <div>
-                    <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 5 — Benefit Unit Bisnis</p>
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 5 — Manfaat Unit Bisnis</p>
                     <p class="mt-1">{{ $application->business_benefit ?: '—' }}</p>
                 </div>
             </div>
             <div>
-                <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 6 — Success Indicators</p>
+                <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 6 — Indikator Keberhasilan</p>
                 @forelse($application->normalizedSuccessIndicators() as $index => $indicator)
                     <p class="mt-1">{{ $index + 1 }}. {{ $indicator }}</p>
                 @empty
                     <p class="mt-1">—</p>
                 @endforelse
                 @if($application->indicator_feedback)
-                    <p class="mt-2 text-muted"><b>Feedback indikator:</b> {{ $application->indicator_feedback }}</p>
+                    <p class="mt-2 text-muted"><b>Masukan indikator:</b> {{ $application->indicator_feedback }}</p>
                 @endif
             </div>
         </div>

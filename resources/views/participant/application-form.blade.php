@@ -254,7 +254,7 @@
                 </span>
                 <div>
                     <h2 class="text-lg font-semibold">Persetujuan Pemagangan</h2>
-                    <p class="mt-1 text-sm text-muted">Sebelum memulai program, peserta dan mentor perlu menyepakati tujuan, aktivitas, output, dari magang dosen.</p>
+                    <p class="mt-1 text-sm text-muted">Sebelum memulai program, dosen dan mentor perlu menyepakati tujuan, aktivitas, dan hasil yang ingin dicapai.</p>
                 </div>
             </div>
 
@@ -295,17 +295,17 @@
 
             <div class="mt-5 space-y-4">
                 <div class="rounded-2xl border border-line bg-bg p-4">
-                    <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 1 — Shared Goal</span>
+                    <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 1 — Tujuan Bersama</span>
                     <p class="mt-1 text-sm text-muted">Rumus sederhana: <b>Selama 2 bulan, kami akan [aktivitas] untuk menghasilkan [luaran] yang memberikan manfaat bagi [penerima manfaat].</b></p>
                     <label class="mt-3 block">
-                        <span class="text-sm font-medium">Shared Goal*</span>
+                        <span class="text-sm font-medium">Tujuan Bersama*</span>
                         <span class="mt-0.5 block text-xs text-muted">Tuliskan tujuan bersama dosen dan mentor secara spesifik dan terukur.</span>
                         <textarea name="shared_goal" rows="3" placeholder="Template: Selama 2 bulan, kami akan [aktivitas] untuk menghasilkan [luaran] yang memberikan manfaat bagi [penerima manfaat].&#10;&#10;Contoh: Selama 2 bulan, kami akan memetakan alur kerja layanan digital untuk menghasilkan teaching case yang memberikan manfaat bagi mahasiswa Informatika." class="mt-2 w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/15" {{ $disabled }} required minlength="20">{{ old('shared_goal', $application?->shared_goal) }}</textarea>
                     </label>
                 </div>
 
                 <div class="rounded-2xl border border-line bg-bg p-4">
-                    <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 2 — Activity</span>
+                    <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 2 — Aktivitas</span>
                     <p class="mt-1 text-sm font-medium">Peserta dan mentor menentukan aktivitas. Isi Pilihan 1 (wajib) dan Pilihan 2 bila ada aktivitas pendukung.</p>
                     @php
                         $activityChoices = array_pad(array_values((array) $checkedActivities), 2, '');
@@ -333,32 +333,32 @@
                 </div>
 
                 <div class="rounded-2xl border border-line bg-bg p-4">
-                    <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 3 — Problem / Opportunity</span>
+                    <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 3 — Masalah atau Peluang</span>
                     <label class="mt-1 block">
-                        <span class="text-sm font-medium">Problem / Opportunity Statement*</span>
+                        <span class="text-sm font-medium">Rumusan Masalah atau Peluang*</span>
                         <span class="mt-0.5 block text-xs text-muted">Jelaskan problem atau peluang yang akan menjadi fokus selama program magang dosen.</span>
                         <textarea name="problem_statement" rows="4" class="mt-2 w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/15" {{ $disabled }} required minlength="20">{{ old('problem_statement', $application?->problem_statement) }}</textarea>
                     </label>
                 </div>
 
                 <div class="rounded-2xl border border-line bg-bg p-4">
-                    <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 4 — Main Output</span>
+                    <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 4 — Hasil Utama</span>
                     <label class="mt-1 block">
-                        <span class="text-sm font-medium">Main Output*</span>
-                        <span class="mt-0.5 block text-xs text-muted">Apa hasil utama yang akan dihasilkan selama program? Misalnya: Research Report + Prototype Concept</span>
-                        <textarea name="main_output" rows="3" placeholder="Misalnya: Research Report + Prototype Concept" class="mt-2 w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/15" {{ $disabled }} required minlength="10">{{ old('main_output', $application?->main_output) }}</textarea>
+                        <span class="text-sm font-medium">Hasil Utama*</span>
+                        <span class="mt-0.5 block text-xs text-muted">Apa hasil utama yang akan dicapai selama program? Contoh: laporan penelitian dan rancangan prototipe.</span>
+                        <textarea name="main_output" rows="3" placeholder="Contoh: laporan penelitian dan rancangan prototipe" class="mt-2 w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/15" {{ $disabled }} required minlength="10">{{ old('main_output', $application?->main_output) }}</textarea>
                     </label>
                 </div>
 
                 <div class="rounded-2xl border border-line bg-bg p-4">
-                    <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 5 — Benefit</span>
+                    <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 5 — Manfaat</span>
                     <div class="mt-3 grid gap-4 sm:grid-cols-2">
                         <label class="block">
-                            <span class="text-sm font-medium">Benefit untuk Dosen / TSU*</span>
+                            <span class="text-sm font-medium">Manfaat untuk Dosen / TSU*</span>
                             <textarea name="participant_benefit" rows="3" class="mt-2 w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/15" {{ $disabled }} required minlength="20">{{ old('participant_benefit', $application?->participant_benefit) }}</textarea>
                         </label>
                         <label class="block">
-                            <span class="text-sm font-medium">Benefit untuk Unit Bisnis*</span>
+                            <span class="text-sm font-medium">Manfaat untuk Unit Bisnis*</span>
                             <textarea name="business_benefit" rows="3" class="mt-2 w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/15" {{ $disabled }} required minlength="20">{{ old('business_benefit', $application?->business_benefit) }}</textarea>
                         </label>
                     </div>
@@ -378,7 +378,7 @@
                         }
                     }"
                 >
-                    <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 6 — Success Indicators</span>
+                    <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 6 — Indikator Keberhasilan</span>
                     <p class="mt-1 text-sm font-medium">Isi minimal {{ \App\Models\Application::MIN_SUCCESS_INDICATORS }} indikator keberhasilan. Tambah baris bila perlu (maks. {{ \App\Models\Application::MAX_SUCCESS_INDICATORS }}).*</p>
                     <p class="mt-0.5 text-xs text-muted">Mentor dapat mengomentari berulang kali lewat minta revisi jika belum puas.</p>
                     <div class="mt-3 space-y-3">
@@ -422,7 +422,7 @@
                 @if($application)
                     <div class="rounded-2xl border border-line bg-bg p-4">
                         <label class="block">
-                            <span class="text-sm font-medium">Feedback untuk usulan mentor (opsional)</span>
+                            <span class="text-sm font-medium">Tanggapan atas usulan mentor (opsional)</span>
                             <span class="mt-0.5 block text-xs text-muted">Gunakan kolom ini untuk menanggapi perubahan indikator yang diusulkan mentor sebelum mengirim ulang.</span>
                             <textarea name="indicator_feedback" rows="3" class="mt-2 w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/15" {{ $disabled }}>{{ old('indicator_feedback', $application?->indicator_feedback) }}</textarea>
                         </label>

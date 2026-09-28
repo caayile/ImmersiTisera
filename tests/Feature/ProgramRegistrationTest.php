@@ -69,15 +69,15 @@ class ProgramRegistrationTest extends TestCase
             ->assertSee('Informasi Program')
             ->assertSee('Detail Peserta')
             ->assertSee('Detail Lokasi')
-            ->assertSee('Shared Goal')
+            ->assertSee('Tujuan Bersama')
             ->assertSee('Pilihan 1')
             ->assertSee('Pilihan 2')
             ->assertSee('Observasi')
             ->assertSee('Riset')
             ->assertDontSee('>Penugasan</', false)
             ->assertSee('Problem / Opportunity')
-            ->assertSee('Main Output')
-            ->assertSee('Success Indicators')
+            ->assertSee('Hasil Utama')
+            ->assertSee('Indikator Keberhasilan')
             ->assertSee('Tambah indikator')
             ->assertDontSee('Tanda tangan dosen')
             ->assertSee('Lanjut ke persetujuan pemagangan')
@@ -172,7 +172,7 @@ class ProgramRegistrationTest extends TestCase
             ->assertSee($application->letter_number)
             ->assertSee('Menunggu tinjauan admin')
             ->assertSee('Persetujuan Pemagangan')
-            ->assertSee('Shared Goal')
+            ->assertSee('Tujuan Bersama')
             ->assertSee('Observasi workflow digital')
             ->assertSee('Research Report + Prototype Concept')
             ->assertSee('Teaching case selesai dan divalidasi mentor')
@@ -204,7 +204,7 @@ class ProgramRegistrationTest extends TestCase
             ->assertSee('2026-09-10')
             ->assertSee('2026-11-10')
             ->assertSee('Persetujuan Pemagangan')
-            ->assertSee('Shared Goal')
+            ->assertSee('Tujuan Bersama')
             ->assertDontSee('Kirim pendaftaran')
             ->assertDontSee('Kirim ulang ke admin');
     }
@@ -600,7 +600,7 @@ class ProgramRegistrationTest extends TestCase
             ->get(route('participant.applications.edit', $application))
             ->assertOk()
             ->assertSee('Prototype tervalidasi bersama tim industri')
-            ->assertSee('Feedback untuk usulan mentor');
+            ->assertSee('Tanggapan atas usulan mentor');
 
         $this->actingAs($dosen)
             ->put(route('participant.applications.update', $application), [

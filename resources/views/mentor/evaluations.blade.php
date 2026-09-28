@@ -7,8 +7,8 @@
 </div>
 <div class="mt-6" x-data="{ tab: 'given' }">
     <div class="grid grid-cols-2 gap-1 rounded-xl border border-line bg-white p-1 text-sm font-semibold">
-        <button type="button" @click="tab = 'given'" :class="tab === 'given' ? 'rounded-lg bg-primary/12 text-primary-dark' : 'rounded-lg text-muted hover:text-ink'" class="px-4 py-2.5 transition">Feedback untuk peserta</button>
-        <button type="button" @click="tab = 'received'" :class="tab === 'received' ? 'rounded-lg bg-primary/12 text-primary-dark' : 'rounded-lg text-muted hover:text-ink'" class="px-4 py-2.5 transition">Feedback Dari Peserta</button>
+        <button type="button" @click="tab = 'given'" :class="tab === 'given' ? 'rounded-lg bg-primary/12 text-primary-dark' : 'rounded-lg text-muted hover:text-ink'" class="px-4 py-2.5 transition">Penilaian untuk peserta</button>
+        <button type="button" @click="tab = 'received'" :class="tab === 'received' ? 'rounded-lg bg-primary/12 text-primary-dark' : 'rounded-lg text-muted hover:text-ink'" class="px-4 py-2.5 transition">Penilaian dari peserta</button>
     </div>
 
     <div class="mt-4 flex flex-col gap-3 md:flex-row md:items-center">

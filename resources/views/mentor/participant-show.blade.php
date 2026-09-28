@@ -6,18 +6,18 @@
 <div class="mt-4 flex flex-wrap gap-3 text-sm">
     <x-badge :status="$program->status" />
     <span>{{ $program->businessUnit->name }}</span>
-    <span>Week {{ $program->current_week }}</span>
+    <span>Minggu {{ $program->current_week }}</span>
 </div>
 <div class="mt-6 grid gap-4 lg:grid-cols-2">
     <article class="rounded-2xl border border-line bg-white p-5 text-sm">
-        <h2 class="font-semibold">Agreement</h2>
+        <h2 class="font-semibold">Perjanjian</h2>
         <p class="mt-2">{{ $program->agreement?->objective }}</p>
         <x-badge class="mt-3" :status="$program->agreement?->status ?? 'draft'" />
     </article>
     <article class="rounded-2xl border border-line bg-white p-5 text-sm">
         <h2 class="font-semibold">Logbook terbaru</h2>
         @foreach($program->logbooks->take(3) as $log)
-            <p class="mt-2">{{ $log->date->format('d M') }} · {{ $log->activity }} · {{ $log->status }}</p>
+            <p class="mt-2">{{ $log->date->format('d M') }} · {{ $log->activity }} · {{ \App\Support\Status::label($log->status) }}</p>
         @endforeach
     </article>
 </div>

@@ -20,7 +20,7 @@
             'no' => '03',
             'fase' => 'FASE 3',
             'title' => 'INTERAKSI',
-            'copy' => 'Mentoring 30 menit setiap minggu plus logbook digital harian sebagai rekam jejak pembelajaran.',
+            'copy' => 'Pendampingan 30 menit setiap minggu serta logbook digital harian sebagai rekam jejak pembelajaran.',
             'icon' => 'forum',
             'meta' => 'Pemeriksaan Mingguan 30 Menit',
         ],

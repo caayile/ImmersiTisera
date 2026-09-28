@@ -23,7 +23,7 @@ class LogbookReviewTest extends TestCase
             ->assertSee('Dr. Andi Pratama')
             ->assertSee('Digital Business')
             ->assertSee('TSPM')
-            ->assertSee('Lihat detail')
+            ->assertSee('Lihat rincian')
             ->assertDontSee('Dr. Maya Kusuma');
 
         $program = Program::whereHas('participant.user', fn ($query) => $query->where('name', 'Dr. Andi Pratama'))->firstOrFail();
@@ -32,7 +32,7 @@ class LogbookReviewTest extends TestCase
             ->get(route('mentor.logbooks.show', $program))
             ->assertOk()
             ->assertSee('Orientation Digital Business')
-            ->assertSee('Tulis feedback')
+            ->assertSee('Tulis masukan atau langkah berikutnya')
             ->assertSee('Hadir disetujui');
     }
 

@@ -4,7 +4,7 @@
 <div class="flex flex-wrap items-start justify-between gap-3">
     <div>
         <h1 class="text-2xl font-semibold">Laporan Akhir</h1>
-        <p class="mt-1 text-sm text-muted">Laporan akhir terkait agreement dan output utama program.</p>
+        <p class="mt-1 text-sm text-muted">Laporan akhir terkait perjanjian dan hasil utama program.</p>
     </div>
     @if($program)
         <button id="report-modal-open" type="button" class="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-dark">
@@ -72,7 +72,7 @@
             <select name="level" class="mt-1 w-full rounded-lg border border-line px-4 py-2.5 text-sm">
                 <option value="">— Pilih level —</option>
                 @for($level = 0; $level <= 4; $level++)
-                    <option value="{{ $level }}" @selected((string) old('level') === (string) $level)>Level {{ $level }} — {{ \App\Support\Status::COLLABORATION_LEVELS[$level] }}: {{ \App\Support\Status::COLLABORATION_LEVEL_DESCRIPTIONS[$level] }}</option>
+                    <option value="{{ $level }}" @selected((string) old('level') === (string) $level)>Tahap {{ $level }} — {{ \App\Support\Status::collaborationLevelLabel($level) }}: {{ \App\Support\Status::COLLABORATION_LEVEL_DESCRIPTIONS[$level] }}</option>
                 @endfor
             </select>
         </div>

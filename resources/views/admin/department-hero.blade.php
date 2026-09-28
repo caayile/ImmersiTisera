@@ -9,22 +9,22 @@
 
     <form method="POST" action="{{ route('admin.department-hero.background') }}" enctype="multipart/form-data" class="mt-6 space-y-4 rounded-2xl border border-line bg-white p-6">
         @csrf
-        <h2 class="font-semibold">Background kampus</h2>
+        <h2 class="font-semibold">Latar belakang kampus</h2>
         @if($setting->backgroundUrl())
-            <img src="{{ $setting->backgroundUrl() }}" alt="Background kampus" class="h-40 w-full rounded-xl object-cover">
+            <img src="{{ $setting->backgroundUrl() }}" alt="Latar belakang kampus" class="h-40 w-full rounded-xl object-cover">
         @endif
         <div class="grid gap-3 md:grid-cols-2">
             <label class="text-xs font-semibold uppercase tracking-wide text-muted">Judul
                 <input name="title" value="{{ old('title', $setting->title) }}" class="mt-2 w-full rounded-lg border border-line px-3 py-2 text-sm" required>
             </label>
-            <label class="text-xs font-semibold uppercase tracking-wide text-muted">Ganti foto background
+            <label class="text-xs font-semibold uppercase tracking-wide text-muted">Ganti foto latar belakang
                 <input type="file" name="background" accept="image/*" class="mt-2 w-full rounded-lg border border-line px-3 py-2 text-sm">
             </label>
-            <label class="text-xs font-semibold uppercase tracking-wide text-muted md:col-span-2">Subtitle
+            <label class="text-xs font-semibold uppercase tracking-wide text-muted md:col-span-2">Subjudul
                 <input name="subtitle" value="{{ old('subtitle', $setting->subtitle) }}" class="mt-2 w-full rounded-lg border border-line px-3 py-2 text-sm">
             </label>
         </div>
-        <button class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white">Simpan background</button>
+        <button class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white">Simpan latar belakang</button>
     </form>
 
     <form method="POST" action="{{ route('admin.department-hero.slides.store') }}" enctype="multipart/form-data" class="mt-6 grid gap-3 rounded-2xl border border-line bg-white p-6 md:grid-cols-2">

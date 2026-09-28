@@ -66,7 +66,6 @@
                 @endif
                 <x-user-menu />
             @else
-                <a href="{{ route('register') }}" class="inline-flex items-center rounded-full border border-ink px-4 py-2 font-medium">+ Pendaftaran</a>
                 <a href="{{ route('login') }}" class="rounded-full bg-primary px-4 py-2 font-semibold text-white">Masuk</a>
             @endauth
             <button class="rounded-lg border border-line px-3 py-1 md:hidden" @click="open = !open">Menu</button>
@@ -84,7 +83,6 @@
                 <button class="block py-2">Keluar</button>
             </form>
         @else
-            <a href="{{ route('register') }}" class="block py-2">Pendaftaran</a>
             <a href="{{ route('login') }}" class="block py-2">Masuk</a>
         @endauth
     </div>

@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\BusinessUnit;
 use App\Models\Department;
+use App\Models\MediaAsset;
+use App\Models\News;
 use App\Models\Program;
 use App\Models\ProgramOutput;
 use App\Models\User;
@@ -23,7 +25,7 @@ class ImersiSmokeTest extends TestCase
         $this->actingAs(User::where('email', 'dosen@imersi.id')->firstOrFail())
             ->get(route('participant.outputs'))
             ->assertOk()
-            ->assertSee('Output & Evidence', false);
+            ->assertSee('Hasil dan Bukti', false);
 
         $this->actingAs(User::where('email', 'dosen@imersi.id')->firstOrFail())
             ->get(route('participant.final-report'))
@@ -33,7 +35,7 @@ class ImersiSmokeTest extends TestCase
         $this->actingAs(User::where('email', 'mentor@imersi.id')->firstOrFail())
             ->get(route('mentor.outputs'))
             ->assertOk()
-            ->assertSee('Validasi Output', false);
+            ->assertSee('Validasi Hasil', false);
     }
 
     public function test_outputs_pages_show_history_across_cycles(): void
@@ -105,7 +107,7 @@ class ImersiSmokeTest extends TestCase
             ->assertSee('Lihat Hasil')
             ->assertSee('2023')
             ->assertSee('https://example.com/hasil-lama', false)
-            ->assertSee('Collaborate');
+            ->assertSee('Kolaborasi');
     }
 
     public function test_final_report_form_saves_explicit_metadata_and_level(): void
@@ -265,8 +267,8 @@ class ImersiSmokeTest extends TestCase
         $this->actingAs(User::where('email', 'mentor@imersi.id')->firstOrFail())
             ->get(route('mentor.evaluations'))
             ->assertOk()
-            ->assertSee('Feedback Dari Peserta')
-            ->assertSee('Feedback untuk peserta')
+            ->assertSee('Penilaian dari peserta')
+            ->assertSee('Penilaian untuk peserta')
             ->assertSee('Mentor sangat membantu.');
     }
 
@@ -330,7 +332,7 @@ class ImersiSmokeTest extends TestCase
             ->assertSee('Dr. Andi')
             ->assertSee('dosen@imersi.id')
             ->assertDontSee('Riwayat Pendaftaran')
-            ->assertSee('Dasbor program')
+            ->assertSee('Ringkasan program')
             ->assertDontSee('Pilih mitra magang dosen Anda');
 
         $this->actingAs(User::where('email', 'mentor@imersi.id')->first())
@@ -434,18 +436,65 @@ class ImersiSmokeTest extends TestCase
     {
         $this->seed();
 
-        $this->actingAs(User::where('email', 'admin@imersi.id')->first())
+        $admin = User::where('email', 'admin@imersi.id')->firstOrFail();
+        $image = UploadedFile::fake()->image('cover.jpg', 1200, 700);
+        $imageContents = file_get_contents($image->getRealPath());
+
+        $this->actingAs($admin)
+            ->get('/admin/news')
+            ->assertOk()
+            ->assertSee('name="cover_image"', false);
+
+        $this->actingAs($admin)
             ->post('/admin/news', [
                 'title' => 'Berita uji admin',
                 'excerpt' => 'Ringkasan singkat berita uji.',
                 'body' => 'Isi lengkap berita uji untuk memastikan admin bisa menambah berita.',
                 'category' => 'Pengumuman',
                 'status' => 'published',
+                'cover_image' => $image,
             ])
             ->assertRedirect();
 
-        $this->get('/berita')->assertOk()->assertSee('Berita uji admin');
-        $this->get('/berita/berita-uji-admin')->assertOk()->assertSee('Isi lengkap berita uji');
+        $news = News::where('slug', 'berita-uji-admin')->firstOrFail();
+        $coverId = substr($news->cover_image, strlen('database-media/'));
+        $this->assertSame($imageContents, MediaAsset::findOrFail($coverId)->binaryContent());
+
+        $this->get('/berita')
+            ->assertOk()
+            ->assertSee('Berita uji admin')
+            ->assertSee(route('media.show', $coverId), false);
+        $this->get('/')->assertOk()->assertSee(route('media.show', $coverId), false);
+        $this->get('/berita/berita-uji-admin')
+            ->assertOk()
+            ->assertSee('Isi lengkap berita uji')
+            ->assertSee('Kembali ke Daftar Berita')
+            ->assertSee('Bagikan artikel ini:')
+            ->assertSee(route('media.show', $coverId), false);
+
+        $oldCoverId = $coverId;
+        $this->actingAs($admin)
+            ->put(route('admin.news.update', $news), [
+                'title' => 'Berita uji admin',
+                'excerpt' => 'Ringkasan singkat berita uji.',
+                'body' => 'Isi lengkap berita uji untuk memastikan admin bisa menambah berita.',
+                'category' => 'Pengumuman',
+                'status' => 'published',
+                'cover_image' => UploadedFile::fake()->image('cover-baru.jpg', 1200, 700),
+            ])
+            ->assertRedirect();
+
+        $news->refresh();
+        $coverId = substr($news->cover_image, strlen('database-media/'));
+        $this->assertDatabaseMissing('media_assets', ['id' => $oldCoverId]);
+        $this->assertModelExists(MediaAsset::findOrFail($coverId));
+        $this->get('/berita/berita-uji-admin')->assertOk()->assertSee(route('media.show', $coverId), false);
+
+        $this->actingAs($admin)
+            ->delete(route('admin.news.destroy', $news))
+            ->assertRedirect();
+
+        $this->assertDatabaseMissing('media_assets', ['id' => $coverId]);
     }
 
     public function test_api_login_returns_token(): void

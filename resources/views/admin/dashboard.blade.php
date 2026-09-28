@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Admin Overview')
+@section('title', 'Ringkasan Pengelola')
 @section('content')
 <h1 class="text-2xl font-semibold">Ringkasan Pengelola Program</h1>
 <div class="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -25,7 +25,7 @@
     new Chart(document.getElementById('statusChart'), {
         type: 'doughnut',
         data: {
-            labels: @json(array_keys($statusCounts->toArray())),
+            labels: @json(collect(array_keys($statusCounts->toArray()))->map(fn ($status) => \App\Support\Status::label($status))->all()),
             datasets: [{ data: @json(array_values($statusCounts->toArray())), backgroundColor: ['#5EC69D','#7DD8B5','#f59e0b','#38bdf8','#94a3b8','#ef4444'] }]
         }
     });

@@ -42,12 +42,12 @@ class AdminController extends Controller
             'stats' => [
                 'Peserta' => Participant::count(),
                 'Mentor' => Mentor::count(),
-                'Department' => Department::count(),
+                'Unit bisnis' => Department::count(),
                 'Unit Bisnis' => BusinessUnit::count(),
                 'Program aktif' => Program::where('status', 'active')->count(),
-                'Completed' => Program::where('status', 'completed')->count(),
-                'Pending approval' => Application::whereIn('status', ['submitted', 'waiting_admin'])->count() + Agreement::where('status', 'submitted')->count(),
-                'Dengan output' => Program::whereHas('outputs')->count(),
+                'Program selesai' => Program::where('status', 'completed')->count(),
+                'Menunggu persetujuan' => Application::whereIn('status', ['submitted', 'waiting_admin'])->count() + Agreement::where('status', 'submitted')->count(),
+                'Program dengan hasil' => Program::whereHas('outputs')->count(),
             ],
             'statusCounts' => Program::selectRaw('status, count(*) as total')->groupBy('status')->pluck('total', 'status'),
             'logbookCompliance' => Program::where('status', 'active')->count()
@@ -760,11 +760,13 @@ class AdminController extends Controller
             'category' => ['nullable', 'string', 'max:80'],
             'status' => ['required', Rule::in(['draft', 'published'])],
             'published_at' => ['nullable', 'date'],
+            'cover_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ]);
 
         News::create([
             ...$data,
             'slug' => News::makeSlug($data['title']),
+            'cover_image' => $request->hasFile('cover_image') ? $this->mediaStorage->store($request->file('cover_image')) : null,
             'category' => $data['category'] ?: 'Umum',
             'excerpt' => $data['excerpt'] ?: Str::limit(strip_tags($data['body']), 160),
             'published_at' => $data['status'] === 'published'
@@ -785,9 +787,12 @@ class AdminController extends Controller
             'category' => ['nullable', 'string', 'max:80'],
             'status' => ['required', Rule::in(['draft', 'published'])],
             'published_at' => ['nullable', 'date'],
+            'cover_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ]);
 
-        $news->update([
+        $previousCoverImage = $news->cover_image;
+        $hasNewCoverImage = $request->hasFile('cover_image');
+        $payload = [
             ...$data,
             'slug' => News::makeSlug($data['title'], $news->id),
             'category' => $data['category'] ?: 'Umum',
@@ -795,24 +800,37 @@ class AdminController extends Controller
             'published_at' => $data['status'] === 'published'
                 ? ($data['published_at'] ?? $news->published_at ?? now())
                 : ($data['published_at'] ?? null),
-        ]);
+        ];
+
+        if ($hasNewCoverImage) {
+            $payload['cover_image'] = $this->mediaStorage->store($request->file('cover_image'));
+        } else {
+            unset($payload['cover_image']);
+        }
+
+        $news->update($payload);
+        if ($hasNewCoverImage) {
+            $this->mediaStorage->deleteIfUnreferenced($previousCoverImage);
+        }
 
         return back()->with('status', 'Berita diperbarui.');
     }
 
     public function destroyNews(News $news)
     {
+        $coverImage = $news->cover_image;
         $news->delete();
+        $this->mediaStorage->deleteIfUnreferenced($coverImage);
 
         return back()->with('status', 'Berita dihapus.');
     }
 
     public function completeProgram(Program $program)
     {
-        abort_unless($program->canComplete(), 422, 'Main output, laporan akhir, dan evaluasi harus selesai.');
+        abort_unless($program->canComplete(), 422, 'Hasil utama, laporan akhir, dan evaluasi harus selesai.');
         $program->update(['status' => 'completed', 'progress' => 100]);
-        $program->participant->user->notify(new ImersiAlert('Program completed', 'Lanjutkan ke after-magang collaboration.', route('participant.collaboration')));
+        $program->participant->user->notify(new ImersiAlert('Program selesai', 'Tentukan tindak lanjut kolaborasi setelah magang.', route('participant.collaboration')));
 
-        return back()->with('status', 'Program ditandai completed.');
+        return back()->with('status', 'Program ditandai selesai.');
     }
 }

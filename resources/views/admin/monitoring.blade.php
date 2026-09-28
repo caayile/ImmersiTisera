@@ -7,13 +7,13 @@
     <input name="q" value="{{ request('q') }}" placeholder="Cari nama peserta" class="rounded-lg border border-line px-3 py-2 text-sm">
     <select name="department_id" onchange="this.form.submit()" class="rounded-lg border border-line px-3 py-2 text-sm"><option value="">Semua unit bisnis</option>@foreach($departments as $department)<option value="{{ $department->id }}" @selected(request('department_id') == $department->id)>{{ $department->name }}</option>@endforeach</select>
     <select name="business_unit_id" onchange="this.form.submit()" class="rounded-lg border border-line px-3 py-2 text-sm"><option value="">Semua departemen</option>@foreach($businessUnits as $businessUnit)<option value="{{ $businessUnit->id }}" @selected(request('business_unit_id') == $businessUnit->id)>{{ $businessUnit->name }}</option>@endforeach</select>
-    <select name="status" onchange="this.form.submit()" class="rounded-lg border border-line px-3 py-2 text-sm"><option value="">Semua status logbook</option>@foreach(['submitted' => 'Menunggu review', 'reviewed' => 'Reviewed', 'revision' => 'Perlu revisi', 'approved' => 'Disetujui'] as $value => $label)<option value="{{ $value }}" @selected(request('status') === $value)>{{ $label }}</option>@endforeach</select>
+    <select name="status" onchange="this.form.submit()" class="rounded-lg border border-line px-3 py-2 text-sm"><option value="">Semua status logbook</option>@foreach(['submitted' => 'Menunggu pemeriksaan', 'reviewed' => 'Sudah diperiksa', 'revision' => 'Perlu revisi', 'approved' => 'Disetujui'] as $value => $label)<option value="{{ $value }}" @selected(request('status') === $value)>{{ $label }}</option>@endforeach</select>
     <button class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white md:col-span-4 md:justify-self-end">Terapkan filter</button>
 </form>
 <div class="mt-6 space-y-3">
 @forelse($programs as $program)
 <a href="{{ route('admin.monitoring.show', $program) }}" class="block rounded-2xl border border-line bg-white p-4 text-sm transition hover:border-primary hover:shadow-sm">
-    <div class="flex flex-wrap items-center justify-between gap-3"><div><p class="font-semibold">{{ $program->participant->user->name }}</p><p class="mt-1 text-xs text-muted">{{ $program->businessUnit?->name ?? '-' }} · {{ $program->department?->name ?? '-' }}</p></div><span class="rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white">Lihat detail</span></div>
+    <div class="flex flex-wrap items-center justify-between gap-3"><div><p class="font-semibold">{{ $program->participant->user->name }}</p><p class="mt-1 text-xs text-muted">{{ $program->businessUnit?->name ?? '-' }} · {{ $program->department?->name ?? '-' }}</p></div><span class="rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white">Lihat rincian</span></div>
 </a>
 @empty
     <x-empty title="Tidak ada logbook" />

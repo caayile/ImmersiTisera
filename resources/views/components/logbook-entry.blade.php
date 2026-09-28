@@ -47,11 +47,11 @@
             <p class="mt-1 rounded-lg border border-line bg-bg/60 px-4 py-2.5">{{ $log->value ?: '—' }}</p>
         </div>
         <div>
-            <p class="text-xs font-medium text-muted">Output hari ini</p>
+            <p class="text-xs font-medium text-muted">Hasil hari ini</p>
             <p class="mt-1 rounded-lg border border-line bg-bg/60 px-4 py-2.5">{{ $log->next_action ?: '—' }}</p>
         </div>
         @if($log->mentor_feedback)
-            <p class="text-primary-dark"><b>Feedback mentor:</b> {{ $log->mentor_feedback }}</p>
+            <p class="text-primary-dark"><b>Masukan mentor:</b> {{ $log->mentor_feedback }}</p>
         @endif
     </div>
 </article>

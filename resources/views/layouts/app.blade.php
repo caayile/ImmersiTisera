@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@yield('title', 'Dashboard') Magang Dosen</title>
+    <title>@yield('title', 'Ringkasan') Magang Dosen</title>
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -39,7 +39,7 @@
             ['Program Aktif', 'mentor.programs'],
             ['Perjanjian Magang Dosen', 'mentor.agreements'],
             ['Linimasa & Pemeriksaan', 'mentor.timeline'],
-            ['Review Logbook', 'mentor.logbooks'],
+            ['Pemeriksaan Logbook', 'mentor.logbooks'],
             ['Pendampingan', 'mentor.mentoring'],
             ['Hasil & Bukti', 'mentor.outputs'],
             ['Evaluasi', 'mentor.evaluations'],
@@ -132,7 +132,7 @@
                 <span class="material-symbols-outlined text-[20px]">{{ $role === 'admin' ? 'admin_panel_settings' : ($role === 'mentor' ? 'support_agent' : 'school') }}</span>
             </span>
             <div class="min-w-0">
-                <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9ce1c2]">Area {{ $role === 'admin' ? 'Pengelola' : ($role === 'mentor' ? 'Mentor' : 'Dosen') }}</p>
+                <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9ce1c2]">Area {{ $role === 'admin' ? 'Pengelola' : ($role === 'mentor' ? 'Pendamping' : 'Dosen') }}</p>
                 <p class="mt-0.5 truncate text-sm font-medium">{{ $authUser->name }}</p>
             </div>
         </div>
@@ -192,7 +192,7 @@
                             type="search"
                             name="q"
                             value="{{ request('q') }}"
-                            placeholder="Cari mitra atau unit bisnis di sini..."
+                            placeholder="Cari mitra atau unit bisnis..."
                             class="w-full rounded-full border border-line bg-bg py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/15"
                         >
                     </label>

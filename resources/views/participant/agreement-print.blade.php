@@ -93,7 +93,7 @@
 
         <div class="judul">
             <h2>PERJANJIAN MAGANG DOSEN</h2>
-            <p>No. {{ $agreement->letter_number ?? '____/MD/TSU/TS/__-____' }}</p>
+            <p>Nomor {{ $agreement->letter_number ?? '____/MD/TSU/TS/__-____' }}</p>
         </div>
 
         <p class="isi">Pada hari ini, {{ $hari }}, tanggal {{ $tgl }} bulan {{ $bln }} tahun {{ $thn }}, kami yang bertanda tangan di bawah ini masing-masing:</p>
@@ -213,7 +213,7 @@
             </tr>
         </table>
 
-        <p class="catatan">Catatan: Dokumen ini merupakan template baku Perjanjian Magang Dosen. Seluruh data terisi otomatis sesuai data pendaftaran, kesepakatan kerja (Agreement), dan persetujuan digital PARA PIHAK di dalam sistem.</p>
+        <p class="catatan">Catatan: Dokumen ini merupakan templat baku Perjanjian Magang Dosen. Seluruh data terisi otomatis sesuai data pendaftaran, kesepakatan kerja, dan persetujuan digital PARA PIHAK di dalam sistem.</p>
     </main>
 </body>
 </html>

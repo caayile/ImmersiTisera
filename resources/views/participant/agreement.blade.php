@@ -1,11 +1,11 @@
 @extends('layouts.app')
-@section('title', 'Agreement')
+@section('title', 'Perjanjian')
 @section('content')
 <h1 class="text-2xl font-semibold">Perjanjian Magang Dosen</h1>
 @unless($program)
-    <x-empty class="mt-6" title="Agreement belum tersedia">Agreement dibuat setelah matching disetujui.</x-empty>
+    <x-empty class="mt-6" title="Perjanjian belum tersedia">Perjanjian dibuat setelah penempatan disetujui.</x-empty>
 @else
-<p class="mt-2 text-sm text-muted">Program tidak menjadi ACTIVE sebelum agreement berstatus AGREED.</p>
+<p class="mt-2 text-sm text-muted">Program baru dimulai setelah perjanjian disepakati.</p>
 <div class="mt-4 flex flex-wrap items-center gap-3">
     <x-badge :status="$agreement?->status ?? 'draft'" />
     @if($agreement?->revision_note)
@@ -61,10 +61,10 @@
     <label class="block text-xs font-semibold uppercase tracking-wide text-muted">Aktivitas peserta
         <textarea name="activities" rows="3" class="mt-2 w-full rounded-lg border border-line px-4 py-2.5 text-sm" required>{{ old('activities', $agreement->activities) }}</textarea>
     </label>
-    <label class="block text-xs font-semibold uppercase tracking-wide text-muted">Problem / opportunity statement
+    <label class="block text-xs font-semibold uppercase tracking-wide text-muted">Rumusan masalah atau peluang
         <textarea name="problem_statement" rows="3" class="mt-2 w-full rounded-lg border border-line px-4 py-2.5 text-sm" required>{{ old('problem_statement', $agreement->problem_statement) }}</textarea>
     </label>
-    <label class="block text-xs font-semibold uppercase tracking-wide text-muted">Main output
+    <label class="block text-xs font-semibold uppercase tracking-wide text-muted">Hasil utama
         <input name="main_output" value="{{ old('main_output', $agreement->main_output) }}" class="mt-2 w-full rounded-lg border border-line px-4 py-2.5 text-sm" required>
     </label>
     <div class="grid gap-4 md:grid-cols-2">
@@ -77,7 +77,7 @@
     </div>
     @php $indicators = old('success_indicators', $agreement->success_indicators ?? ['','','']); @endphp
     @for($i = 0; $i < 3; $i++)
-        <label class="block text-xs font-semibold uppercase tracking-wide text-muted">Success indicator {{ $i+1 }}
+        <label class="block text-xs font-semibold uppercase tracking-wide text-muted">Indikator keberhasilan {{ $i+1 }}
             <input name="success_indicators[]" value="{{ $indicators[$i] ?? '' }}" class="mt-2 w-full rounded-lg border border-line px-4 py-2.5 text-sm" @required($i === 0)>
         </label>
     @endfor
@@ -100,8 +100,8 @@
     <div class="mt-6 space-y-3 rounded-2xl border border-line bg-white p-6 text-sm">
         <p><b>Tujuan:</b> {{ $agreement?->objective }}</p>
         <p><b>Aktivitas:</b> {{ $agreement?->activities }}</p>
-        <p><b>Problem:</b> {{ $agreement?->problem_statement }}</p>
-        <p><b>Output:</b> {{ $agreement?->main_output }}</p>
+        <p><b>Masalah:</b> {{ $agreement?->problem_statement }}</p>
+        <p><b>Hasil utama:</b> {{ $agreement?->main_output }}</p>
         <p>Persetujuan peserta: {{ $agreement?->participant_approved_at?->format('d M Y H:i') ?? '—' }}</p>
         <p>Persetujuan mentor: {{ $agreement?->mentor_approved_at?->format('d M Y H:i') ?? '—' }}</p>
         @if(filled($agreement?->letter_number))

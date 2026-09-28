@@ -11,7 +11,7 @@
             'submitted' => ['Pendaftaran menunggu tinjauan admin.', route('participant.applications.show', $application)],
             'waiting_mentor' => ['Menunggu persetujuan mentor industri.', route('participant.applications.show', $application)],
             'waiting_admin' => ['Menunggu pengesahan akhir dari admin.', route('participant.applications.show', $application)],
-            'revision' => ['Perbaiki form pendaftaran sesuai catatan reviewer.', route('participant.applications.edit', $application)],
+            'revision' => ['Perbaiki formulir pendaftaran sesuai catatan peninjau.', route('participant.applications.edit', $application)],
             'rejected' => ['Pendaftaran ditolak. Ajukan program lain jika masih relevan.', route('participant.applications')],
             'approved' => ['Pendaftaran disetujui. Lanjutkan ke perjanjian magang dosen.', route('participant.agreement')],
             default => $next,
@@ -104,7 +104,7 @@
         ['work_history', 'Total Magang', $stats['programs'] ?? 0, 'Siklus', route('participant.program')],
         ['edit_note', 'Entri Logbook', $stats['logbooks'] ?? 0, 'Entri', route('participant.logbooks')],
         ['forum', 'Sesi Mentoring', $stats['mentorings'] ?? 0, 'Sesi', route('participant.mentoring')],
-        ['folder_special', 'Hasil', $stats['outputs'] ?? 0, 'Output', route('participant.outputs')],
+        ['folder_special', 'Hasil', $stats['outputs'] ?? 0, 'Berkas', route('participant.outputs')],
     ] as [$icon, $title, $count, $unit, $url])
         <a href="{{ $url }}" class="rounded-2xl border border-line bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary hover:shadow-md">
             <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary-dark">

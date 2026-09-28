@@ -14,9 +14,9 @@
     ];
 
     if ($user->isParticipant()) {
-        $items[] = ['Dasbor program', route('participant.applications'), 'space_dashboard'];
+        $items[] = ['Ringkasan program', route('participant.applications'), 'space_dashboard'];
     } elseif ($user->isMentor()) {
-        $items[] = ['Dasbor program', route('mentor.dashboard'), 'space_dashboard'];
+        $items[] = ['Ringkasan program', route('mentor.dashboard'), 'space_dashboard'];
     } else {
         $items[] = ['Dasbor', route('admin.dashboard'), 'space_dashboard'];
     }

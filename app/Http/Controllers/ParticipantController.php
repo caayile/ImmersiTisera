@@ -299,9 +299,9 @@ class ParticipantController extends Controller
             'mentor_approved_at' => null,
             'mentor_signature' => null,
         ]);
-        $program->mentor->user->notify(new ImersiAlert('Agreement diajukan', 'Menunggu persetujuan mentor.', route('mentor.agreements')));
+        $program->mentor->user->notify(new ImersiAlert('Perjanjian diajukan', 'Menunggu persetujuan mentor.', route('mentor.agreements')));
 
-        return back()->with('status', 'Agreement diajukan ke mentor.');
+        return back()->with('status', 'Perjanjian diajukan ke mentor.');
     }
 
     public function timeline(Request $request)
@@ -422,13 +422,13 @@ class ParticipantController extends Controller
 
         if ($existing) {
             $existing->update($payload);
-            $program->mentor->user->notify(new ImersiAlert('Logbook diperbarui', 'Ada perubahan logbook menunggu review.', route('mentor.logbooks')));
+            $program->mentor->user->notify(new ImersiAlert('Logbook diperbarui', 'Ada perubahan logbook yang menunggu pemeriksaan.', route('mentor.logbooks')));
 
             return back()->with('status', 'Logbook diperbarui.');
         }
 
         $program->logbooks()->create($payload);
-        $program->mentor->user->notify(new ImersiAlert('Logbook baru', 'Ada logbook menunggu review.', route('mentor.logbooks')));
+        $program->mentor->user->notify(new ImersiAlert('Logbook baru', 'Ada logbook yang menunggu pemeriksaan.', route('mentor.logbooks')));
 
         return back()->with('status', 'Logbook dikirim.');
     }
@@ -535,9 +535,9 @@ class ParticipantController extends Controller
                 ['level' => (int) $data['level']]
             );
         }
-        $program->mentor->user->notify(new ImersiAlert('Output dikirim', $data['title'].' menunggu validasi.', route('mentor.outputs')));
+        $program->mentor->user->notify(new ImersiAlert('Hasil dikirim', $data['title'].' menunggu validasi.', route('mentor.outputs')));
 
-        return back()->with('status', 'Output dikirim.');
+        return back()->with('status', 'Hasil dikirim.');
     }
 
     /**

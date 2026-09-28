@@ -75,7 +75,7 @@
                 @if($canReview)
                     <form method="POST" action="{{ route('mentor.logbooks.review', $log) }}" class="grid gap-2 rounded-xl border border-line bg-bg/60 p-3">
                         @csrf
-                        <input name="mentor_feedback" value="{{ $log->mentor_feedback }}" placeholder="Tulis feedback / langkah berikutnya" class="w-full rounded-lg border border-line px-3 py-2 text-sm">
+                        <input name="mentor_feedback" value="{{ $log->mentor_feedback }}" placeholder="Tulis masukan atau langkah berikutnya" class="w-full rounded-lg border border-line px-3 py-2 text-sm">
                         <div class="flex flex-col gap-2 sm:flex-row">
                             <select name="status" class="w-full flex-1 rounded-lg border border-line px-3 py-2 text-sm">
                                 <option value="reviewed" @selected($log->status === 'reviewed')>Ditinjau</option>
@@ -86,7 +86,7 @@
                         </div>
                     </form>
                 @elseif($log->mentor_feedback)
-                    <div class="rounded-xl border border-line bg-bg/60 p-3 text-sm"><p class="font-semibold">Feedback mentor</p><p class="mt-1">{{ $log->mentor_feedback }}</p></div>
+                    <div class="rounded-xl border border-line bg-bg/60 p-3 text-sm"><p class="font-semibold">Masukan mentor</p><p class="mt-1">{{ $log->mentor_feedback }}</p></div>
                 @endif
             @endforeach
         </div>

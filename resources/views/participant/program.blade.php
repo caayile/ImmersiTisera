@@ -16,16 +16,16 @@
             <div><dt class="text-muted">Departemen</dt><dd>{{ $program->businessUnit->name }}</dd></div>
             <div><dt class="text-muted">Mentor</dt><dd>{{ $program->mentor->user->name }}</dd></div>
             <div><dt class="text-muted">Periode</dt><dd>{{ $program->start_date?->format('d M Y') ?? '—' }} – {{ $program->end_date?->format('d M Y') ?? '—' }}</dd></div>
-            <div><dt class="text-muted">Progress</dt><dd>{{ $program->progress }}% · Minggu {{ $program->current_week }}</dd></div>
+            <div><dt class="text-muted">Kemajuan</dt><dd>{{ $program->progress }}% · Minggu {{ $program->current_week }}</dd></div>
         </dl>
     </article>
     <article class="rounded-2xl border border-line bg-white p-5 text-sm">
         <p class="text-xs font-semibold uppercase tracking-wide text-muted">Jejak program</p>
         <ul class="mt-3 space-y-2">
-            <li>Agreement: {{ strtoupper($program->agreement?->status ?? 'draft') }}</li>
+            <li>Perjanjian: {{ \App\Support\Status::label($program->agreement?->status ?? 'draft') }}</li>
             <li>Logbook: {{ $program->logbooks->count() }}</li>
-            <li>Mentoring: {{ $program->mentorSessions->count() }}</li>
-            <li>Output: {{ $program->outputs->count() }}</li>
+            <li>Pendampingan: {{ $program->mentorSessions->count() }}</li>
+            <li>Hasil: {{ $program->outputs->count() }}</li>
             <li>Evaluasi: {{ $program->evaluations->count() }}</li>
             <li>Kolaborasi: {{ $program->collaboration?->level ?? 0 }}</li>
         </ul>

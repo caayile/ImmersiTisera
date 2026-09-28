@@ -6,7 +6,7 @@
     <p class="mt-1 text-sm text-muted">Kemajuan 8 minggu program magang Anda, diperbarui mengikuti minggu berjalan.</p>
 </div>
 @unless($program)
-    <x-empty class="mt-6" title="Timeline belum aktif">Timeline muncul setelah program ACTIVE.</x-empty>
+    <x-empty class="mt-6" title="Linimasa belum aktif">Linimasa muncul setelah program dimulai.</x-empty>
 @else
 <div class="mt-6 flex flex-wrap items-center gap-3 rounded-2xl border border-line bg-white px-5 py-4 shadow-sm">
     <div>
@@ -33,12 +33,12 @@
                     <p class="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Minggu {{ $item->week }}</p>
                     <x-badge :status="$item->status" />
                 </div>
-                <h2 class="mt-1 font-semibold">{{ $item->title }}</h2>
+                <h2 class="mt-1 font-semibold">{{ \App\Support\Status::timelineText($item->title) }}</h2>
                 @if($item->description)
-                    <p class="mt-1 text-sm text-muted">{{ $item->description }}</p>
+                    <p class="mt-1 text-sm text-muted">{{ \App\Support\Status::timelineText($item->description) }}</p>
                 @endif
                 @if($item->expected_output)
-                    <p class="mt-2 text-sm"><b>Target hasil:</b> {{ $item->expected_output }}</p>
+                    <p class="mt-2 text-sm"><b>Target hasil:</b> {{ \App\Support\Status::timelineText($item->expected_output) }}</p>
                 @endif
                 @if($item->mentor_note)
                     <p class="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800"><b>Catatan mentor:</b> {{ $item->mentor_note }}</p>

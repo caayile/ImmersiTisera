@@ -136,7 +136,7 @@
                     <textarea id="logbook_obstacles" name="obstacles" rows="2" class="mt-1 w-full rounded-lg border border-line px-4 py-2.5 text-sm">{{ old('obstacles') }}</textarea>
                 </div>
                 <div>
-                    <label class="text-xs font-medium text-muted">Output hari ini</label>
+                    <label class="text-xs font-medium text-muted">Hasil hari ini</label>
                     <textarea id="logbook_output" name="output" rows="2" class="mt-1 w-full rounded-lg border border-line px-4 py-2.5 text-sm">{{ old('output') }}</textarea>
                 </div>
                 <div class="flex justify-end gap-3 pt-1">
@@ -162,7 +162,7 @@
             <div id="logbook-history-body" class="mt-4 space-y-3"></div>
             <div class="mt-4 flex justify-end gap-3">
                 @if($canFill)
-                    <button type="button" id="logbook-history-refill" class="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-dark">Edit</button>
+                    <button type="button" id="logbook-history-refill" class="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-dark">Ubah</button>
                 @endif
                 <button type="button" id="logbook-history-close" class="rounded-lg border border-line px-4 py-2.5 text-sm font-semibold text-muted">Tutup</button>
             </div>

@@ -25,8 +25,8 @@ class OutputUploadTest extends TestCase
         $this->actingAs($participant)
             ->get(route('participant.outputs'))
             ->assertOk()
-            ->assertSee('Jadikan main output')
-            ->assertSee('Upload evidence');
+            ->assertSee('Jadikan hasil utama')
+            ->assertSee('Unggah bukti');
 
         $this->actingAs($participant)
             ->post('/participant/outputs', [

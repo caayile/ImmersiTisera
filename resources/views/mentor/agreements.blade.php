@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Agreement')
+@section('title', 'Perjanjian')
 @section('content')
 <h1 class="text-2xl font-semibold">Perjanjian Magang Dosen</h1>
 <div class="mt-6 space-y-4">
@@ -12,7 +12,7 @@
             <p class="mt-2 text-sm">{{ $agreement->objective }}</p>
             <p class="mt-1 text-sm text-muted">{{ $agreement->problem_statement }}</p>
             @if(filled($agreement->letter_number))
-                <p class="mt-1 text-sm font-semibold">No. {{ $agreement->letter_number }}</p>
+                <p class="mt-1 text-sm font-semibold">Nomor {{ $agreement->letter_number }}</p>
             @endif
             @if($agreement->status === 'agreed')
                 <div class="mt-3 flex flex-wrap gap-2">
@@ -32,7 +32,7 @@
                 <x-signature-pad
                     name="mentor_signature"
                     label="Tanda tangan mentor untuk pihak kedua"
-                    hint="Wajib saat menyetujui agreement."
+                    hint="Wajib diisi untuk menyetujui perjanjian."
                     class="md:col-span-3"
                     :required="true"
                 />
@@ -43,7 +43,7 @@
             @endif
         </article>
     @empty
-        <x-empty title="Belum ada agreement" />
+        <x-empty title="Belum ada perjanjian" />
     @endforelse
 </div>
 @endsection
