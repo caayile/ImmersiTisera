@@ -19,9 +19,11 @@ use App\Models\User;
 use App\Notifications\ImersiAlert;
 use App\Services\AgreementLetterService;
 use App\Services\ApplicationApprovalService;
+use App\Services\MediaStorageService;
 use App\Support\Status;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Storage;
@@ -30,6 +32,8 @@ use Illuminate\Validation\Rule;
 
 class AdminController extends Controller
 {
+    public function __construct(private readonly MediaStorageService $mediaStorage) {}
+
     public function dashboard()
     {
         $programs = Program::query();
@@ -138,15 +142,20 @@ class AdminController extends Controller
             'image' => ['nullable', 'image', 'max:5120'],
         ]);
 
+        $previousImagePath = $department->image_path;
+        $hasNewImage = $request->hasFile('image');
         $payload = collect($data)->except('image')->toArray();
         $payload['slug'] = Str::slug($data['name']);
         $payload['map_url'] = self::normalizedMapUrl($data['map_url'] ?? null);
 
-        if ($request->hasFile('image')) {
-            $payload['image_path'] = $this->storeDepartmentImage($request->file('image'), $department->image_path);
+        if ($hasNewImage) {
+            $payload['image_path'] = $this->storeDepartmentImage($request->file('image'));
         }
 
         $department->update($payload);
+        if ($hasNewImage) {
+            $this->deleteDepartmentImage($previousImagePath);
+        }
 
         return back()->with('status', 'Unit bisnis diperbarui.');
     }
@@ -157,17 +166,16 @@ class AdminController extends Controller
             return back()->withErrors(['department' => 'Unit bisnis masih memiliki departemen atau program, tidak dapat dihapus.']);
         }
 
-        $this->deleteDepartmentImage($department->image_path);
+        $imagePath = $department->image_path;
         $department->delete();
+        $this->deleteDepartmentImage($imagePath);
 
         return back()->with('status', 'Unit bisnis dihapus.');
     }
 
-    private function storeDepartmentImage($file, ?string $previous = null): string
+    private function storeDepartmentImage(UploadedFile $file): string
     {
-        $this->deleteDepartmentImage($previous);
-
-        return $file->store('departments', 'public');
+        return $this->mediaStorage->store($file);
     }
 
     private static function normalizedMapUrl(?string $url): ?string
@@ -180,6 +188,12 @@ class AdminController extends Controller
     private function deleteDepartmentImage(?string $path): void
     {
         if (! $path || str_starts_with($path, 'images/')) {
+            return;
+        }
+
+        if (str_starts_with($path, MediaStorageService::PATH_PREFIX)) {
+            $this->mediaStorage->deleteIfUnreferenced($path);
+
             return;
         }
 
@@ -262,16 +276,21 @@ class AdminController extends Controller
             'image' => ['nullable', 'image', 'max:5120'],
         ]);
 
+        $previousImagePath = $businessUnit->image_path;
+        $hasNewImage = $request->hasFile('image');
         $payload = collect($this->normalizePeriod($data))->except('mentor_id', 'relevant_programs', 'image')->toArray();
 
-        if ($request->hasFile('image')) {
-            $payload['image_path'] = $this->storeBusinessUnitImage($request->file('image'), $businessUnit->image_path);
+        if ($hasNewImage) {
+            $payload['image_path'] = $this->storeBusinessUnitImage($request->file('image'));
         }
 
         $businessUnit->update([
             ...$payload,
             'relevant_programs' => $this->parseRelevantPrograms($data['relevant_programs'] ?? null),
         ]);
+        if ($hasNewImage) {
+            $this->deleteDepartmentImage($previousImagePath);
+        }
         if ($request->mentor_id) {
             Mentor::where('id', $request->mentor_id)->update([
                 'business_unit_id' => $businessUnit->id,
@@ -288,22 +307,16 @@ class AdminController extends Controller
             return back()->withErrors(['business_unit' => 'Departemen masih memiliki program, tidak dapat dihapus.']);
         }
 
-        if ($businessUnit->image_path && ! str_starts_with($businessUnit->image_path, 'images/')) {
-            Storage::disk('public')->delete($businessUnit->image_path);
-        }
-
+        $imagePath = $businessUnit->image_path;
         $businessUnit->delete();
+        $this->deleteDepartmentImage($imagePath);
 
         return back()->with('status', 'Departemen dihapus.');
     }
 
-    private function storeBusinessUnitImage($file, ?string $previous = null): string
+    private function storeBusinessUnitImage(UploadedFile $file): string
     {
-        if ($previous && ! str_starts_with($previous, 'images/')) {
-            Storage::disk('public')->delete($previous);
-        }
-
-        return $file->store('departments', 'public');
+        return $this->mediaStorage->store($file);
     }
 
     private function parseRelevantPrograms(?string $programs): array

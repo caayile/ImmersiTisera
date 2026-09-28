@@ -2,12 +2,14 @@
 
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\MediaController;
 use App\Http\Controllers\MentorController;
 use App\Http\Controllers\ParticipantController;
 use App\Http\Controllers\PublicController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [PublicController::class, 'home'])->name('home');
+Route::get('/media/{mediaAsset}', [MediaController::class, 'show'])->name('media.show');
 Route::get('/departments', [PublicController::class, 'departments'])->name('departments.index');
 Route::get('/departments/{department:slug}', [PublicController::class, 'department'])->name('departments.show');
 Route::get('/business-units/{businessUnit}', [PublicController::class, 'unit'])->name('units.show');

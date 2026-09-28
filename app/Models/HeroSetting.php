@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use App\Services\MediaStorageService;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 #[Fillable(['page', 'title', 'subtitle', 'background_path'])]
 class HeroSetting extends Model
@@ -37,6 +39,16 @@ class HeroSetting extends Model
 
         if (str_starts_with($path, 'images/')) {
             return asset($path);
+        }
+
+        if (str_starts_with($path, MediaStorageService::PATH_PREFIX)) {
+            $mediaId = substr($path, strlen(MediaStorageService::PATH_PREFIX));
+
+            return Str::isUuid($mediaId) ? route('media.show', $mediaId) : null;
+        }
+
+        if (! Storage::disk('public')->exists($path)) {
+            return null;
         }
 
         return Storage::disk('public')->url($path);

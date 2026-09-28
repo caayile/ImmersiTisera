@@ -54,6 +54,17 @@ class DepartmentHeroTest extends TestCase
         $this->assertSame(7, substr_count($html, 'Lihat Departemen'));
     }
 
+    public function test_missing_uploaded_media_does_not_generate_a_broken_url(): void
+    {
+        Storage::fake('public');
+
+        $this->assertNull(HeroSetting::resolveMediaUrl('departments/missing.png'));
+
+        Storage::disk('public')->put('departments/available.png', 'image');
+
+        $this->assertNotNull(HeroSetting::resolveMediaUrl('departments/available.png'));
+    }
+
     public function test_admin_can_update_background_and_slides(): void
     {
         Storage::fake('public');
