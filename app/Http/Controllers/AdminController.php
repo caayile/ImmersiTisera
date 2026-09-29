@@ -730,14 +730,21 @@ class AdminController extends Controller
 
     private function storeHeroUpload($file, ?string $previous = null): string
     {
+        $path = $this->mediaStorage->store($file);
         $this->deleteHeroUpload($previous);
 
-        return $file->store('hero', 'public');
+        return $path;
     }
 
     private function deleteHeroUpload(?string $path): void
     {
         if (! $path || str_starts_with($path, 'images/')) {
+            return;
+        }
+
+        if (str_starts_with($path, MediaStorageService::PATH_PREFIX)) {
+            $this->mediaStorage->deleteIfUnreferenced($path);
+
             return;
         }
 

@@ -607,6 +607,9 @@ body {
 }
 
 .partner-card {
+    /* Pertahanan: position absolute eksplisit agar tak bisa ditimpa
+       .tap-feedback (position:relative) bila class itu ikut menempel. */
+    position: absolute;
     will-change: transform, opacity;
 }
 
