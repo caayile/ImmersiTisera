@@ -11,34 +11,6 @@
 <section
     class="departments-hero relative overflow-hidden"
     style="--hero-campus: url('{{ $background }}')"
-    x-data="{
-        slides: @js($slides),
-        index: 0,
-        timer: null,
-        get count() { return this.slides.length; },
-        prev() { if (! this.count) return; this.index = (this.index - 1 + this.count) % this.count; },
-        next() { if (! this.count) return; this.index = (this.index + 1) % this.count; },
-        go(i) { this.index = i; },
-        offset(i) {
-            if (! this.count) return 0;
-            let d = i - this.index;
-            if (d > this.count / 2) d -= this.count;
-            if (d < -this.count / 2) d += this.count;
-            return d;
-        },
-        start() {
-            this.stop();
-            if (this.count < 2) return;
-            this.timer = setInterval(() => this.next(), 5200);
-        },
-        stop() {
-            if (this.timer) clearInterval(this.timer);
-            this.timer = null;
-        }
-    }"
-    x-init="start()"
-    @mouseenter="stop()"
-    @mouseleave="start()"
 >
     <div class="departments-hero__backdrop" aria-hidden="true"></div>
     <div class="relative mx-auto max-w-6xl px-5 pb-14 pt-10">
@@ -48,63 +20,74 @@
             <p class="mt-2 text-sm leading-6 text-white/80">{{ $hero->subtitle ?: 'Pilih unit bisnis mitra imersi.' }}</p>
         </div>
 
-        <div class="relative mx-auto max-w-5xl px-10 md:px-14">
-            <button type="button" @click="prev()" class="partner-nav left-0" aria-label="Sebelumnya">
-                <span class="material-symbols-outlined">chevron_left</span>
-            </button>
-            <button type="button" @click="next()" class="partner-nav right-0" aria-label="Berikutnya">
-                <span class="material-symbols-outlined">chevron_right</span>
-            </button>
-
-            <div class="relative mx-auto h-[240px] sm:h-[320px] md:h-[400px]">
-                <template x-for="(slide, i) in slides" :key="slide.id">
-                    <a
-                        :href="slide.url"
-                        class="partner-card absolute inset-y-0 left-1/2 flex w-[88%] max-w-3xl items-center justify-center overflow-hidden rounded-3xl bg-[#0d241e] shadow-2xl transition-all duration-500 ease-out sm:w-[78%]"
-                        :style="`
-                            transform: translateX(calc(-50% + ${offset(i) * 58}%)) scale(${offset(i) === 0 ? 1 : 0.86});
-                            z-index: ${20 - Math.abs(offset(i))};
-                            opacity: ${Math.abs(offset(i)) > 1 ? 0 : (offset(i) === 0 ? 1 : 0.55)};
-                            pointer-events: ${offset(i) === 0 ? 'auto' : 'none'};
-                        `"
-                    >
-                        <template x-if="slide.image">
-                            <img :src="slide.image" :alt="slide.title" class="absolute inset-0 h-full w-full object-cover">
-                        </template>
-                        <div class="pointer-events-none absolute inset-0 z-10 bg-gradient-to-t from-black/80 via-black/10 to-transparent"></div>
-                        <div class="absolute inset-x-0 bottom-0 z-20 p-5 sm:p-7">
-                            <h2 class="text-2xl font-semibold text-white sm:text-3xl" x-text="slide.title"></h2>
-                            <p class="mt-2 line-clamp-2 max-w-xl text-sm text-white/85" x-text="slide.subtitle"></p>
-                        </div>
-                    </a>
-                </template>
-
-                <template x-if="! count">
-                    <div class="flex h-full items-center justify-center rounded-3xl border border-white/20 bg-black/25 text-sm text-white/85 backdrop-blur">
-                        Belum ada banner mitra. Admin dapat menambahkannya di Hero Unit Bisnis.
-                    </div>
-                </template>
-            </div>
-
-            <div class="mt-5 flex justify-center gap-2">
-                <template x-for="(slide, i) in slides" :key="'dot-'+slide.id">
-                    <button
-                        type="button"
-                        class="h-2.5 rounded-full transition-all"
-                        :class="i === index ? 'w-7 bg-secondary' : 'w-2.5 bg-white/40 hover:bg-white/70'"
-                        @click="go(i)"
-                        :aria-label="'Banner ' + slide.title"
-                    ></button>
-                </template>
-            </div>
-        </div>
+        <x-hero-carousel
+            :slides="$slides"
+            height="h-[380px] md:h-[400px] lg:h-[420px]"
+            :interval="2000"
+            card-width="w-[72%] md:w-[74%]"
+            radius="rounded-[22px]"
+            empty-message="Belum ada banner mitra. Admin dapat menambahkannya di Hero Unit Bisnis."
+        />
     </div>
 </section>
 
 <div class="mx-auto max-w-7xl px-5 py-12">
-    <div>
-        <h2 class="text-2xl font-semibold">Daftar unit bisnis</h2>
-        <p class="mt-1 text-muted">Tujuh unit bisnis mitra TSU.</p>
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+            <h2 class="text-2xl font-semibold">Daftar unit bisnis</h2>
+            <p class="mt-1 text-muted">Tujuh unit bisnis mitra TSU.</p>
+        </div>
+        <div class="relative w-full max-w-sm sm:min-w-[300px]" 
+             x-data="{ query: '{{ request('q') }}', results: [], showDropdown: false, loading: false }" 
+             @click.away="showDropdown = false">
+            <form action="{{ route('departments.index') }}" method="GET" class="relative">
+                <input 
+                    type="search" 
+                    name="q" 
+                    x-model="query"
+                    @input.debounce.300ms="
+                        if(query.length > 0) {
+                            loading = true;
+                            showDropdown = true;
+                            fetch('{{ route('api.search') }}?q=' + encodeURIComponent(query))
+                                .then(res => res.json())
+                                .then(data => { results = data; loading = false; });
+                        } else {
+                            showDropdown = false;
+                            results = [];
+                        }
+                    "
+                    @focus="if(query.length > 0) showDropdown = true"
+                    placeholder="Cari departemen atau unit bisnis..." 
+                    autocomplete="off"
+                    class="w-full rounded-xl border border-line bg-white py-2.5 pl-10 pr-4 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary">
+                <svg class="absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-muted" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                </svg>
+            </form>
+            
+            <!-- Dropdown Live Search -->
+            <div x-show="showDropdown" x-cloak x-transition.opacity
+                 class="absolute left-0 right-0 top-full mt-2 overflow-hidden rounded-xl border border-line bg-white shadow-lg z-50 max-h-[400px] overflow-y-auto">
+                <div x-show="loading" class="p-4 text-center text-sm text-muted">Mencari...</div>
+                <div x-show="!loading && results.length === 0" class="p-4 text-center text-sm text-muted">Tidak ada hasil ditemukan.</div>
+                <ul x-show="!loading && results.length > 0" class="divide-y divide-line">
+                    <template x-for="item in results" :key="item.type + item.id">
+                        <li>
+                            <a :href="item.url" class="flex items-center gap-3 p-3 hover:bg-bg transition group">
+                                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition">
+                                    <span class="material-symbols-outlined" x-text="item.type === 'Departemen' ? 'domain' : 'storefront'"></span>
+                                </div>
+                                <div class="text-left">
+                                    <div class="text-sm font-semibold text-ink" x-text="item.name"></div>
+                                    <div class="text-[11px] font-medium text-muted uppercase tracking-wider mt-0.5" x-text="item.type"></div>
+                                </div>
+                            </a>
+                        </li>
+                    </template>
+                </ul>
+            </div>
+        </div>
     </div>
 
     <div class="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">

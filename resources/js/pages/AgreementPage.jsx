@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import api from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { ACTIVITIES } from '../lib/constants'
 import { Badge, Button, Card, Field, PageHeader, inputClass } from '../components/ui'
+import { pageVariants, staggerContainer, cardVariants, fadeIn } from '../lib/motion'
 
 export default function AgreementPage() {
   const { id } = useParams()
@@ -50,16 +52,25 @@ export default function AgreementPage() {
   if (!item) return null
 
   return (
-    <div>
+    <motion.div variants={pageVariants} initial="hidden" animate="visible">
       <PageHeader
         kicker="Industry Immersion Agreement"
         title="Single source of truth"
         description="Shared goals, timeline, output, dan komitmen kedua pihak. Program tidak aktif sebelum ini AGREED."
         action={<Badge tone="copper">{item.status}</Badge>}
       />
-      <form className="grid gap-4" onSubmit={save}>
+
+      <motion.form
+        className="grid gap-4"
+        onSubmit={save}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.1 }}
+      >
         <Card className="grid gap-4 md:grid-cols-2">
-          <p className="md:col-span-2 text-sm text-moss/80">Dosen {item.dosen?.name} × Mentor {item.mentor?.name} · {item.business_unit}</p>
+          <p className="md:col-span-2 text-sm text-moss/80">
+            Dosen {item.dosen?.name} × Mentor {item.mentor?.name} · {item.business_unit}
+          </p>
           <div className="md:col-span-2"><Field label="Shared goal"><textarea className={inputClass} rows="3" value={form.shared_goal || ''} onChange={(e) => set('shared_goal', e.target.value)} /></Field></div>
           <div className="md:col-span-2"><Field label="Problem / opportunity"><textarea className={inputClass} rows="3" value={form.problem_opportunity || ''} onChange={(e) => set('problem_opportunity', e.target.value)} /></Field></div>
           <Field label="Aktivitas utama">
@@ -79,14 +90,45 @@ export default function AgreementPage() {
           <div className="md:col-span-2"><Field label="Success indicator"><textarea className={inputClass} rows="2" value={form.success_indicator || ''} onChange={(e) => set('success_indicator', e.target.value)} /></Field></div>
           <div className="md:col-span-2"><Field label="Potensi kolaborasi"><textarea className={inputClass} rows="2" value={form.potential_collaboration || ''} onChange={(e) => set('potential_collaboration', e.target.value)} /></Field></div>
         </Card>
+
         <div className="flex flex-wrap gap-3">
-          <Button variant="ghost">Simpan draft</Button>
-          {user.role === 'mentor' && <Button type="button" onClick={approve}>Mentor approve</Button>}
-          {user.role === 'user' && <Button type="button" onClick={approve}>Dosen approve</Button>}
-          {item.program && <Link to={`/app/programs/${item.program.id}`} className="rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-parchment">Masuk program</Link>}
+          <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+            <Button variant="ghost">Simpan draft</Button>
+          </motion.div>
+          {user.role === 'mentor' && (
+            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+              <Button type="button" onClick={approve}>Mentor approve</Button>
+            </motion.div>
+          )}
+          {user.role === 'user' && (
+            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+              <Button type="button" onClick={approve}>Dosen approve</Button>
+            </motion.div>
+          )}
+          {item.program && (
+            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+              <Link to={`/app/programs/${item.program.id}`} className="rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-parchment">
+                Masuk program
+              </Link>
+            </motion.div>
+          )}
         </div>
-        {message && <p className="text-sm text-moss">{message}</p>}
-      </form>
-    </div>
+
+        <AnimatePresence>
+          {message && (
+            <motion.p
+              key="msg"
+              className="text-sm text-moss"
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+            >
+              {message}
+            </motion.p>
+          )}
+        </AnimatePresence>
+      </motion.form>
+    </motion.div>
   )
 }

@@ -1,4 +1,5 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { AnimatePresence } from 'framer-motion'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import Layout from './components/Layout'
 import Landing from './pages/Landing'
@@ -38,11 +39,11 @@ function Guard({ children, roles, allowUnverified = false }) {
   return children
 }
 
-export default function App() {
+function AnimatedRoutes() {
+  const location = useLocation()
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -69,7 +70,16 @@ export default function App() {
             <Route path="admin/needs" element={<Guard roles={['admin']}><AdminNeeds /></Guard>} />
             <Route path="admin/programs" element={<Guard roles={['admin']}><AdminPrograms /></Guard>} />
           </Route>
-        </Routes>
+      </Routes>
+    </AnimatePresence>
+  )
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <AnimatedRoutes />
       </BrowserRouter>
     </AuthProvider>
   )

@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
 import { Button, Field, inputClass } from '../components/ui'
+import { pageVariants, staggerContainer, cardVariants, slideLeft, slideRight } from '../lib/motion'
 
 const demos = [
   ['Dosen', 'dosen@imersi.id'],
@@ -34,12 +36,22 @@ export default function Login() {
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
-      <section className="relative hidden flex-col justify-between bg-ink px-12 py-12 text-white lg:flex">
+      {/* Left panel */}
+      <motion.section
+        className="relative hidden flex-col justify-between bg-ink px-12 py-12 text-white lg:flex"
+        variants={slideLeft}
+        initial="hidden"
+        animate="visible"
+      >
         <div>
           <p className="text-2xl font-semibold">IMMERSI</p>
           <p className="mt-1 text-xs font-medium uppercase tracking-[0.2em] text-mint-light">TSU Industry Immersion</p>
         </div>
-        <div>
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25, duration: 0.5 }}
+        >
           <p className="text-sm font-medium text-mint">Dosen × Industri</p>
           <h1 className="mt-4 max-w-md text-4xl font-semibold leading-tight">
             Masuk untuk melanjutkan program immersion.
@@ -47,53 +59,84 @@ export default function Login() {
           <p className="mt-4 max-w-md text-sm leading-6 text-white/70">
             Identify, match, dan berkolaborasi dengan unit bisnis TSPM dan TSIC selama 60 hari.
           </p>
-        </div>
+        </motion.div>
         <p className="text-xs text-white/50">Tiga Serangkai · Industry Immersion</p>
-      </section>
+      </motion.section>
 
-      <section className="flex items-center justify-center bg-cream px-6 py-12">
-        <div className="w-full max-w-[420px]">
-          <div className="mb-8 lg:hidden">
+      {/* Right panel — form */}
+      <motion.section
+        className="flex items-center justify-center bg-cream px-6 py-12"
+        variants={slideRight}
+        initial="hidden"
+        animate="visible"
+      >
+        <motion.div
+          className="w-full max-w-[420px]"
+          variants={staggerContainer}
+          initial="hidden"
+          animate="visible"
+        >
+          <motion.div variants={cardVariants} className="mb-8 lg:hidden">
             <p className="text-xl font-semibold text-ink">IMMERSI</p>
             <p className="text-xs text-moss/70">TSU Industry Immersion</p>
-          </div>
-          <h2 className="text-2xl font-semibold text-ink">Masuk ke akun</h2>
-          <p className="mt-2 text-sm text-moss/80">Gunakan email dan kata sandi yang sudah terdaftar.</p>
+          </motion.div>
 
-          <form className="mt-8 space-y-4" onSubmit={submit}>
+          <motion.h2 variants={cardVariants} className="text-2xl font-semibold text-ink">Masuk ke akun</motion.h2>
+          <motion.p variants={cardVariants} className="mt-2 text-sm text-moss/80">Gunakan email dan kata sandi yang sudah terdaftar.</motion.p>
+
+          <motion.form variants={cardVariants} className="mt-8 space-y-4" onSubmit={submit}>
             <Field label="Email">
               <input className={inputClass} type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" />
             </Field>
             <Field label="Kata sandi">
               <input className={inputClass} type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
             </Field>
-            {error && <p className="text-sm text-red-600">{error}</p>}
-            <Button className="w-full" disabled={loading}>{loading ? 'Memproses…' : 'Masuk'}</Button>
-          </form>
 
-          <div className="mt-8">
+            <AnimatePresence>
+              {error && (
+                <motion.p
+                  key="error"
+                  className="text-sm text-red-600"
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.25 }}
+                >
+                  {error}
+                </motion.p>
+              )}
+            </AnimatePresence>
+
+            <motion.div whileHover={{ scale: 1.015 }} whileTap={{ scale: 0.985 }}>
+              <Button className="w-full" disabled={loading}>{loading ? 'Memproses…' : 'Masuk'}</Button>
+            </motion.div>
+          </motion.form>
+
+          <motion.div variants={cardVariants} className="mt-8">
             <p className="mb-3 text-xs font-medium text-moss/70">Akun demo</p>
             <div className="grid grid-cols-2 gap-2">
               {demos.map(([label, value]) => (
-                <button
+                <motion.button
                   key={value}
                   type="button"
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
                   className={`rounded-lg border px-3 py-2 text-sm ${
                     email === value ? 'border-mint bg-mint/10 font-medium text-ink' : 'border-clay text-moss hover:border-mint'
                   }`}
                   onClick={() => setEmail(value)}
                 >
                   {label}
-                </button>
+                </motion.button>
               ))}
             </div>
-          </div>
+          </motion.div>
 
-          <p className="mt-8 text-sm text-moss/80">
+          <motion.p variants={cardVariants} className="mt-8 text-sm text-moss/80">
             Belum punya akun? <Link to="/register" className="font-semibold text-copper-dark">Daftar</Link>
-          </p>
-        </div>
-      </section>
+          </motion.p>
+        </motion.div>
+      </motion.section>
     </div>
   )
 }

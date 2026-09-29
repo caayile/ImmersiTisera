@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
 import api from '../api/client'
 
@@ -54,20 +55,26 @@ function DosenProfileCard({ user }) {
   return (
     <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
       <div className="flex flex-col items-center text-center">
-        {user?.avatar ? (
-          <img
-            src={user.avatar}
-            alt=""
-            width="72"
-            height="72"
-            className="h-[72px] w-[72px] rounded-full object-cover ring-2 ring-white/15"
-            referrerPolicy="no-referrer"
-          />
-        ) : (
-          <span className="flex h-[72px] w-[72px] items-center justify-center rounded-full bg-mint/20 text-lg font-semibold text-mint-light ring-2 ring-white/15">
-            {initials}
-          </span>
-        )}
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.4, type: 'spring', stiffness: 200 }}
+        >
+          {user?.avatar ? (
+            <img
+              src={user.avatar}
+              alt=""
+              width="72"
+              height="72"
+              className="h-[72px] w-[72px] rounded-full object-cover ring-2 ring-white/15"
+              referrerPolicy="no-referrer"
+            />
+          ) : (
+            <span className="flex h-[72px] w-[72px] items-center justify-center rounded-full bg-mint/20 text-lg font-semibold text-mint-light ring-2 ring-white/15">
+              {initials}
+            </span>
+          )}
+        </motion.div>
         <p className="mt-3 text-sm font-semibold leading-snug text-white">{user?.name}</p>
         <p className="mt-0.5 text-xs text-white/55">{nidn || 'NIDN belum diisi'}</p>
         <span
@@ -93,6 +100,21 @@ function DosenProfileCard({ user }) {
   )
 }
 
+const sidebarVariants = {
+  hidden: { x: -280, opacity: 0 },
+  visible: { x: 0, opacity: 1, transition: { duration: 0.35, ease: 'easeOut' } },
+  exit: { x: -280, opacity: 0, transition: { duration: 0.25 } },
+}
+
+const navItemVariants = {
+  hidden: { opacity: 0, x: -12 },
+  visible: (i) => ({
+    opacity: 1,
+    x: 0,
+    transition: { delay: 0.05 + i * 0.04, duration: 0.3 },
+  }),
+}
+
 export default function Layout() {
   const { user, logout } = useAuth()
   const items = menus[user?.role] || menus.user
@@ -116,29 +138,54 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen bg-cream lg:grid lg:grid-cols-[280px_1fr]">
-      <div
-        className={`fixed inset-0 z-30 bg-black/30 lg:hidden ${open ? 'block' : 'hidden'}`}
-        onClick={() => setOpen(false)}
-        aria-hidden="true"
-      />
+      {/* Mobile overlay */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            key="overlay"
+            className="fixed inset-0 z-30 bg-black/30 lg:hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={() => setOpen(false)}
+            aria-hidden="true"
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Sidebar — desktop: always visible; mobile: slide-in */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-[280px] flex-col bg-ink px-6 py-8 text-white transition lg:static lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-[280px] flex-col bg-ink px-6 py-8 text-white transition-transform lg:static lg:translate-x-0 ${
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="mb-6 shrink-0">
+        {/* Brand */}
+        <motion.div
+          className="mb-6 shrink-0"
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+        >
           <p className="text-2xl font-semibold">IMMERSI</p>
           <p className="mt-1 text-[10px] uppercase tracking-[0.18em] text-mint-light">Industry Immersion</p>
-        </div>
+        </motion.div>
 
+        {/* Profile card (dosen only) */}
         {isDosen && (
-          <div className="mb-6 shrink-0">
+          <motion.div
+            className="mb-6 shrink-0"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1, duration: 0.4 }}
+          >
             <DosenProfileCard user={user} />
-          </div>
+          </motion.div>
         )}
 
+        {/* Nav items */}
         <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto">
-          {items.map(([label, to]) => {
+          {items.map(([label, to], i) => {
             const disabled = label === 'Logbook' && hasActiveProgram === false
 
             if (disabled) {
@@ -155,31 +202,44 @@ export default function Layout() {
             }
 
             return (
-              <NavLink
+              <motion.div
                 key={to}
-                to={to}
-                end={to === '/app'}
-                onClick={() => setOpen(false)}
-                className={({ isActive }) =>
-                  `block rounded-xl px-4 py-2.5 text-sm font-medium transition ${
-                    isActive ? 'bg-mint text-white' : 'text-white/70 hover:bg-white/5 hover:text-white'
-                  }`
-                }
+                custom={i}
+                variants={navItemVariants}
+                initial="hidden"
+                animate="visible"
               >
-                {label}
-              </NavLink>
+                <NavLink
+                  to={to}
+                  end={to === '/app'}
+                  onClick={() => setOpen(false)}
+                  className={({ isActive }) =>
+                    `block rounded-xl px-4 py-2.5 text-sm font-medium transition ${
+                      isActive ? 'bg-mint text-white' : 'text-white/70 hover:bg-white/5 hover:text-white'
+                    }`
+                  }
+                >
+                  {label}
+                </NavLink>
+              </motion.div>
             )
           })}
         </nav>
 
+        {/* User card bottom (non-dosen) */}
         {!isDosen && (
-          <div className="mt-8 shrink-0 rounded-2xl bg-ink-soft p-4">
+          <motion.div
+            className="mt-8 shrink-0 rounded-2xl bg-ink-soft p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3, duration: 0.4 }}
+          >
             <p className="text-sm font-semibold">{user?.name}</p>
             <p className="mt-1 text-xs text-mint-light">{roleLabel[user?.role]}</p>
             <button type="button" className="mt-4 text-xs font-medium text-mint-light" onClick={signOut}>
               Keluar
             </button>
-          </div>
+          </motion.div>
         )}
 
         {isDosen && (
@@ -189,16 +249,24 @@ export default function Layout() {
         )}
       </aside>
 
+      {/* Main content */}
       <div className="min-w-0">
         <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-clay bg-white/95 px-5 py-3 backdrop-blur lg:px-10">
-          <button type="button" className="rounded-lg border border-clay px-3 py-2 text-sm lg:hidden" onClick={() => setOpen((value) => !value)}>
+          <motion.button
+            type="button"
+            className="rounded-lg border border-clay px-3 py-2 text-sm lg:hidden"
+            onClick={() => setOpen((value) => !value)}
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.96 }}
+          >
             Menu
-          </button>
+          </motion.button>
           <div className="ml-auto text-right">
             <p className="text-sm font-medium text-ink">{user?.name}</p>
             <p className="text-[11px] text-moss/70">{roleLabel[user?.role]}</p>
           </div>
         </header>
+
         <main className="px-5 py-8 lg:px-10">
           <Outlet />
         </main>

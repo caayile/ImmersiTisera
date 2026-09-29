@@ -590,16 +590,29 @@ body {
     translate: 0 -50%;
     align-items: center;
     justify-content: center;
-    border-radius: 0.9rem;
+    border-radius: 9999px;
     background: linear-gradient(180deg, #6fd4a8 0%, #3eaa84 100%);
     color: white;
     box-shadow: 0 10px 24px rgba(15, 42, 36, 0.35);
-    transition: filter 0.15s ease, box-shadow 0.15s ease;
+    transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), filter 0.15s ease, box-shadow 0.15s ease;
 }
 
 .partner-nav:hover {
+    transform: scale(1.1);
     filter: brightness(1.08);
     box-shadow: 0 12px 28px rgba(15, 42, 36, 0.42);
+}
+
+.partner-nav:active {
+    transform: scale(0.95);
+}
+
+.partner-nav.left-0 {
+    left: 0;
+}
+
+.partner-nav.right-0 {
+    right: 0;
 }
 
 .partner-card {
