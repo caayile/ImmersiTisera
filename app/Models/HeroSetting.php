@@ -17,7 +17,7 @@ class HeroSetting extends Model
             ['page' => $page],
             [
                 'title' => 'Departemen Mitra',
-                'subtitle' => 'Pilih lokasi imersi yang selaras dengan kompetensi Anda.',
+                'subtitle' => 'Pilih lokasi magang dosen yang selaras dengan kompetensi Anda.',
             ],
         );
     }

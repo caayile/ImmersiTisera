@@ -370,7 +370,7 @@ class ApplicationApprovalService
 
             $application->participant->user->notify(new ImersiAlert(
                 'Pendaftaran disetujui',
-                'Surat persetujuan disahkan. Lanjutkan ke Perjanjian Imersi Industri.',
+                'Surat persetujuan disahkan. Lanjutkan ke Perjanjian Magang Dosen Industri.',
                 route('participant.agreement')
             ));
 

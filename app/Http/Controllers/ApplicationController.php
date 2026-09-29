@@ -65,8 +65,8 @@ class ApplicationController extends Controller
             $application = $this->approvals->submit($participant, $unit, [
                 'shared_goal' => $data['proposed_shared_goal'],
                 'activity_types' => $activityTypes,
-                'problem_statement' => $data['problem_statement'] ?? 'Fokus observasi dan pemetaan proses '.$unit->name.' selama program imersi.',
-                'main_output' => $data['main_output'] ?? 'Hasil imersi sesuai kesepakatan mentor.',
+                'problem_statement' => $data['problem_statement'] ?? 'Fokus observasi dan pemetaan proses '.$unit->name.' selama program magang dosen.',
+                'main_output' => $data['main_output'] ?? 'Hasil magang dosen sesuai kesepakatan mentor.',
                 'participant_benefit' => $data['participant_benefit'] ?? 'Pengayaan materi dan jejaring industri bagi dosen.',
                 'business_benefit' => $data['business_benefit'] ?? 'Sudut pandang akademik atas proses unit bisnis.',
                 'success_indicators' => $data['success_indicators'] ?? [

@@ -59,7 +59,7 @@ class ParticipantNextStep
             return new self(
                 eyebrow: 'Langkah berikutnya',
                 title: 'Isi logbook minggu ini',
-                message: 'Program imersi sudah aktif. Catat aktivitas harian agar progres tetap terukur.',
+                message: 'Program magang dosen sudah aktif. Catat aktivitas harian agar progres tetap terukur.',
                 cta: 'Buka logbook',
                 url: route('participant.logbooks'),
             );
@@ -68,7 +68,7 @@ class ParticipantNextStep
         if ($program && in_array($program->status, ['draft', 'submitted', 'revision', 'agreed'], true)) {
             return new self(
                 eyebrow: 'Langkah berikutnya',
-                title: 'Lanjutkan perjanjian imersi',
+                title: 'Lanjutkan perjanjian magang dosen',
                 message: 'Pendaftaran disetujui. Lengkapi perjanjian sebelum program dimulai.',
                 cta: 'Buka perjanjian',
                 url: route('participant.agreement'),

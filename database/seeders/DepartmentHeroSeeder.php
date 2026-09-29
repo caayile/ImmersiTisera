@@ -15,7 +15,7 @@ class DepartmentHeroSeeder extends Seeder
         HeroSetting::firstOrCreate(
             ['page' => 'departments'],
             [
-                'title' => 'Unit Bisnis Mitra Imersi',
+                'title' => 'Unit Bisnis Mitra Magang Dosen',
                 'subtitle' => 'Jelajahi lokasi industri dan pendidikan mitra TSU.',
                 'background_path' => 'images/hero/campus.jpg',
             ],

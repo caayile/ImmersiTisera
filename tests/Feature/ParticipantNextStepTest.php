@@ -102,7 +102,7 @@ class ParticipantNextStepTest extends TestCase
 
         $this->actingAs($dosen)
             ->get(route('home'))
-            ->assertSee('Lanjutkan perjanjian imersi')
+            ->assertSee('Lanjutkan perjanjian magang dosen')
             ->assertSee('Buka perjanjian')
             ->assertSee(route('participant.agreement'), false);
     }

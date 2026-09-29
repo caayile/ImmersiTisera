@@ -65,7 +65,7 @@ export default function Logbooks() {
       <PageHeader
         kicker="Immersion · Rekam jejak"
         title="Logbook"
-        description="Refleksi harian selama imersi. Diisi oleh peserta, lalu diverifikasi mentor."
+        description="Refleksi harian selama magang dosen. Diisi oleh peserta, lalu diverifikasi mentor."
         action={program ? <Badge tone="copper">{program.status}</Badge> : null}
       />
 
@@ -86,7 +86,7 @@ export default function Logbooks() {
             <Card>
               <h3 className="font-semibold">Logbook terbuka setelah program aktif</h3>
               <p className="mt-1 text-sm text-moss/80">
-                Belum ada program imersi untuk Anda. Lengkapi profil lalu ajukan minat ke unit bisnis.
+                Belum ada program magang dosen untuk Anda. Lengkapi profil lalu ajukan minat ke unit bisnis.
               </p>
               <div className="mt-4 flex flex-wrap gap-3">
                 <Link to="/app/opportunities" className="text-sm font-semibold text-copper">Cari opportunity →</Link>

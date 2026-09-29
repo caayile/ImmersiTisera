@@ -20,7 +20,7 @@ class DepartmentHeroTest extends TestCase
 
         $this->get('/departments')
             ->assertOk()
-            ->assertSee('Unit Bisnis Mitra Imersi')
+            ->assertSee('Unit Bisnis Mitra Magang Dosen')
             ->assertSee('Tiga Serangkai Pustama Mandiri')
             ->assertSee('Tiga Serangkai Inti Corpora')
             ->assertSee('K33')

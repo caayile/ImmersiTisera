@@ -16,14 +16,15 @@
     ];
 
     $unitMeta = [
-        'Operation (Sales)' => ['area' => 'K33 · Operasi & Sales', 'image' => 'from-[#16352c] to-[#3eaa84]'],
-        'Production' => ['area' => 'WJL · Produksi', 'image' => 'from-[#1e3a5f] to-[#5ec69d]'],
-        'Marketing' => ['area' => 'WJL · Pemasaran', 'image' => 'from-[#2f4a3c] to-[#7dd8b5]'],
-        'Finance Accounting' => ['area' => 'K33 · Keuangan & IT', 'image' => 'from-[#16352c] to-[#5ec69d]'],
-        'Human Resources Development' => ['area' => 'K33 · SDM', 'image' => 'from-[#1e3a5f] to-[#3eaa84]'],
-        'Digital Business' => ['area' => 'Teknologi & Analitik', 'image' => 'from-[#16352c] to-[#3eaa84]'],
-        'IT' => ['area' => 'Teknologi Informasi', 'image' => 'from-[#1e3a5f] to-[#5ec69d]'],
-        'Center Of Excellence' => ['area' => 'Pembelajaran & Inovasi', 'image' => 'from-[#2f4a3c] to-[#7dd8b5]'],
+        'Operation (Sales)' => ['area' => 'K33 · Operasi & Sales', 'image' => 'from-[#16352c] to-[#3eaa84]', 'photo' => asset('images/hero/k33.jpg')],
+        'Production' => ['area' => 'WJL · Produksi', 'image' => 'from-[#1e3a5f] to-[#5ec69d]', 'photo' => asset('images/hero/k33.jpg')],
+        'Marketing' => ['area' => 'WJL · Pemasaran', 'image' => 'from-[#2f4a3c] to-[#7dd8b5]', 'photo' => asset('images/hero/assalaam.jpg')],
+        'Finance Accounting' => ['area' => 'K33 · Keuangan & IT', 'image' => 'from-[#16352c] to-[#5ec69d]', 'photo' => asset('images/hero/campus.jpg')],
+        'Human Resources Development' => ['area' => 'K33 · SDM', 'image' => 'from-[#1e3a5f] to-[#3eaa84]', 'photo' => asset('images/hero/campus.jpg')],
+        'Digital Business' => ['area' => 'Teknologi & Analitik', 'image' => 'from-[#16352c] to-[#3eaa84]', 'photo' => asset('images/hero/campus.jpg')],
+        'IT' => ['area' => 'Teknologi Informasi', 'image' => 'from-[#1e3a5f] to-[#5ec69d]', 'photo' => asset('images/hero/campus.jpg')],
+        'Center Of Excellence' => ['area' => 'Pembelajaran & Inovasi', 'image' => 'from-[#2f4a3c] to-[#7dd8b5]', 'photo' => asset('images/hero/campus.jpg')],
+        'SD Al-Firdaus' => ['area' => 'Pendidikan', 'image' => 'from-[#2f4a3c] to-[#7dd8b5]', 'photo' => asset('images/hero/al-firdaus.jpg')],
     ];
 @endphp
 
@@ -120,6 +121,8 @@
                 @endphp
                 <article class="overflow-hidden rounded-2xl border border-line bg-white shadow-sm tap-feedback" data-reveal data-reveal-delay="{{ $loop->index % 4 }}">
                     <div class="relative h-44 bg-gradient-to-br {{ $meta['image'] }} p-4">
+                        <img src="{{ $meta['photo'] }}" alt="{{ $unit->name }}" class="absolute inset-0 h-full w-full object-cover" loading="lazy">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/10"></div>
                         <span class="absolute left-4 top-4 rounded-md bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide {{ $isFull || $unit->status !== 'open' ? 'text-red-600' : 'text-ink' }}">{{ $isFull ? 'Kuota penuh' : ($unit->status === 'open' ? 'Gelombang terbuka' : 'Lowongan ditutup') }}</span>
                         <p class="absolute bottom-4 left-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/90">{{ $meta['area'] }}</p>
                     </div>

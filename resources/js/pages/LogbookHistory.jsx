@@ -27,7 +27,7 @@ function PeriodItem({ program, selected, onClick }) {
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate font-semibold">{program.department || program.opportunity || 'Program imersi'}</p>
+          <p className="truncate font-semibold">{program.department || program.opportunity || 'Program magang dosen'}</p>
           <p className="mt-0.5 truncate text-sm text-moss/75">{program.opportunity || 'Unit bisnis belum ditentukan'}</p>
         </div>
         <Badge tone={program.status === 'active' ? 'sage' : 'copper'}>{program.status}</Badge>
@@ -74,7 +74,7 @@ export default function LogbookHistory() {
   return (
     <motion.div variants={pageVariants} initial="hidden" animate="visible">
       <PageHeader
-        kicker="Arsip imersi"
+        kicker="Arsip magang dosen"
         title="Riwayat Logbook"
         description="Daftar periode magang per tahun, termasuk penempatan unit bisnis tiap batch."
         action={<Badge tone="copper">{total} entri</Badge>}
@@ -136,7 +136,7 @@ export default function LogbookHistory() {
                         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-copper-dark">
                           Batch {String(selected.start_date || selected.end_date || '').slice(0, 4) || '—'}
                         </p>
-                        <h2 className="mt-1 text-xl font-semibold">{selected.department || selected.opportunity || 'Program imersi'}</h2>
+                        <h2 className="mt-1 text-xl font-semibold">{selected.department || selected.opportunity || 'Program magang dosen'}</h2>
                         <p className="mt-1 text-sm text-moss/80">{selected.opportunity || 'Unit bisnis belum ditentukan'}</p>
                       </div>
                       <Badge tone={selected.status === 'active' ? 'sage' : 'copper'}>{selected.status}</Badge>

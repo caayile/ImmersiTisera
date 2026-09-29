@@ -113,7 +113,7 @@ class Application extends Model
         return [
             [
                 'key' => 'motivation',
-                'label' => 'Mengapa Anda tertarik mengikuti program imersi di penempatan ini?',
+                'label' => 'Mengapa Anda tertarik mengikuti program magang dosen di penempatan ini?',
             ],
             [
                 'key' => 'learning_objectives',
@@ -121,7 +121,7 @@ class Application extends Model
             ],
             [
                 'key' => 'planned_activities',
-                'label' => 'Apa rencana kegiatan Anda selama periode imersi?',
+                'label' => 'Apa rencana kegiatan Anda selama periode magang dosen?',
             ],
             [
                 'key' => 'expected_output',

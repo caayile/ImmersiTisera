@@ -85,7 +85,7 @@ class ProgramRegistrationTest extends TestCase
             ->assertSee('Kirim pendaftaran')
             ->assertSee('Profil dosen')
             ->assertDontSee('Pertanyaan pendaftaran')
-            ->assertDontSee('Mengapa Anda tertarik mengikuti program imersi')
+            ->assertDontSee('Mengapa Anda tertarik mengikuti program magang dosen')
             ->assertDontSee('Kompetensi</dt>', false)
             ->assertDontSee('Keahlian</dt>', false)
             ->assertDontSee('Curriculum Vitae')

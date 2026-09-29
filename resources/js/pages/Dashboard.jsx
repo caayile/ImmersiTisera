@@ -72,7 +72,7 @@ function DosenHome() {
             <div>
               <h3 className="font-semibold">Logbook</h3>
               <p className="mt-1 text-sm text-moss/80">
-                {active ? `Isi refleksi harian program aktif · Minggu ${active.current_week}` : 'Refleksi harian selama program imersi berlangsung'}
+                {active ? `Isi refleksi harian program aktif · Minggu ${active.current_week}` : 'Refleksi harian selama program magang dosen berlangsung'}
               </p>
             </div>
             <span className="text-sm font-semibold text-copper">Buka logbook →</span>

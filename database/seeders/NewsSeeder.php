@@ -15,7 +15,7 @@ class NewsSeeder extends Seeder
 
         $items = [
             [
-                'title' => 'Gelombang Imersi 2026 dibuka',
+                'title' => 'Gelombang Magang Dosen 2026 dibuka',
                 'excerpt' => 'Pendaftaran dosen untuk program 8 minggu / ±60 hari sudah dibuka di TSPM dan TSIC.',
                 'body' => "Pendaftaran dosen untuk program Industry Immersion gelombang 2026 telah dibuka.\n\nDosen dapat memilih departemen dan unit bisnis yang relevan, lalu menempuh perjalanan 8 minggu dengan buku catatan harian, pendampingan mingguan, serta satu hasil utama yang nyata.\n\nSegera lengkapi profil dan ajukan penempatan agar pencocokan dapat diproses.",
                 'category' => 'Pengumuman',
@@ -31,7 +31,7 @@ class NewsSeeder extends Seeder
             [
                 'title' => 'Kolaborasi kuliah tamu dimulai',
                 'excerpt' => 'Program yang selesai dapat berlanjut ke kuliah tamu, proyek mahasiswa, dan pengembangan kurikulum.',
-                'body' => "Setelah tahap imersi selesai, dosen dan mentor dapat melanjutkan ke alur kolaborasi: tindak lanjut, kuliah tamu, riset bersama, hingga pengembangan kurikulum.\n\nHal ini memastikan dampak program tidak berhenti di minggu ke-8.",
+                'body' => "Setelah tahap magang dosen selesai, dosen dan mentor dapat melanjutkan ke alur kolaborasi: tindak lanjut, kuliah tamu, riset bersama, hingga pengembangan kurikulum.\n\nHal ini memastikan dampak program tidak berhenti di minggu ke-8.",
                 'category' => 'Kolaborasi',
                 'days' => 7,
             ],
@@ -50,9 +50,9 @@ class NewsSeeder extends Seeder
                 'days' => 14,
             ],
             [
-                'title' => 'Tips menyusun perjanjian imersi yang jelas',
+                'title' => 'Tips menyusun perjanjian magang dosen yang jelas',
                 'excerpt' => 'Perjanjian yang baik memuat peran, jadwal, target hasil, dan komitmen mentor–dosen.',
-                'body' => "Sebelum program aktif, perjanjian imersi harus disepakati bersama mentor.\n\nPastikan peran, jadwal 8 minggu, target hasil, dan akses kerja sudah tertulis jelas agar perjalanan imersi lebih terukur.",
+                'body' => "Sebelum program aktif, perjanjian magang dosen harus disepakati bersama mentor.\n\nPastikan peran, jadwal 8 minggu, target hasil, dan akses kerja sudah tertulis jelas agar perjalanan magang dosen lebih terukur.",
                 'category' => 'Panduan',
                 'days' => 18,
             ],

@@ -623,7 +623,7 @@ class AdminController extends Controller
 
             return Response::streamDownload(function () use ($csv) {
                 echo stream_get_contents($csv);
-            }, 'imersi-programs.csv');
+            }, 'magang-dosen-programs.csv');
         }
 
         return view('admin.reports', compact('programs'));
