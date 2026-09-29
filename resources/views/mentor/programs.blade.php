@@ -9,7 +9,7 @@
                 <p class="font-medium">{{ $program->participant->user->name }} · {{ $program->businessUnit->name }}</p>
                 <x-badge :status="$program->status" />
             </div>
-            <p class="mt-2 text-sm text-muted">Agreement {{ $program->agreement?->status ?? 'draft' }} · progress {{ $program->progress }}%</p>
+            <p class="mt-2 text-sm text-muted">Perjanjian {{ \App\Support\Status::label($program->agreement?->status ?? 'draft') }} · kemajuan {{ $program->progress }}%</p>
         </article>
     @empty
         <x-empty title="Tidak ada program" />

@@ -54,6 +54,17 @@ class DepartmentHeroTest extends TestCase
         $this->assertSame(7, substr_count($html, 'Lihat Departemen'));
     }
 
+    public function test_missing_uploaded_media_does_not_generate_a_broken_url(): void
+    {
+        Storage::fake('public');
+
+        $this->assertNull(HeroSetting::resolveMediaUrl('departments/missing.png'));
+
+        Storage::disk('public')->put('departments/available.png', 'image');
+
+        $this->assertNotNull(HeroSetting::resolveMediaUrl('departments/available.png'));
+    }
+
     public function test_admin_can_update_background_and_slides(): void
     {
         Storage::fake('public');
@@ -65,7 +76,7 @@ class DepartmentHeroTest extends TestCase
             ->get('/admin/department-hero')
             ->assertOk()
             ->assertSee('Hero Unit Bisnis')
-            ->assertSee('Background kampus');
+            ->assertSee('Latar belakang kampus');
 
         $this->actingAs($admin)
             ->post('/admin/department-hero/background', [
@@ -77,8 +88,8 @@ class DepartmentHeroTest extends TestCase
 
         $setting = HeroSetting::forPage('departments');
         $this->assertSame('Mitra Kampus TSU', $setting->title);
-        $this->assertNotNull($setting->background_path);
-        Storage::disk('public')->assertExists($setting->background_path);
+        $this->assertTrue(str_starts_with($setting->background_path, 'database-media/'));
+        $this->assertNotNull($setting->backgroundUrl());
 
         $this->actingAs($admin)
             ->post('/admin/department-hero/slides', [
@@ -97,7 +108,9 @@ class DepartmentHeroTest extends TestCase
         ]);
 
         $slide = HeroSlide::where('title', 'WJL')->firstOrFail();
-        Storage::disk('public')->assertExists($slide->image_path);
+        $this->assertTrue(str_starts_with($slide->image_path, 'database-media/'));
+        $this->assertNotNull($slide->imageUrl());
+        $previousPath = $slide->image_path;
 
         $this->actingAs($admin)
             ->put('/admin/department-hero/slides/'.$slide->id, [
@@ -115,7 +128,10 @@ class DepartmentHeroTest extends TestCase
             'title' => 'Wangsa Jastra Lestari Updated',
             'subtitle' => 'Deskripsi unit bisnis yang diperbarui.',
         ]);
-        Storage::disk('public')->assertExists(HeroSlide::findOrFail($slide->id)->image_path);
+        $updated = HeroSlide::findOrFail($slide->id);
+        $this->assertTrue(str_starts_with($updated->image_path, 'database-media/'));
+        $this->assertNotSame($previousPath, $updated->image_path);
+        $this->assertNotNull($updated->imageUrl());
 
         $this->get('/departments')->assertOk()->assertSee('WJL');
     }

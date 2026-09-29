@@ -6,11 +6,13 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 
 #[Fillable([
-    'program_id', 'participant_id', 'date', 'activity', 'what_i_did', 'what_i_learned',
+    'program_id', 'participant_id', 'date', 'activity', 'attendance', 'what_i_did', 'what_i_learned',
     'what_i_found', 'value', 'next_action', 'attachment_path', 'mentor_feedback', 'status',
 ])]
 class Logbook extends Model
 {
+    public const ATTENDANCE_TYPES = ['Hadir', 'Izin', 'Sakit', 'Tanpa Keterangan'];
+
     protected function casts(): array
     {
         return ['date' => 'date'];

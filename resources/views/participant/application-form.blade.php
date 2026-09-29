@@ -9,13 +9,50 @@
     $disabled = $readOnly ? 'disabled' : '';
 @endphp
 
-<div x-data="{ step: 1, next() { const form = document.getElementById('application-form'); if (! form) { this.step = 2; return; } const start = form.elements['period_start']; const end = form.elements['period_end']; if (! start.value) { start.reportValidity(); return; } if (! end.value) { end.reportValidity(); return; } this.step = 2; window.scrollTo({ top: 0, behavior: 'smooth' }); }, back() { this.step = 1; window.scrollTo({ top: 0, behavior: 'smooth' }); } }">
-    <a href="{{ $application ? route('participant.applications.show', $application) : ($unit ? route('units.show', $unit) : route('departments.index')) }}" class="inline-flex items-center gap-1 text-sm font-semibold text-primary-dark">
-        <span class="material-symbols-outlined text-[18px]">arrow_back</span>
-        Kembali
-    </a>
-
-    <section class="mt-5 overflow-hidden rounded-3xl border border-line bg-white shadow-sm">
+<div x-data="{
+    step: {{ old('shared_goal') || old('declaration') ? 2 : 1 }},
+    periodStart: @js(old('period_start', $periodStart)),
+    periodEnd: @js(old('period_end', $periodEnd)),
+    addMonths(value, months) {
+        if (! value) return '';
+        const parts = value.split('-').map(Number);
+        const date = new Date(Date.UTC(parts[0], parts[1] - 1 + months, 1));
+        const last = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0)).getUTCDate();
+        date.setUTCDate(Math.min(parts[2], last));
+        return date.toISOString().slice(0, 10);
+    },
+    onStartChange() {
+        if (this.periodStart) this.periodEnd = this.addMonths(this.periodStart, 2);
+    },
+    onEndChange() {
+        if (this.periodEnd) this.periodStart = this.addMonths(this.periodEnd, -2);
+    },
+    formatPeriod() {
+        if (! this.periodStart || ! this.periodEnd) return '—';
+        const fmt = (value) => {
+            const [y, m, d] = value.split('-').map(Number);
+            const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+            return String(d).padStart(2, '0') + ' ' + months[m - 1] + ' ' + y;
+        };
+        return fmt(this.periodStart) + ' – ' + fmt(this.periodEnd);
+    },
+    next() {
+        const form = document.getElementById('application-form');
+        if (! form) { this.step = 2; return; }
+        const start = form.elements['period_start'];
+        const end = form.elements['period_end'];
+        if (! start.value) { start.reportValidity(); return; }
+        if (! end.value) { end.reportValidity(); return; }
+        this.step = 2;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        this.$nextTick(() => window.dispatchEvent(new Event('resize')));
+    },
+    back() {
+        this.step = 1;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+}">
+    <section class="overflow-hidden rounded-3xl border border-line bg-white shadow-sm">
         <div class="hero-grid px-6 py-8 md:px-8">
             <p class="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">Pendaftaran dosen</p>
             <h1 class="mt-2 text-3xl font-semibold tracking-tight text-white md:text-4xl">
@@ -31,7 +68,7 @@
                 @if($readOnly)
                     Pendaftaran sedang diproses. Anda dapat melihat data yang sudah dikirim, tetapi tidak dapat mengirim ulang kecuali diminta revisi.
                 @elseif($application)
-                    Sesuaikan jawaban lalu kirim ulang ke admin.
+                    Sesuaikan pernyataan sesuai catatan mentor/admin, lalu kirim ulang. Jika revisi dari mentor, surat langsung kembali ke mentor untuk ditinjau dan ditandatangani.
                 @else
                     Lengkapi data diri dan informasi akademik Anda untuk mengikuti program Magang Dosen TSU.
                 @endif
@@ -179,42 +216,18 @@
                 <span class="material-symbols-outlined text-[22px]">calendar_month</span>
             </span>
             <div>
-                <h2 class="text-lg font-semibold">Periode imersi</h2>
+                <h2 class="text-lg font-semibold">Periode magang dosen</h2>
                 <p class="mt-1 text-sm text-muted">Durasi otomatis 2 bulan. Ubah tanggal mulai atau selesai, yang lain akan menyesuaikan.</p>
             </div>
         </div>
-        <div
-            class="grid gap-4 sm:grid-cols-2"
-            x-data="{
-                start: @js(old('period_start', $periodStart)),
-                end: @js(old('period_end', $periodEnd)),
-                addMonths(value, months) {
-                    if (! value) return '';
-                    const parts = value.split('-').map(Number);
-                    const date = new Date(Date.UTC(parts[0], parts[1] - 1 + months, 1));
-                    const last = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0)).getUTCDate();
-                    date.setUTCDate(Math.min(parts[2], last));
-                    return date.toISOString().slice(0, 10);
-                },
-                onStartChange() {
-                    if (this.start) {
-                        this.end = this.addMonths(this.start, 2);
-                    }
-                },
-                onEndChange() {
-                    if (this.end) {
-                        this.start = this.addMonths(this.end, -2);
-                    }
-                }
-            }"
-        >
+        <div class="grid gap-4 sm:grid-cols-2">
             <label class="block">
                 <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Tanggal mulai</span>
-                <input type="date" name="period_start" x-model="start" @change="onStartChange()" class="mt-2 w-full rounded-2xl border border-line bg-bg px-4 py-3 text-sm outline-none transition focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/15" {{ $disabled }} required>
+                <input type="date" name="period_start" x-model="periodStart" @change="onStartChange()" class="mt-2 w-full rounded-2xl border border-line bg-bg px-4 py-3 text-sm outline-none transition focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/15" {{ $disabled }} required>
             </label>
             <label class="block">
                 <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Tanggal selesai</span>
-                <input type="date" name="period_end" x-model="end" @change="onEndChange()" class="mt-2 w-full rounded-2xl border border-line bg-bg px-4 py-3 text-sm outline-none transition focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/15" {{ $disabled }} required>
+                <input type="date" name="period_end" x-model="periodEnd" @change="onEndChange()" class="mt-2 w-full rounded-2xl border border-line bg-bg px-4 py-3 text-sm outline-none transition focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/15" {{ $disabled }} required>
             </label>
         </div>
 
@@ -241,7 +254,7 @@
                 </span>
                 <div>
                     <h2 class="text-lg font-semibold">Persetujuan Pemagangan</h2>
-                    <p class="mt-1 text-sm text-muted">Sebelum memulai program, peserta dan mentor perlu menyepakati tujuan, aktivitas, output, dari magang dosen.</p>
+                    <p class="mt-1 text-sm text-muted">Sebelum memulai program, dosen dan mentor perlu menyepakati tujuan, aktivitas, dan hasil yang ingin dicapai.</p>
                 </div>
             </div>
 
@@ -263,7 +276,7 @@
                         <dl class="mt-2 space-y-1.5 text-sm">
                             <div class="flex justify-between gap-2"><dt class="text-muted">Unit Bisnis</dt><dd class="text-right font-medium">{{ $unit->department?->name ?? '—' }}</dd></div>
                             <div class="flex justify-between gap-2"><dt class="text-muted">Department</dt><dd class="text-right font-medium">{{ $unit->name }}</dd></div>
-                            <div class="flex justify-between gap-2"><dt class="text-muted">Periode</dt><dd class="text-right font-medium">{{ $application?->periodLabel() ?? ($periodStart.' – '.$periodEnd) }}</dd></div>
+                            <div class="flex justify-between gap-2"><dt class="text-muted">Periode</dt><dd class="text-right font-medium" x-text="formatPeriod()">{{ $application?->periodLabel() ?? ($periodStart.' – '.$periodEnd) }}</dd></div>
                         </dl>
                     </div>
                 </div>
@@ -271,82 +284,145 @@
 
             @php
                 $checkedActivities = old('activity_types', $application?->normalizedActivityTypes() ?? []);
-                $indicatorDefaults = array_pad(array_values((array) old('success_indicators', $application?->normalizedSuccessIndicators() ?? [])), 3, '');
+                $indicatorSeed = array_values(array_filter(array_map(
+                    fn ($item) => trim((string) $item),
+                    (array) old('success_indicators', $application?->normalizedSuccessIndicators() ?? [])
+                ), fn ($item) => $item !== ''));
+                while (count($indicatorSeed) < \App\Models\Application::MIN_SUCCESS_INDICATORS) {
+                    $indicatorSeed[] = '';
+                }
             @endphp
 
             <div class="mt-5 space-y-4">
                 <div class="rounded-2xl border border-line bg-bg p-4">
-                    <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 1 — Shared Goal</span>
-                    <p class="mt-1 text-sm text-muted">Selama 2 bulan, kami akan __________ untuk menghasilkan __________ yang memberikan manfaat bagi __________.</p>
+                    <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 1 — Tujuan Bersama</span>
+                    <p class="mt-1 text-sm text-muted">Rumus sederhana: <b>Selama 2 bulan, kami akan [aktivitas] untuk menghasilkan [luaran] yang memberikan manfaat bagi [penerima manfaat].</b></p>
                     <label class="mt-3 block">
-                        <span class="text-sm font-medium">Shared Goal*</span>
-                        <textarea name="shared_goal" rows="3" placeholder="Selama 2 bulan, kami akan ... untuk menghasilkan ... yang memberikan manfaat bagi ..." class="mt-2 w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/15" {{ $disabled }} required minlength="20">{{ old('shared_goal', $application?->shared_goal) }}</textarea>
+                        <span class="text-sm font-medium">Tujuan Bersama*</span>
+                        <span class="mt-0.5 block text-xs text-muted">Tuliskan tujuan bersama dosen dan mentor secara spesifik dan terukur.</span>
+                        <textarea name="shared_goal" rows="3" placeholder="Template: Selama 2 bulan, kami akan [aktivitas] untuk menghasilkan [luaran] yang memberikan manfaat bagi [penerima manfaat].&#10;&#10;Contoh: Selama 2 bulan, kami akan memetakan alur kerja layanan digital untuk menghasilkan teaching case yang memberikan manfaat bagi mahasiswa Informatika." class="mt-2 w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/15" {{ $disabled }} required minlength="20">{{ old('shared_goal', $application?->shared_goal) }}</textarea>
                     </label>
                 </div>
 
                 <div class="rounded-2xl border border-line bg-bg p-4">
-                    <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 2 — Activity</span>
-                    <p class="mt-1 text-sm font-medium">Peserta dan mentor menentukan aktivitas. Pilih minimal satu jenis aktivitas.*</p>
-                    <div class="mt-3 flex flex-wrap gap-2">
-                        @foreach(\App\Models\Application::ACTIVITY_TYPES as $type)
-                            <label class="inline-flex cursor-pointer items-center gap-2 rounded-full border border-line bg-white px-4 py-2 text-sm font-medium transition has-[:checked]:border-primary has-[:checked]:bg-primary/10 has-[:checked]:text-primary-dark">
-                                <input type="checkbox" name="activity_types[]" value="{{ $type }}" @checked(in_array($type, (array) $checkedActivities, true)) {{ $disabled }} class="accent-[#1f5a45]">
-                                {{ \App\Models\Application::activityTypeLabel($type) }}
-                            </label>
-                        @endforeach
+                    <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 2 — Aktivitas</span>
+                    <p class="mt-1 text-sm font-medium">Peserta dan mentor menentukan aktivitas. Isi Pilihan 1 (wajib) dan Pilihan 2 bila ada aktivitas pendukung.</p>
+                    @php
+                        $activityChoices = array_pad(array_values((array) $checkedActivities), 2, '');
+                    @endphp
+                    <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                        <label class="block">
+                            <span class="text-sm font-medium">Pilihan 1*</span>
+                            <select name="activity_types[]" class="mt-2 w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/15" {{ $disabled }} required>
+                                <option value="" disabled @selected($activityChoices[0] === '')>Pilih aktivitas</option>
+                                @foreach(\App\Models\Application::ACTIVITY_TYPES as $type)
+                                    <option value="{{ $type }}" @selected($activityChoices[0] === $type)>{{ \App\Models\Application::activityTypeLabel($type) }}</option>
+                                @endforeach
+                            </select>
+                        </label>
+                        <label class="block">
+                            <span class="text-sm font-medium">Pilihan 2</span>
+                            <select name="activity_types[]" class="mt-2 w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/15" {{ $disabled }}>
+                                <option value="">Opsional</option>
+                                @foreach(\App\Models\Application::ACTIVITY_TYPES as $type)
+                                    <option value="{{ $type }}" @selected($activityChoices[1] === $type)>{{ \App\Models\Application::activityTypeLabel($type) }}</option>
+                                @endforeach
+                            </select>
+                        </label>
                     </div>
                 </div>
 
                 <div class="rounded-2xl border border-line bg-bg p-4">
-                    <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 3 — Problem / Opportunity</span>
+                    <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 3 — Masalah atau Peluang</span>
                     <label class="mt-1 block">
-                        <span class="text-sm font-medium">Problem / Opportunity Statement*</span>
-                        <span class="mt-0.5 block text-xs text-muted">Jelaskan problem atau peluang yang akan menjadi fokus selama Industry Immersion.</span>
+                        <span class="text-sm font-medium">Rumusan Masalah atau Peluang*</span>
+                        <span class="mt-0.5 block text-xs text-muted">Jelaskan problem atau peluang yang akan menjadi fokus selama program magang dosen.</span>
                         <textarea name="problem_statement" rows="4" class="mt-2 w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/15" {{ $disabled }} required minlength="20">{{ old('problem_statement', $application?->problem_statement) }}</textarea>
                     </label>
                 </div>
 
                 <div class="rounded-2xl border border-line bg-bg p-4">
-                    <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 4 — Main Output</span>
+                    <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 4 — Hasil Utama</span>
                     <label class="mt-1 block">
-                        <span class="text-sm font-medium">Main Output*</span>
-                        <span class="mt-0.5 block text-xs text-muted">Apa hasil utama yang akan dihasilkan selama program? Misalnya: Research Report + Prototype Concept</span>
-                        <textarea name="main_output" rows="3" placeholder="Misalnya: Research Report + Prototype Concept" class="mt-2 w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/15" {{ $disabled }} required minlength="10">{{ old('main_output', $application?->main_output) }}</textarea>
+                        <span class="text-sm font-medium">Hasil Utama*</span>
+                        <span class="mt-0.5 block text-xs text-muted">Apa hasil utama yang akan dicapai selama program? Contoh: laporan penelitian dan rancangan prototipe.</span>
+                        <textarea name="main_output" rows="3" placeholder="Contoh: laporan penelitian dan rancangan prototipe" class="mt-2 w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/15" {{ $disabled }} required minlength="10">{{ old('main_output', $application?->main_output) }}</textarea>
                     </label>
                 </div>
 
                 <div class="rounded-2xl border border-line bg-bg p-4">
-                    <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 5 — Benefit</span>
+                    <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 5 — Manfaat</span>
                     <div class="mt-3 grid gap-4 sm:grid-cols-2">
                         <label class="block">
-                            <span class="text-sm font-medium">Benefit untuk Dosen / TSU*</span>
+                            <span class="text-sm font-medium">Manfaat untuk Dosen / TSU*</span>
                             <textarea name="participant_benefit" rows="3" class="mt-2 w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/15" {{ $disabled }} required minlength="20">{{ old('participant_benefit', $application?->participant_benefit) }}</textarea>
                         </label>
                         <label class="block">
-                            <span class="text-sm font-medium">Benefit untuk Unit Bisnis*</span>
+                            <span class="text-sm font-medium">Manfaat untuk Unit Bisnis*</span>
                             <textarea name="business_benefit" rows="3" class="mt-2 w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/15" {{ $disabled }} required minlength="20">{{ old('business_benefit', $application?->business_benefit) }}</textarea>
                         </label>
                     </div>
                 </div>
 
-                <div class="rounded-2xl border border-line bg-bg p-4">
-                    <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 6 — Success Indicators</span>
-                    <p class="mt-1 text-sm font-medium">Tentukan maksimal 3 indikator keberhasilan. Isi minimal 1 indikator.*</p>
-                    <p class="mt-0.5 text-xs text-muted">Mentor dapat mengusulkan perubahan indikator — usulannya akan dikirim kembali ke Anda beserta catatannya.</p>
+                <div
+                    class="rounded-2xl border border-line bg-bg p-4"
+                    x-data="{
+                        indicators: @js($indicatorSeed),
+                        max: {{ \App\Models\Application::MAX_SUCCESS_INDICATORS }},
+                        min: {{ \App\Models\Application::MIN_SUCCESS_INDICATORS }},
+                        add() {
+                            if (this.indicators.length < this.max) this.indicators.push('');
+                        },
+                        remove(index) {
+                            if (this.indicators.length > this.min) this.indicators.splice(index, 1);
+                        }
+                    }"
+                >
+                    <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Bagian 6 — Indikator Keberhasilan</span>
+                    <p class="mt-1 text-sm font-medium">Isi minimal {{ \App\Models\Application::MIN_SUCCESS_INDICATORS }} indikator keberhasilan. Tambah baris bila perlu (maks. {{ \App\Models\Application::MAX_SUCCESS_INDICATORS }}).*</p>
+                    <p class="mt-0.5 text-xs text-muted">Mentor dapat mengomentari berulang kali lewat minta revisi jika belum puas.</p>
                     <div class="mt-3 space-y-3">
-                        @for($i = 0; $i < 3; $i++)
+                        <template x-for="(indicator, index) in indicators" :key="index">
                             <label class="block">
-                                <span class="text-xs font-semibold text-muted">{{ $i + 1 }}.</span>
-                                <input type="text" name="success_indicators[]" value="{{ $indicatorDefaults[$i] ?? '' }}" maxlength="255" class="mt-1 w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/15" {{ $disabled }} @required($i === 0)>
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="text-xs font-semibold text-muted" x-text="(index + 1) + '.'"></span>
+                                    <button
+                                        type="button"
+                                        class="text-xs font-semibold text-red-600 disabled:opacity-40"
+                                        @click="remove(index)"
+                                        x-show="indicators.length > min"
+                                        {{ $disabled ? 'disabled' : '' }}
+                                    >Hapus</button>
+                                </div>
+                                <input
+                                    type="text"
+                                    name="success_indicators[]"
+                                    x-model="indicators[index]"
+                                    maxlength="255"
+                                    class="mt-1 w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/15"
+                                    {{ $disabled }}
+                                    :required="index < min"
+                                >
                             </label>
-                        @endfor
+                        </template>
                     </div>
+                    @unless($readOnly)
+                        <button
+                            type="button"
+                            class="mt-3 inline-flex items-center gap-1 rounded-full border border-line bg-white px-4 py-2 text-xs font-semibold disabled:opacity-40"
+                            @click="add()"
+                            :disabled="indicators.length >= max"
+                        >
+                            <span class="material-symbols-outlined text-[16px]">add</span>
+                            Tambah indikator
+                        </button>
+                    @endunless
                 </div>
 
                 @if($application)
                     <div class="rounded-2xl border border-line bg-bg p-4">
                         <label class="block">
-                            <span class="text-sm font-medium">Feedback untuk usulan mentor (opsional)</span>
+                            <span class="text-sm font-medium">Tanggapan atas usulan mentor (opsional)</span>
                             <span class="mt-0.5 block text-xs text-muted">Gunakan kolom ini untuk menanggapi perubahan indikator yang diusulkan mentor sebelum mengirim ulang.</span>
                             <textarea name="indicator_feedback" rows="3" class="mt-2 w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/15" {{ $disabled }}>{{ old('indicator_feedback', $application?->indicator_feedback) }}</textarea>
                         </label>
@@ -359,11 +435,11 @@
         <div class="flex flex-wrap items-start gap-4 rounded-2xl bg-bg px-4 py-4">
             <label class="flex min-w-0 flex-1 items-start gap-3 text-sm">
                 <input type="checkbox" name="declaration" value="1" class="mt-1" @checked(old('declaration')) required>
-                <span>Saya menyatakan data di atas benar dan mengajukan persetujuan pemagangan untuk ditinjau admin, mentor, lalu disahkan admin.</span>
+                <span>Saya telah membaca ketentuan di atas, menyatakan data benar, dan mengajukan persetujuan pemagangan untuk ditinjau admin, mentor, lalu disahkan admin.</span>
             </label>
         </div>
 
-        <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
             <button type="button" @click="back()" class="inline-flex items-center gap-1 rounded-full border border-line px-5 py-2.5 text-sm font-semibold">
                 <span class="material-symbols-outlined text-[18px]">arrow_back</span>
                 Kembali ke data diri
@@ -374,13 +450,15 @@
             </button>
         </div>
         @else
-        <div class="rounded-2xl border border-line bg-bg px-4 py-4 text-sm text-muted">
-            <p class="font-semibold text-ink">Pengiriman dikunci</p>
-            <p class="mt-1">Anda hanya dapat melihat data tahapan ini. Form dapat dikirim ulang hanya setelah admin meminta revisi.</p>
-            <a href="{{ route('participant.applications.show', $application) }}" class="mt-3 inline-flex items-center gap-1 font-semibold text-primary-dark">
-                <span class="material-symbols-outlined text-[18px]">arrow_back</span>
-                Kembali ke status pendaftaran
-            </a>
+        <div class="mt-4 space-y-4">
+            <div class="rounded-2xl border border-line bg-bg px-4 py-4 text-sm text-muted">
+                <p class="font-semibold text-ink">Pengiriman dikunci</p>
+                <p class="mt-1">Anda hanya dapat melihat data tahapan ini. Form dapat dikirim ulang hanya setelah admin meminta revisi.</p>
+                <a href="{{ route('participant.applications.show', $application) }}" class="mt-3 inline-flex items-center gap-1 font-semibold text-primary-dark">
+                    <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+                    Kembali ke status pendaftaran
+                </a>
+            </div>
         </div>
         @endif
         </div>

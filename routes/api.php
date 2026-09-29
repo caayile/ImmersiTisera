@@ -7,9 +7,11 @@ use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\OpportunityController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProgramController;
+use App\Http\Controllers\PublicController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health-api', fn () => ['ok' => true]);
+Route::get('/search', [PublicController::class, 'searchApi'])->name('api.search');
 
 Route::post('/login', [ApiAuthController::class, 'login']);
 Route::post('/register', [ApiAuthController::class, 'register']);

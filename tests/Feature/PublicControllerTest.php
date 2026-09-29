@@ -9,22 +9,31 @@ class PublicControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_departments_index_filters_by_search_query(): void
+    public function test_departments_index_shows_image_carousel_and_catalog(): void
     {
         $this->seed();
 
-        $this->get(route('departments.index', ['q' => 'TSPM']))
+        $this->get(route('departments.index'))
             ->assertOk()
-            ->assertSee('TSPM')
-            ->assertDontSee('Belum ada unit bisnis.');
+            ->assertSee('Mitra Magang Dosen')
+            ->assertSee('Daftar unit bisnis')
+            ->assertSee('Cari departemen atau unit bisnis...')
+            ->assertSee('dept-hero-carousel')
+            ->assertSee('dept-hero-prev')
+            ->assertSee('partner-card');
     }
 
-    public function test_departments_index_shows_empty_state_when_search_misses(): void
+    public function test_departments_page_renders_live_search_and_api_returns_matches(): void
     {
         $this->seed();
 
-        $this->get(route('departments.index', ['q' => 'zzzz-tidak-ada']))
+        $this->get(route('departments.index'))->assertOk();
+
+        $this->get(route('api.search', ['q' => 'TSPM']))
             ->assertOk()
-            ->assertSee('Belum ada unit bisnis.');
+            ->assertJsonFragment([
+                'type' => 'Departemen',
+                'name' => 'TSPM',
+            ]);
     }
 }

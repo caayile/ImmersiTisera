@@ -14,7 +14,7 @@
         <div class="pointer-events-none absolute inset-0 z-20 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
     </x-fill-image>
     <div class="relative mx-auto max-w-6xl pb-10 pt-8 text-white sm:pb-12">
-        <p class="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">{{ $department->area ?: 'Mitra Imersi' }}</p>
+        <p class="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">{{ $department->area ?: 'Mitra Magang Dosen' }}</p>
         <h1 class="mt-3 text-4xl font-semibold tracking-tight md:text-5xl">{{ $department->name }}</h1>
         @if($department->subtitle)
             <p class="mt-2 text-base text-white/80">{{ $department->subtitle }}</p>
@@ -41,6 +41,9 @@
                 $unitImage = $unit->imageUrl()
                     ?? ($department->imageUrl() ?: asset('images/hero/campus.jpg'));
                 $isOpen = $unit->status === 'open';
+                $filled = (int) ($unit->active_applications_count ?? $unit->applications()->forQuota($unit)->count());
+                $quota = \App\Models\BusinessUnit::MAX_APPLICANTS;
+                $isFull = $filled >= $quota;
             @endphp
             <article class="flex flex-col overflow-hidden rounded-2xl border border-line bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-primary hover:shadow-md">
                 <a href="{{ route('units.show', $unit) }}">
@@ -51,8 +54,8 @@
                 <div class="flex flex-1 flex-col p-5">
                     <div class="flex items-start justify-between gap-2">
                         <h3 class="text-lg font-semibold">{{ $unit->name }}</h3>
-                        <span class="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold {{ $isOpen ? 'bg-primary/12 text-primary-dark' : 'bg-red-50 text-red-600' }}">
-                            {{ $isOpen ? 'Lowongan dibuka' : 'Lowongan ditutup' }}
+                        <span class="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold {{ $isFull ? 'bg-red-50 text-red-600' : ($isOpen ? 'bg-primary/12 text-primary-dark' : 'bg-red-50 text-red-600') }}">
+                            {{ $isFull ? 'Kuota penuh ('.$filled.'/'.$quota.')' : ($isOpen ? 'Lowongan dibuka ('.$filled.'/'.$quota.')' : 'Lowongan ditutup') }}
                         </span>
                     </div>
                     <p class="mt-2 flex-1 text-sm leading-6 text-muted">{{ \Illuminate\Support\Str::limit($unit->description, 90) }}</p>

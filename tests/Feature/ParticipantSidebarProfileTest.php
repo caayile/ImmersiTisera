@@ -42,6 +42,18 @@ class ParticipantSidebarProfileTest extends TestCase
             ->assertDontSee('University');
     }
 
+    public function test_sidebar_nav_persists_scroll_position_across_pages(): void
+    {
+        $dosen = User::factory()->create(['role' => 'participant']);
+        Participant::create(['user_id' => $dosen->id]);
+
+        $this->actingAs($dosen)
+            ->get(route('participant.dashboard'))
+            ->assertOk()
+            ->assertSee('sidebar-nav', false)
+            ->assertSee('sidebar-nav-scroll', false);
+    }
+
     public function test_api_me_includes_avatar_for_sidebar_profile(): void
     {
         $dosen = User::factory()->create([

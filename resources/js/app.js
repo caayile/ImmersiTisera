@@ -1,3 +1,10 @@
+// Alpine.js is bundled locally (not via CDN) so dropdowns, modals and
+// toggles keep working even without access to external CDNs.
+import Alpine from 'alpinejs';
+
+window.Alpine = Alpine;
+Alpine.start();
+
 // Global Top Page Loader Bar & Navigation Management
 (() => {
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -58,7 +65,11 @@
         }
     }
 
-    document.querySelectorAll('a, button').forEach((element) => element.classList.add('tap-feedback'));
+    // NOTE: Jangan tempel tap-feedback ke kartu carousel hero (posisinya
+    // absolute via inset-y-0/left-1/2). Class .tap-feedback memaksa
+    // position:relative (unlayered, mengalahkan utility Tailwind) sehingga
+    // kartu kolaps (tinggi 0) dan tak terlihat sama sekali.
+    document.querySelectorAll('a:not(.partner-card), button').forEach((element) => element.classList.add('tap-feedback'));
 
     document.addEventListener('pointerdown', (event) => {
         const target = event.target.closest('a, button');

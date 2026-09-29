@@ -74,7 +74,7 @@ class ImersiAlert extends Notification
             $mail->action('Buka di Magang Dosen', url($this->url));
         }
 
-        return $mail->salutation('Magang Dosen · TSU Industry Immersion');
+        return $mail->salutation('Program Magang Dosen · TSU');
     }
 
     /**

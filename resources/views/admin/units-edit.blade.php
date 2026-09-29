@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Edit '.$businessUnit->name)
+@section('title', 'Ubah '.$businessUnit->name)
 @section('content')
 @php $dept = $businessUnit->department; @endphp
 <a href="{{ route('admin.units.show', $dept) }}" class="inline-flex items-center gap-1.5 text-sm font-medium text-muted transition hover:text-primary-dark">
@@ -12,7 +12,7 @@
         <img src="{{ $businessUnit->imageUrl() }}" alt="{{ $businessUnit->name }}" class="h-14 w-20 rounded-xl object-cover">
     @endif
     <div>
-        <h1 class="text-2xl font-semibold">Edit Departemen</h1>
+        <h1 class="text-2xl font-semibold">Ubah Departemen</h1>
         <p class="text-sm text-muted">{{ $businessUnit->name }} · {{ $dept->name }}</p>
     </div>
 </div>
@@ -73,31 +73,7 @@
         </div>
     </section>
 
-    {{-- ===== PERIODE PENDAFTARAN ===== --}}
-    <section class="rounded-2xl border border-line bg-white p-5">
-        <h2 class="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-ink">
-            <span class="material-symbols-outlined text-[18px] text-primary-dark">event</span>
-            Periode Pendaftaran
-        </h2>
-        <div class="mt-4 grid gap-3 md:grid-cols-3">
-            <div>
-                <label class="text-xs font-medium text-muted">Dibuka pada</label>
-                <input type="datetime-local" name="registration_start" value="{{ $businessUnit->registration_start?->format('Y-m-d\TH:i') }}" class="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm">
-            </div>
-            <div>
-                <label class="text-xs font-medium text-muted">Ditutup pada</label>
-                <input type="datetime-local" name="registration_deadline" value="{{ $businessUnit->registration_deadline?->format('Y-m-d\TH:i') }}" class="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm">
-            </div>
-            <div>
-                <label class="text-xs font-medium text-muted">Status lowongan</label>
-                <select name="status" class="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm">
-                    <option value="open" @selected($businessUnit->status === 'open')>Lowongan dibuka</option>
-                    <option value="closed" @selected($businessUnit->status === 'closed')>Lowongan ditutup</option>
-                </select>
-            </div>
-        </div>
-        <p class="mt-3 text-xs text-muted">Pendaftaran otomatis terbuka sejak waktu dibuka dan tertutup setelah waktu ditutup. Jika tanggal penutupan kosong, lowongan berstatus <b>Akan diumumkan</b> (tertutup) sampai ditetapkan.</p>
-    </section>
+    <input type="hidden" name="status" value="{{ $businessUnit->status }}">
 
     <div class="flex items-center justify-end gap-4">
         <a href="{{ route('admin.units.show', $dept) }}" class="text-sm font-semibold text-muted">Batal</a>

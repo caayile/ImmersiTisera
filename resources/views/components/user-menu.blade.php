@@ -14,12 +14,9 @@
     ];
 
     if ($user->isParticipant()) {
-        $items[] = ['Dasbor program', route('spa'), 'space_dashboard'];
-        $items[] = ['Riwayat Pendaftaran', route('participant.applications'), 'history'];
+        $items[] = ['Ringkasan program', route('participant.applications'), 'space_dashboard'];
     } elseif ($user->isMentor()) {
-        $items[] = ['Dasbor program', route('spa'), 'space_dashboard'];
-        $items[] = ['Pendaftaran', route('mentor.applications'), 'history'];
-        $items[] = ['Logbook', route('mentor.logbooks'), 'menu_book'];
+        $items[] = ['Ringkasan program', route('mentor.dashboard'), 'space_dashboard'];
     } else {
         $items[] = ['Dasbor', route('admin.dashboard'), 'space_dashboard'];
     }

@@ -53,7 +53,7 @@
     <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
             <p class="inline-flex rounded-full bg-primary/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-dark">Perjalanan 60 Hari</p>
-            <h2 class="mt-3 text-2xl font-semibold tracking-tight md:text-3xl">Linimasa Imersi Terstruktur 8 Minggu</h2>
+            <h2 class="mt-3 text-2xl font-semibold tracking-tight md:text-3xl">Linimasa Magang Dosen 8 Minggu</h2>
             <p class="mt-2 max-w-xl text-sm text-muted">Setiap tahap punya pemeriksaan, aktivitas, dan target hasil yang harus diselesaikan.</p>
         </div>
         <div class="inline-flex self-start rounded-full border border-line bg-white p-1 text-sm">

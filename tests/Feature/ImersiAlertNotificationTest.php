@@ -158,14 +158,13 @@ class ImersiAlertNotificationTest extends TestCase
             ->assertSee(route('participant.notifications'), false);
     }
 
-    public function test_dosen_notifications_page_has_a_back_link_to_home(): void
+    public function test_dosen_notifications_page_has_no_back_link(): void
     {
         $dosen = User::factory()->create(['role' => 'participant']);
 
         $this->actingAs($dosen)
             ->get(route('participant.notifications'))
-            ->assertSee('Kembali')
-            ->assertSee(route('home'), false);
+            ->assertDontSee('Kembali');
     }
 
     public function test_dosen_notifications_page_lists_alert_and_marks_it_read(): void

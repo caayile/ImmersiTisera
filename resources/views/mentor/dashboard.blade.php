@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Overview Mentor')
+@section('title', 'Ringkasan Pendamping')
 @section('content')
 <h1 class="text-2xl font-semibold">Ringkasan Mentor</h1>
 <div class="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -7,9 +7,9 @@
         ['Peserta aktif', $programs->where('status','active')->count()],
         ['Program aktif', $programs->where('status','active')->count()],
         ['Pendaftaran menunggu', $pendingApplications],
-        ['Pending agreement', $pendingAgreements],
-        ['Logbook perlu review', $pendingLogbooks],
-        ['Output perlu validasi', $pendingOutputs],
+        ['Perjanjian menunggu persetujuan', $pendingAgreements],
+        ['Logbook perlu diperiksa', $pendingLogbooks],
+        ['Hasil perlu divalidasi', $pendingOutputs],
     ] as [$label, $value])
         <article class="rounded-2xl border border-line bg-white p-5">
             <p class="text-xs font-semibold uppercase tracking-wide text-muted">{{ $label }}</p>
@@ -19,7 +19,7 @@
 </div>
 <div class="mt-6 overflow-x-auto rounded-2xl border border-line bg-white">
     <table class="min-w-full text-left text-sm">
-        <thead class="bg-bg text-xs uppercase text-muted"><tr><th class="px-4 py-3">Peserta</th><th class="px-4 py-3">Unit</th><th class="px-4 py-3">Status</th><th class="px-4 py-3">Week</th></tr></thead>
+        <thead class="bg-bg text-xs uppercase text-muted"><tr><th class="px-4 py-3">Peserta</th><th class="px-4 py-3">Unit</th><th class="px-4 py-3">Status</th><th class="px-4 py-3">Minggu</th></tr></thead>
         <tbody>
         @foreach($programs as $program)
             <tr class="border-t border-line">

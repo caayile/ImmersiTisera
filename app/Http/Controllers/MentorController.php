@@ -10,10 +10,14 @@ use App\Models\Logbook;
 use App\Models\MentorSession;
 use App\Models\Program;
 use App\Models\ProgramOutput;
+use App\Models\Timeline;
 use App\Notifications\ImersiAlert;
+use App\Services\AgreementLetterService;
 use App\Services\ApplicationApprovalService;
 use App\Support\Status;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 
 class MentorController extends Controller
 {
@@ -53,7 +57,7 @@ class MentorController extends Controller
 
     public function applications(Request $request)
     {
-        $applications = Application::with(['participant.user', 'department', 'businessUnit'])
+        $applications = Application::with(['participant.user', 'department', 'businessUnit', 'mentor.user'])
             ->where('mentor_id', $request->user()->mentor?->id)
             ->latest()
             ->get();
@@ -61,13 +65,23 @@ class MentorController extends Controller
         return view('mentor.applications', compact('applications'));
     }
 
+    public function showApplication(Request $request, Application $application)
+    {
+        $mentor = $request->user()->mentor;
+        abort_unless($mentor && $application->mentor_id === $mentor->id, 403);
+
+        $application->load(['participant.user', 'department', 'businessUnit', 'mentor.user']);
+
+        return view('mentor.application-show', compact('application'));
+    }
+
     public function reviewApplication(Request $request, Application $application, ApplicationApprovalService $approvals)
     {
         $data = $request->validate([
-            'decision' => ['required', 'in:approved,revision,rejected'],
-            'mentor_note' => ['nullable', 'string'],
-            'revision_note' => ['nullable', 'string'],
-            'success_indicators' => ['sometimes', 'array', 'max:3'],
+            'decision' => ['required', 'in:approved,revision'],
+            'mentor_note' => ['required_if:decision,revision', 'nullable', 'string', 'min:10', 'max:2000'],
+            'revision_note' => ['nullable', 'string', 'max:2000'],
+            'success_indicators' => ['sometimes', 'array', 'max:'.Application::MAX_SUCCESS_INDICATORS],
             'success_indicators.*' => ['nullable', 'string', 'max:255'],
         ]);
 
@@ -75,12 +89,20 @@ class MentorController extends Controller
         abort_unless($mentor, 403);
 
         if ($application->mentor_id === $mentor->id && $data['decision'] === 'approved' && $application->status === 'waiting_admin') {
-            return back()->with('status', 'Persetujuan ini sudah disetujui (status: '.$application->currentStageLabel().'). Muat ulang halaman untuk melihat status terbaru.');
+            return redirect()
+                ->route('mentor.applications.show', $application)
+                ->with('status', 'Persetujuan ini sudah disetujui (status: '.$application->currentStageLabel().'). Muat ulang halaman untuk melihat status terbaru.');
         }
 
         $approvals->mentorReview($application, $mentor, $data);
 
-        return back()->with('status', 'Keputusan pendaftaran disimpan.');
+        $message = $data['decision'] === 'revision'
+            ? 'Permintaan revisi dikirim ke dosen.'
+            : 'Surat persetujuan ditandatangani dan diteruskan ke admin.';
+
+        return redirect()
+            ->route('mentor.applications')
+            ->with('status', $message);
     }
 
     public function agreements(Request $request)
@@ -93,20 +115,74 @@ class MentorController extends Controller
         return view('mentor.agreements', compact('agreements'));
     }
 
+    public function printAgreement(Request $request, Agreement $agreement)
+    {
+        $this->authorizeProgram($request, $agreement->program);
+        abort_unless($agreement->status === 'agreed', 404);
+
+        if (blank($agreement->letter_number)) {
+            app(AgreementLetterService::class)->issue($agreement);
+            $agreement->refresh();
+        }
+
+        return view('participant.agreement-print', [
+            'program' => $agreement->program->load(['participant.user', 'mentor.user', 'department', 'businessUnit', 'agreement', 'application']),
+            'agreement' => $agreement,
+            'pdf' => false,
+        ]);
+    }
+
+    public function downloadAgreementPdf(Request $request, Agreement $agreement)
+    {
+        $this->authorizeProgram($request, $agreement->program);
+        abort_unless($agreement->status === 'agreed', 404);
+
+        if (blank($agreement->letter_number)) {
+            app(AgreementLetterService::class)->issue($agreement);
+            $agreement->refresh();
+        }
+
+        $program = $agreement->program->load(['participant.user', 'mentor.user', 'department', 'businessUnit', 'agreement', 'application']);
+
+        $filename = 'Perjanjian-Magang-'.preg_replace('/[^A-Za-z0-9]+/', '-', (string) ($agreement->letter_number ?? 'tanpa-nomor')).'.pdf';
+
+        return Pdf::loadView('participant.agreement-print', [
+            'program' => $program,
+            'agreement' => $agreement,
+            'pdf' => true,
+        ])->setPaper('a4', 'portrait')->download($filename);
+    }
+
     public function reviewAgreement(Request $request, Agreement $agreement)
     {
         $this->authorizeProgram($request, $agreement->program);
         $data = $request->validate([
             'decision' => ['required', 'in:agreed,revision'],
             'revision_note' => ['nullable', 'string'],
+            'mentor_signature' => [
+                'required_if:decision,agreed',
+                'nullable',
+                'string',
+                'regex:/^data:image\/(png|jpeg|jpg|webp);base64,/i',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if (is_string($value) && strlen($value) > 900_000) {
+                        $fail('Tanda tangan mentor terlalu besar.');
+                    }
+                },
+            ],
         ]);
 
         if ($data['decision'] === 'revision') {
             $agreement->update(['status' => 'revision', 'revision_note' => $data['revision_note'], 'mentor_approved_at' => null]);
             $agreement->program->update(['status' => 'revision']);
-            $agreement->program->participant->user->notify(new ImersiAlert('Agreement perlu revisi', $data['revision_note'] ?? 'Silakan perbaiki agreement.', route('participant.agreement')));
+            $agreement->program->participant->user->notify(new ImersiAlert('Perjanjian perlu revisi', $data['revision_note'] ?? 'Silakan perbaiki perjanjian.', route('participant.agreement')));
         } else {
-            $agreement->update(['status' => 'agreed', 'mentor_approved_at' => now()]);
+            $agreement->update([
+                'status' => 'agreed',
+                'mentor_approved_at' => now(),
+                'mentor_signature' => $data['mentor_signature'],
+            ]);
+            app(AgreementLetterService::class)->issue($agreement->fresh());
             $program = $agreement->program;
             $program->update([
                 'status' => 'active',
@@ -114,25 +190,102 @@ class MentorController extends Controller
                 'end_date' => now()->addDays(60)->toDateString(),
             ]);
             $program->seedTimeline();
-            $program->participant->user->notify(new ImersiAlert('Program ACTIVE', 'Agreement disetujui. Immersion dimulai.', route('participant.program')));
+            $program->participant->user->notify(new ImersiAlert('Program aktif', 'Perjanjian disetujui. Masa magang dimulai.', route('participant.program')));
         }
 
-        return back()->with('status', 'Keputusan agreement disimpan.');
+        return back()->with('status', 'Keputusan perjanjian disimpan.');
     }
 
     public function timeline(Request $request)
     {
-        return view('mentor.timeline', ['programs' => $this->mine($request)->with('timelines')->get()]);
+        return view('mentor.timeline', ['programs' => $this->mine($request)->with(['participant.user', 'businessUnit', 'department', 'timelines'])->get()]);
+    }
+
+    public function showTimeline(Request $request, Program $program)
+    {
+        $this->authorizeProgram($request, $program);
+
+        return view('mentor.timeline-show', ['program' => $program->load(['participant.user', 'businessUnit', 'department', 'timelines'])]);
+    }
+
+    public function reviewTimeline(Request $request, Timeline $timeline)
+    {
+        $this->authorizeProgram($request, $timeline->program);
+
+        $data = $request->validate([
+            'status' => ['required', 'in:done,pending'],
+            'mentor_note' => ['required_if:status,pending', 'nullable', 'string'],
+        ]);
+
+        $timeline->update([
+            'status' => $data['status'],
+            'mentor_note' => $data['status'] === 'pending' ? $data['mentor_note'] : null,
+        ]);
+        $timeline->program->participant->user->notify(new ImersiAlert(
+            'Checkpoint minggu '.$timeline->week.' '.$data['status'],
+            $data['status'] === 'done' ? 'Mentor mengesahkan checkpoint.' : ($data['mentor_note'] ?? 'Mentor meminta perbaikan.'),
+            route('participant.timeline')
+        ));
+
+        return back()->with('status', 'Checkpoint diperbarui.');
     }
 
     public function logbooks(Request $request)
     {
-        $logbooks = Logbook::with(['program.participant.user'])
-            ->whereHas('program', fn ($q) => $q->where('mentor_id', $request->user()->mentor?->id))
-            ->latest()
-            ->get();
+        $query = $this->mine($request)->with(['participant.user', 'department', 'businessUnit', 'logbooks']);
 
-        return view('mentor.logbooks', compact('logbooks'));
+        if ($request->filled('q')) {
+            $needle = mb_strtolower($request->string('q')->toString(), 'UTF-8');
+            $query->whereHas('participant.user', fn ($q) => $q->whereRaw('LOWER(name) LIKE ?', ['%'.$needle.'%']));
+        }
+
+        foreach (['department_id', 'business_unit_id'] as $filter) {
+            if ($request->filled($filter)) {
+                $query->where($filter, $request->input($filter));
+            }
+        }
+
+        if ($request->filled('status')) {
+            $query->whereHas('logbooks', fn ($q) => $q->where('status', $request->input('status')));
+        }
+
+        $programs = $query->get();
+
+        return view('mentor.logbooks', [
+            'programs' => $programs,
+            'departments' => $programs->pluck('department')->filter()->unique('id')->sortBy('name'),
+            'businessUnits' => $programs->pluck('businessUnit')->filter()->unique('id')->sortBy('name'),
+        ]);
+    }
+
+    public function showLogbooks(Request $request, Program $program)
+    {
+        $this->authorizeProgram($request, $program);
+
+        $program->load(['participant.user', 'department', 'businessUnit', 'logbooks']);
+
+        return view('logbooks.show', [
+            'program' => $program,
+            'month' => $this->showMonth($request, $program),
+            'byDate' => $program->logbooks->sortBy(['date', 'id'])->groupBy(fn (Logbook $log) => $log->date->toDateString()),
+            'backRoute' => 'mentor.logbooks',
+            'canReview' => true,
+        ]);
+    }
+
+    private function showMonth(Request $request, Program $program): Carbon
+    {
+        try {
+            $parsed = trim((string) $request->string('month'));
+
+            if ($parsed !== '') {
+                return Carbon::createFromFormat('Y-m', $parsed)->startOfMonth();
+            }
+        } catch (\Exception) {
+            // Fall through to the program-based default below.
+        }
+
+        return $program->start_date?->copy()->startOfMonth() ?? today()->startOfMonth();
     }
 
     public function reviewLogbook(Request $request, Logbook $logbook)
@@ -143,7 +296,7 @@ class MentorController extends Controller
             'mentor_feedback' => ['nullable', 'string'],
         ]);
         $logbook->update($data);
-        $logbook->program->participant->user->notify(new ImersiAlert('Update logbook', 'Status logbook: '.$data['status'], route('participant.logbooks')));
+        $logbook->program->participant->user->notify(new ImersiAlert('Logbook diperbarui', 'Status logbook: '.Status::logbookLabel($data['status']), route('participant.logbooks')));
 
         return back()->with('status', 'Logbook diperbarui.');
     }
@@ -203,14 +356,24 @@ class MentorController extends Controller
             'mentor_feedback' => ['nullable', 'string'],
         ]);
         $output->update($data);
-        $output->program->participant->user->notify(new ImersiAlert('Output '.$data['status'], $output->title, route('participant.outputs')));
+        $output->program->participant->user->notify(new ImersiAlert('Hasil: '.Status::outputLabel($data['status']), $output->title, route('participant.outputs')));
 
-        return back()->with('status', 'Output divalidasi.');
+        return back()->with('status', 'Hasil berhasil divalidasi.');
     }
 
     public function evaluations(Request $request)
     {
-        return view('mentor.evaluations', ['programs' => $this->mine($request)->with(['participant.user', 'evaluations'])->get()]);
+        $programs = $this->mine($request)->with(['participant.user', 'businessUnit', 'evaluations.evaluator', 'evaluations.program.participant.user', 'evaluations.program.businessUnit'])->get();
+        $evaluatorId = $request->user()->id;
+
+        $given = $programs->flatMap(fn (Program $program) => $program->evaluations)
+            ->where('evaluator_id', $evaluatorId)
+            ->values();
+        $received = $programs->flatMap(fn (Program $program) => $program->evaluations)
+            ->whereNotIn('evaluator_id', [$evaluatorId])
+            ->values();
+
+        return view('mentor.evaluations', compact('programs', 'given', 'received'));
     }
 
     public function storeEvaluation(Request $request, Program $program)
@@ -253,7 +416,7 @@ class MentorController extends Controller
         CollaborationPipeline::updateOrCreate(['program_id' => $program->id], $data);
         $program->participant->user->notify(new ImersiAlert('Kolaborasi diperbarui', Status::COLLABORATION_LEVELS[$data['level']], route('participant.collaboration')));
 
-        return back()->with('status', 'Pipeline kolaborasi disimpan.');
+        return back()->with('status', 'Rencana kolaborasi disimpan.');
     }
 
     public function notifications(Request $request)

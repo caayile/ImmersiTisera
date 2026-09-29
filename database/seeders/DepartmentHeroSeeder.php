@@ -10,7 +10,9 @@ class DepartmentHeroSeeder extends Seeder
 {
     public function run(): void
     {
-        HeroSetting::updateOrCreate(
+        // Jangan timpa kustomisasi admin saat re-seed: hanya buat default
+        // bila belum ada, agar upload hero via CRUD tidak "hilang sendiri".
+        HeroSetting::firstOrCreate(
             ['page' => 'departments'],
             [
                 'title' => 'Unit Bisnis Mitra Imersi',
@@ -38,7 +40,7 @@ class DepartmentHeroSeeder extends Seeder
                 'title' => 'K33',
                 'subtitle' => 'Operasi penjualan, SDM, keuangan, IT, dan rantai pasok industri.',
                 'image_path' => 'images/hero/k33.jpg',
-                'link_url' => '/departments/k33',
+                'link_url' => '/departments/k33-distribusi',
                 'sort_order' => 3,
             ],
             [
@@ -72,7 +74,7 @@ class DepartmentHeroSeeder extends Seeder
         ];
 
         foreach ($slides as $slide) {
-            HeroSlide::updateOrCreate(
+            HeroSlide::firstOrCreate(
                 [
                     'page' => 'departments',
                     'title' => $slide['title'],
@@ -84,5 +86,10 @@ class DepartmentHeroSeeder extends Seeder
                 ],
             );
         }
+
+        // Perbaiki data lama yang link-nya salah (slug asli k33-distribusi).
+        HeroSlide::forPage('departments')
+            ->where('link_url', '/departments/k33')
+            ->update(['link_url' => '/departments/k33-distribusi']);
     }
 }

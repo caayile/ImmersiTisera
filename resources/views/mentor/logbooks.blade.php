@@ -1,32 +1,28 @@
 @extends('layouts.app')
 @section('title', 'Logbook')
 @section('content')
-<h1 class="text-2xl font-semibold">Review Logbook</h1>
-<div class="mt-6 space-y-4">
-    @forelse($logbooks as $log)
-        <article class="rounded-2xl border border-line bg-white p-5 text-sm {{ $log->status === 'submitted' ? 'ring-1 ring-amber-300' : '' }}">
-            <div class="flex flex-wrap items-center justify-between gap-2">
-                <p class="font-medium">{{ $log->program->participant->user->name }} · {{ $log->date->format('d M Y') }}</p>
-                <div class="flex items-center gap-2">
-                    @if($log->status === 'submitted')<span class="text-xs font-semibold text-amber-700">Pending Review</span>@endif
-                    <x-badge :status="$log->status" />
-                </div>
-            </div>
-            <p class="mt-2"><b>{{ $log->activity }}</b></p>
-            <p>Did: {{ $log->what_i_did }}</p>
-            <p>Learned: {{ $log->what_i_learned }}</p>
-            <p>Found: {{ $log->what_i_found }}</p>
-            <form method="POST" action="{{ route('mentor.logbooks.review', $log) }}" class="mt-3 grid gap-2 md:grid-cols-[1fr_160px_auto]">
-                @csrf
-                <input name="mentor_feedback" value="{{ $log->mentor_feedback }}" placeholder="Feedback / next action" class="rounded-lg border border-line px-3 py-2 text-sm">
-                <select name="status" class="rounded-lg border border-line px-3 py-2 text-sm">
-                    <option value="reviewed">Reviewed</option>
-                    <option value="revision">Revision required</option>
-                    <option value="approved">Approved</option>
-                </select>
-                <button class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white">Simpan</button>
-            </form>
-        </article>
+<h1 class="text-2xl font-semibold">Pemeriksaan Logbook</h1>
+<form method="GET" class="mt-5 grid gap-3 rounded-2xl border border-line bg-white p-4 md:grid-cols-4">
+    <input name="q" value="{{ request('q') }}" placeholder="Cari nama peserta" class="rounded-lg border border-line px-3 py-2 text-sm">
+    <select name="department_id" onchange="this.form.submit()" class="rounded-lg border border-line px-3 py-2 text-sm"><option value="">Semua unit bisnis</option>@foreach($departments as $department)<option value="{{ $department->id }}" @selected(request('department_id') == $department->id)>{{ $department->name }}</option>@endforeach</select>
+    <select name="business_unit_id" onchange="this.form.submit()" class="rounded-lg border border-line px-3 py-2 text-sm"><option value="">Semua departemen</option>@foreach($businessUnits as $businessUnit)<option value="{{ $businessUnit->id }}" @selected(request('business_unit_id') == $businessUnit->id)>{{ $businessUnit->name }}</option>@endforeach</select>
+    <select name="status" onchange="this.form.submit()" class="rounded-lg border border-line px-3 py-2 text-sm"><option value="">Semua status logbook</option>@foreach(['submitted' => 'Menunggu pemeriksaan', 'reviewed' => 'Sudah diperiksa', 'revision' => 'Perlu revisi', 'approved' => 'Disetujui'] as $value => $label)<option value="{{ $value }}" @selected(request('status') === $value)>{{ $label }}</option>@endforeach</select>
+    <button class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white md:col-span-4 md:justify-self-end">Terapkan filter</button>
+</form>
+<div class="mt-6 overflow-hidden rounded-2xl border border-line bg-white">
+    @forelse($programs as $program)
+        @php $pendingCount = $program->logbooks->whereIn('status', ['submitted', 'reviewed', 'draft'])->count(); @endphp
+        <a href="{{ route('mentor.logbooks.show', $program) }}" class="flex items-center gap-3 border-b border-line px-4 py-3 text-sm transition last:border-0 hover:bg-bg/60">
+            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary-dark">{{ mb_strtoupper(mb_substr(trim($program->participant->user->name), 0, 1)) }}</span>
+            <span class="min-w-0 flex-1">
+                <span class="block truncate font-semibold">{{ $program->participant->user->name }}</span>
+                <span class="mt-0.5 block truncate text-xs text-muted">{{ $program->businessUnit?->name ?? '-' }} · {{ $program->department?->name ?? '-' }}</span>
+            </span>
+            @if($pendingCount)
+                <span class="shrink-0 rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700">{{ $pendingCount }} menunggu pemeriksaan</span>
+            @endif
+            <span class="shrink-0 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white">Lihat rincian</span>
+        </a>
     @empty
         <x-empty title="Tidak ada logbook" />
     @endforelse

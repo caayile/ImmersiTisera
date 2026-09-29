@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 #[Fillable([
@@ -11,6 +12,8 @@ use Illuminate\Database\Eloquent\Model;
 ])]
 class BusinessUnit extends Model
 {
+    public const MAX_APPLICANTS = 2;
+
     protected function casts(): array
     {
         return [
@@ -49,6 +52,44 @@ class BusinessUnit extends Model
     public function isClosed(): bool
     {
         return ! $this->isOpen();
+    }
+
+    /**
+     * Preload the batch-aware quota count to avoid N+1 queries, e.g.
+     * `BusinessUnit::query()->withQuotaCount()->get()`.
+     *
+     * @param  Builder<BusinessUnit>  $query
+     */
+    public function scopeWithQuotaCount($query)
+    {
+        return $query->withCount(['applications as active_applications_count' => function ($count) {
+            $count->where('status', '!=', 'rejected')
+                ->where(function ($count) {
+                    $count->whereColumn('applications.batch', 'business_units.batch')
+                        ->orWhere(function ($count) {
+                            $count->whereNull('applications.batch')->whereNull('business_units.batch');
+                        });
+                });
+        }]);
+    }
+
+    public function activeApplicantsCount(): int
+    {
+        if ($this->hasAttribute('active_applications_count') && $this->active_applications_count !== null) {
+            return (int) $this->active_applications_count;
+        }
+
+        return $this->applications()->forQuota($this)->count();
+    }
+
+    public function remainingSlots(): int
+    {
+        return max(0, self::MAX_APPLICANTS - $this->activeApplicantsCount());
+    }
+
+    public function isFull(): bool
+    {
+        return $this->activeApplicantsCount() >= self::MAX_APPLICANTS;
     }
 
     public function imageUrl(): ?string

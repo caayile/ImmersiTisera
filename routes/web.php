@@ -2,12 +2,14 @@
 
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\MediaController;
 use App\Http\Controllers\MentorController;
 use App\Http\Controllers\ParticipantController;
 use App\Http\Controllers\PublicController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [PublicController::class, 'home'])->name('home');
+Route::get('/media/{mediaAsset}', [MediaController::class, 'show'])->name('media.show');
 Route::get('/departments', [PublicController::class, 'departments'])->name('departments.index');
 Route::get('/departments/{department:slug}', [PublicController::class, 'department'])->name('departments.show');
 Route::get('/business-units/{businessUnit}', [PublicController::class, 'unit'])->name('units.show');
@@ -15,6 +17,7 @@ Route::get('/berita', [PublicController::class, 'news'])->name('news.index');
 Route::get('/berita/{news:slug}', [PublicController::class, 'newsShow'])->name('news.show');
 Route::get('/profil', [PublicController::class, 'profile'])->middleware('auth')->name('profile.public');
 Route::get('/program-info', [PublicController::class, 'programInfo'])->name('program.info');
+Route::view('/app/{any?}', 'spa')->where('any', '.*')->name('spa');
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::get('/login/user', [AuthController::class, 'showUserLogin'])->name('login.user');
@@ -38,11 +41,6 @@ Route::middleware('guest')->group(function () {
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
-Route::view('/app/{any?}', 'spa')
-    ->where('any', '.*')
-    ->middleware('auth')
-    ->name('spa');
-
 Route::middleware(['auth', 'role:participant'])->prefix('participant')->name('participant.')->group(function () {
     Route::get('/dashboard', [ParticipantController::class, 'dashboard'])->name('dashboard');
     Route::get('/profile', [ParticipantController::class, 'profile'])->name('profile');
@@ -55,8 +53,11 @@ Route::middleware(['auth', 'role:participant'])->prefix('participant')->name('pa
     Route::put('/applications/{application}', [ParticipantController::class, 'updateApplication'])->name('applications.update');
     Route::get('/program', [ParticipantController::class, 'program'])->name('program');
     Route::get('/agreement', [ParticipantController::class, 'agreement'])->name('agreement');
+    Route::get('/agreement/print', [ParticipantController::class, 'printAgreement'])->name('agreement.print');
+    Route::get('/agreement/download-pdf', [ParticipantController::class, 'downloadAgreementPdf'])->name('agreement.download');
     Route::post('/agreement', [ParticipantController::class, 'updateAgreement']);
     Route::get('/timeline', [ParticipantController::class, 'timeline'])->name('timeline');
+    Route::post('/timeline/{timeline}', [ParticipantController::class, 'updateTimeline'])->name('timeline.update');
     Route::get('/logbooks', [ParticipantController::class, 'logbooks'])->name('logbooks');
     Route::post('/logbooks', [ParticipantController::class, 'storeLogbook']);
     Route::get('/mentoring', [ParticipantController::class, 'mentoring'])->name('mentoring');
@@ -75,14 +76,20 @@ Route::middleware(['auth', 'role:participant'])->prefix('participant')->name('pa
 Route::middleware(['auth', 'role:mentor'])->prefix('mentor')->name('mentor.')->group(function () {
     Route::get('/dashboard', [MentorController::class, 'dashboard'])->name('dashboard');
     Route::get('/applications', [MentorController::class, 'applications'])->name('applications');
+    Route::get('/applications/{application}', [MentorController::class, 'showApplication'])->name('applications.show');
     Route::post('/applications/{application}', [MentorController::class, 'reviewApplication'])->name('applications.review');
     Route::get('/participants', [MentorController::class, 'participants'])->name('participants');
     Route::get('/participants/{program}', [MentorController::class, 'showParticipant'])->name('participants.show');
     Route::get('/programs', [MentorController::class, 'programs'])->name('programs');
     Route::get('/agreements', [MentorController::class, 'agreements'])->name('agreements');
+    Route::get('/agreements/{agreement}/print', [MentorController::class, 'printAgreement'])->name('agreements.print');
+    Route::get('/agreements/{agreement}/download-pdf', [MentorController::class, 'downloadAgreementPdf'])->name('agreements.download');
     Route::post('/agreements/{agreement}', [MentorController::class, 'reviewAgreement'])->name('agreements.review');
     Route::get('/timeline', [MentorController::class, 'timeline'])->name('timeline');
+    Route::get('/timeline/{program}', [MentorController::class, 'showTimeline'])->name('timeline.show');
+    Route::post('/timeline/{timeline}', [MentorController::class, 'reviewTimeline'])->name('timeline.review');
     Route::get('/logbooks', [MentorController::class, 'logbooks'])->name('logbooks');
+    Route::get('/logbooks/{program}', [MentorController::class, 'showLogbooks'])->name('logbooks.show');
     Route::post('/logbooks/{logbook}', [MentorController::class, 'reviewLogbook'])->name('logbooks.review');
     Route::get('/mentoring', [MentorController::class, 'mentoring'])->name('mentoring');
     Route::post('/mentoring', [MentorController::class, 'storeMentoring']);
@@ -116,6 +123,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/lowongan/{businessUnit}/period', [AdminController::class, 'updateLowonganPeriod'])->name('lowongan.period');
     Route::post('/lowongan/toggle-all', [AdminController::class, 'toggleAllLowongan'])->name('lowongan.toggle-all');
     Route::post('/lowongan/open-all', [AdminController::class, 'openAllLowongan'])->name('lowongan.open-all');
+    Route::post('/lowongan/period-all', [AdminController::class, 'updateAllLowonganPeriod'])->name('lowongan.period-all');
     Route::get('/mentors', [AdminController::class, 'mentors'])->name('mentors');
     Route::get('/participants', [AdminController::class, 'participants'])->name('participants');
     Route::get('/programs', [AdminController::class, 'programs'])->name('programs');
@@ -123,7 +131,9 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/matching', [AdminController::class, 'matching'])->name('matching');
     Route::post('/matching/{application}', [AdminController::class, 'updateMatching'])->name('matching.update');
     Route::get('/agreements', [AdminController::class, 'agreements'])->name('agreements');
+    Route::get('/agreements/{agreement}/download-pdf', [AdminController::class, 'downloadAgreementPdf'])->name('agreements.download');
     Route::get('/monitoring', [AdminController::class, 'monitoring'])->name('monitoring');
+    Route::get('/monitoring/{program}', [AdminController::class, 'showMonitoringLogbooks'])->name('monitoring.show');
     Route::get('/evaluations', [AdminController::class, 'evaluations'])->name('evaluations');
     Route::get('/collaborations', [AdminController::class, 'collaborations'])->name('collaborations');
     Route::get('/reports', [AdminController::class, 'reports'])->name('reports');

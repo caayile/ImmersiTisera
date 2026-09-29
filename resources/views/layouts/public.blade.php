@@ -3,12 +3,11 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@yield('title', 'Magang Dosen') TSU Industry Immersion</title>
+    <title>@yield('title', 'Magang Dosen') Program TSU</title>
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/cdn.min.js"></script>
     <script>
         (() => {
             const isPageTransition = sessionStorage.getItem('is-page-transition');
@@ -36,7 +35,7 @@
     </div>
     <div id="brand-splash-wordmark" class="brand-splash__wordmark">
         <span>Magang Dosen</span>
-        <small>TSU INDUSTRY IMMERSION</small>
+        <small>PROGRAM MAGANG DOSEN TSU</small>
     </div>
     <div class="brand-splash__line" aria-hidden="true"><span></span></div>
 </div>
@@ -52,7 +51,7 @@
         <a href="{{ route('home') }}" class="flex items-center gap-2 font-semibold">
             <img id="nav-logo" src="{{ asset('images/logo-tsu.svg') }}" alt="TSU" class="site-logo site-logo--nav">
             <span id="nav-brand-text">Magang Dosen
-                <span class="block text-[10px] font-medium uppercase tracking-[0.14em] text-muted">TSU Industry Immersion</span>
+                <span class="block text-[10px] font-medium uppercase tracking-[0.14em] text-muted">Program Magang Dosen</span>
             </span>
         </a>
         <nav class="hidden items-center gap-1 text-sm font-medium md:flex">
@@ -67,7 +66,6 @@
                 @endif
                 <x-user-menu />
             @else
-                <a href="{{ route('register') }}" class="inline-flex items-center rounded-full border border-ink px-4 py-2 font-medium">+ Pendaftaran</a>
                 <a href="{{ route('login') }}" class="rounded-full bg-primary px-4 py-2 font-semibold text-white">Masuk</a>
             @endauth
             <button class="rounded-lg border border-line px-3 py-1 md:hidden" @click="open = !open">Menu</button>
@@ -85,7 +83,6 @@
                 <button class="block py-2">Keluar</button>
             </form>
         @else
-            <a href="{{ route('register') }}" class="block py-2">Pendaftaran</a>
             <a href="{{ route('login') }}" class="block py-2">Masuk</a>
         @endauth
     </div>
@@ -94,7 +91,38 @@
     <div class="bg-primary/15 px-5 py-3 text-center text-sm text-primary-dark">{{ session('status') }}</div>
 @endif
 <main>@yield('content')</main>
-<footer class="border-t border-line bg-white py-8 text-center text-sm text-muted">Magang Dosen · Tiga Serangkai · TSU Industry Immersion</footer>
+<footer class="bg-[#173d32] text-white/75">
+    <div class="mx-auto grid max-w-6xl gap-10 px-5 py-14 md:grid-cols-[1.35fr_0.8fr_1fr] md:gap-16 md:py-16">
+        <div>
+            <div class="flex items-center gap-3 text-white">
+                <span class="flex h-11 w-11 items-center justify-center rounded-xl border border-white/25 bg-white/10 text-lg font-semibold">TS</span>
+                <div class="font-semibold leading-tight">Magang<br>Tiga Serangkai</div>
+            </div>
+            <p class="mt-5 max-w-sm text-sm leading-6">Program ini dikelola langsung oleh unit pembelajaran dan inovasi untuk mempertemukan dosen dengan pengalaman kerja nyata di dunia industri.</p>
+            <p class="mt-5 flex max-w-sm items-start gap-2 text-sm leading-6"><span class="material-symbols-outlined mt-0.5 text-[18px] text-secondary">location_on</span><span>Jl. Prof. DR. Supomo No.23, Sriwedari, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57141</span></p>
+        </div>
+        <div>
+            <h2 class="font-semibold text-white">Navigasi</h2>
+            <nav class="mt-5 flex flex-col gap-3 text-sm">
+                <a href="{{ route('home') }}" class="transition hover:text-secondary">Beranda</a>
+                <a href="{{ route('departments.index') }}" class="transition hover:text-secondary">Unit Bisnis</a>
+                <a href="{{ route('news.index') }}" class="transition hover:text-secondary">Berita</a>
+                <a href="{{ route('program.info') }}" class="transition hover:text-secondary">Pusat Informasi</a>
+            </nav>
+        </div>
+        <div>
+            <h2 class="font-semibold text-white">Kontak</h2>
+            <a href="mailto:info@tiga-serangkai.com" class="mt-5 flex items-center gap-2 text-sm transition hover:text-secondary"><span class="material-symbols-outlined text-[18px] text-secondary">mail</span>info@tiga-serangkai.com</a>
+            <div class="mt-6 flex items-center gap-4 text-white">
+                <a href="#" aria-label="LinkedIn" class="transition hover:text-secondary"><span class="material-symbols-outlined">business</span></a>
+                <a href="#" aria-label="Instagram" class="transition hover:text-secondary"><span class="material-symbols-outlined">photo_camera</span></a>
+                <a href="#" aria-label="Website" class="transition hover:text-secondary"><span class="material-symbols-outlined">language</span></a>
+                <a href="#" aria-label="TikTok" class="transition hover:text-secondary"><span class="material-symbols-outlined">music_note</span></a>
+            </div>
+        </div>
+    </div>
+    <div class="border-t border-white/15 px-5 py-5 text-center text-xs text-white/65">© {{ now()->year }} PT Tiga Serangkai. All rights reserved.</div>
+</footer>
 <script>
     (() => {
         const splash = document.getElementById('brand-splash');

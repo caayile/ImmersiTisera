@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { NavLink, Outlet } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { NavLink, useLocation, useOutlet } from 'react-router-dom'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
 import api from '../api/client'
 
@@ -117,6 +117,9 @@ const navItemVariants = {
 
 export default function Layout() {
   const { user, logout } = useAuth()
+  const location = useLocation()
+  const outlet = useOutlet()
+  const prefersReducedMotion = useReducedMotion()
   const items = menus[user?.role] || menus.user
   const isDosen = user?.role === 'user'
   const [open, setOpen] = useState(false)
@@ -268,7 +271,17 @@ export default function Layout() {
         </header>
 
         <main className="px-5 py-8 lg:px-10">
-          <Outlet />
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={location.pathname}
+              initial={prefersReducedMotion ? false : { opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: prefersReducedMotion ? 1 : 0, y: prefersReducedMotion ? 0 : -8 }}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.2, ease: 'easeOut' }}
+            >
+              {outlet}
+            </motion.div>
+          </AnimatePresence>
         </main>
       </div>
     </div>

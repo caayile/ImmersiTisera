@@ -17,6 +17,7 @@ class OpportunityController extends Controller
         $user = $request->user();
         $query = BusinessUnit::query()
             ->with(['department', 'mentors.user'])
+            ->withQuotaCount()
             ->orderByDesc('id');
 
         if ($user->isMentor()) {

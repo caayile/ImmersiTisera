@@ -20,7 +20,7 @@
     <div class="mt-6">
         <x-approval-flow
             :application="$application"
-            caption="Tahapan surat persetujuan — status diperbarui otomatis setelah tinjauan admin, mentor, dan pengesahan. Anda tetap bisa membuka data yang sudah dikirim, tetapi hanya bisa mengirim ulang saat status revisi."
+            caption="Tahapan surat persetujuan — status diperbarui otomatis setelah tinjauan admin, mentor, dan pengesahan. Jika mentor meminta revisi, perbaiki pernyataan lalu kirim ulang langsung ke mentor untuk ditandatangani."
         />
     </div>
 

@@ -19,6 +19,7 @@ class PublicController extends Controller
             ->get();
 
         $featuredUnits = BusinessUnit::with(['department.businessUnits'])
+            ->withQuotaCount()
             ->whereIn('name', [
                 'Operation (Sales)',
                 'Production',
@@ -38,6 +39,7 @@ class PublicController extends Controller
 
         if ($featuredUnits->count() < 3) {
             $featuredUnits = BusinessUnit::with(['department.businessUnits'])
+                ->withQuotaCount()
                 ->latest()
                 ->take(3)
                 ->get();
@@ -63,9 +65,9 @@ class PublicController extends Controller
         $departments = Department::query()
             ->where('status', 'active')
             ->where(function ($query) use ($search) {
-                $query->where('name', 'like', '%' . $search . '%')
-                    ->orWhere('description', 'like', '%' . $search . '%')
-                    ->orWhere('area', 'like', '%' . $search . '%');
+                $query->where('name', 'like', '%'.$search.'%')
+                    ->orWhere('description', 'like', '%'.$search.'%')
+                    ->orWhere('area', 'like', '%'.$search.'%');
             })
             ->get()
             ->map(function ($dept) {
@@ -79,7 +81,7 @@ class PublicController extends Controller
 
         $units = BusinessUnit::query()
             ->where('status', 'open')
-            ->where('name', 'like', '%' . $search . '%')
+            ->where('name', 'like', '%'.$search.'%')
             ->get()
             ->map(function ($unit) {
                 return [
@@ -98,7 +100,7 @@ class PublicController extends Controller
         $search = trim((string) $request->string('q'));
 
         $departments = Department::query()
-            ->with('businessUnits')
+            ->with(['businessUnits' => fn ($units) => $units->withQuotaCount()])
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($inner) use ($search) {
                     $inner->where('name', 'like', '%'.$search.'%')
@@ -130,7 +132,7 @@ class PublicController extends Controller
 
     public function department(Department $department)
     {
-        $department->load('businessUnits');
+        $department->load(['businessUnits' => fn ($units) => $units->withQuotaCount()]);
         $hero = HeroSetting::forPage('departments');
 
         return view('public.department', compact('department', 'hero'));
@@ -139,6 +141,7 @@ class PublicController extends Controller
     public function unit(BusinessUnit $businessUnit)
     {
         $businessUnit->load(['department', 'mentors.user']);
+        $businessUnit->loadCount(['applications as active_applications_count' => fn ($count) => $count->forQuota($businessUnit)]);
 
         return view('public.unit', compact('businessUnit'));
     }

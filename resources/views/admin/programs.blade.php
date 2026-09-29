@@ -1,12 +1,12 @@
 @extends('layouts.app')
 @section('title', 'Program')
 @section('content')
-<h1 class="text-2xl font-semibold">Program Management</h1>
+<h1 class="text-2xl font-semibold">Manajemen Program</h1>
 <form class="mt-4 flex flex-wrap gap-3">
     <select name="status" class="rounded-lg border border-line px-3 py-2 text-sm">
         <option value="">Semua status</option>
         @foreach(['draft','submitted','revision','agreed','active','completed'] as $status)
-            <option value="{{ $status }}" @selected(request('status')===$status)>{{ $status }}</option>
+            <option value="{{ $status }}" @selected(request('status')===$status)>{{ \App\Support\Status::label($status) }}</option>
         @endforeach
     </select>
     <select name="department_id" class="rounded-lg border border-line px-3 py-2 text-sm">
@@ -15,7 +15,7 @@
             <option value="{{ $department->id }}" @selected(request('department_id')==$department->id)>{{ $department->name }}</option>
         @endforeach
     </select>
-    <button class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white">Filter</button>
+    <button class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white">Terapkan</button>
 </form>
 <div class="mt-6 overflow-x-auto rounded-2xl border border-line bg-white">
     <table class="min-w-full text-left text-sm">
@@ -30,9 +30,9 @@
                 <td class="px-4 py-3"><x-badge :status="$program->status" /></td>
                 <td class="px-4 py-3">
                     @if($program->status === 'active')
-                    <form method="POST" action="{{ route('admin.programs.complete', $program) }}" onsubmit="return confirm('Tandai completed?')">
+                    <form method="POST" action="{{ route('admin.programs.complete', $program) }}" onsubmit="return confirm('Tandai program sebagai selesai?')">
                         @csrf
-                        <button class="text-primary-dark">Complete</button>
+                        <button class="text-primary-dark">Tandai selesai</button>
                     </form>
                     @endif
                 </td>

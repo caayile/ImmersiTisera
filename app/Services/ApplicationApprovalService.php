@@ -35,6 +35,17 @@ class ApplicationApprovalService
             ]);
         }
 
+        $filled = Application::query()
+            ->where('business_unit_id', $unit->id)
+            ->forQuota($unit)
+            ->count();
+
+        if ($filled >= BusinessUnit::MAX_APPLICANTS) {
+            throw ValidationException::withMessages([
+                'business_unit_id' => 'Kuota lowongan ini sudah penuh (2 pendaftar). Silakan pilih lowongan lain.',
+            ]);
+        }
+
         $match = $this->matching->score($participant, $unit);
         $mentor = $unit->mentors()->first();
         $period = $this->periodPayload($data);
@@ -43,6 +54,7 @@ class ApplicationApprovalService
             'participant_id' => $participant->id,
             'department_id' => $unit->department_id,
             'business_unit_id' => $unit->id,
+            'batch' => $unit->batch,
             'mentor_id' => $mentor?->id,
             ...$this->questionnairePayload($data),
             ...$period,
@@ -81,11 +93,28 @@ class ApplicationApprovalService
         abort_unless($application->status === 'revision', 403);
 
         $unit = BusinessUnit::with('mentors')->findOrFail($data['business_unit_id']);
+
+        if ((int) $unit->id !== (int) $application->business_unit_id) {
+            $filled = Application::query()
+                ->where('business_unit_id', $unit->id)
+                ->where('id', '!=', $application->id)
+                ->forQuota($unit)
+                ->count();
+
+            if ($filled >= BusinessUnit::MAX_APPLICANTS) {
+                throw ValidationException::withMessages([
+                    'business_unit_id' => 'Kuota lowongan tujuan sudah penuh (2 pendaftar). Silakan pilih lowongan lain.',
+                ]);
+            }
+        }
+
         $match = $this->matching->score($application->participant, $unit);
+        $returnsToMentor = $application->mentor_reviewed_at !== null && $application->mentor_id;
 
         $application->update([
             'department_id' => $unit->department_id,
             'business_unit_id' => $unit->id,
+            'batch' => $unit->batch,
             'mentor_id' => $application->mentor_id ?: $unit->mentors()->first()?->id,
             ...$this->questionnairePayload($data),
             ...$this->periodPayload($data),
@@ -93,14 +122,22 @@ class ApplicationApprovalService
             'match_score' => $match['score'],
             'relevance_warning' => $match['warning'],
             'revision_note' => null,
-            'status' => 'submitted',
+            'status' => $returnsToMentor ? 'waiting_mentor' : 'submitted',
         ]);
 
-        $this->notifyAdmins(
-            'Pendaftaran dikirim ulang',
-            $application->participant->user->name.' memperbaiki pendaftaran '.$unit->name.'.',
-            route('admin.matching')
-        );
+        if ($returnsToMentor) {
+            $application->mentor?->user?->notify(new ImersiAlert(
+                'Perbaikan dosen siap ditinjau',
+                $application->participant->user->name.' sudah memperbaiki surat persetujuan. Silakan tinjau dan tandatangani.',
+                route('mentor.applications.show', $application)
+            ));
+        } else {
+            $this->notifyAdmins(
+                'Pendaftaran dikirim ulang',
+                $application->participant->user->name.' memperbaiki pendaftaran '.$unit->name.'.',
+                route('admin.matching')
+            );
+        }
 
         return $application->fresh(['participant.user', 'department', 'businessUnit', 'mentor.user']);
     }
@@ -120,7 +157,7 @@ class ApplicationApprovalService
     }
 
     /**
-     * @param  array{decision: string, mentor_note?: string|null, revision_note?: string|null, success_indicators?: list<string>|null}  $data
+     * @param  array{decision: string, mentor_note?: string|null, revision_note?: string|null, success_indicators?: list<string>|null, mentor_signature?: string|null}  $data
      */
     public function mentorReview(Application $application, Mentor $mentor, array $data): Application
     {
@@ -129,34 +166,27 @@ class ApplicationApprovalService
 
         if ($data['decision'] === 'revision') {
             $indicators = $this->cleanIndicators($data['success_indicators'] ?? null);
+            $note = trim((string) ($data['revision_note'] ?? $data['mentor_note'] ?? ''));
+
+            if ($note === '') {
+                throw ValidationException::withMessages([
+                    'mentor_note' => 'Tulis komentar revisi agar dosen tahu apa yang perlu diperbaiki.',
+                ]);
+            }
+
             $application->update([
                 'status' => 'revision',
-                'mentor_note' => $data['mentor_note'] ?? $application->mentor_note,
-                'revision_note' => $data['revision_note']
-                    ?? $data['mentor_note']
-                    ?? ($indicators !== null ? 'Mentor mengusulkan perubahan indikator keberhasilan.' : $application->revision_note),
-                ...($indicators !== null ? ['success_indicators' => $indicators] : []),
+                'mentor_note' => $note,
+                'revision_note' => $note,
+                'mentor_signature' => null,
+                'mentor_signed_at' => null,
+                ...($indicators !== null && $indicators !== [] ? ['success_indicators' => $indicators] : []),
                 'mentor_reviewed_at' => now(),
             ]);
             $application->participant->user->notify(new ImersiAlert(
                 'Pendaftaran perlu revisi',
-                $application->revision_note ?: 'Mentor meminta perbaikan surat persetujuan.',
-                route('participant.applications.show', $application)
-            ));
-
-            return $application->fresh(['participant.user', 'department', 'businessUnit', 'mentor.user']);
-        }
-
-        if ($data['decision'] === 'rejected') {
-            $application->update([
-                'status' => 'rejected',
-                'mentor_note' => $data['mentor_note'] ?? $application->mentor_note,
-                'mentor_reviewed_at' => now(),
-            ]);
-            $application->participant->user->notify(new ImersiAlert(
-                'Pendaftaran ditolak mentor',
-                $application->mentor_note ?: 'Mentor menolak pendaftaran program.',
-                route('participant.applications.show', $application)
+                $application->revision_note ?: 'Mentor meminta perbaikan surat persetujuan. Silakan perbaiki pernyataan Anda.',
+                route('participant.applications.edit', $application)
             ));
 
             return $application->fresh(['participant.user', 'department', 'businessUnit', 'mentor.user']);
@@ -187,10 +217,24 @@ class ApplicationApprovalService
      */
     private function adminFirstReview(Application $application, array $data): Application
     {
-        if (($data['business_unit_id'] ?? null) !== null) {
+        if (($data['business_unit_id'] ?? null) !== null && (int) $data['business_unit_id'] !== (int) $application->business_unit_id) {
             $unit = BusinessUnit::findOrFail($data['business_unit_id']);
+
+            $filled = Application::query()
+                ->where('business_unit_id', $unit->id)
+                ->where('id', '!=', $application->id)
+                ->forQuota($unit)
+                ->count();
+
+            if ($filled >= BusinessUnit::MAX_APPLICANTS) {
+                throw ValidationException::withMessages([
+                    'business_unit_id' => 'Kuota lowongan tujuan sudah penuh (2 pendaftar).',
+                ]);
+            }
+
             $application->business_unit_id = $unit->id;
             $application->department_id = $unit->department_id;
+            $application->batch = $unit->batch;
         }
 
         if (($data['mentor_id'] ?? null) !== null) {
@@ -238,12 +282,21 @@ class ApplicationApprovalService
         $application->mentor?->user?->notify(new ImersiAlert(
             'Pendaftaran menunggu persetujuan',
             $application->participant->user->name.' mengajukan '.$application->businessUnit->name.'.',
-            route('mentor.applications')
+            route('mentor.applications.show', $application)
         ));
         $application->participant->user->notify(new ImersiAlert(
             'Diteruskan ke mentor',
             'Admin sudah meninjau pendaftaran. Menunggu persetujuan mentor.',
             route('participant.applications.show', $application)
+        ));
+        $mentorPhone = preg_replace('/\D+/', '', (string) $application->mentor?->user?->phone);
+        if (str_starts_with($mentorPhone, '0')) {
+            $mentorPhone = '62'.substr($mentorPhone, 1);
+        }
+        $application->participant->user->notify(new ImersiAlert(
+            'Mentor dan kontak sudah ditetapkan',
+            'Mentor Anda adalah '.$application->mentor?->user?->name.'. WhatsApp: '.($mentorPhone ?: 'nomor belum tersedia').'. Silakan berkoordinasi sebelum melengkapi perjanjian.',
+            route('participant.agreement')
         ));
 
         return $application;
@@ -344,11 +397,27 @@ class ApplicationApprovalService
             'business_benefit' => $data['business_benefit'],
             'success_indicators' => $this->cleanIndicators($data['success_indicators'] ?? []) ?? [],
             'indicator_feedback' => $data['indicator_feedback'] ?? null,
+            ...$this->participantSignaturePayload($data),
         ];
     }
 
     /**
-     * @param  mixed  $value
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function participantSignaturePayload(array $data): array
+    {
+        if (! array_key_exists('participant_signature', $data) || blank($data['participant_signature'])) {
+            return [];
+        }
+
+        return [
+            'participant_signature' => trim((string) $data['participant_signature']),
+            'participant_signed_at' => now(),
+        ];
+    }
+
+    /**
      * @return list<string>|null
      */
     private function cleanIndicators(mixed $value): ?array
@@ -360,7 +429,7 @@ class ApplicationApprovalService
         return collect(is_array($value) ? $value : [$value])
             ->map(fn ($item) => trim((string) $item))
             ->filter()
-            ->take(3)
+            ->take(Application::MAX_SUCCESS_INDICATORS)
             ->values()
             ->all();
     }

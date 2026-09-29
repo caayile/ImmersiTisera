@@ -1,5 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
-import { AnimatePresence } from 'framer-motion'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import Layout from './components/Layout'
 import Landing from './pages/Landing'
@@ -41,9 +41,19 @@ function Guard({ children, roles, allowUnverified = false }) {
 
 function AnimatedRoutes() {
   const location = useLocation()
+  const prefersReducedMotion = useReducedMotion()
+  const routeKey = location.pathname.startsWith('/app') ? '/app' : location.pathname
+
   return (
     <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
+      <motion.div
+        key={routeKey}
+        initial={prefersReducedMotion ? false : { opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: prefersReducedMotion ? 1 : 0, y: prefersReducedMotion ? 0 : -8 }}
+        transition={{ duration: prefersReducedMotion ? 0 : 0.2, ease: 'easeOut' }}
+      >
+        <Routes location={location}>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -70,7 +80,8 @@ function AnimatedRoutes() {
             <Route path="admin/needs" element={<Guard roles={['admin']}><AdminNeeds /></Guard>} />
             <Route path="admin/programs" element={<Guard roles={['admin']}><AdminPrograms /></Guard>} />
           </Route>
-      </Routes>
+        </Routes>
+      </motion.div>
     </AnimatePresence>
   )
 }

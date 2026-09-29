@@ -9,7 +9,7 @@
         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
     </div>
     <h1 class="mt-5 text-xl font-semibold tracking-tight text-zinc-900">Kata sandi baru</h1>
-    <p class="mt-2 text-sm leading-relaxed text-zinc-400">Buat kata sandi baru untuk akun Imersi Anda.</p>
+    <p class="mt-2 text-sm leading-relaxed text-zinc-400">Buat kata sandi baru untuk akun Magang Dosen Anda.</p>
     @if($errors->any())
         <p class="mt-4 rounded-2xl bg-red-50 px-3 py-2 text-left text-sm text-red-700">{{ $errors->first() }}</p>
     @endif
@@ -17,8 +17,8 @@
         @csrf
         <input type="hidden" name="token" value="{{ $token }}">
         <x-auth.input name="email" type="email" :value="$email" placeholder="Email" :icon="$mail" required />
-        <x-auth.password placeholder="Password baru" />
-        <x-auth.password name="password_confirmation" placeholder="Konfirmasi password" />
+        <x-auth.password placeholder="Kata sandi baru" />
+        <x-auth.password name="password_confirmation" placeholder="Ulangi kata sandi baru" />
         <button class="w-full rounded-2xl bg-zinc-900 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800">Simpan</button>
     </form>
 </section>

@@ -8,7 +8,7 @@
     </div>
 </div>
 
-<form method="POST" action="{{ route('admin.news') }}" class="mt-6 grid gap-3 rounded-2xl border border-line bg-white p-5 md:grid-cols-2">
+<form method="POST" action="{{ route('admin.news') }}" enctype="multipart/form-data" class="mt-6 grid gap-3 rounded-2xl border border-line bg-white p-5 md:grid-cols-2">
     @csrf
     <input name="title" placeholder="Judul berita" class="rounded-lg border border-line px-3 py-2 text-sm md:col-span-2" required>
     <input name="category" placeholder="Kategori (mis. Pengumuman)" class="rounded-lg border border-line px-3 py-2 text-sm">
@@ -17,6 +17,10 @@
         <option value="draft">Draf</option>
     </select>
     <input type="datetime-local" name="published_at" class="rounded-lg border border-line px-3 py-2 text-sm md:col-span-2">
+    <label class="grid gap-2 text-sm text-muted md:col-span-2">
+        <span>Gambar cover (maksimal 5 MB)</span>
+        <input type="file" name="cover_image" accept="image/jpeg,image/png,image/webp" class="rounded-lg border border-line px-3 py-2 text-sm text-ink">
+    </label>
     <textarea name="excerpt" rows="2" placeholder="Ringkasan singkat" class="rounded-lg border border-line px-3 py-2 text-sm md:col-span-2"></textarea>
     <textarea name="body" rows="5" placeholder="Isi berita" class="rounded-lg border border-line px-3 py-2 text-sm md:col-span-2" required></textarea>
     <button class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white">Tambah berita</button>
@@ -36,7 +40,7 @@
                     <button class="text-sm text-red-600">Hapus</button>
                 </form>
             </div>
-            <form method="POST" action="{{ route('admin.news.update', $item) }}" class="mt-4 grid gap-3 md:grid-cols-2">
+            <form method="POST" action="{{ route('admin.news.update', $item) }}" enctype="multipart/form-data" class="mt-4 grid gap-3 md:grid-cols-2">
                 @csrf @method('PUT')
                 <input name="title" value="{{ $item->title }}" class="rounded-lg border border-line px-3 py-2 text-sm md:col-span-2" required>
                 <input name="category" value="{{ $item->category }}" class="rounded-lg border border-line px-3 py-2 text-sm">
@@ -45,6 +49,13 @@
                     <option value="draft" @selected($item->status === 'draft')>Draf</option>
                 </select>
                 <input type="datetime-local" name="published_at" value="{{ optional($item->published_at)->format('Y-m-d\TH:i') }}" class="rounded-lg border border-line px-3 py-2 text-sm md:col-span-2">
+                <label class="grid gap-2 text-sm text-muted md:col-span-2">
+                    <span>Ganti gambar cover (maksimal 5 MB)</span>
+                    <input type="file" name="cover_image" accept="image/jpeg,image/png,image/webp" class="rounded-lg border border-line px-3 py-2 text-sm text-ink">
+                </label>
+                @if($item->cover_image && $coverUrl = \App\Models\HeroSetting::resolveMediaUrl($item->cover_image))
+                    <img src="{{ $coverUrl }}" alt="Cover {{ $item->title }}" class="h-28 w-48 rounded-lg object-cover md:col-span-2">
+                @endif
                 <textarea name="excerpt" rows="2" class="rounded-lg border border-line px-3 py-2 text-sm md:col-span-2">{{ $item->excerpt }}</textarea>
                 <textarea name="body" rows="4" class="rounded-lg border border-line px-3 py-2 text-sm md:col-span-2" required>{{ $item->body }}</textarea>
                 <button class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white">Simpan perubahan</button>

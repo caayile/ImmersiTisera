@@ -6,7 +6,6 @@
 @endphp
 <div class="bg-bg py-12">
     <div class="mx-auto max-w-4xl px-5">
-        <x-back-link class="mb-4" />
         <div class="overflow-hidden rounded-3xl border border-line bg-white">
             <div class="hero-grid px-6 py-8 md:px-8">
                 <div class="flex flex-col gap-5 sm:flex-row sm:items-center">
@@ -110,7 +109,7 @@
 
         @if($program)
             <article class="mt-6 rounded-3xl border border-line bg-white p-6 md:p-8">
-                <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary-dark">Penempatan imersi</p>
+                <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary-dark">Penempatan magang dosen</p>
                 <h2 class="mt-2 text-xl font-semibold">{{ $program->businessUnit?->name }}</h2>
                 <div class="mt-4 grid gap-3 text-sm sm:grid-cols-3">
                     <div>

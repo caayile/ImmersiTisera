@@ -4,17 +4,28 @@ namespace App\Http\Controllers;
 
 use App\Models\Application;
 use App\Models\BusinessUnit;
+use App\Models\CollaborationPipeline;
 use App\Models\Department;
 use App\Models\Evaluation;
+use App\Models\Logbook;
+use App\Models\MentorSession;
 use App\Models\Participant;
 use App\Models\Program;
+use App\Models\ProgramOutput;
+use App\Models\Timeline;
 use App\Notifications\ImersiAlert;
+use App\Services\AgreementLetterService;
 use App\Services\ApplicationApprovalService;
 use App\Support\Status;
 use App\Support\StudyPrograms;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class ParticipantController extends Controller
 {
@@ -27,46 +38,19 @@ class ParticipantController extends Controller
             ->latest()
             ->first();
 
-        $gradients = [
-            'from-[#16352c] via-[#1f5a45] to-[#5ec69d]',
-            'from-[#1e3a5f] via-[#2a6b55] to-[#7dd8b5]',
-            'from-[#2f4a3c] via-[#3eaa84] to-[#a8e6cf]',
-            'from-[#0f2a24] via-[#256b52] to-[#5ec69d]',
-            'from-[#243d36] via-[#3e8f6d] to-[#8fd9b8]',
-        ];
-
-        $partners = Department::query()
-            ->where('status', 'active')
-            ->withCount('businessUnits')
-            ->withCount(['businessUnits as open_units_count' => fn ($q) => $q->where('status', 'open')])
-            ->orderBy('area')
-            ->orderBy('name')
-            ->get()
-            ->values()
-            ->map(function (Department $department, int $index) use ($gradients) {
-                $imagePath = "images/partners/{$department->slug}.jpg";
-                $imageExists = is_file(public_path($imagePath));
-
-                return [
-                    'id' => $department->id,
-                    'name' => $department->name,
-                    'area' => $department->area ?: 'Mitra Imersi',
-                    'description' => $department->description,
-                    'slug' => $department->slug,
-                    'url' => route('departments.show', $department),
-                    'units' => $department->business_units_count,
-                    'openUnits' => $department->open_units_count,
-                    'image' => $imageExists ? asset($imagePath) : null,
-                    'gradient' => $gradients[$index % count($gradients)],
-                ];
-            });
+        $participantId = $request->user()->participant?->id;
 
         return view('participant.dashboard', [
             'participant' => $request->user()->participant,
             'program' => $program?->fresh(['department', 'businessUnit', 'mentor.user', 'agreement', 'logbooks', 'timelines']),
             'notifications' => $request->user()->unreadNotifications()->latest()->take(5)->get(),
-            'partners' => $partners,
             'application' => $application,
+            'stats' => [
+                'programs' => Program::where('participant_id', $participantId)->count(),
+                'logbooks' => Logbook::where('participant_id', $participantId)->count(),
+                'mentorings' => MentorSession::where('participant_id', $participantId)->count(),
+                'outputs' => ProgramOutput::where('participant_id', $participantId)->where('is_final_report', false)->count(),
+            ],
         ]);
     }
 
@@ -141,6 +125,11 @@ class ParticipantController extends Controller
             return redirect()->route('departments.index')->with('status', 'Pilih unit bisnis atau departemen terlebih dahulu.');
         }
 
+        $alreadyApplied = $participant->applications()->where('business_unit_id', $unit->id)->exists();
+        if (! $alreadyApplied && $unit->isFull()) {
+            return redirect()->route('departments.index')->with('status', 'Kuota lowongan ini sudah penuh (2 pendaftar). Silakan pilih lowongan lain.');
+        }
+
         return view('participant.application-form', [
             'participant' => $participant,
             'unit' => $unit,
@@ -167,7 +156,11 @@ class ParticipantController extends Controller
             return redirect()->route('departments.index')->with('status', 'Lowongan departemen ini sudah ditutup.');
         }
 
-        $application = $approvals->submit($participant, $unit, $data);
+        try {
+            $application = $approvals->submit($participant, $unit, $data);
+        } catch (ValidationException $exception) {
+            return redirect()->back()->withErrors($exception->errors())->withInput();
+        }
 
         return redirect()
             ->route('participant.applications.show', $application)
@@ -210,9 +203,14 @@ class ParticipantController extends Controller
 
         $approvals->resubmit($application, $data);
 
+        $fresh = $application->fresh();
+        $message = $fresh->status === 'waiting_mentor'
+            ? 'Perbaikan dikirim ke mentor untuk ditinjau dan ditandatangani.'
+            : 'Pendaftaran dikirim ulang ke admin.';
+
         return redirect()
             ->route('participant.applications.show', $application)
-            ->with('status', 'Pendaftaran dikirim ulang ke admin.');
+            ->with('status', $message);
     }
 
     public function program(Request $request)
@@ -229,6 +227,44 @@ class ParticipantController extends Controller
         return view('participant.agreement', ['program' => $program, 'agreement' => $program?->agreement]);
     }
 
+    public function printAgreement(Request $request)
+    {
+        $program = $this->currentProgram($request);
+        abort_unless($program?->agreement?->status === 'agreed', 404);
+
+        if (blank($program->agreement->letter_number)) {
+            app(AgreementLetterService::class)->issue($program->agreement);
+            $program->agreement->refresh();
+        }
+
+        return view('participant.agreement-print', [
+            'program' => $program->load(['participant.user', 'mentor.user', 'department', 'businessUnit', 'agreement', 'application']),
+            'agreement' => $program->agreement,
+            'pdf' => false,
+        ]);
+    }
+
+    public function downloadAgreementPdf(Request $request)
+    {
+        $program = $this->currentProgram($request);
+        abort_unless($program?->agreement?->status === 'agreed', 404);
+
+        if (blank($program->agreement->letter_number)) {
+            app(AgreementLetterService::class)->issue($program->agreement);
+        }
+
+        $program->load(['participant.user', 'mentor.user', 'department', 'businessUnit', 'agreement', 'application']);
+        $agreement = $program->agreement->fresh();
+
+        $filename = 'Perjanjian-Magang-'.preg_replace('/[^A-Za-z0-9]+/', '-', (string) ($agreement->letter_number ?? 'tanpa-nomor')).'.pdf';
+
+        return Pdf::loadView('participant.agreement-print', [
+            'program' => $program,
+            'agreement' => $agreement,
+            'pdf' => true,
+        ])->setPaper('a4', 'portrait')->download($filename);
+    }
+
     public function updateAgreement(Request $request)
     {
         $program = $this->currentProgram($request, true);
@@ -243,13 +279,29 @@ class ParticipantController extends Controller
             'participant_benefit' => ['required', 'string'],
             'business_benefit' => ['required', 'string'],
             'success_indicators' => ['required', 'array', 'max:3'],
+            'participant_signature' => [
+                'required',
+                'string',
+                'regex:/^data:image\/(png|jpeg|jpg|webp);base64,/i',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if (strlen((string) $value) > 900_000) {
+                        $fail('Tanda tangan dosen terlalu besar.');
+                    }
+                },
+            ],
             'collaboration_potential' => ['nullable', 'string'],
         ]);
 
-        $agreement->update([...$data, 'status' => 'submitted', 'participant_approved_at' => now()]);
-        $program->mentor->user->notify(new ImersiAlert('Agreement diajukan', 'Menunggu persetujuan mentor.', route('mentor.agreements')));
+        $agreement->update([
+            ...$data,
+            'status' => 'submitted',
+            'participant_approved_at' => now(),
+            'mentor_approved_at' => null,
+            'mentor_signature' => null,
+        ]);
+        $program->mentor->user->notify(new ImersiAlert('Perjanjian diajukan', 'Menunggu persetujuan mentor.', route('mentor.agreements')));
 
-        return back()->with('status', 'Agreement diajukan ke mentor.');
+        return back()->with('status', 'Perjanjian diajukan ke mentor.');
     }
 
     public function timeline(Request $request)
@@ -257,11 +309,83 @@ class ParticipantController extends Controller
         return view('participant.timeline', ['program' => $this->currentProgram($request)]);
     }
 
+    public function updateTimeline(Request $request, Timeline $timeline)
+    {
+        $participantId = $request->user()->participant?->id;
+        abort_unless($timeline->program && (int) $timeline->program->participant_id === (int) $participantId, 403);
+
+        $data = $request->validate([
+            'title' => ['required', 'string', 'max:180'],
+            'description' => ['nullable', 'string'],
+            'expected_output' => ['nullable', 'string'],
+        ]);
+
+        $timeline->update([
+            ...$data,
+            'status' => 'submitted',
+        ]);
+
+        $timeline->program->mentor?->user?->notify(new ImersiAlert(
+            'Checkpoint diajukan',
+            'Minggu '.$timeline->week.' menunggu pengesahan.',
+            route('mentor.timeline')
+        ));
+
+        return back()->with('status', 'Checkpoint minggu '.$timeline->week.' dikirim untuk disahkan mentor.');
+    }
+
     public function logbooks(Request $request)
     {
         $program = $this->currentProgram($request);
+        $participant = $request->user()->participant;
+        $programs = $this->allPrograms($request);
 
-        return view('participant.logbooks', compact('program'));
+        $entries = Logbook::query()
+            ->with(['program.businessUnit', 'program.department'])
+            ->where('participant_id', $participant?->id)
+            ->orderBy('date')
+            ->orderBy('id')
+            ->get();
+
+        $month = $this->historyMonth($request, $programs);
+        $byDate = $entries->groupBy(fn (Logbook $log) => $log->date->toDateString());
+        $formDate = $this->historyDay($request, 'date')?->toDateString() ?? today()->toDateString();
+        $entryPrefill = $byDate->map(fn ($logs) => [
+            'attendance' => $logs->last()->attendance ?? 'Hadir',
+            'what_did' => (string) $logs->last()->what_i_did,
+            'what_learned' => (string) $logs->last()->what_i_learned,
+            'what_found' => (string) $logs->last()->what_i_found,
+            'obstacles' => (string) ($logs->last()->value ?? ''),
+            'output' => (string) ($logs->last()->next_action ?? ''),
+        ]);
+
+        return view('participant.logbooks', compact('program', 'month', 'byDate', 'formDate', 'entryPrefill'));
+    }
+
+    private function historyMonth(Request $request, $programs): Carbon
+    {
+        $fallback = $programs->firstWhere(fn (Program $program) => $program->start_date)
+            ?->start_date->copy()->startOfMonth()
+            ?? today()->startOfMonth();
+
+        try {
+            $parsed = trim((string) $request->string('month'));
+
+            return $parsed === '' ? $fallback : Carbon::createFromFormat('Y-m', $parsed)->startOfMonth();
+        } catch (\Exception) {
+            return $fallback;
+        }
+    }
+
+    private function historyDay(Request $request, string $key = 'day'): ?Carbon
+    {
+        try {
+            $parsed = trim((string) $request->string($key));
+
+            return $parsed === '' ? null : Carbon::createFromFormat('Y-m-d', $parsed)->startOfDay();
+        } catch (\Exception) {
+            return null;
+        }
     }
 
     public function storeLogbook(Request $request)
@@ -270,24 +394,41 @@ class ParticipantController extends Controller
         abort_unless($program && $program->status === 'active', 403);
 
         $data = $request->validate([
-            'date' => ['required', 'date'],
-            'activity' => ['required', 'string', 'max:180'],
-            'what_i_did' => ['required', 'string'],
-            'what_i_learned' => ['required', 'string'],
-            'what_i_found' => ['required', 'string'],
-            'value' => ['nullable', 'string'],
-            'next_action' => ['nullable', 'string'],
-            'attachment' => ['nullable', 'file', 'max:5120', 'mimes:pdf,jpg,jpeg,png,doc,docx'],
+            'entry_date' => ['required', 'date'],
+            'attendance' => ['required', 'in:Hadir,Izin,Sakit,Tanpa Keterangan'],
+            'what_did' => ['required', 'string'],
+            'what_learned' => ['required', 'string'],
+            'what_found' => ['required', 'string'],
+            'obstacles' => ['nullable', 'string'],
+            'output' => ['nullable', 'string'],
         ]);
 
-        $path = $request->file('attachment')?->store('logbooks', 'public');
-        $program->logbooks()->create([
-            ...collect($data)->except('attachment')->toArray(),
+        // One entry per date: resubmitting updates the existing record
+        // and sends it back for mentor review.
+        $payload = [
             'participant_id' => $program->participant_id,
-            'attachment_path' => $path,
+            'date' => $data['entry_date'],
+            'activity' => 'Logbook harian',
+            'attendance' => $data['attendance'],
+            'what_i_did' => $data['what_did'],
+            'what_i_learned' => $data['what_learned'],
+            'what_i_found' => $data['what_found'],
+            'value' => $data['obstacles'] ?? null,
+            'next_action' => $data['output'] ?? null,
             'status' => 'submitted',
-        ]);
-        $program->mentor->user->notify(new ImersiAlert('Logbook baru', 'Ada logbook menunggu review.', route('mentor.logbooks')));
+        ];
+
+        $existing = $program->logbooks()->whereDate('date', $data['entry_date'])->latest('id')->first();
+
+        if ($existing) {
+            $existing->update($payload);
+            $program->mentor->user->notify(new ImersiAlert('Logbook diperbarui', 'Ada perubahan logbook yang menunggu pemeriksaan.', route('mentor.logbooks')));
+
+            return back()->with('status', 'Logbook diperbarui.');
+        }
+
+        $program->logbooks()->create($payload);
+        $program->mentor->user->notify(new ImersiAlert('Logbook baru', 'Ada logbook yang menunggu pemeriksaan.', route('mentor.logbooks')));
 
         return back()->with('status', 'Logbook dikirim.');
     }
@@ -301,6 +442,7 @@ class ParticipantController extends Controller
     {
         return view('participant.outputs', [
             'program' => $this->currentProgram($request),
+            'programs' => $this->allPrograms($request),
             'types' => Status::OUTPUT_TYPES,
         ]);
     }
@@ -314,28 +456,103 @@ class ParticipantController extends Controller
             'title' => ['required', 'string', 'max:180'],
             'type' => ['required', 'string'],
             'description' => ['nullable', 'string'],
+            'link' => ['nullable', 'string', 'max:2048'],
+            'hasil_file' => ['nullable', 'file', 'max:10240', 'mimes:pdf,jpg,jpeg,png,doc,docx,ppt,pptx,zip'],
+            'laporan_link' => ['nullable', 'string', 'max:2048'],
+            'department_id' => ['nullable', 'exists:departments,id'],
+            'business_unit_id' => ['nullable', 'exists:business_units,id'],
+            'year' => ['nullable', 'digits:4', 'integer', 'min:2000', 'max:2100'],
+            'level' => ['nullable', 'integer', 'min:0', 'max:4'],
             'is_main_output' => ['sometimes', 'boolean'],
             'is_final_report' => ['sometimes', 'boolean'],
             'file' => ['nullable', 'file', 'max:10240', 'mimes:pdf,jpg,jpeg,png,doc,docx,ppt,pptx,zip'],
         ]);
 
+        // One source per artifact: link xor file.
+        if (filled($data['link'] ?? null) && $request->hasFile('hasil_file')) {
+            throw ValidationException::withMessages([
+                'link' => 'Isi salah satu saja untuk Hasil: tautan atau file.',
+            ]);
+        }
+
+        if ($request->hasFile('file') && filled($data['laporan_link'] ?? null)) {
+            throw ValidationException::withMessages([
+                'file' => 'Isi salah satu saja untuk Laporan: file atau tautan.',
+            ]);
+        }
+
         if ($request->boolean('is_main_output')) {
             $program->outputs()->update(['is_main_output' => false]);
         }
 
-        $program->outputs()->create([
+        $payload = [
             'participant_id' => $program->participant_id,
             'title' => $data['title'],
             'type' => $data['type'],
-            'description' => $data['description'] ?? null,
+            'link' => $data['link'] ?? null,
+            'department_id' => $data['department_id'] ?? null,
+            'business_unit_id' => $data['business_unit_id'] ?? null,
+            'year' => $data['year'] ?? null,
             'is_main_output' => $request->boolean('is_main_output'),
             'is_final_report' => $request->boolean('is_final_report'),
-            'file_path' => $request->file('file')?->store('outputs', 'public'),
             'status' => 'submitted',
-        ]);
-        $program->mentor->user->notify(new ImersiAlert('Output dikirim', $data['title'].' menunggu validasi.', route('mentor.outputs')));
+        ];
 
-        return back()->with('status', 'Output dikirim.');
+        // Only overwrite the description when the form actually sends it,
+        // so removing the field from a form never wipes stored data.
+        if (array_key_exists('description', $data)) {
+            $payload['description'] = $data['description'];
+        }
+
+        if ($request->file('file')) {
+            $payload['file_path'] = $request->file('file')->store('outputs', 'public');
+            $payload['laporan_link'] = null;
+        } elseif (array_key_exists('laporan_link', $data)) {
+            $payload['laporan_link'] = $data['laporan_link'];
+        }
+
+        if ($request->file('hasil_file')) {
+            $payload['hasil_file_path'] = $request->file('hasil_file')->store('outputs', 'public');
+            $payload['link'] = null;
+        }
+
+        // One final report per cycle: resubmitting updates the existing
+        // record instead of duplicating it.
+        $existingReport = $request->boolean('is_final_report')
+            ? $program->outputs()->where('is_final_report', true)->first()
+            : null;
+
+        if ($existingReport) {
+            $this->deleteReplacedOutputFiles($existingReport, $payload);
+            $output = tap($existingReport)->update($payload);
+        } else {
+            $output = $program->outputs()->create($payload);
+        }
+
+        if ($output->is_final_report && array_key_exists('level', $data) && $data['level'] !== null) {
+            CollaborationPipeline::updateOrCreate(
+                ['program_id' => $program->id],
+                ['level' => (int) $data['level']]
+            );
+        }
+        $program->mentor->user->notify(new ImersiAlert('Hasil dikirim', $data['title'].' menunggu validasi.', route('mentor.outputs')));
+
+        return back()->with('status', 'Hasil dikirim.');
+    }
+
+    /**
+     * Remove stored files replaced by a new upload or a link, so each
+     * artifact keeps exactly one source.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    private function deleteReplacedOutputFiles(ProgramOutput $output, array $payload): void
+    {
+        foreach (['file_path', 'hasil_file_path'] as $column) {
+            if (array_key_exists($column, $payload) && $output->{$column} && $output->{$column} !== $payload[$column]) {
+                Storage::disk('public')->delete($output->{$column});
+            }
+        }
     }
 
     public function evaluation(Request $request)
@@ -361,8 +578,14 @@ class ParticipantController extends Controller
 
     public function finalReport(Request $request)
     {
+        $programs = $this->allPrograms($request);
+        $programs->loadMissing(['outputs.department', 'outputs.businessUnit']);
+
         return view('participant.final-report', [
             'program' => $this->currentProgram($request),
+            'programs' => $programs,
+            'departments' => Department::orderBy('name')->get(['id', 'name']),
+            'businessUnits' => BusinessUnit::with('department:id,name')->orderBy('name')->get(['id', 'name', 'department_id']),
         ]);
     }
 
@@ -403,8 +626,8 @@ class ParticipantController extends Controller
     {
         return [
             'shared_goal' => ['required', 'string', 'min:20'],
-            'activity_types' => ['required', 'array', 'min:1'],
-            'activity_types.*' => ['required', 'string', Rule::in(Application::ACTIVITY_TYPES)],
+            'activity_types' => ['required', 'array', 'min:1', 'max:2'],
+            'activity_types.*' => ['nullable', 'string', Rule::in(Application::ACTIVITY_TYPES)],
             'problem_statement' => ['required', 'string', 'min:20'],
             'main_output' => ['required', 'string', 'min:10'],
             'participant_benefit' => ['required', 'string', 'min:20'],
@@ -412,12 +635,12 @@ class ParticipantController extends Controller
             'success_indicators' => [
                 'required',
                 'array',
-                'min:1',
-                'max:3',
+                'min:'.Application::MIN_SUCCESS_INDICATORS,
+                'max:'.Application::MAX_SUCCESS_INDICATORS,
                 function (string $attribute, mixed $value, \Closure $fail): void {
                     $filled = collect(is_array($value) ? $value : [])->map(fn ($item) => trim((string) $item))->filter();
-                    if ($filled->isEmpty()) {
-                        $fail('Tulis minimal 1 indikator keberhasilan.');
+                    if ($filled->count() < Application::MIN_SUCCESS_INDICATORS) {
+                        $fail('Tulis minimal '.Application::MIN_SUCCESS_INDICATORS.' indikator keberhasilan.');
 
                         return;
                     }
@@ -455,14 +678,31 @@ class ParticipantController extends Controller
 
     private function currentProgram(Request $request, bool $required = false): ?Program
     {
-        $program = Program::with([
-            'department', 'businessUnit', 'mentor.user', 'participant.user', 'agreement',
-            'timelines', 'logbooks', 'mentorSessions', 'outputs', 'evaluations.evaluator', 'collaboration',
-        ])->where('participant_id', $request->user()->participant?->id)->latest()->first();
+        $program = $this->programsQuery($request)->latest()->first();
 
         abort_if($required && ! $program, 404, 'Belum ada program aktif.');
 
         return $program;
+    }
+
+    /**
+     * All internship cycles of the participant, newest first, for
+     * cross-cycle history (outputs, final reports). Uploads still target
+     * the current program only.
+     *
+     * @return Collection<int, Program>
+     */
+    private function allPrograms(Request $request)
+    {
+        return $this->programsQuery($request)->latest()->get();
+    }
+
+    private function programsQuery(Request $request)
+    {
+        return Program::with([
+            'department', 'businessUnit', 'mentor.user', 'participant.user', 'agreement',
+            'timelines', 'logbooks', 'mentorSessions', 'outputs', 'evaluations.evaluator', 'collaboration',
+        ])->where('participant_id', $request->user()->participant?->id);
     }
 
     private function csv(string $value): array

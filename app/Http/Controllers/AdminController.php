@@ -17,9 +17,13 @@ use App\Models\Participant;
 use App\Models\Program;
 use App\Models\User;
 use App\Notifications\ImersiAlert;
+use App\Services\AgreementLetterService;
 use App\Services\ApplicationApprovalService;
+use App\Services\MediaStorageService;
 use App\Support\Status;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Storage;
@@ -28,6 +32,8 @@ use Illuminate\Validation\Rule;
 
 class AdminController extends Controller
 {
+    public function __construct(private readonly MediaStorageService $mediaStorage) {}
+
     public function dashboard()
     {
         $programs = Program::query();
@@ -36,12 +42,12 @@ class AdminController extends Controller
             'stats' => [
                 'Peserta' => Participant::count(),
                 'Mentor' => Mentor::count(),
-                'Department' => Department::count(),
+                'Unit bisnis' => Department::count(),
                 'Unit Bisnis' => BusinessUnit::count(),
                 'Program aktif' => Program::where('status', 'active')->count(),
-                'Completed' => Program::where('status', 'completed')->count(),
-                'Pending approval' => Application::whereIn('status', ['submitted', 'waiting_admin'])->count() + Agreement::where('status', 'submitted')->count(),
-                'Dengan output' => Program::whereHas('outputs')->count(),
+                'Program selesai' => Program::where('status', 'completed')->count(),
+                'Menunggu persetujuan' => Application::whereIn('status', ['submitted', 'waiting_admin'])->count() + Agreement::where('status', 'submitted')->count(),
+                'Program dengan hasil' => Program::whereHas('outputs')->count(),
             ],
             'statusCounts' => Program::selectRaw('status, count(*) as total')->groupBy('status')->pluck('total', 'status'),
             'logbookCompliance' => Program::where('status', 'active')->count()
@@ -136,15 +142,20 @@ class AdminController extends Controller
             'image' => ['nullable', 'image', 'max:5120'],
         ]);
 
+        $previousImagePath = $department->image_path;
+        $hasNewImage = $request->hasFile('image');
         $payload = collect($data)->except('image')->toArray();
         $payload['slug'] = Str::slug($data['name']);
         $payload['map_url'] = self::normalizedMapUrl($data['map_url'] ?? null);
 
-        if ($request->hasFile('image')) {
-            $payload['image_path'] = $this->storeDepartmentImage($request->file('image'), $department->image_path);
+        if ($hasNewImage) {
+            $payload['image_path'] = $this->storeDepartmentImage($request->file('image'));
         }
 
         $department->update($payload);
+        if ($hasNewImage) {
+            $this->deleteDepartmentImage($previousImagePath);
+        }
 
         return back()->with('status', 'Unit bisnis diperbarui.');
     }
@@ -155,17 +166,16 @@ class AdminController extends Controller
             return back()->withErrors(['department' => 'Unit bisnis masih memiliki departemen atau program, tidak dapat dihapus.']);
         }
 
-        $this->deleteDepartmentImage($department->image_path);
+        $imagePath = $department->image_path;
         $department->delete();
+        $this->deleteDepartmentImage($imagePath);
 
         return back()->with('status', 'Unit bisnis dihapus.');
     }
 
-    private function storeDepartmentImage($file, ?string $previous = null): string
+    private function storeDepartmentImage(UploadedFile $file): string
     {
-        $this->deleteDepartmentImage($previous);
-
-        return $file->store('departments', 'public');
+        return $this->mediaStorage->store($file);
     }
 
     private static function normalizedMapUrl(?string $url): ?string
@@ -178,6 +188,12 @@ class AdminController extends Controller
     private function deleteDepartmentImage(?string $path): void
     {
         if (! $path || str_starts_with($path, 'images/')) {
+            return;
+        }
+
+        if (str_starts_with($path, MediaStorageService::PATH_PREFIX)) {
+            $this->mediaStorage->deleteIfUnreferenced($path);
+
             return;
         }
 
@@ -226,7 +242,7 @@ class AdminController extends Controller
             'image' => ['nullable', 'image', 'max:5120'],
         ]);
         $unit = BusinessUnit::create([
-            ...collect($data)->except('mentor_id', 'relevant_programs', 'image')->toArray(),
+            ...collect($this->normalizePeriod($data))->except('mentor_id', 'relevant_programs', 'image')->toArray(),
             'relevant_programs' => $this->parseRelevantPrograms($data['relevant_programs'] ?? null),
             'status' => 'open',
             'image_path' => $request->hasFile('image') ? $this->storeBusinessUnitImage($request->file('image')) : null,
@@ -260,16 +276,21 @@ class AdminController extends Controller
             'image' => ['nullable', 'image', 'max:5120'],
         ]);
 
-        $payload = collect($data)->except('mentor_id', 'relevant_programs', 'image')->toArray();
+        $previousImagePath = $businessUnit->image_path;
+        $hasNewImage = $request->hasFile('image');
+        $payload = collect($this->normalizePeriod($data))->except('mentor_id', 'relevant_programs', 'image')->toArray();
 
-        if ($request->hasFile('image')) {
-            $payload['image_path'] = $this->storeBusinessUnitImage($request->file('image'), $businessUnit->image_path);
+        if ($hasNewImage) {
+            $payload['image_path'] = $this->storeBusinessUnitImage($request->file('image'));
         }
 
         $businessUnit->update([
             ...$payload,
             'relevant_programs' => $this->parseRelevantPrograms($data['relevant_programs'] ?? null),
         ]);
+        if ($hasNewImage) {
+            $this->deleteDepartmentImage($previousImagePath);
+        }
         if ($request->mentor_id) {
             Mentor::where('id', $request->mentor_id)->update([
                 'business_unit_id' => $businessUnit->id,
@@ -286,22 +307,16 @@ class AdminController extends Controller
             return back()->withErrors(['business_unit' => 'Departemen masih memiliki program, tidak dapat dihapus.']);
         }
 
-        if ($businessUnit->image_path && ! str_starts_with($businessUnit->image_path, 'images/')) {
-            Storage::disk('public')->delete($businessUnit->image_path);
-        }
-
+        $imagePath = $businessUnit->image_path;
         $businessUnit->delete();
+        $this->deleteDepartmentImage($imagePath);
 
         return back()->with('status', 'Departemen dihapus.');
     }
 
-    private function storeBusinessUnitImage($file, ?string $previous = null): string
+    private function storeBusinessUnitImage(UploadedFile $file): string
     {
-        if ($previous && ! str_starts_with($previous, 'images/')) {
-            Storage::disk('public')->delete($previous);
-        }
-
-        return $file->store('departments', 'public');
+        return $this->mediaStorage->store($file);
     }
 
     private function parseRelevantPrograms(?string $programs): array
@@ -340,7 +355,7 @@ class AdminController extends Controller
 
     public function lowongan(Request $request)
     {
-        $query = BusinessUnit::with('department')->withCount('applications');
+        $query = BusinessUnit::with('department')->withCount('applications')->withQuotaCount();
 
         if ($request->filled('unit')) {
             $query->where('id', $request->input('unit'));
@@ -364,10 +379,12 @@ class AdminController extends Controller
             'registration_deadline' => ['required', 'date', 'after_or_equal:registration_start'],
         ]);
 
+        $period = self::normalizePeriod($data);
+
         BusinessUnit::query()->update([
             'batch' => $data['batch'] ?: self::batchDefault(),
-            'registration_start' => Carbon::parse($data['registration_start'])->format('Y-m-d H:i:s'),
-            'registration_deadline' => Carbon::parse($data['registration_deadline'])->format('Y-m-d H:i:s'),
+            'registration_start' => $period['registration_start'],
+            'registration_deadline' => $period['registration_deadline'],
             'status' => 'open',
         ]);
 
@@ -379,13 +396,37 @@ class AdminController extends Controller
         return 'Batch '.now()->translatedFormat('F Y');
     }
 
+    /**
+     * Registration uses dates only: the start applies from 00:00 and the
+     * deadline runs until 23:59 on the chosen dates.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private static function normalizePeriod(array $data): array
+    {
+        if (array_key_exists('registration_start', $data)) {
+            $data['registration_start'] = filled($data['registration_start'])
+                ? Carbon::parse($data['registration_start'])->startOfDay()->format('Y-m-d H:i:s')
+                : null;
+        }
+
+        if (array_key_exists('registration_deadline', $data)) {
+            $data['registration_deadline'] = filled($data['registration_deadline'])
+                ? Carbon::parse($data['registration_deadline'])->setTime(23, 59, 59)->format('Y-m-d H:i:s')
+                : null;
+        }
+
+        return $data;
+    }
+
     public function toggleAllLowongan(Request $request)
     {
         $data = $request->validate([
             'status' => ['required', Rule::in(['open', 'closed'])],
         ]);
 
-        if (BusinessUnit::whereNull('registration_start')->orWhereNull('registration_deadline')->exists()) {
+        if ($data['status'] === 'open' && BusinessUnit::whereNull('registration_start')->orWhereNull('registration_deadline')->exists()) {
             return back()->withErrors([
                 'lowongan' => 'Masih ada lowongan tanpa periode pendaftaran. Setel tanggal buka dan tutup semua lowongan terlebih dahulu.',
             ]);
@@ -404,9 +445,9 @@ class AdminController extends Controller
             'status' => ['required', Rule::in(['open', 'closed'])],
         ]);
 
-        if (! $businessUnit->registration_start || ! $businessUnit->registration_deadline) {
+        if ($data['status'] === 'open' && (! $businessUnit->registration_start || ! $businessUnit->registration_deadline)) {
             return back()->withErrors([
-                'lowongan' => 'Atur periode pendaftaran (tanggal buka dan tutup) terlebih dahulu sebelum mengubah status lowongan.',
+                'lowongan' => 'Atur periode pendaftaran (tanggal buka dan tutup) terlebih dahulu sebelum membuka lowongan.',
             ]);
         }
 
@@ -420,13 +461,30 @@ class AdminController extends Controller
     public function updateLowonganPeriod(Request $request, BusinessUnit $businessUnit)
     {
         $data = $request->validate([
+            'batch' => ['nullable', 'string', 'max:120'],
             'registration_start' => ['nullable', 'date'],
             'registration_deadline' => ['nullable', 'date'],
         ]);
 
-        $businessUnit->update($data);
+        if (array_key_exists('batch', $data) && trim((string) $data['batch']) === '') {
+            $data['batch'] = null;
+        }
+
+        $businessUnit->update(self::normalizePeriod($data));
 
         return back()->with('status', 'Periode pendaftaran diperbarui.');
+    }
+
+    public function updateAllLowonganPeriod(Request $request)
+    {
+        $data = $request->validate([
+            'registration_start' => ['nullable', 'date'],
+            'registration_deadline' => ['nullable', 'date', 'after_or_equal:registration_start'],
+        ]);
+
+        BusinessUnit::query()->update(self::normalizePeriod($data));
+
+        return back()->with('status', 'Periode semua lowongan diperbarui.');
     }
 
     public function matching(Request $request)
@@ -447,7 +505,7 @@ class AdminController extends Controller
     public function updateMatching(Request $request, Application $application, ApplicationApprovalService $approvals)
     {
         $data = $request->validate([
-            'status' => ['required', Rule::in(['approved', 'rejected', 'revision'])],
+            'status' => ['required', Rule::in(['approved', 'revision'])],
             'mentor_id' => ['nullable', 'exists:mentors,id'],
             'business_unit_id' => ['nullable', 'exists:business_units,id'],
             'matching_notes' => ['nullable', 'string'],
@@ -468,11 +526,67 @@ class AdminController extends Controller
         return view('admin.agreements', ['agreements' => Agreement::with('program.participant.user')->latest()->get()]);
     }
 
-    public function monitoring()
+    public function downloadAgreementPdf(Agreement $agreement)
     {
-        $programs = Program::with(['participant.user', 'mentor.user', 'logbooks', 'outputs', 'evaluations', 'collaboration', 'agreement'])->latest()->get();
+        abort_unless($agreement->status === 'agreed', 404);
 
-        return view('admin.monitoring', compact('programs'));
+        if (blank($agreement->letter_number)) {
+            app(AgreementLetterService::class)->issue($agreement);
+            $agreement->refresh();
+        }
+
+        $program = $agreement->program->load(['participant.user', 'mentor.user', 'department', 'businessUnit', 'agreement', 'application']);
+
+        $filename = 'Perjanjian-Magang-'.preg_replace('/[^A-Za-z0-9]+/', '-', (string) ($agreement->letter_number ?? 'tanpa-nomor')).'.pdf';
+
+        return Pdf::loadView('participant.agreement-print', [
+            'program' => $program,
+            'agreement' => $agreement,
+            'pdf' => true,
+        ])->setPaper('a4', 'portrait')->download($filename);
+    }
+
+    public function monitoring(Request $request)
+    {
+        $query = Program::with(['participant.user', 'department', 'businessUnit', 'logbooks'])
+            ->when($request->filled('q'), function ($query) use ($request) {
+                $needle = mb_strtolower($request->string('q')->toString(), 'UTF-8');
+
+                return $query->whereHas('participant.user', fn ($q) => $q->whereRaw('LOWER(name) LIKE ?', ['%'.$needle.'%']));
+            })
+            ->when($request->filled('department_id'), fn ($query) => $query->where('department_id', $request->input('department_id')))
+            ->when($request->filled('business_unit_id'), fn ($query) => $query->where('business_unit_id', $request->input('business_unit_id')))
+            ->when($request->filled('status'), fn ($query) => $query->whereHas('logbooks', fn ($q) => $q->where('status', $request->input('status'))));
+
+        $programs = $query->latest()->get();
+
+        return view('admin.monitoring', [
+            'programs' => $programs,
+            'departments' => $programs->pluck('department')->filter()->unique('id')->sortBy('name'),
+            'businessUnits' => $programs->pluck('businessUnit')->filter()->unique('id')->sortBy('name'),
+        ]);
+    }
+
+    public function showMonitoringLogbooks(Request $request, Program $program)
+    {
+        $program->load(['participant.user', 'department', 'businessUnit', 'logbooks']);
+
+        try {
+            $parsed = trim((string) $request->string('month'));
+            $month = $parsed !== ''
+                ? Carbon::createFromFormat('Y-m', $parsed)->startOfMonth()
+                : ($program->start_date?->copy()->startOfMonth() ?? today()->startOfMonth());
+        } catch (\Exception) {
+            $month = $program->start_date?->copy()->startOfMonth() ?? today()->startOfMonth();
+        }
+
+        return view('logbooks.show', [
+            'program' => $program,
+            'month' => $month,
+            'byDate' => $program->logbooks->sortBy(['date', 'id'])->groupBy(fn (Logbook $log) => $log->date->toDateString()),
+            'backRoute' => 'admin.monitoring',
+            'canReview' => false,
+        ]);
     }
 
     public function evaluations()
@@ -616,14 +730,21 @@ class AdminController extends Controller
 
     private function storeHeroUpload($file, ?string $previous = null): string
     {
+        $path = $this->mediaStorage->store($file);
         $this->deleteHeroUpload($previous);
 
-        return $file->store('hero', 'public');
+        return $path;
     }
 
     private function deleteHeroUpload(?string $path): void
     {
         if (! $path || str_starts_with($path, 'images/')) {
+            return;
+        }
+
+        if (str_starts_with($path, MediaStorageService::PATH_PREFIX)) {
+            $this->mediaStorage->deleteIfUnreferenced($path);
+
             return;
         }
 
@@ -646,11 +767,13 @@ class AdminController extends Controller
             'category' => ['nullable', 'string', 'max:80'],
             'status' => ['required', Rule::in(['draft', 'published'])],
             'published_at' => ['nullable', 'date'],
+            'cover_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ]);
 
         News::create([
             ...$data,
             'slug' => News::makeSlug($data['title']),
+            'cover_image' => $request->hasFile('cover_image') ? $this->mediaStorage->store($request->file('cover_image')) : null,
             'category' => $data['category'] ?: 'Umum',
             'excerpt' => $data['excerpt'] ?: Str::limit(strip_tags($data['body']), 160),
             'published_at' => $data['status'] === 'published'
@@ -671,9 +794,12 @@ class AdminController extends Controller
             'category' => ['nullable', 'string', 'max:80'],
             'status' => ['required', Rule::in(['draft', 'published'])],
             'published_at' => ['nullable', 'date'],
+            'cover_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ]);
 
-        $news->update([
+        $previousCoverImage = $news->cover_image;
+        $hasNewCoverImage = $request->hasFile('cover_image');
+        $payload = [
             ...$data,
             'slug' => News::makeSlug($data['title'], $news->id),
             'category' => $data['category'] ?: 'Umum',
@@ -681,24 +807,37 @@ class AdminController extends Controller
             'published_at' => $data['status'] === 'published'
                 ? ($data['published_at'] ?? $news->published_at ?? now())
                 : ($data['published_at'] ?? null),
-        ]);
+        ];
+
+        if ($hasNewCoverImage) {
+            $payload['cover_image'] = $this->mediaStorage->store($request->file('cover_image'));
+        } else {
+            unset($payload['cover_image']);
+        }
+
+        $news->update($payload);
+        if ($hasNewCoverImage) {
+            $this->mediaStorage->deleteIfUnreferenced($previousCoverImage);
+        }
 
         return back()->with('status', 'Berita diperbarui.');
     }
 
     public function destroyNews(News $news)
     {
+        $coverImage = $news->cover_image;
         $news->delete();
+        $this->mediaStorage->deleteIfUnreferenced($coverImage);
 
         return back()->with('status', 'Berita dihapus.');
     }
 
     public function completeProgram(Program $program)
     {
-        abort_unless($program->canComplete(), 422, 'Main output, final report, dan evaluasi harus selesai.');
+        abort_unless($program->canComplete(), 422, 'Hasil utama, laporan akhir, dan evaluasi harus selesai.');
         $program->update(['status' => 'completed', 'progress' => 100]);
-        $program->participant->user->notify(new ImersiAlert('Program completed', 'Lanjutkan ke after-magang collaboration.', route('participant.collaboration')));
+        $program->participant->user->notify(new ImersiAlert('Program selesai', 'Tentukan tindak lanjut kolaborasi setelah magang.', route('participant.collaboration')));
 
-        return back()->with('status', 'Program ditandai completed.');
+        return back()->with('status', 'Program ditandai selesai.');
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Agreement;
+use App\Services\AgreementLetterService;
 use App\Support\ApiPresenter;
 use Illuminate\Http\Request;
 
@@ -35,6 +36,11 @@ class AgreementController extends Controller
             'benefit_industry' => ['sometimes', 'string'],
             'success_indicator' => ['sometimes', 'string'],
             'potential_collaboration' => ['nullable', 'string'],
+            'participant_signature' => [
+                'required',
+                'string',
+                'regex:/^data:image\/(png|jpeg|jpg|webp);base64,/i',
+            ],
         ]);
 
         $indicators = isset($data['success_indicator'])
@@ -53,6 +59,8 @@ class AgreementController extends Controller
             'status' => 'draft',
             'participant_approved_at' => null,
             'mentor_approved_at' => null,
+            'participant_signature' => $data['participant_signature'],
+            'mentor_signature' => null,
         ]);
 
         return response()->json($this->presenter->agreement($agreement->fresh()));
@@ -64,19 +72,34 @@ class AgreementController extends Controller
         $user = $request->user();
         $program = $agreement->program;
 
+        $signature = $request->validate([
+            'signature' => [
+                'required',
+                'string',
+                'regex:/^data:image\/(png|jpeg|jpg|webp);base64,/i',
+            ],
+        ])['signature'];
+
         if ($user->isMentor()) {
             $agreement->update([
                 'mentor_approved_at' => now(),
                 'status' => $agreement->participant_approved_at ? 'agreed' : 'submitted',
+                'mentor_signature' => $signature,
             ]);
         } elseif ($user->isParticipant()) {
             $agreement->update([
                 'participant_approved_at' => now(),
                 'status' => $agreement->mentor_approved_at ? 'agreed' : 'submitted',
+                'participant_signature' => $signature,
             ]);
         }
 
         $agreement->refresh();
+
+        if ($agreement->status === 'agreed') {
+            app(AgreementLetterService::class)->issue($agreement);
+            $agreement->refresh();
+        }
 
         if ($agreement->status === 'agreed' && $program) {
             $program->update([

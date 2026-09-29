@@ -5,11 +5,11 @@
     $capabilities = [
         ['person_add', 'Registrasi & Profil', 'Sinkronisasi data dosen, rekam publikasi, dan portofolio kompetensi untuk pencocokan yang akurat.', '01 / Sinkron Profil'],
         ['account_tree', 'Mesin Pencocokan Linear', 'Algoritma mencocokkan keahlian dosen dengan tantangan teknis unit bisnis secara terukur.', '02 / Pencocokan'],
-        ['handshake', 'Perjanjian Imersi', 'Dokumen digital kesepakatan tiga pihak: dosen, kampus, dan industri sebelum program aktif.', '03 / Perjanjian'],
+        ['handshake', 'Perjanjian Magang Dosen', 'Dokumen digital kesepakatan dosen dan mentor sebelum program aktif.', '03 / Perjanjian'],
         ['calendar_month', 'Pemeriksaan 8 Minggu', 'Tonggak mingguan dari Temukan hingga Serahkan dengan target hasil yang jelas.', '04 / Tonggak'],
         ['edit_note', 'Logbook Harian', 'Form refleksi harian untuk merekam aktivitas, pembelajaran, dan bukti kerja.', '05 / Catatan'],
         ['forum', 'Mentoring Mingguan', 'Sesi 30 menit tiap minggu untuk menyelaraskan temuan, tugas, dan langkah berikutnya.', '06 / Mentor'],
-        ['folder_managed', 'Repositori Bukti', 'Penyimpanan aman untuk artefak, dokumen, dan hasil kerja selama imersi.', '07 / Bukti'],
+        ['folder_managed', 'Repositori Bukti', 'Penyimpanan aman untuk artefak, dokumen, dan hasil kerja selama magang dosen.', '07 / Bukti'],
         ['diversity_3', 'Evaluasi Multi Perspektif', 'Penilaian 360 dari industri, mentor, dan capaian hasil kerja dosen.', '08 / Evaluasi'],
         ['trending_up', 'Alur Kolaborasi 0–4', 'Kerangka formal dari tutup hingga perluas kemitraan setelah magang.', '09 / Alur'],
         ['monitoring', 'Dasbor Eksekutif', 'Visibilitas real-time untuk pemantauan capaian program dan indikator kinerja.', '10 / Dasbor'],
@@ -95,7 +95,7 @@
     <div class="mx-auto max-w-7xl px-5">
         <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
-                <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary-dark">Mitra Imersi</p>
+                <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary-dark">Mitra Magang Dosen</p>
                 <h2 class="mt-2 text-3xl font-semibold tracking-tight">Unit bisnis pilihan gelombang 2026</h2>
                 <p class="mt-2 max-w-xl text-sm text-muted">Pilih unit bisnis dan departemen yang selaras dengan rumpun keilmuan Anda.</p>
             </div>
@@ -110,8 +110,9 @@
                 @php
                     $direct = $unit->department?->isDirectPlacement();
                     $meta = $unitMeta[$unit->name] ?? ['area' => $unit->department?->area ?? 'Unit Bisnis', 'image' => 'from-[#16352c] to-primary'];
-                    $prodi = collect($unit->relevant_programs ?? [])->take(3)->implode(', ') ?: 'Semua prodi relevan';
-                    $quota = max(2, count($unit->relevant_programs ?? []) + 1);
+                    $quota = \App\Models\BusinessUnit::MAX_APPLICANTS;
+                    $filled = (int) ($unit->active_applications_count ?? 0);
+                    $isFull = $filled >= $quota;
                     $detailUrl = $direct && $unit->department
                         ? route('departments.show', $unit->department)
                         : route('units.show', $unit);
@@ -119,22 +120,12 @@
                 @endphp
                 <article class="overflow-hidden rounded-2xl border border-line bg-white shadow-sm tap-feedback" data-reveal data-reveal-delay="{{ $loop->index % 4 }}">
                     <div class="relative h-44 bg-gradient-to-br {{ $meta['image'] }} p-4">
-                        <span class="absolute left-4 top-4 rounded-md bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide {{ $unit->status === 'open' ? 'text-ink' : 'text-red-600' }}">{{ $unit->status === 'open' ? 'Gelombang terbuka' : 'Lowongan ditutup' }}</span>
+                        <span class="absolute left-4 top-4 rounded-md bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide {{ $isFull || $unit->status !== 'open' ? 'text-red-600' : 'text-ink' }}">{{ $isFull ? 'Kuota penuh' : ($unit->status === 'open' ? 'Gelombang terbuka' : 'Lowongan ditutup') }}</span>
                         <p class="absolute bottom-4 left-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/90">{{ $meta['area'] }}</p>
                     </div>
                     <div class="p-5">
                         <h3 class="text-xl font-semibold">{{ $unit->name }}</h3>
                         <p class="mt-2 text-sm leading-6 text-muted">{{ $unit->description }}</p>
-                        <dl class="mt-4 space-y-2 text-sm">
-                            <div class="flex items-start justify-between gap-3">
-                                <dt class="text-muted">Kuota dosen</dt>
-                                <dd class="font-semibold">{{ $quota }} posisi</dd>
-                            </div>
-                            <div class="flex items-start justify-between gap-3">
-                                <dt class="shrink-0 text-muted">Rekomendasi prodi</dt>
-                                <dd class="text-right font-medium">{{ $prodi }}</dd>
-                            </div>
-                        </dl>
                         <a href="{{ $detailUrl }}" class="mt-5 block rounded-xl bg-[#eef4f1] px-4 py-3 text-center text-sm font-semibold text-ink hover:bg-primary hover:text-white">{{ $detailLabel }}</a>
                     </div>
                 </article>
@@ -149,7 +140,7 @@
                         Pendaftaran gelombang terbaru telah dibuka
                     </p>
                     <h3 class="mt-4 text-2xl font-semibold tracking-tight md:text-3xl">Siap menemukan lingkungan industri yang tepat untuk bidang keahlian Anda?</h3>
-                    <p class="mt-3 max-w-xl text-sm leading-6 text-muted">Imersi menuntun dosen dari pencocokan hingga kolaborasi lanjutan dengan sistem yang terukur dan transparan.</p>
+                    <p class="mt-3 max-w-xl text-sm leading-6 text-muted">Magang Dosen menuntun peserta dari pencocokan hingga kolaborasi lanjutan dengan sistem yang terukur dan transparan.</p>
                 </div>
                 <div class="flex flex-col gap-3 sm:flex-row lg:justify-end">
                     <a href="{{ route('departments.index') }}" class="inline-flex items-center justify-center gap-1 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white">
@@ -172,7 +163,7 @@
             <div>
                 <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary-dark">Berita Terbaru</p>
                 <h2 class="mt-2 text-3xl font-semibold tracking-tight">Update program & kolaborasi</h2>
-                <p class="mt-2 text-sm text-muted">Tiga berita paling baru dari Imersi.</p>
+                <p class="mt-2 text-sm text-muted">Tiga berita paling baru dari Magang Dosen.</p>
             </div>
             <a href="{{ route('news.index') }}" class="inline-flex items-center gap-1 text-sm font-semibold text-primary-dark">
                 Lihat semua berita
@@ -183,8 +174,13 @@
         <div class="mt-8 grid gap-4 md:grid-cols-3">
             @forelse($latestNews as $item)
                 <article class="flex flex-col overflow-hidden rounded-2xl border border-line bg-white">
-                    <div class="flex h-32 items-end bg-gradient-to-br from-[#16352c] to-primary p-4">
-                        <span class="rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">{{ $item->category }}</span>
+                    @php
+                        $coverImage = \App\Models\HeroSetting::resolveMediaUrl($item->cover_image) ?: asset('images/hero/campus.jpg');
+                    @endphp
+                    <div class="relative flex h-32 items-end overflow-hidden bg-[#16352c] p-4">
+                        <img src="{{ $coverImage }}" alt="" class="absolute inset-0 h-full w-full object-cover" loading="lazy">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/65 to-transparent"></div>
+                        <span class="relative z-10 rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">{{ $item->category }}</span>
                     </div>
                     <div class="flex flex-1 flex-col p-5">
                         <p class="text-xs font-semibold text-primary-dark">{{ $item->published_at?->translatedFormat('d M Y') }}</p>

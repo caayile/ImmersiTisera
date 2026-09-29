@@ -77,7 +77,7 @@
                         <div class="grid gap-3 sm:grid-cols-2">
                             <input type="file" name="image" accept="image/*" class="w-full rounded-lg border border-line px-3 py-2 text-sm">
                             <select name="mentor_id" class="w-full rounded-lg border border-line px-3 py-2 text-sm">
-                                <option value="">Assign mentor</option>
+                                <option value="">Pilih mentor</option>
                                 @foreach($mentors as $mentor)<option value="{{ $mentor->id }}">{{ $mentor->user->name }}</option>@endforeach
                             </select>
                         </div>
@@ -110,7 +110,7 @@
                         <a href="{{ route('units.show', $unit) }}" title="Lihat publik" class="flex h-9 w-9 items-center justify-center rounded-lg border border-line text-muted transition hover:border-primary hover:text-primary-dark">
                             <span class="material-symbols-outlined text-[20px]">open_in_new</span>
                         </a>
-                        <a href="{{ route('admin.units.edit', $unit) }}" title="Edit" class="flex h-9 w-9 items-center justify-center rounded-lg border border-line text-muted transition hover:border-primary hover:text-primary-dark">
+                        <a href="{{ route('admin.units.edit', $unit) }}" title="Ubah" class="flex h-9 w-9 items-center justify-center rounded-lg border border-line text-muted transition hover:border-primary hover:text-primary-dark">
                             <span class="material-symbols-outlined text-[20px]">edit</span>
                         </a>
                         <button type="button" title="Hapus" onclick="if (confirm('Hapus departemen ini?')) document.getElementById('delete-unit-{{ $unit->id }}').submit()" class="flex h-9 w-9 items-center justify-center rounded-lg border border-line text-muted transition hover:border-red-300 hover:text-red-600">

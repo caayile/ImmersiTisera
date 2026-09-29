@@ -4,22 +4,28 @@ namespace App\Models;
 
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 
 #[Fillable([
-    'participant_id', 'department_id', 'business_unit_id', 'mentor_id', 'motivation',
+    'participant_id', 'department_id', 'business_unit_id', 'batch', 'mentor_id', 'motivation',
     'learning_objectives', 'planned_activities', 'expected_output', 'campus_benefit', 'cv_path',
     'shared_goal', 'activity_types', 'problem_statement', 'main_output',
     'participant_benefit', 'business_benefit', 'success_indicators', 'indicator_feedback',
+    'participant_signature', 'mentor_signature', 'participant_signed_at', 'mentor_signed_at',
     'preferred_period', 'period_start', 'period_end', 'match_score', 'relevance_warning',
     'matching_notes', 'letter_number', 'mentor_note', 'revision_note', 'status',
     'admin_reviewed_at', 'mentor_reviewed_at', 'admin_finalized_at',
 ])]
 class Application extends Model
 {
-    public const ACTIVITY_TYPES = ['penugasan', 'observasi', 'riset'];
+    public const ACTIVITY_TYPES = ['observasi', 'riset'];
+
+    public const MIN_SUCCESS_INDICATORS = 2;
+
+    public const MAX_SUCCESS_INDICATORS = 10;
 
     protected function casts(): array
     {
@@ -29,6 +35,8 @@ class Application extends Model
             'success_indicators' => 'array',
             'period_start' => 'date',
             'period_end' => 'date',
+            'participant_signed_at' => 'datetime',
+            'mentor_signed_at' => 'datetime',
             'admin_reviewed_at' => 'datetime',
             'mentor_reviewed_at' => 'datetime',
             'admin_finalized_at' => 'datetime',
@@ -58,6 +66,24 @@ class Application extends Model
     public function program()
     {
         return $this->hasOne(Program::class);
+    }
+
+    /**
+     * Applications occupying quota slots: not rejected and in the unit's
+     * current registration batch. Units without a batch set keep the
+     * legacy behaviour of counting batch-less applications.
+     */
+    public function scopeForQuota(Builder $query, BusinessUnit $unit): Builder
+    {
+        $query->where('status', '!=', 'rejected');
+
+        if ($unit->batch === null) {
+            $query->whereNull('batch');
+        } else {
+            $query->where('batch', $unit->batch);
+        }
+
+        return $query;
     }
 
     public static function periodEndFromStart(CarbonInterface $start): Carbon
@@ -131,9 +157,9 @@ class Application extends Model
     public static function activityTypeLabel(string $value): string
     {
         return match ($value) {
-            'penugasan' => 'Penugasan',
             'observasi' => 'Observasi',
             'riset' => 'Riset',
+            'penugasan' => 'Penugasan',
             default => $value,
         };
     }
@@ -158,9 +184,19 @@ class Application extends Model
         return collect($this->success_indicators ?? [])
             ->map(fn ($item) => trim((string) $item))
             ->filter()
-            ->take(3)
+            ->take(self::MAX_SUCCESS_INDICATORS)
             ->values()
             ->all();
+    }
+
+    public function hasParticipantSignature(): bool
+    {
+        return filled($this->participant_signature);
+    }
+
+    public function hasMentorSignature(): bool
+    {
+        return filled($this->mentor_signature);
     }
 
     public function activityTypeLabels(): string

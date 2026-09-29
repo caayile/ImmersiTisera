@@ -78,6 +78,9 @@ class ApiPresenter
         $unit->loadMissing(['department', 'mentors.user']);
         $mentor = $unit->mentors->first();
         $score = $match['score'] ?? 0;
+        $applicantsCount = $unit->activeApplicantsCount();
+        $quota = BusinessUnit::MAX_APPLICANTS;
+        $isFull = ! $applied && $applicantsCount >= $quota;
 
         return [
             'id' => $unit->id,
@@ -94,6 +97,10 @@ class ApiPresenter
             'match_label' => $this->matchLabel($score),
             'applied' => $applied,
             'application' => $application ? $this->application($application) : null,
+            'quota' => $quota,
+            'applicants_count' => $applicantsCount,
+            'remaining_slots' => max(0, $quota - $applicantsCount),
+            'is_full' => $isFull,
             'mentor' => $mentor?->user ? [
                 'id' => $mentor->user->id,
                 'name' => $mentor->user->name,
@@ -112,6 +119,20 @@ class ApiPresenter
         return [
             'id' => $application->id,
             'status' => $application->status,
+            'batch' => $application->batch,
+            'letter_number' => $application->letter_number,
+            'department' => $application->businessUnit?->department ? [
+                'id' => $application->businessUnit->department->id,
+                'name' => $application->businessUnit->department->name,
+            ] : null,
+            'business_unit' => $application->businessUnit ? [
+                'id' => $application->businessUnit->id,
+                'name' => $application->businessUnit->name,
+            ] : null,
+            'mentor' => $application->mentor?->user ? [
+                'id' => $application->mentor->user->id,
+                'name' => $application->mentor->user->name,
+            ] : null,
             'match_score' => $application->match_score,
             'match_label' => $this->matchLabel((int) $application->match_score),
             'primary_activity' => $application->normalizedActivityTypes()[0] ?? null,
@@ -152,6 +173,8 @@ class ApiPresenter
         return [
             'id' => $agreement->id,
             'status' => $agreement->status,
+            'letter_number' => $agreement->letter_number,
+            'letter_issued_at' => $agreement->letter_issued_at?->toIso8601String(),
             'shared_goal' => $agreement->objective,
             'problem_opportunity' => $agreement->problem_statement,
             'primary_activity' => $agreement->activities,
@@ -161,6 +184,8 @@ class ApiPresenter
             'benefit_industry' => $agreement->business_benefit,
             'success_indicator' => collect($agreement->success_indicators ?? [])->implode(', '),
             'potential_collaboration' => $agreement->collaboration_potential,
+            'participant_signature' => $agreement->participant_signature,
+            'mentor_signature' => $agreement->mentor_signature,
             'business_unit' => $program?->businessUnit?->name,
             'dosen' => $program?->participant?->user ? [
                 'id' => $program->participant->user->id,
@@ -169,6 +194,7 @@ class ApiPresenter
             'mentor' => $program?->mentor?->user ? [
                 'id' => $program->mentor->user->id,
                 'name' => $program->mentor->user->name,
+                'phone' => $program->mentor->user->phone,
             ] : null,
             'program' => $program ? ['id' => $program->id] : null,
         ];
