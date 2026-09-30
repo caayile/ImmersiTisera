@@ -8,11 +8,45 @@ use App\Models\HeroSetting;
 use App\Models\HeroSlide;
 use App\Models\News;
 use App\Support\ParticipantNextStep;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class PublicController extends Controller
 {
     public function home()
+    {
+        // Homepage publik di-cache sebagai HTML untuk tamu: tanpa query DB sama sekali.
+        // Dilewati bila ada flash session agar banner status tidak ikut ter-cache.
+        if (auth()->user() === null && ! session()->has('status') && ! session()->has('errors')) {
+            $html = Cache::remember('public.home.html', now()->addMinutes(10), function () {
+                [$departments, $featuredUnits, $latestNews] = $this->homeData();
+
+                return view('public.home', [
+                    'departments' => $departments,
+                    'featuredUnits' => $featuredUnits,
+                    'latestNews' => $latestNews,
+                    'nextStep' => null,
+                ])->render();
+            });
+
+            return response($html);
+        }
+
+        [$departments, $featuredUnits, $latestNews] = $this->homeData();
+
+        $user = auth()->user();
+        $nextStep = $user?->isParticipant()
+            ? ParticipantNextStep::for($user)
+            : null;
+
+        return view('public.home', compact('departments', 'featuredUnits', 'latestNews', 'nextStep'));
+    }
+
+    /**
+     * @return array{0: Collection, 1: Collection, 2: Collection}
+     */
+    private function homeData(): array
     {
         $departments = Department::withCount('businessUnits')
             ->where('status', 'active')
@@ -46,12 +80,8 @@ class PublicController extends Controller
         }
 
         $latestNews = News::published()->latest('published_at')->take(3)->get();
-        $user = auth()->user();
-        $nextStep = $user?->isParticipant()
-            ? ParticipantNextStep::for($user)
-            : null;
 
-        return view('public.home', compact('departments', 'featuredUnits', 'latestNews', 'nextStep'));
+        return [$departments, $featuredUnits, $latestNews];
     }
 
     public function searchApi(Request $request)

@@ -70,7 +70,7 @@ class ImersiAlertNotificationTest extends TestCase
         $this->assertSame(['database', 'mail'], (new ImersiAlert('Program ACTIVE', 'Lanjutkan logbook minggu ini.'))->via($dosen));
     }
 
-    public function test_admin_alert_uses_database_channel_only(): void
+    public function test_admin_alert_uses_database_and_mail_channels(): void
     {
         Notification::fake();
 
@@ -78,7 +78,7 @@ class ImersiAlertNotificationTest extends TestCase
 
         $admin->notify(new ImersiAlert('Matching menunggu review', 'Ada pengajuan baru.', route('admin.matching')));
 
-        Notification::assertSentTo($admin, ImersiAlert::class, fn (ImersiAlert $notification, array $channels): bool => $channels === ['database']);
+        Notification::assertSentTo($admin, ImersiAlert::class, fn (ImersiAlert $notification, array $channels): bool => $channels === ['database', 'mail']);
     }
 
     public function test_dosen_mail_contains_title_message_and_action(): void

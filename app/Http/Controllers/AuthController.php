@@ -189,7 +189,8 @@ class AuthController extends Controller
         $user = User::where('email', $request->email)->first();
 
         if (! $user) {
-            return back()->with('status', 'Jika email terdaftar, kode OTP telah dikirim.');
+            return redirect()->route('password.verify-otp', ['email' => $request->email])
+                ->with('status', 'Jika email terdaftar, kode OTP 6 digit telah dikirim. Silakan periksa kotak masuk email Anda.');
         }
 
         $otp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
@@ -203,9 +204,21 @@ class AuthController extends Controller
             ]
         );
 
-        Mail::to($user->email)->send(new PasswordResetOtpMail($otp, $user->email));
+        try {
+            Mail::to($user->email)->send(new PasswordResetOtpMail($otp, $user->email));
+        } catch (Throwable $exception) {
+            Log::error('Failed sending password reset OTP email: '.$exception->getMessage(), [
+                'email' => $user->email,
+                'exception' => $exception,
+            ]);
 
-        return back()->with('status', 'Kode OTP 6 digit telah dikirim ke email Anda. Kode berlaku 10 menit.');
+            return back()->withErrors([
+                'email' => 'Gagal mengirim email OTP. Silakan coba lagi dalam beberapa saat atau hubungi admin.',
+            ])->withInput();
+        }
+
+        return redirect()->route('password.verify-otp', ['email' => $user->email])
+            ->with('status', 'Kode OTP 6 digit telah dikirim ke email Anda. Kode berlaku 10 menit.');
     }
 
     public function showReset(string $token)
@@ -227,13 +240,13 @@ class AuthController extends Controller
             ->first();
 
         if (! $otpRecord) {
-            return back()->withErrors(['email' => 'Sesi reset tidak valid atau sudah kedaluwarsa. Silakan ulangi proses.']);
+            return back()->withErrors(['email' => 'Sesi reset tidak valid atau sudah kedaluwarsa. Silakan ulangi proses.'])->withInput();
         }
 
         $user = User::where('email', $request->email)->first();
 
         if (! $user) {
-            return back()->withErrors(['email' => 'Email tidak ditemukan.']);
+            return back()->withErrors(['email' => 'Email tidak ditemukan.'])->withInput();
         }
 
         $user->forceFill(['password' => $request->password, 'remember_token' => Str::random(60)])->save();
@@ -253,17 +266,20 @@ class AuthController extends Controller
     {
         $request->validate([
             'email' => ['required', 'email'],
-            'otp' => ['required', 'digits:6'],
+            'otp_digits' => ['required', 'array', 'size:6'],
+            'otp_digits.*' => ['required', 'digits:1'],
         ]);
 
+        $otp = implode('', $request->otp_digits);
+
         $otpRecord = PasswordResetOtp::where('email', $request->email)
-            ->where('otp', $request->otp)
+            ->where('otp', $otp)
             ->whereNull('verified_at')
             ->where('expires_at', '>', now())
             ->first();
 
         if (! $otpRecord) {
-            return back()->withErrors(['otp' => 'Kode OTP tidak valid atau sudah kedaluwarsa.']);
+            return back()->withErrors(['otp' => 'Kode OTP tidak valid atau sudah kedaluwarsa.'])->withInput();
         }
 
         $otpRecord->update(['verified_at' => now()]);

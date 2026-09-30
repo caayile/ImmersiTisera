@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Application;
 use App\Models\BusinessUnit;
 use App\Models\Participant;
 use App\Models\User;
@@ -47,7 +48,7 @@ class ApplicationControllerTest extends TestCase
 
         $this->assertSame(
             ['riset', 'observasi'],
-            \App\Models\Application::where('participant_id', $dosen->participant->id)->firstOrFail()->normalizedActivityTypes()
+            Application::where('participant_id', $dosen->participant->id)->firstOrFail()->normalizedActivityTypes()
         );
 
         Notification::assertSentTo(

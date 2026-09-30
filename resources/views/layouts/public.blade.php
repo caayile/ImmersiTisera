@@ -216,7 +216,7 @@
                 splash.classList.add('brand-splash--leaving');
                 setTimeout(() => splash.remove(), 600);
             }
-        }, 2000);
+        }, 600);
     })();
 </script>
 </body>

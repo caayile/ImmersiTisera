@@ -517,4 +517,14 @@ class ImersiSmokeTest extends TestCase
             ->assertJsonPath('user.email', 'dosen@imersi.id')
             ->assertJsonStructure(['token', 'user' => ['id', 'name', 'email', 'role']]);
     }
+
+    public function test_guest_homepage_renders_twice_from_cache(): void
+    {
+        $this->seed();
+
+        $first = $this->get('/')->assertOk()->assertSee('Unit bisnis pilihan gelombang 2026', false);
+        $second = $this->get('/')->assertOk()->assertSee('Unit bisnis pilihan gelombang 2026', false);
+
+        $this->assertSame($first->getContent(), $second->getContent());
+    }
 }

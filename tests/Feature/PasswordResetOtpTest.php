@@ -27,6 +27,7 @@ class PasswordResetOtpTest extends TestCase
         $user = User::factory()->create(['email' => 'test@example.com']);
 
         $this->post(route('password.email'), ['email' => $user->email])
+            ->assertRedirect(route('password.verify-otp', ['email' => $user->email]))
             ->assertSessionHas('status');
 
         $this->assertDatabaseHas('password_reset_otps', [
@@ -34,7 +35,7 @@ class PasswordResetOtpTest extends TestCase
             'verified_at' => null,
         ]);
 
-        Mail::assertQueued(PasswordResetOtpMail::class, function ($mail) use ($user) {
+        Mail::assertSent(PasswordResetOtpMail::class, function ($mail) use ($user) {
             return $mail->hasTo($user->email);
         });
     }
@@ -44,6 +45,7 @@ class PasswordResetOtpTest extends TestCase
         Mail::fake();
 
         $this->post(route('password.email'), ['email' => 'nonexistent@example.com'])
+            ->assertRedirect(route('password.verify-otp', ['email' => 'nonexistent@example.com']))
             ->assertSessionHas('status');
 
         Mail::assertNothingSent();
@@ -68,7 +70,7 @@ class PasswordResetOtpTest extends TestCase
 
         $this->post(route('password.verify-otp.submit'), [
             'email' => $user->email,
-            'otp' => '123456',
+            'otp_digits' => ['1', '2', '3', '4', '5', '6'],
         ])
             ->assertRedirect(route('password.reset', [
                 'token' => base64_encode($user->email.'|'.now()->timestamp),
@@ -93,7 +95,7 @@ class PasswordResetOtpTest extends TestCase
 
         $this->post(route('password.verify-otp.submit'), [
             'email' => $user->email,
-            'otp' => '999999',
+            'otp_digits' => ['9', '9', '9', '9', '9', '9'],
         ])
             ->assertSessionHasErrors(['otp']);
     }
@@ -110,7 +112,7 @@ class PasswordResetOtpTest extends TestCase
 
         $this->post(route('password.verify-otp.submit'), [
             'email' => $user->email,
-            'otp' => '123456',
+            'otp_digits' => ['1', '2', '3', '4', '5', '6'],
         ])
             ->assertSessionHasErrors(['otp']);
     }

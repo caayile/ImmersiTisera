@@ -37,10 +37,6 @@ class ImersiAlert extends Notification
             return false;
         }
 
-        if (! $notifiable->isMentor() && ! $notifiable->isParticipant()) {
-            return false;
-        }
-
         return $this->mailerIsReady();
     }
 

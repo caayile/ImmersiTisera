@@ -1,28 +1,147 @@
 @extends('layouts.auth')
-@section('title', 'Verifikasi OTP')
-@php
-    $mail = '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg>';
-@endphp
+@section('title', 'Verifikasi Kode OTP')
+
 @section('content')
-<section class="mx-auto w-full max-w-sm rounded-[32px] bg-white px-8 py-9 text-center shadow-[0_24px_70px_rgba(30,55,80,0.16)]">
-    <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-zinc-200 bg-white shadow-sm text-zinc-700">
-        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>
+@php
+    $targetEmail = old('email', request('email', session('email', '')));
+@endphp
+<div>
+    <!-- Icon Header -->
+    <div class="w-12 h-12 rounded-2xl bg-mint/20 border border-mint/40 text-forest flex items-center justify-center mx-auto mb-4 shadow-sm">
+        <i class="fa-solid fa-shield-halved text-xl"></i>
     </div>
-    <h1 class="mt-5 text-xl font-semibold tracking-tight text-zinc-900">Masukkan Kode OTP</h1>
-    <p class="mt-2 text-sm leading-relaxed text-zinc-400">Kami telah mengirim kode 6 digit ke email Anda. Masukkan kode di bawah ini untuk verifikasi.</p>
-    @if($errors->any())
-        <p class="mt-4 rounded-2xl bg-red-50 px-3 py-2 text-left text-sm text-red-700">{{ $errors->first() }}</p>
+
+    <!-- Title & Description -->
+    <div class="text-center mb-5">
+        <h2 class="text-xl font-extrabold text-charcoal tracking-tight">Masukkan Kode OTP</h2>
+        <p class="text-xs text-gray-500 mt-1.5 leading-relaxed">
+            Kode 6 digit telah dikirim ke email:<br>
+            <span class="font-bold text-charcoal break-all">{{ $targetEmail ?: 'alamat email Anda' }}</span>
+        </p>
+    </div>
+
+    <!-- Alert Errors -->
+    @if ($errors->any())
+        <div class="mb-4 py-2.5 px-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 flex items-center space-x-2">
+            <i class="fa-solid fa-circle-exclamation shrink-0 text-sm"></i>
+            <span class="break-words font-medium">{{ $errors->first() }}</span>
+        </div>
     @endif
-    @if(session('status'))
-        <p class="mt-4 rounded-2xl bg-green-50 px-3 py-2 text-left text-sm text-green-700">{{ session('status') }}</p>
+
+    <!-- Alert Status -->
+    @if (session('status'))
+        <div class="mb-4 py-2.5 px-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 flex items-center space-x-2">
+            <i class="fa-solid fa-circle-check shrink-0 text-sm"></i>
+            <span class="font-medium">{{ session('status') }}</span>
+        </div>
     @endif
-    <form method="POST" action="{{ route('password.verify-otp.submit') }}" class="mt-6 space-y-3 text-left">
+
+    <!-- Form -->
+    <form method="POST" action="{{ route('password.verify-otp.submit') }}" class="space-y-4">
         @csrf
-        <x-auth.input name="email" type="email" :value="old('email', request('email'))" placeholder="Email" :icon="$mail" required />
-        <x-auth.input name="otp" type="text" :value="old('otp')" placeholder="6 digit kode OTP" maxlength="6" required />
-        <button class="w-full rounded-2xl bg-zinc-900 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800">Verifikasi</button>
+        <!-- Email Input (read-only or hidden if email present, or input if missing) -->
+        @if ($targetEmail)
+            <input type="hidden" name="email" value="{{ $targetEmail }}">
+        @else
+            <div>
+                <label class="block text-xs font-bold text-charcoal mb-1">Email Institusi / Akun</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400">
+                        <i class="fa-regular fa-envelope text-xs"></i>
+                    </span>
+                    <input type="email" name="email" value="{{ old('email') }}" required
+                        placeholder="nama@email.com"
+                        class="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-charcoal placeholder-gray-400 focus:bg-white focus:outline-none focus:border-forest focus:ring-2 focus:ring-forest/10 transition">
+                </div>
+            </div>
+        @endif
+
+        <div>
+            <label class="block text-xs font-bold text-charcoal mb-2 text-center">Masukkan 6 Digit Kode OTP</label>
+            <div class="flex justify-center gap-2" id="otp-inputs">
+                @for ($i = 0; $i < 6; $i++)
+                    <input type="text" name="otp_digits[]"
+                        class="otp-digit w-10 h-12 sm:w-11 sm:h-12 text-center text-lg sm:text-xl font-extrabold border border-gray-300 rounded-xl focus:border-forest focus:ring-2 focus:ring-forest/20 focus:outline-none transition bg-gray-50 focus:bg-white text-forest selection:bg-mint"
+                        maxlength="1" inputmode="numeric" pattern="[0-9]*" required
+                        autocomplete="off" aria-label="Digit OTP {{ $i + 1 }}">
+                @endfor
+            </div>
+        </div>
+
+        <button type="submit"
+            class="w-full py-3 px-4 bg-forest hover:bg-forest-light text-white font-bold rounded-xl text-xs sm:text-sm transition duration-200 flex items-center justify-center space-x-2 shadow-lg shadow-forest/20 group">
+            <span>Verifikasi Kode OTP</span>
+            <i class="fa-solid fa-circle-check text-xs group-hover:scale-110 transition-transform"></i>
+        </button>
     </form>
-    <p class="mt-5 text-sm text-zinc-400"><a href="{{ route('password.request') }}" class="font-medium text-zinc-800">Kirim ulang kode</a></p>
-    <p class="mt-2 text-sm text-zinc-400"><a href="{{ route('login') }}" class="font-medium text-zinc-800">Kembali ke masuk</a></p>
-</section>
+
+    <!-- Resend Form -->
+    @if ($targetEmail)
+        <form method="POST" action="{{ route('password.email') }}" class="mt-3 text-center">
+            @csrf
+            <input type="hidden" name="email" value="{{ $targetEmail }}">
+            <button type="submit" class="text-xs text-gray-500 hover:text-forest font-semibold transition inline-flex items-center space-x-1.5 py-1 px-2 rounded-lg hover:bg-gray-100">
+                <i class="fa-solid fa-rotate-right text-[10px]"></i>
+                <span>Belum menerima kode? Kirim ulang OTP</span>
+            </button>
+        </form>
+    @endif
+
+    <!-- Footer Links -->
+    <div class="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between text-xs">
+        <a href="{{ route('password.request') }}" class="font-semibold text-gray-500 hover:text-charcoal transition flex items-center space-x-1">
+            <i class="fa-regular fa-pen-to-square text-[10px]"></i>
+            <span>Ganti Email</span>
+        </a>
+        <a href="{{ route('login') }}" class="font-bold text-forest hover:text-mint-dark transition flex items-center space-x-1">
+            <i class="fa-solid fa-arrow-left text-[10px]"></i>
+            <span>Kembali ke Masuk</span>
+        </a>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const digits = document.querySelectorAll('.otp-digit');
+        if (digits.length === 0) return;
+
+        // Auto focus first empty input
+        let focused = false;
+        digits.forEach(input => {
+            if (!input.value && !focused) {
+                input.focus();
+                focused = true;
+            }
+        });
+        if (!focused) digits[0].focus();
+
+        digits.forEach((input, index) => {
+            input.addEventListener('input', function() {
+                this.value = this.value.replace(/[^0-9]/g, '');
+                if (this.value && index < digits.length - 1) {
+                    digits[index + 1].focus();
+                }
+            });
+
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Backspace' && !this.value && index > 0) {
+                    digits[index - 1].focus();
+                }
+            });
+
+            input.addEventListener('paste', function(e) {
+                e.preventDefault();
+                const pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '').slice(0, 6);
+                pasted.split('').forEach((char, i) => {
+                    if (digits[i]) digits[i].value = char;
+                });
+                if (pasted.length > 0) {
+                    const nextIndex = Math.min(pasted.length, digits.length - 1);
+                    digits[nextIndex].focus();
+                }
+            });
+        });
+    });
+</script>
 @endsection
+
