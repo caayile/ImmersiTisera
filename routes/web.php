@@ -35,6 +35,8 @@ Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallbac
 Route::middleware('guest')->group(function () {
     Route::get('/forgot-password', [AuthController::class, 'showForgot'])->name('password.request');
     Route::post('/forgot-password', [AuthController::class, 'sendReset'])->name('password.email');
+    Route::get('/verify-otp', [AuthController::class, 'showVerifyOtp'])->name('password.verify-otp');
+    Route::post('/verify-otp', [AuthController::class, 'verifyOtp'])->name('password.verify-otp.submit');
     Route::get('/reset-password/{token}', [AuthController::class, 'showReset'])->name('password.reset');
     Route::post('/reset-password', [AuthController::class, 'reset'])->name('password.update');
 });

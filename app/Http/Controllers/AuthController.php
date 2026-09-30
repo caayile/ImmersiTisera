@@ -2,16 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\PasswordResetOtpMail;
 use App\Models\Department;
 use App\Models\Mentor;
 use App\Models\Participant;
+use App\Models\PasswordResetOtp;
 use App\Models\User;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
@@ -183,9 +185,27 @@ class AuthController extends Controller
     public function sendReset(Request $request)
     {
         $request->validate(['email' => ['required', 'email']]);
-        $status = Password::sendResetLink($request->only('email'));
 
-        return back()->with('status', __($status));
+        $user = User::where('email', $request->email)->first();
+
+        if (! $user) {
+            return back()->with('status', 'Jika email terdaftar, kode OTP telah dikirim.');
+        }
+
+        $otp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+
+        PasswordResetOtp::updateOrCreate(
+            ['email' => $user->email],
+            [
+                'otp' => $otp,
+                'expires_at' => now()->addMinutes(10),
+                'verified_at' => null,
+            ]
+        );
+
+        Mail::to($user->email)->send(new PasswordResetOtpMail($otp, $user->email));
+
+        return back()->with('status', 'Kode OTP 6 digit telah dikirim ke email Anda. Kode berlaku 10 menit.');
     }
 
     public function showReset(string $token)
@@ -201,14 +221,57 @@ class AuthController extends Controller
             'password' => ['required', 'min:6', 'confirmed'],
         ]);
 
-        $status = Password::reset($request->only('email', 'password', 'password_confirmation', 'token'), function (User $user, string $password) {
-            $user->forceFill(['password' => $password, 'remember_token' => Str::random(60)])->save();
-            event(new PasswordReset($user));
-        });
+        $otpRecord = PasswordResetOtp::where('email', $request->email)
+            ->whereNotNull('verified_at')
+            ->where('expires_at', '>', now())
+            ->first();
 
-        return $status === Password::PASSWORD_RESET
-            ? redirect()->route('login')->with('status', __($status))
-            : back()->withErrors(['email' => [__($status)]]);
+        if (! $otpRecord) {
+            return back()->withErrors(['email' => 'Sesi reset tidak valid atau sudah kedaluwarsa. Silakan ulangi proses.']);
+        }
+
+        $user = User::where('email', $request->email)->first();
+
+        if (! $user) {
+            return back()->withErrors(['email' => 'Email tidak ditemukan.']);
+        }
+
+        $user->forceFill(['password' => $request->password, 'remember_token' => Str::random(60)])->save();
+        event(new PasswordReset($user));
+
+        $otpRecord->delete();
+
+        return redirect()->route('login')->with('status', 'Kata sandi berhasil diubah. Silakan masuk dengan kata sandi baru.');
+    }
+
+    public function showVerifyOtp()
+    {
+        return view('auth.verify-otp');
+    }
+
+    public function verifyOtp(Request $request)
+    {
+        $request->validate([
+            'email' => ['required', 'email'],
+            'otp' => ['required', 'digits:6'],
+        ]);
+
+        $otpRecord = PasswordResetOtp::where('email', $request->email)
+            ->where('otp', $request->otp)
+            ->whereNull('verified_at')
+            ->where('expires_at', '>', now())
+            ->first();
+
+        if (! $otpRecord) {
+            return back()->withErrors(['otp' => 'Kode OTP tidak valid atau sudah kedaluwarsa.']);
+        }
+
+        $otpRecord->update(['verified_at' => now()]);
+
+        return redirect()->route('password.reset', [
+            'token' => base64_encode($request->email.'|'.now()->timestamp),
+            'email' => $request->email,
+        ]);
     }
 
     private function attemptLogin(Request $request, string $type)

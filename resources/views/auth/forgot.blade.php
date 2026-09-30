@@ -9,14 +9,14 @@
         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
     </div>
     <h1 class="mt-5 text-xl font-semibold tracking-tight text-zinc-900">Lupa kata sandi?</h1>
-    <p class="mt-2 text-sm leading-relaxed text-zinc-400">Masukkan email akun Magang Dosen. Kami kirim tautan untuk kata sandi baru.</p>
+    <p class="mt-2 text-sm leading-relaxed text-zinc-400">Masukkan email akun Magang Dosen. Kami akan mengirim kode OTP 6 digit untuk reset kata sandi.</p>
     @if($errors->any())
         <p class="mt-4 rounded-2xl bg-red-50 px-3 py-2 text-left text-sm text-red-700">{{ $errors->first() }}</p>
     @endif
     <form method="POST" class="mt-6 space-y-3 text-left">
         @csrf
         <x-auth.input name="email" type="email" :value="old('email')" placeholder="Email" :icon="$mail" required />
-        <button class="w-full rounded-2xl bg-zinc-900 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800">Kirim tautan</button>
+        <button class="w-full rounded-2xl bg-zinc-900 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800">Kirim Kode OTP</button>
     </form>
     <p class="mt-5 text-sm text-zinc-400"><a href="{{ route('login') }}" class="font-medium text-zinc-800">Kembali ke masuk</a></p>
 </section>
