@@ -1,11 +1,11 @@
 @extends('layouts.app')
-@section('title', 'Linimasa')
+@section('title', 'Checkpoint')
 @section('content')
-<h1 class="text-2xl font-semibold">Linimasa dan Tonggak</h1>
-<p class="mt-1 text-sm text-muted">Pilih peserta untuk meninjau dan mengesahkan checkpoint mingguannya.</p>
+<h1 class="text-2xl font-semibold">Checkpoint Peserta</h1>
+<p class="mt-1 text-sm text-muted">Tinjau dan sahkan laporan checkpoint minggu 2, 4, 6, dan 8.</p>
 <div class="mt-6 overflow-hidden rounded-2xl border border-line bg-white">
     @forelse($programs as $program)
-        @php $pendingCount = $program->timelines->where('status', 'submitted')->count(); @endphp
+        @php $pendingCount = $program->timelines->whereIn('week', \App\Support\Status::CHECKPOINT_WEEKS)->where('status', 'submitted')->count(); @endphp
         <a href="{{ route('mentor.timeline.show', $program) }}" class="flex items-center gap-3 border-b border-line px-4 py-3 text-sm transition last:border-0 hover:bg-bg/60">
             <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary-dark">{{ mb_strtoupper(mb_substr(trim($program->participant->user->name), 0, 1)) }}</span>
             <span class="min-w-0 flex-1">

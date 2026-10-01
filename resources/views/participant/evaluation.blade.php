@@ -23,7 +23,7 @@
             <span class="material-symbols-outlined pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[20px] text-muted">search</span>
             <input id="eval-search" type="search" placeholder="Cari penilaian..." class="w-full rounded-xl border border-line bg-white py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/15">
         </div>
-        <button id="eval-modal-open" type="button" class="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-dark">
+        <button id="eval-modal-open" type="button" x-show="tab === 'mine'" x-cloak class="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-dark">
             <span class="material-symbols-outlined text-[18px]">add</span>
             Isi evaluasi
         </button>
@@ -35,11 +35,7 @@
                 <thead>
                     <tr class="border-b border-line text-sm font-semibold">
                         <th class="px-4 py-3">No.</th>
-                        <th class="px-4 py-3">Pemahaman Industri</th>
-                        <th class="px-4 py-3">Relasi</th>
-                        <th class="px-4 py-3">Hasil</th>
-                        <th class="px-4 py-3">Manfaat Bersama</th>
-                        <th class="px-4 py-3">Potensi Kolaborasi</th>
+                        <th class="px-4 py-3">Indikator penilaian</th>
                         <th class="px-4 py-3">Rata-rata</th>
                         <th class="px-4 py-3">Catatan</th>
                     </tr>
@@ -48,17 +44,13 @@
                     @forelse($myEvaluations as $index => $eval)
                         <tr class="eval-row border-b border-line last:border-0" data-search="{{ strtolower($eval->comments ?: '') }}">
                             <td class="row-no px-4 py-3 align-top">{{ $index + 1 }}</td>
-                            <td class="px-4 py-3 align-top">{{ $eval->industry_understanding }}</td>
-                            <td class="px-4 py-3 align-top">{{ $eval->relationship }}</td>
-                            <td class="px-4 py-3 align-top">{{ $eval->output }}</td>
-                            <td class="px-4 py-3 align-top">{{ $eval->mutual_benefit }}</td>
-                            <td class="px-4 py-3 align-top">{{ $eval->collaboration_potential }}</td>
+                            <td class="px-4 py-3 align-top"><div class="space-y-1">@foreach($eval->criteriaForDisplay() as $criterion)<p>{{ $criterion['label'] }}: <b>{{ $criterion['score'] }}/5</b></p>@endforeach</div></td>
                             <td class="px-4 py-3 align-top font-semibold">{{ $eval->average() }} / 5</td>
                             <td class="px-4 py-3 align-top text-muted">{{ $eval->comments ?: '—' }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="px-4 py-8 text-center text-sm text-muted">Belum ada penilaian untuk mentor. Klik Isi evaluasi untuk mulai.</td>
+                            <td colspan="4" class="px-4 py-8 text-center text-sm text-muted">Belum ada penilaian untuk mentor. Klik Isi evaluasi untuk mulai.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -73,11 +65,7 @@
                     <tr class="border-b border-line text-sm font-semibold">
                         <th class="px-4 py-3">No.</th>
                         <th class="px-4 py-3">Penilai</th>
-                        <th class="px-4 py-3">Pemahaman Industri</th>
-                        <th class="px-4 py-3">Relasi</th>
-                        <th class="px-4 py-3">Hasil</th>
-                        <th class="px-4 py-3">Manfaat Bersama</th>
-                        <th class="px-4 py-3">Potensi Kolaborasi</th>
+                        <th class="px-4 py-3">Indikator penilaian</th>
                         <th class="px-4 py-3">Rata-rata</th>
                         <th class="px-4 py-3">Catatan</th>
                     </tr>
@@ -87,17 +75,13 @@
                         <tr class="eval-row border-b border-line last:border-0" data-search="{{ strtolower($eval->evaluator->name.' '.($eval->comments ?: '')) }}">
                             <td class="row-no px-4 py-3 align-top">{{ $index + 1 }}</td>
                             <td class="px-4 py-3 align-top font-medium">{{ $eval->evaluator->name }}</td>
-                            <td class="px-4 py-3 align-top">{{ $eval->industry_understanding }}</td>
-                            <td class="px-4 py-3 align-top">{{ $eval->relationship }}</td>
-                            <td class="px-4 py-3 align-top">{{ $eval->output }}</td>
-                            <td class="px-4 py-3 align-top">{{ $eval->mutual_benefit }}</td>
-                            <td class="px-4 py-3 align-top">{{ $eval->collaboration_potential }}</td>
+                            <td class="px-4 py-3 align-top"><div class="space-y-1">@foreach($eval->criteriaForDisplay() as $criterion)<p>{{ $criterion['label'] }}: <b>{{ $criterion['score'] }}/5</b></p>@endforeach</div></td>
                             <td class="px-4 py-3 align-top font-semibold">{{ $eval->average() }} / 5</td>
                             <td class="px-4 py-3 align-top text-muted">{{ $eval->comments ?: '—' }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="px-4 py-8 text-center text-sm text-muted">Belum ada penilaian dari mentor.</td>
+                            <td colspan="5" class="px-4 py-8 text-center text-sm text-muted">Belum ada penilaian dari mentor.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -114,25 +98,20 @@
                 <h3 class="text-lg font-bold text-ink">Form Evaluasi</h3>
                 <p class="mt-1 text-xs text-muted">Nilai 1–5 untuk setiap aspek.</p>
             </div>
-            <button type="button" id="eval-modal-x" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-line text-muted hover:text-ink">
+            <button type="button" id="eval-modal-x" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-line text-muted hover:text-ink">
                 <span class="material-symbols-outlined text-[18px]">close</span>
             </button>
         </div>
         @if($errors->any())
-            <p class="mt-4 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">{{ $errors->first() }}</p>
+            <p class="mt-4 rounded-xl bg-red-50 px-3 py-2 text-xs text-red-700">{{ $errors->first() }}</p>
         @endif
         <form method="POST" class="mt-5 space-y-4">
             @csrf
-            @foreach(['industry_understanding' => 'Pemahaman Industri', 'relationship' => 'Relasi', 'output' => 'Hasil', 'mutual_benefit' => 'Manfaat Bersama', 'collaboration_potential' => 'Potensi Kolaborasi'] as $name => $label)
-                <div>
-                    <label class="text-xs font-medium text-muted">{{ $label }}</label>
-                    <input type="number" min="1" max="5" name="{{ $name }}" value="{{ old($name, 0) }}" class="mt-1 w-full rounded-lg border border-line px-4 py-2.5 text-sm" required>
-                </div>
-            @endforeach
-            <textarea name="comments" rows="3" class="w-full rounded-lg border border-line px-4 py-2.5 text-sm" placeholder="Catatan">{{ old('comments') }}</textarea>
+            <x-evaluation-criteria-fields :criteria="$mine?->criteria ?? []" />
+            <textarea name="comments" rows="3" class="w-full rounded-xl border border-line px-4 py-2.5 text-sm outline-none focus:border-primary focus:ring-4 focus:ring-primary/15" placeholder="Catatan">{{ old('comments') }}</textarea>
             <div class="flex justify-end gap-3 pt-1">
-                <button type="button" id="eval-modal-cancel" class="rounded-lg border border-line px-4 py-2.5 text-sm font-semibold text-muted">Batal</button>
-                <button class="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-dark">Simpan evaluasi</button>
+                <button type="button" id="eval-modal-cancel" class="rounded-xl border border-line px-4 py-2.5 text-sm font-semibold text-muted">Batal</button>
+                <button class="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-dark">Simpan evaluasi</button>
             </div>
         </form>
     </div>

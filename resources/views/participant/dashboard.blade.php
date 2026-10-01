@@ -87,7 +87,7 @@
         ['person', 'Profil', 'Lengkapi prodi & kompetensi', route('participant.profile')],
         ['send', 'Pendaftaran', 'Ajukan ke unit mitra', route('participant.applications')],
         ['edit_note', 'Logbook', 'Isi refleksi harian', route('participant.logbooks')],
-        ['calendar_month', 'Linimasa', 'Ikuti tonggak 8 minggu', route('participant.timeline')],
+        ['fact_check', 'Checkpoint', 'Isi laporan pada minggu 2, 4, 6, dan 8', route('participant.timeline')],
     ] as [$icon, $title, $copy, $url])
         <a href="{{ $url }}" class="rounded-2xl border border-line bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary hover:shadow-md">
             <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary-dark">

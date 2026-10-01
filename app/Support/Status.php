@@ -14,6 +14,8 @@ class Status
 
     public const OUTPUT = ['draft', 'submitted', 'revision', 'approved'];
 
+    public const CHECKPOINT_WEEKS = [2, 4, 6, 8];
+
     public const OUTPUT_TYPES = [
         'Project', 'Improvement', 'SOP', 'Prototype', 'Design', 'Campaign',
         'Insight', 'Recommendation', 'Process Mapping', 'Research Report',

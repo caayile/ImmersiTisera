@@ -9,6 +9,8 @@
 <div
     class="mx-auto max-w-5xl"
     x-data="{
+        avatarPreview: @js($user->avatar),
+        avatarName: '',
         catalog: @js($studyProgramCatalog),
         placementCatalog: @js($placementCatalog),
         faculty: @js(old('faculty', $participant->faculty)),
@@ -33,7 +35,12 @@
     <section class="overflow-hidden rounded-3xl border border-line bg-white shadow-sm">
         <div class="hero-grid px-6 py-8 md:px-10">
             <div class="flex flex-col gap-5 sm:flex-row sm:items-center">
-                <span class="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-white text-2xl font-semibold text-primary-dark shadow-sm">{{ $initials }}</span>
+                <template x-if="avatarPreview">
+                    <img :src="avatarPreview" alt="Foto profil" width="80" height="80" class="h-20 w-20 shrink-0 rounded-2xl object-cover shadow-sm">
+                </template>
+                <template x-if="!avatarPreview">
+                    <span class="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-white text-2xl font-semibold text-primary-dark shadow-sm">{{ $initials }}</span>
+                </template>
                 <div class="text-white">
                     <p class="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">Profil dosen · Magang Dosen</p>
                     <h1 class="mt-1 text-3xl font-semibold tracking-tight md:text-4xl">{{ $user->name }}</h1>
@@ -46,7 +53,7 @@
             </div>
         </div>
 
-        <form method="POST" class="space-y-8 p-6 md:p-10">
+        <form method="POST" enctype="multipart/form-data" class="space-y-8 p-6 md:p-10">
             @csrf
 
             <section>
@@ -60,6 +67,16 @@
                     </div>
                 </div>
                 <div class="mt-5 grid gap-4 md:grid-cols-2">
+                    <div class="md:col-span-2">
+                        <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Foto profil</span>
+                        <div class="mt-2 flex flex-wrap items-center gap-3">
+                            <input id="profile-avatar" type="file" name="avatar" accept=".jpg,.jpeg,.png,.webp" class="sr-only" @change="avatarName = $event.target.files[0]?.name ?? ''; if ($event.target.files[0]) avatarPreview = URL.createObjectURL($event.target.files[0])">
+                            <label for="profile-avatar" class="inline-flex cursor-pointer items-center rounded-xl border border-line bg-white px-4 py-2.5 text-sm font-semibold text-primary-dark transition hover:border-primary">Pilih foto</label>
+                            <span class="min-w-[12rem] flex-1 rounded-xl border border-line bg-white px-3 py-2.5 text-sm text-muted" x-text="avatarName || 'Belum ada file dipilih'">Belum ada file dipilih</span>
+                        </div>
+                        <p class="mt-1 text-xs text-muted">Opsional. JPG, PNG, atau WebP, maksimal 5 MB.</p>
+                        @error('avatar')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                    </div>
                     <label class="md:col-span-2">
                         <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Nama lengkap</span>
                         <input name="name" value="{{ old('name', $user->name) }}" class="mt-2 w-full rounded-2xl border border-line bg-bg px-4 py-3 text-sm outline-none transition focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/15" required>

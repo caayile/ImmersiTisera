@@ -7,39 +7,126 @@ use App\Models\Program;
 use App\Models\Timeline;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class TimelineCheckpointTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_participant_sees_own_weeks_and_updates_one(): void
+    public function test_participant_sees_checkpoint_weeks_and_uploads_a_report(): void
     {
+        Storage::fake('public');
         $this->seed();
 
         $dosen = User::where('email', 'dosen@imersi.id')->firstOrFail();
         $program = $dosen->participant->programs()->latest()->firstOrFail();
-        $item = $program->timelines()->orderBy('week')->firstOrFail();
+        $item = $program->timelines()->where('week', 2)->firstOrFail();
 
         $this->actingAs($dosen)
             ->get(route('participant.timeline'))
             ->assertOk()
+            ->assertSee('Checkpoint Saya')
             ->assertSee('Minggu '.$item->week)
-            ->assertSee('Ubah rencana minggu ini');
+            ->assertSee('Isi atau perbarui checkpoint')
+            ->assertSee('Minggu 4')
+            ->assertSee('Minggu 6')
+            ->assertSee('Minggu 8')
+            ->assertSee('Pilih File')
+            ->assertSee('Keterangan laporan (opsional)');
+
+        $this->assertSame([2, 4, 6, 8], $program->timelines()->pluck('week')->all());
 
         $this->actingAs($dosen)
             ->post(route('participant.timeline.update', $item), [
                 'title' => 'Rencana revisi minggu '.$item->week,
                 'description' => 'Fokus observasi lapangan.',
                 'expected_output' => 'Catatan observasi.',
+                'attachment' => UploadedFile::fake()->create('laporan.pdf', 100, 'application/pdf'),
             ])
             ->assertRedirect();
 
+        $item->refresh();
+        $this->assertNotNull($item->attachment_path);
+        Storage::disk('public')->assertExists($item->attachment_path);
         $this->assertDatabaseHas('timelines', [
             'id' => $item->id,
             'title' => 'Rencana revisi minggu '.$item->week,
             'status' => 'submitted',
         ]);
+
+        $this->actingAs(User::where('email', 'mentor@imersi.id')->firstOrFail())
+            ->get(route('mentor.timeline.show', $program))
+            ->assertOk()
+            ->assertSee('Unduh laporan terlampir');
+    }
+
+    public function test_checkpoint_accepts_word_documents_and_images(): void
+    {
+        Storage::fake('public');
+        $this->seed();
+
+        $dosen = User::where('email', 'dosen@imersi.id')->firstOrFail();
+        $program = $dosen->participant->programs()->latest()->firstOrFail();
+        $uploads = [
+            [4, UploadedFile::fake()->create('laporan.docx', 100, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')],
+            [6, UploadedFile::fake()->image('bukti.png')],
+        ];
+
+        foreach ($uploads as [$week, $upload]) {
+            $item = $program->timelines()->where('week', $week)->firstOrFail();
+
+            $this->actingAs($dosen)
+                ->post(route('participant.timeline.update', $item), [
+                    'title' => 'Checkpoint minggu '.$week,
+                    'attachment' => $upload,
+                ])
+                ->assertRedirect()
+                ->assertSessionHasNoErrors();
+
+            $item->refresh();
+            $this->assertNotNull($item->attachment_path);
+            Storage::disk('public')->assertExists($item->attachment_path);
+        }
+    }
+
+    public function test_checkpoint_rejects_unsupported_report_files(): void
+    {
+        Storage::fake('public');
+        $this->seed();
+
+        $dosen = User::where('email', 'dosen@imersi.id')->firstOrFail();
+        $item = $dosen->participant->programs()->latest()->firstOrFail()->timelines()->where('week', 2)->firstOrFail();
+
+        $this->actingAs($dosen)
+            ->from(route('participant.timeline'))
+            ->post(route('participant.timeline.update', $item), [
+                'title' => 'Checkpoint minggu 2',
+                'attachment' => UploadedFile::fake()->create('script.exe', 100, 'application/x-msdownload'),
+            ])
+            ->assertRedirect(route('participant.timeline'))
+            ->assertSessionHasErrors('attachment');
+    }
+
+    public function test_participant_cannot_submit_a_week_outside_the_checkpoint_schedule(): void
+    {
+        $this->seed();
+
+        $dosen = User::where('email', 'dosen@imersi.id')->firstOrFail();
+        $program = $dosen->participant->programs()->latest()->firstOrFail();
+        $legacyTimeline = $program->timelines()->create([
+            'week' => 1,
+            'phase' => 'discover',
+            'title' => 'Minggu 1',
+            'status' => 'pending',
+        ]);
+
+        $this->actingAs($dosen)
+            ->post(route('participant.timeline.update', $legacyTimeline), [
+                'title' => 'Minggu 1 bukan checkpoint',
+            ])
+            ->assertNotFound();
     }
 
     public function test_participant_cannot_update_another_participant_timeline(): void
@@ -111,7 +198,8 @@ class TimelineCheckpointTest extends TestCase
         $this->actingAs($mentor)
             ->get(route('mentor.timeline.show', $program))
             ->assertOk()
-            ->assertSee('Minggu 1')
+            ->assertSee('Minggu 2')
+            ->assertDontSee('Minggu 1')
             ->assertSee('Minta revisi');
     }
 

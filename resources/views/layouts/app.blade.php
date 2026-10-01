@@ -18,12 +18,12 @@
     $unread = $authUser->unreadNotifications()->count();
     $menus = [
         'participant' => [
-            ['Ringkasan', 'participant.dashboard'],
+            ['Ringkasan Program', 'participant.dashboard'],
             ['Profil', 'participant.profile'],
             ['Riwayat Pendaftaran', 'participant.applications'],
             ['Program', 'participant.program'],
             ['Perjanjian', 'participant.agreement'],
-            ['Linimasa', 'participant.timeline'],
+            ['Checkpoint', 'participant.timeline'],
             ['Logbook', 'participant.logbooks'],
             ['Pendampingan', 'participant.mentoring'],
             ['Hasil', 'participant.outputs'],
@@ -39,7 +39,7 @@
             ['Pendaftaran', 'mentor.applications'],
             ['Program Aktif', 'mentor.programs'],
             ['Perjanjian Magang Dosen', 'mentor.agreements'],
-            ['Linimasa & Pemeriksaan', 'mentor.timeline'],
+            ['Checkpoint', 'mentor.timeline'],
             ['Pemeriksaan Logbook', 'mentor.logbooks'],
             ['Pendampingan', 'mentor.mentoring'],
             ['Hasil & Bukti', 'mentor.outputs'],
@@ -75,7 +75,7 @@
         'participant.applications' => 'description',
         'participant.program' => 'work_history',
         'participant.agreement' => 'draw',
-        'participant.timeline' => 'route',
+        'participant.timeline' => 'fact_check',
         'participant.logbooks' => 'edit_note',
         'participant.mentoring' => 'forum',
         'participant.outputs' => 'folder_special',
@@ -89,7 +89,7 @@
         'mentor.applications' => 'description',
         'mentor.programs' => 'work_history',
         'mentor.agreements' => 'draw',
-        'mentor.timeline' => 'route',
+        'mentor.timeline' => 'fact_check',
         'mentor.logbooks' => 'menu_book',
         'mentor.mentoring' => 'forum',
         'mentor.outputs' => 'folder_special',
@@ -120,8 +120,8 @@
     <div x-show="open" x-cloak class="fixed inset-0 z-30 bg-black/30 lg:hidden" @click="open = false"></div>
     <aside class="fixed inset-y-0 left-0 z-40 flex max-h-screen w-[280px] -translate-x-full flex-col border-r border-[#dcebe3] bg-gradient-to-b from-[#f7fcf9] via-[#f4faf7] to-[#edf7f2] p-3 transition lg:sticky lg:top-0 lg:h-screen lg:translate-x-0" :class="open && 'translate-x-0'">
         <a href="{{ route('home') }}" class="group flex shrink-0 items-center gap-3 rounded-2xl border border-white/80 bg-white/75 px-3 py-2.5 shadow-sm transition hover:bg-white hover:shadow-md">
-            <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-[#0c7774] shadow-sm shadow-[#0c7774]/20">
-                <img src="{{ asset('images/logo-tsu.svg') }}" alt="TSU" class="site-logo h-9 w-9">
+            <span class="flex h-11 w-11 items-center justify-center rounded-xl border border-[#dcebe3] bg-white shadow-sm">
+                <img src="{{ asset('images/logo-tsu.svg') }}" alt="TSU" class="site-logo h-11 w-11">
             </span>
             <span class="leading-tight">Magang Dosen
             <span class="mt-1 block text-[10px] font-semibold uppercase tracking-[0.18em] text-primary-dark">Program TSU</span>

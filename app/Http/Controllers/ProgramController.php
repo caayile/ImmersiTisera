@@ -197,6 +197,13 @@ class ProgramController extends Controller
                 'output' => $data['output_quality'],
                 'mutual_benefit' => $data['mutual_benefit'],
                 'collaboration_potential' => $data['collaboration_potential'],
+                'criteria' => [
+                    ['label' => 'Pemahaman Industri', 'score' => $data['industry_understanding']],
+                    ['label' => 'Relasi', 'score' => $data['relationship']],
+                    ['label' => 'Hasil', 'score' => $data['output_quality']],
+                    ['label' => 'Manfaat Bersama', 'score' => $data['mutual_benefit']],
+                    ['label' => 'Potensi Kolaborasi', 'score' => $data['collaboration_potential']],
+                ],
                 'comments' => $data['comments'] ?? null,
             ]
         );

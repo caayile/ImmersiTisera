@@ -6,6 +6,7 @@ use App\Models\BusinessUnit;
 use App\Models\Department;
 use App\Models\Mentor;
 use App\Models\Participant;
+use App\Services\AvatarStorageService;
 use App\Support\ApiPresenter;
 use Illuminate\Http\Request;
 
@@ -13,7 +14,7 @@ class ProfileController extends Controller
 {
     public function __construct(private ApiPresenter $presenter) {}
 
-    public function update(Request $request)
+    public function update(Request $request, AvatarStorageService $avatars)
     {
         $user = $request->user();
 
@@ -21,6 +22,7 @@ class ProfileController extends Controller
             $data = $request->validate([
                 'name' => ['sometimes', 'string', 'max:255'],
                 'phone' => ['nullable', 'string', 'max:30'],
+                'avatar' => ['sometimes', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
                 'nidn' => ['nullable', 'string', 'max:40'],
                 'prodi' => ['required', 'string', 'max:120'],
                 'department' => ['nullable', 'string', 'max:120'],
@@ -35,6 +37,7 @@ class ProfileController extends Controller
             $user->update([
                 'name' => $data['name'] ?? $user->name,
                 'phone' => $data['phone'] ?? $user->phone,
+                'avatar' => $request->hasFile('avatar') ? $avatars->store($request->file('avatar'), $user->avatar) : $user->avatar,
             ]);
 
             $existing = $user->participant?->profile_data ?? [];
@@ -59,6 +62,7 @@ class ProfileController extends Controller
             $data = $request->validate([
                 'name' => ['sometimes', 'string', 'max:255'],
                 'phone' => ['nullable', 'string', 'max:30'],
+                'avatar' => ['sometimes', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
                 'company_name' => ['nullable', 'string', 'max:180'],
                 'industry_field' => ['nullable', 'string', 'max:120'],
                 'business_unit' => ['required', 'string', 'max:120'],
@@ -75,6 +79,7 @@ class ProfileController extends Controller
             $user->update([
                 'name' => $data['name'] ?? $user->name,
                 'phone' => $data['phone'] ?? $user->phone,
+                'avatar' => $request->hasFile('avatar') ? $avatars->store($request->file('avatar'), $user->avatar) : $user->avatar,
             ]);
 
             $unit = BusinessUnit::query()->where('name', $data['business_unit'])->first();

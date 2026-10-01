@@ -44,10 +44,14 @@ export default function ProfileSetup() {
   const { user, setUser } = useAuth()
   const navigate = useNavigate()
   const [form, setForm] = useState(user?.role === 'mentor' ? emptyMentor : emptyDosen)
+  const [avatarFile, setAvatarFile] = useState(null)
+  const [avatarPreview, setAvatarPreview] = useState(user?.avatar || '')
   const [message, setMessage] = useState('')
+  const userInitials = user?.name?.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || ''
 
   useEffect(() => {
     if (!user) return
+    setAvatarPreview(user.avatar || '')
     if (user.role === 'mentor') {
       const profile = user.mentor_profile || {}
       setForm({
@@ -77,8 +81,24 @@ export default function ProfileSetup() {
       ? { ...form, expertise: csv(form.expertise) }
       : { ...form, expertise: csv(form.expertise), interests: csv(form.interests) }
 
-    const { data } = await api.put('/profile', payload)
+    let data
+    if (avatarFile) {
+      const multipart = new FormData()
+      Object.entries(payload).forEach(([key, value]) => {
+        if (Array.isArray(value)) {
+          value.forEach((item, index) => multipart.append(`${key}[${index}]`, item))
+        } else {
+          multipart.append(key, value ?? '')
+        }
+      })
+      multipart.append('_method', 'PUT')
+      multipart.append('avatar', avatarFile)
+      ;({ data } = await api.post('/profile', multipart))
+    } else {
+      ;({ data } = await api.put('/profile', payload))
+    }
     setUser(data)
+    setAvatarFile(null)
     setMessage('Profil tersimpan. Menunggu verifikasi admin.')
     if (data.verification_status === 'verified') navigate('/app')
   }
@@ -127,6 +147,28 @@ export default function ProfileSetup() {
       >
         <Card>
           <form className="grid gap-4 md:grid-cols-2" onSubmit={submit}>
+            <div className="flex flex-wrap items-center gap-4 md:col-span-2">
+              {avatarPreview ? (
+                <img src={avatarPreview} alt="Foto profil" width="80" height="80" className="h-20 w-20 rounded-2xl object-cover" />
+              ) : (
+                <span className="flex h-20 w-20 items-center justify-center rounded-2xl bg-mint/15 text-2xl font-semibold text-moss">{userInitials}</span>
+              )}
+              <div className="min-w-0 flex-1">
+                <Field label="Foto profil (opsional)">
+                  <input
+                    className={inputClass}
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.webp"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0] || null
+                      setAvatarFile(file)
+                      if (file) setAvatarPreview(URL.createObjectURL(file))
+                    }}
+                  />
+                </Field>
+                <p className="mt-1 text-xs text-moss/70">JPG, PNG, atau WebP, maksimal 5 MB.</p>
+              </div>
+            </div>
             {user?.role === 'user' ? (
               <>
                 <Field label="NIDN"><input className={inputClass} value={form.nidn} onChange={(e) => set('nidn', e.target.value)} /></Field>

@@ -380,14 +380,22 @@ class MentorController extends Controller
     {
         $this->authorizeProgram($request, $program);
         $data = $request->validate([
-            'industry_understanding' => ['required', 'integer', 'min:1', 'max:5'],
-            'relationship' => ['required', 'integer', 'min:1', 'max:5'],
-            'output' => ['required', 'integer', 'min:1', 'max:5'],
-            'mutual_benefit' => ['required', 'integer', 'min:1', 'max:5'],
-            'collaboration_potential' => ['required', 'integer', 'min:1', 'max:5'],
+            'criteria' => ['required', 'array', 'min:1', 'max:15'],
+            'criteria.*' => ['required', 'array:label,score'],
+            'criteria.*.label' => ['required', 'string', 'max:120'],
+            'criteria.*.score' => ['required', 'integer', 'min:1', 'max:5'],
             'comments' => ['nullable', 'string'],
         ]);
-        Evaluation::updateOrCreate(['program_id' => $program->id, 'evaluator_id' => $request->user()->id], $data);
+        Evaluation::updateOrCreate(
+            ['program_id' => $program->id, 'evaluator_id' => $request->user()->id],
+            [
+                'criteria' => array_map(fn (array $criterion) => [
+                    'label' => trim($criterion['label']),
+                    'score' => (int) $criterion['score'],
+                ], $data['criteria']),
+                'comments' => $data['comments'] ?? null,
+            ]
+        );
 
         return back()->with('status', 'Evaluasi tersimpan.');
     }

@@ -104,6 +104,10 @@ class Program extends Model
         }
 
         foreach (Status::TIMELINE as $week => $meta) {
+            if (! in_array($week, Status::CHECKPOINT_WEEKS, true)) {
+                continue;
+            }
+
             $this->timelines()->create([
                 'week' => $week,
                 'phase' => $meta['phase'],

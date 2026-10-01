@@ -16,6 +16,7 @@ use App\Models\Timeline;
 use App\Notifications\ImersiAlert;
 use App\Services\AgreementLetterService;
 use App\Services\ApplicationApprovalService;
+use App\Services\AvatarStorageService;
 use App\Support\Status;
 use App\Support\StudyPrograms;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -67,11 +68,12 @@ class ParticipantController extends Controller
         ]);
     }
 
-    public function updateProfile(Request $request)
+    public function updateProfile(Request $request, AvatarStorageService $avatars)
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:30'],
+            'avatar' => ['sometimes', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'nidn' => ['nullable', 'string', 'max:40'],
             'faculty' => ['required', 'string', Rule::in(StudyPrograms::faculties())],
             'study_program' => [
@@ -89,7 +91,11 @@ class ParticipantController extends Controller
             'motivation' => ['nullable', 'string'],
         ]);
 
-        $request->user()->update(['name' => $data['name'], 'phone' => $data['phone'] ?? null]);
+        $request->user()->update([
+            'name' => $data['name'],
+            'phone' => $data['phone'] ?? null,
+            'avatar' => $request->hasFile('avatar') ? $avatars->store($request->file('avatar'), $request->user()->avatar) : $request->user()->avatar,
+        ]);
         $request->user()->participant()->updateOrCreate(['user_id' => $request->user()->id], [
             'nidn' => $data['nidn'] ?? null,
             'faculty' => $data['faculty'],
@@ -313,17 +319,29 @@ class ParticipantController extends Controller
     {
         $participantId = $request->user()->participant?->id;
         abort_unless($timeline->program && (int) $timeline->program->participant_id === (int) $participantId, 403);
+        abort_unless(in_array($timeline->week, Status::CHECKPOINT_WEEKS, true), 404);
 
         $data = $request->validate([
             'title' => ['required', 'string', 'max:180'],
             'description' => ['nullable', 'string'],
             'expected_output' => ['nullable', 'string'],
+            'attachment' => ['nullable', 'file', 'max:10240', 'mimes:pdf,doc,docx,jpg,jpeg,png,webp'],
         ]);
 
+        $previousAttachmentPath = $timeline->attachment_path;
+        $attachmentPath = $request->file('attachment')?->store('timeline-reports', 'public');
+
         $timeline->update([
-            ...$data,
+            'title' => $data['title'],
+            'description' => $data['description'] ?? null,
+            'expected_output' => $data['expected_output'] ?? null,
+            'attachment_path' => $attachmentPath ?? $previousAttachmentPath,
             'status' => 'submitted',
         ]);
+
+        if ($attachmentPath && $previousAttachmentPath) {
+            Storage::disk('public')->delete($previousAttachmentPath);
+        }
 
         $timeline->program->mentor?->user?->notify(new ImersiAlert(
             'Checkpoint diajukan',
@@ -570,7 +588,13 @@ class ParticipantController extends Controller
         $data = $this->evalRules($request);
         Evaluation::updateOrCreate(
             ['program_id' => $program->id, 'evaluator_id' => $request->user()->id],
-            $data
+            [
+                'criteria' => array_map(fn (array $criterion) => [
+                    'label' => trim($criterion['label']),
+                    'score' => (int) $criterion['score'],
+                ], $data['criteria']),
+                'comments' => $data['comments'] ?? null,
+            ]
         );
 
         return back()->with('status', 'Evaluasi tersimpan.');
@@ -713,11 +737,10 @@ class ParticipantController extends Controller
     private function evalRules(Request $request): array
     {
         return $request->validate([
-            'industry_understanding' => ['required', 'integer', 'min:1', 'max:5'],
-            'relationship' => ['required', 'integer', 'min:1', 'max:5'],
-            'output' => ['required', 'integer', 'min:1', 'max:5'],
-            'mutual_benefit' => ['required', 'integer', 'min:1', 'max:5'],
-            'collaboration_potential' => ['required', 'integer', 'min:1', 'max:5'],
+            'criteria' => ['required', 'array', 'min:1', 'max:15'],
+            'criteria.*' => ['required', 'array:label,score'],
+            'criteria.*.label' => ['required', 'string', 'max:120'],
+            'criteria.*.score' => ['required', 'integer', 'min:1', 'max:5'],
             'comments' => ['nullable', 'string'],
         ]);
     }

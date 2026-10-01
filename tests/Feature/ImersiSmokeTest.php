@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\BusinessUnit;
 use App\Models\Department;
+use App\Models\Evaluation;
 use App\Models\MediaAsset;
 use App\Models\News;
 use App\Models\Program;
@@ -270,6 +271,94 @@ class ImersiSmokeTest extends TestCase
             ->assertSee('Penilaian dari peserta')
             ->assertSee('Penilaian untuk peserta')
             ->assertSee('Mentor sangat membantu.');
+    }
+
+    public function test_participant_can_customize_and_add_evaluation_indicators(): void
+    {
+        $this->seed();
+
+        $dosen = User::where('email', 'dosen@imersi.id')->firstOrFail();
+        $program = $dosen->participant->programs()->latest()->firstOrFail();
+        $criteria = [
+            ['label' => 'Pemahaman Industri', 'score' => 5],
+            ['label' => 'Relasi Mentor', 'score' => 4],
+            ['label' => 'Hasil', 'score' => 3],
+            ['label' => 'Manfaat Bersama', 'score' => 4],
+            ['label' => 'Potensi Kolaborasi', 'score' => 5],
+            ['label' => 'Penerapan Teknologi', 'score' => 2],
+        ];
+
+        $this->actingAs($dosen)
+            ->get(route('participant.evaluation'))
+            ->assertOk()
+            ->assertSee('Tambah indikator');
+
+        $this->actingAs($dosen)
+            ->post(route('participant.evaluation'), [
+                'criteria' => $criteria,
+                'comments' => 'Evaluasi dengan indikator tambahan.',
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $evaluation = Evaluation::where('program_id', $program->id)
+            ->where('evaluator_id', $dosen->id)
+            ->firstOrFail();
+
+        $this->assertCount(6, $evaluation->criteria);
+        $this->assertSame('Relasi Mentor', $evaluation->criteria[1]['label']);
+        $this->assertSame('Penerapan Teknologi', $evaluation->criteria[5]['label']);
+        $this->assertSame(3.8, $evaluation->average());
+
+        $this->actingAs($dosen)
+            ->get(route('participant.evaluation'))
+            ->assertOk()
+            ->assertSee('Relasi Mentor')
+            ->assertSee('Penerapan Teknologi')
+            ->assertSee("x-show=\"tab === 'mine'\"", false);
+    }
+
+    public function test_mentor_can_customize_and_add_evaluation_indicators(): void
+    {
+        $this->seed();
+
+        $mentor = User::where('email', 'mentor@imersi.id')->firstOrFail();
+        $program = Program::whereHas('mentor.user', fn ($query) => $query->whereKey($mentor->id))->firstOrFail();
+        $criteria = [
+            ['label' => 'Pemahaman Industri', 'score' => 4],
+            ['label' => 'Relasi Peserta', 'score' => 5],
+            ['label' => 'Hasil', 'score' => 4],
+            ['label' => 'Manfaat Bersama', 'score' => 3],
+            ['label' => 'Potensi Kolaborasi', 'score' => 4],
+            ['label' => 'Kemandirian', 'score' => 5],
+        ];
+
+        $this->actingAs($mentor)
+            ->get(route('mentor.evaluations'))
+            ->assertOk()
+            ->assertSee('Tambah indikator');
+
+        $this->actingAs($mentor)
+            ->post(route('mentor.evaluations.store', $program), [
+                'criteria' => $criteria,
+                'comments' => 'Indikator tambahan untuk peserta.',
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $evaluation = Evaluation::where('program_id', $program->id)
+            ->where('evaluator_id', $mentor->id)
+            ->firstOrFail();
+
+        $this->assertCount(6, $evaluation->criteria);
+        $this->assertSame('Kemandirian', $evaluation->criteria[5]['label']);
+        $this->assertSame(4.2, $evaluation->average());
+
+        $this->actingAs($mentor)
+            ->get(route('mentor.evaluations'))
+            ->assertOk()
+            ->assertSee('Relasi Peserta')
+            ->assertSee('Kemandirian');
     }
 
     public function test_public_and_role_homes_render(): void
