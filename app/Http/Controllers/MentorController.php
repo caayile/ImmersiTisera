@@ -379,6 +379,42 @@ class MentorController extends Controller
     public function storeEvaluation(Request $request, Program $program)
     {
         $this->authorizeProgram($request, $program);
+
+        if ($request->has('groups')) {
+            $data = $request->validate([
+                'groups' => ['required', 'array', 'min:1', 'max:10'],
+                'groups.*.name' => ['required', 'string', 'max:120'],
+                'groups.*.weight' => ['required', 'numeric', 'min:0', 'max:100'],
+                'groups.*.aspects' => ['required', 'array', 'min:1', 'max:20'],
+                'groups.*.aspects.*.label' => ['required', 'string', 'max:120'],
+                'groups.*.aspects.*.score' => ['required', 'integer', 'min:0', 'max:100'],
+                'comments' => ['nullable', 'string'],
+            ]);
+
+            Evaluation::updateOrCreate(
+                ['program_id' => $program->id, 'evaluator_id' => $request->user()->id],
+                [
+                    'grade_groups' => array_map(fn (array $group) => [
+                        'name' => trim($group['name']),
+                        'weight' => (float) $group['weight'],
+                        'aspects' => array_map(fn (array $aspect) => [
+                            'label' => trim($aspect['label']),
+                            'score' => (int) $aspect['score'],
+                        ], $group['aspects']),
+                    ], $data['groups']),
+                    'criteria' => null,
+                    'industry_understanding' => null,
+                    'relationship' => null,
+                    'output' => null,
+                    'mutual_benefit' => null,
+                    'collaboration_potential' => null,
+                    'comments' => $data['comments'] ?? null,
+                ]
+            );
+
+            return back()->with('status', 'Nilai raport tersimpan.');
+        }
+
         $data = $request->validate([
             'criteria' => ['required', 'array', 'min:1', 'max:15'],
             'criteria.*' => ['required', 'array:label,score'],

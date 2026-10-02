@@ -70,39 +70,89 @@
     </div>
 
     <div x-show="tab === 'mentor'" x-cloak>
-        <div class="mt-4 overflow-x-auto rounded-2xl border border-line bg-white">
-            <table class="w-full min-w-[860px] text-left text-sm">
-                <thead>
-                    <tr class="border-b border-line text-sm font-semibold">
-                        <th class="px-4 py-3">No.</th>
-                        <th class="px-4 py-3">Penilai</th>
-                        @foreach($mentorColumns as $label)
-                            <th class="px-4 py-3">{{ $label }}</th>
-                        @endforeach
-                        <th class="px-4 py-3">Rata-rata</th>
-                        <th class="px-4 py-3">Catatan</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($mentorEvaluations as $index => $eval)
-                        @php $mentorScores = collect($eval->criteriaForDisplay())->keyBy('label'); @endphp
-                        <tr class="eval-row border-b border-line last:border-0" data-search="{{ strtolower($eval->evaluator->name.' '.$mentorScores->map(fn ($c) => $c['label'].' '.$c['score'])->implode(' ').' '.($eval->comments ?: '')) }}">
-                            <td class="row-no px-4 py-3 align-top">{{ $index + 1 }}</td>
-                            <td class="px-4 py-3 align-top font-medium">{{ $eval->evaluator->name }}</td>
-                            @foreach($mentorColumns as $label)
-                                <td class="px-4 py-3 align-top">{{ $mentorScores->has($label) ? $mentorScores[$label]['score'].' / 5' : '—' }}</td>
+        @php
+            $reportEvaluations = $mentorEvaluations->filter(fn ($eval) => $eval->hasReport())->values();
+            $legacyEvaluations = $mentorEvaluations->reject(fn ($eval) => $eval->hasReport())->values();
+            $reportLocked = $reportEvaluations->isNotEmpty() && $myEvaluations->isEmpty();
+        @endphp
+        @if($reportLocked)
+            <div class="mt-4 rounded-2xl border border-line bg-white p-6 text-center">
+                <span class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/15 text-primary-dark">
+                    <span class="material-symbols-outlined text-[26px]">lock</span>
+                </span>
+                <h3 class="mt-3 font-semibold">Nilai raport dari mentor terkunci</h3>
+                <p class="mx-auto mt-1 max-w-md text-sm text-muted">Mentor sudah memberikan nilai raport. Isi evaluasi untuk mentor terlebih dahulu untuk membuka nilaimu.</p>
+                <button type="button" @click="tab = 'mine'" class="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-dark">
+                    <span class="material-symbols-outlined text-[18px]">add</span>
+                    Isi evaluasi
+                </button>
+            </div>
+        @else
+            @foreach($reportEvaluations as $eval)
+                <article class="eval-row mt-4 overflow-hidden rounded-2xl border border-line bg-white" data-search="{{ strtolower($eval->evaluator->name.' raport '.($eval->comments ?: '')) }}">
+                    <div class="flex flex-col gap-1 border-b border-line bg-[#f4f8f6] p-5 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Nilai raport dari {{ $eval->evaluator->name }}</p>
+                            <p class="mt-1 text-3xl font-semibold">{{ $eval->reportAverage() }} <span class="text-lg text-primary-dark">{{ $eval->predicate() }}</span></p>
+                        </div>
+                        @if(filled($eval->comments))
+                            <p class="max-w-md text-sm text-muted">{{ $eval->comments }}</p>
+                        @endif
+                    </div>
+                    @foreach($eval->grade_groups as $group)
+                        @php $groupScores = collect($group['aspects'] ?? [])->map(fn ($a) => (float) ($a['score'] ?? 0)); @endphp
+                        <div class="border-b border-line p-5 last:border-0">
+                            <div class="flex items-center justify-between gap-3">
+                                <h4 class="font-semibold">{{ $group['name'] }} <span class="text-xs font-medium text-muted">(bobot {{ $group['weight'] }}%)</span></h4>
+                                <p class="text-sm font-semibold">{{ $groupScores->isNotEmpty() ? round($groupScores->avg(), 1) : '—' }}</p>
+                            </div>
+                            <dl class="mt-3 space-y-2">
+                                @foreach($group['aspects'] ?? [] as $aspect)
+                                    <div class="flex items-center justify-between gap-3 rounded-xl bg-bg/60 px-3 py-2 text-sm">
+                                        <dt class="text-muted">{{ $aspect['label'] }}</dt>
+                                        <dd class="font-semibold">{{ $aspect['score'] }}</dd>
+                                    </div>
+                                @endforeach
+                            </dl>
+                        </div>
+                    @endforeach
+                </article>
+            @endforeach
+            @if($legacyEvaluations->isNotEmpty())
+                <div class="mt-4 overflow-x-auto rounded-2xl border border-line bg-white">
+                    <table class="w-full min-w-[860px] text-left text-sm">
+                        <thead>
+                            <tr class="border-b border-line text-sm font-semibold">
+                                <th class="px-4 py-3">No.</th>
+                                <th class="px-4 py-3">Penilai</th>
+                                @foreach($mentorColumns as $label)
+                                    <th class="px-4 py-3">{{ $label }}</th>
+                                @endforeach
+                                <th class="px-4 py-3">Rata-rata</th>
+                                <th class="px-4 py-3">Catatan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($legacyEvaluations as $index => $eval)
+                                @php $mentorScores = collect($eval->criteriaForDisplay())->keyBy('label'); @endphp
+                                <tr class="eval-row border-b border-line last:border-0" data-search="{{ strtolower($eval->evaluator->name.' '.$mentorScores->map(fn ($c) => $c['label'].' '.$c['score'])->implode(' ').' '.($eval->comments ?: '')) }}">
+                                    <td class="row-no px-4 py-3 align-top">{{ $index + 1 }}</td>
+                                    <td class="px-4 py-3 align-top font-medium">{{ $eval->evaluator->name }}</td>
+                                    @foreach($mentorColumns as $label)
+                                        <td class="px-4 py-3 align-top">{{ $mentorScores->has($label) ? $mentorScores[$label]['score'].' / 5' : '—' }}</td>
+                                    @endforeach
+                                    <td class="px-4 py-3 align-top font-semibold">{{ $eval->average() }} / 5</td>
+                                    <td class="px-4 py-3 align-top text-muted">{{ $eval->comments ?: '—' }}</td>
+                                </tr>
                             @endforeach
-                            <td class="px-4 py-3 align-top font-semibold">{{ $eval->average() }} / 5</td>
-                            <td class="px-4 py-3 align-top text-muted">{{ $eval->comments ?: '—' }}</td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="{{ $mentorColumns->count() + 4 }}" class="px-4 py-8 text-center text-sm text-muted">Belum ada penilaian dari mentor.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+                        </tbody>
+                    </table>
+                </div>
+            @endif
+            @if($mentorEvaluations->isEmpty())
+                <p class="mt-4 rounded-2xl border border-line bg-white px-4 py-8 text-center text-sm text-muted">Belum ada penilaian dari mentor.</p>
+            @endif
+        @endif
     </div>
     <p id="eval-empty" class="mt-4 hidden text-center text-sm text-muted">Tidak ada penilaian yang cocok dengan pencarian.</p>
 </div>
@@ -123,7 +173,7 @@
         @endif
         <form method="POST" class="mt-5 space-y-4">
             @csrf
-            <x-evaluation-criteria-fields :criteria="$mine?->criteria ?? []" />
+            <x-evaluation-criteria-fields :criteria="$mine?->criteriaForDisplay() ?? []" />
             <textarea name="comments" rows="3" class="w-full rounded-xl border border-line px-4 py-2.5 text-sm outline-none focus:border-primary focus:ring-4 focus:ring-primary/15" placeholder="Catatan">{{ old('comments') }}</textarea>
             <div class="flex justify-end gap-3 pt-1">
                 <button type="button" id="eval-modal-cancel" class="rounded-xl border border-line px-4 py-2.5 text-sm font-semibold text-muted">Batal</button>

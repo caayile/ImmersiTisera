@@ -318,30 +318,39 @@ class ImersiSmokeTest extends TestCase
             ->assertSee("x-show=\"tab === 'mine'\"", false);
     }
 
-    public function test_mentor_can_customize_and_add_evaluation_indicators(): void
+    public function test_mentor_can_input_weighted_report_grades(): void
     {
         $this->seed();
 
         $mentor = User::where('email', 'mentor@imersi.id')->firstOrFail();
         $program = Program::whereHas('mentor.user', fn ($query) => $query->whereKey($mentor->id))->firstOrFail();
-        $criteria = [
-            ['label' => 'Pemahaman Industri', 'score' => 4],
-            ['label' => 'Relasi Peserta', 'score' => 5],
-            ['label' => 'Hasil', 'score' => 4],
-            ['label' => 'Manfaat Bersama', 'score' => 3],
-            ['label' => 'Potensi Kolaborasi', 'score' => 4],
-            ['label' => 'Kemandirian', 'score' => 5],
-        ];
 
         $this->actingAs($mentor)
             ->get(route('mentor.evaluations'))
             ->assertOk()
-            ->assertSee('Tambah indikator');
+            ->assertSee('Tambah aspek');
 
         $this->actingAs($mentor)
             ->post(route('mentor.evaluations.store', $program), [
-                'criteria' => $criteria,
-                'comments' => 'Indikator tambahan untuk peserta.',
+                'groups' => [
+                    [
+                        'name' => 'Project',
+                        'weight' => 40,
+                        'aspects' => [
+                            ['label' => 'Kualitas Hasil Kerja', 'score' => 80],
+                            ['label' => 'Ketepatan Waktu', 'score' => 90],
+                        ],
+                    ],
+                    [
+                        'name' => 'Sikap',
+                        'weight' => 60,
+                        'aspects' => [
+                            ['label' => 'Kehadiran', 'score' => 100],
+                            ['label' => 'Kedisiplinan', 'score' => 90],
+                        ],
+                    ],
+                ],
+                'comments' => 'Pertahankan.',
             ])
             ->assertRedirect()
             ->assertSessionHasNoErrors();
@@ -350,15 +359,15 @@ class ImersiSmokeTest extends TestCase
             ->where('evaluator_id', $mentor->id)
             ->firstOrFail();
 
-        $this->assertCount(6, $evaluation->criteria);
-        $this->assertSame('Kemandirian', $evaluation->criteria[5]['label']);
-        $this->assertSame(4.2, $evaluation->average());
+        // Project avg 85*40 + Sikap avg 95*60 → 91.
+        $this->assertSame(91.0, $evaluation->reportAverage());
+        $this->assertSame('A', $evaluation->predicate());
 
         $this->actingAs($mentor)
             ->get(route('mentor.evaluations'))
             ->assertOk()
-            ->assertSee('Relasi Peserta')
-            ->assertSee('Kemandirian');
+            ->assertSee('91')
+            ->assertSee('Kehadiran');
     }
 
     public function test_public_and_role_homes_render(): void

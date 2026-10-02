@@ -10,7 +10,13 @@
             <tr class="border-t border-line">
                 <td class="px-4 py-3">{{ $evaluation->program->participant->user->name }}</td>
                 <td class="px-4 py-3">{{ $evaluation->evaluator->name }}</td>
-                <td class="px-4 py-3">{{ $evaluation->average() }}</td>
+                <td class="px-4 py-3">
+                    @if($evaluation->hasReport())
+                        {{ $evaluation->reportAverage() }} ({{ $evaluation->predicate() }})
+                    @else
+                        {{ $evaluation->average() }}
+                    @endif
+                </td>
             </tr>
         @endforeach
         </tbody>
