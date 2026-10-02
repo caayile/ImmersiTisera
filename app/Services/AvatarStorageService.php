@@ -7,15 +7,33 @@ use Illuminate\Support\Facades\Storage;
 
 class AvatarStorageService
 {
+    public function __construct(private readonly MediaStorageService $mediaStorage) {}
+
     public function store(UploadedFile $file, ?string $previousAvatar): string
     {
-        $disk = Storage::disk('public');
-        $path = $file->store('avatars', 'public');
+        // Simpan ke database-media agar tidak bergantung pada symlink
+        // public/storage (kasus foto hilang di instalasi baru).
+        $path = $this->mediaStorage->store($file);
+        $this->delete($previousAvatar);
 
-        if ($previousAvatar && str_starts_with($previousAvatar, $disk->url('avatars/'))) {
-            $disk->delete('avatars/'.substr($previousAvatar, strlen($disk->url('avatars/'))));
+        return $path;
+    }
+
+    public function delete(?string $avatar): void
+    {
+        if (! $avatar) {
+            return;
         }
 
-        return $disk->url($path);
+        if (str_starts_with($avatar, MediaStorageService::PATH_PREFIX)) {
+            $this->mediaStorage->deleteIfUnreferenced($avatar);
+
+            return;
+        }
+
+        // Bersihkan file lama (format lawas: avatars/... atau .../storage/avatars/...).
+        if (preg_match('#(?:^|/storage/)(avatars/.+)$#', $avatar, $match)) {
+            Storage::disk('public')->delete($match[1]);
+        }
     }
 }

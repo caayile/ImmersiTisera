@@ -4,6 +4,12 @@
 @php
     $myEvaluations = $program ? $program->evaluations->where('evaluator_id', auth()->id())->values() : collect();
     $mentorEvaluations = $program ? $program->evaluations->whereNotIn('evaluator_id', [auth()->id()])->values() : collect();
+    $columnLabels = function ($evaluations) {
+        $labels = $evaluations->flatMap(fn ($eval) => collect($eval->criteriaForDisplay())->pluck('label'))->unique()->values();
+        return $labels->isNotEmpty() ? $labels : collect((new \App\Models\Evaluation)->criteriaForDisplay())->pluck('label');
+    };
+    $myColumns = $columnLabels($myEvaluations);
+    $mentorColumns = $columnLabels($mentorEvaluations);
 @endphp
 <div>
     <h1 class="text-2xl font-semibold">Evaluasi</h1>
@@ -35,22 +41,27 @@
                 <thead>
                     <tr class="border-b border-line text-sm font-semibold">
                         <th class="px-4 py-3">No.</th>
-                        <th class="px-4 py-3">Indikator penilaian</th>
+                        @foreach($myColumns as $label)
+                            <th class="px-4 py-3">{{ $label }}</th>
+                        @endforeach
                         <th class="px-4 py-3">Rata-rata</th>
                         <th class="px-4 py-3">Catatan</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($myEvaluations as $index => $eval)
-                        <tr class="eval-row border-b border-line last:border-0" data-search="{{ strtolower($eval->comments ?: '') }}">
+                        @php $myScores = collect($eval->criteriaForDisplay())->keyBy('label'); @endphp
+                        <tr class="eval-row border-b border-line last:border-0" data-search="{{ strtolower($myScores->map(fn ($c) => $c['label'].' '.$c['score'])->implode(' ').' '.($eval->comments ?: '')) }}">
                             <td class="row-no px-4 py-3 align-top">{{ $index + 1 }}</td>
-                            <td class="px-4 py-3 align-top"><div class="space-y-1">@foreach($eval->criteriaForDisplay() as $criterion)<p>{{ $criterion['label'] }}: <b>{{ $criterion['score'] }}/5</b></p>@endforeach</div></td>
+                            @foreach($myColumns as $label)
+                                <td class="px-4 py-3 align-top">{{ $myScores->has($label) ? $myScores[$label]['score'].' / 5' : '—' }}</td>
+                            @endforeach
                             <td class="px-4 py-3 align-top font-semibold">{{ $eval->average() }} / 5</td>
                             <td class="px-4 py-3 align-top text-muted">{{ $eval->comments ?: '—' }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="px-4 py-8 text-center text-sm text-muted">Belum ada penilaian untuk mentor. Klik Isi evaluasi untuk mulai.</td>
+                            <td colspan="{{ $myColumns->count() + 3 }}" class="px-4 py-8 text-center text-sm text-muted">Belum ada penilaian untuk mentor. Klik Isi evaluasi untuk mulai.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -65,23 +76,28 @@
                     <tr class="border-b border-line text-sm font-semibold">
                         <th class="px-4 py-3">No.</th>
                         <th class="px-4 py-3">Penilai</th>
-                        <th class="px-4 py-3">Indikator penilaian</th>
+                        @foreach($mentorColumns as $label)
+                            <th class="px-4 py-3">{{ $label }}</th>
+                        @endforeach
                         <th class="px-4 py-3">Rata-rata</th>
                         <th class="px-4 py-3">Catatan</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($mentorEvaluations as $index => $eval)
-                        <tr class="eval-row border-b border-line last:border-0" data-search="{{ strtolower($eval->evaluator->name.' '.($eval->comments ?: '')) }}">
+                        @php $mentorScores = collect($eval->criteriaForDisplay())->keyBy('label'); @endphp
+                        <tr class="eval-row border-b border-line last:border-0" data-search="{{ strtolower($eval->evaluator->name.' '.$mentorScores->map(fn ($c) => $c['label'].' '.$c['score'])->implode(' ').' '.($eval->comments ?: '')) }}">
                             <td class="row-no px-4 py-3 align-top">{{ $index + 1 }}</td>
                             <td class="px-4 py-3 align-top font-medium">{{ $eval->evaluator->name }}</td>
-                            <td class="px-4 py-3 align-top"><div class="space-y-1">@foreach($eval->criteriaForDisplay() as $criterion)<p>{{ $criterion['label'] }}: <b>{{ $criterion['score'] }}/5</b></p>@endforeach</div></td>
+                            @foreach($mentorColumns as $label)
+                                <td class="px-4 py-3 align-top">{{ $mentorScores->has($label) ? $mentorScores[$label]['score'].' / 5' : '—' }}</td>
+                            @endforeach
                             <td class="px-4 py-3 align-top font-semibold">{{ $eval->average() }} / 5</td>
                             <td class="px-4 py-3 align-top text-muted">{{ $eval->comments ?: '—' }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-4 py-8 text-center text-sm text-muted">Belum ada penilaian dari mentor.</td>
+                            <td colspan="{{ $mentorColumns->count() + 4 }}" class="px-4 py-8 text-center text-sm text-muted">Belum ada penilaian dari mentor.</td>
                         </tr>
                     @endforelse
                 </tbody>

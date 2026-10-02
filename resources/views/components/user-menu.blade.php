@@ -7,16 +7,16 @@
         ? $user->name
         : (in_array($parts[0], $titles, true) ? $parts->take(2)->implode(' ') : $parts[0]);
 
-    $avatar = filled($user->avatar) ? $user->avatar : null;
+    $avatar = $user->avatarUrl();
 
     $items = [
         ['Profil', route('profile.public'), 'person'],
     ];
 
     if ($user->isParticipant()) {
-        $items[] = ['Ringkasan program', route('participant.applications'), 'space_dashboard'];
+        $items[] = ['Dashboard Program', route('participant.applications'), 'space_dashboard'];
     } elseif ($user->isMentor()) {
-        $items[] = ['Ringkasan program', route('mentor.dashboard'), 'space_dashboard'];
+        $items[] = ['Dashboard Program', route('mentor.dashboard'), 'space_dashboard'];
     } else {
         $items[] = ['Dasbor', route('admin.dashboard'), 'space_dashboard'];
     }

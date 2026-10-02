@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Ringkasan')
+@section('title', 'Dashboard Program')
 @section('content')
 @php
     $next = ['Lengkapi profil kompetensi Anda.', route('participant.profile')];

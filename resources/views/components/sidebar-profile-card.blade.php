@@ -3,7 +3,7 @@
     $participant = $user->participant;
     $parts = collect(preg_split('/\s+/', trim($user->name)))->filter()->values();
     $initials = $parts->map(fn ($part) => mb_strtoupper(mb_substr($part, 0, 1)))->take(2)->implode('');
-    $avatar = filled($user->avatar) ? $user->avatar : null;
+    $avatar = $user->avatarUrl();
     $nidn = $participant?->nidn;
     $prodi = $participant?->study_program;
     $faculty = $participant?->faculty;

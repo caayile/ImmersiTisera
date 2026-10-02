@@ -3,14 +3,15 @@
 @section('content')
 @php
     $initials = collect(preg_split('/\s+/', trim($user->name)))->filter()->map(fn ($part) => mb_strtoupper(mb_substr($part, 0, 1)))->take(2)->implode('');
+    $avatarUrl = $user->avatarUrl();
 @endphp
 <div class="bg-bg py-12">
     <div class="mx-auto max-w-4xl px-5">
         <div class="overflow-hidden rounded-3xl border border-line bg-white">
             <div class="hero-grid px-6 py-8 md:px-8">
                 <div class="flex flex-col gap-5 sm:flex-row sm:items-center">
-                    @if(filled($user->avatar))
-                        <img src="{{ $user->avatar }}" alt="" width="80" height="80" class="h-20 w-20 shrink-0 rounded-2xl object-cover" referrerpolicy="no-referrer">
+                    @if($avatarUrl)
+                        <img src="{{ $avatarUrl }}" alt="" width="80" height="80" class="h-20 w-20 shrink-0 rounded-2xl object-cover" referrerpolicy="no-referrer">
                     @else
                         <span class="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-white text-2xl font-semibold text-primary-dark">{{ $initials }}</span>
                     @endif

@@ -28,9 +28,10 @@ class ProfileAvatarTest extends TestCase
             ])
             ->assertRedirect();
 
-        $avatarUrl = $participant->fresh()->avatar;
-        $this->assertStringStartsWith('/storage/avatars/', $avatarUrl);
-        Storage::disk('public')->assertExists(str_replace('/storage/', '', $avatarUrl));
+        $avatarPath = $participant->fresh()->avatar;
+        $this->assertTrue(str_starts_with($avatarPath, 'database-media/'));
+        $this->assertNotNull($participant->fresh()->avatarUrl());
+        $this->assertStringContainsString('/media/', $participant->fresh()->avatarUrl());
     }
 
     public function test_mentor_can_upload_and_replace_a_profile_photo(): void
@@ -49,9 +50,9 @@ class ProfileAvatarTest extends TestCase
             ], ['Accept' => 'application/json'])
             ->assertOk();
 
-        $firstAvatarUrl = $mentor->fresh()->avatar;
-        $firstAvatarPath = str_replace('/storage/', '', $firstAvatarUrl);
-        Storage::disk('public')->assertExists($firstAvatarPath);
+        $firstAvatarPath = $mentor->fresh()->avatar;
+        $this->assertTrue(str_starts_with($firstAvatarPath, 'database-media/'));
+        $this->assertNotNull($mentor->fresh()->avatarUrl());
 
         $this->actingAs($mentor)
             ->post('/api/profile', [
@@ -63,10 +64,11 @@ class ProfileAvatarTest extends TestCase
             ], ['Accept' => 'application/json'])
             ->assertOk();
 
-        $secondAvatarUrl = $mentor->fresh()->avatar;
-        $this->assertNotSame($firstAvatarUrl, $secondAvatarUrl);
-        Storage::disk('public')->assertMissing($firstAvatarPath);
-        Storage::disk('public')->assertExists(str_replace('/storage/', '', $secondAvatarUrl));
+        $secondAvatarPath = $mentor->fresh()->avatar;
+        $this->assertNotSame($firstAvatarPath, $secondAvatarPath);
+        $this->assertTrue(str_starts_with($secondAvatarPath, 'database-media/'));
+        $this->assertNotNull($mentor->fresh()->avatarUrl());
+        $this->assertDatabaseMissing('media_assets', ['id' => substr($firstAvatarPath, strlen('database-media/'))]);
     }
 
     public function test_profile_photo_upload_rejects_non_image_files(): void

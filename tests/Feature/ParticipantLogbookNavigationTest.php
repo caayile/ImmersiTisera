@@ -242,7 +242,7 @@ class ParticipantLogbookNavigationTest extends TestCase
         $this->actingAs($dosen)
             ->get(route('participant.dashboard'))
             ->assertOk()
-            ->assertSee('Ringkasan program')
+            ->assertSee('Dashboard Program')
             ->assertSee(route('participant.applications'));
     }
 }

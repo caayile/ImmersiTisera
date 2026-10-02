@@ -9,7 +9,7 @@
 <div
     class="mx-auto max-w-5xl"
     x-data="{
-        avatarPreview: @js($user->avatar),
+        avatarPreview: @js($user->avatarUrl()),
         avatarName: '',
         catalog: @js($studyProgramCatalog),
         placementCatalog: @js($placementCatalog),

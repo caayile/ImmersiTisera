@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@yield('title', 'Ringkasan') Magang Dosen</title>
+    <title>@yield('title', 'Dashboard Program') Magang Dosen</title>
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -18,7 +18,7 @@
     $unread = $authUser->unreadNotifications()->count();
     $menus = [
         'participant' => [
-            ['Ringkasan Program', 'participant.dashboard'],
+            ['Dashboard Program', 'participant.dashboard'],
             ['Profil', 'participant.profile'],
             ['Riwayat Pendaftaran', 'participant.applications'],
             ['Program', 'participant.program'],
@@ -34,7 +34,7 @@
             ['Pengaturan', 'participant.settings'],
         ],
         'mentor' => [
-            ['Ringkasan', 'mentor.dashboard'],
+            ['Dashboard Program', 'mentor.dashboard'],
             ['Peserta', 'mentor.participants'],
             ['Pendaftaran', 'mentor.applications'],
             ['Program Aktif', 'mentor.programs'],
@@ -49,7 +49,7 @@
         ],
         'admin' => [
             ['Beranda', 'home'],
-            ['Ringkasan', 'admin.dashboard'],
+            ['Dashboard Program', 'admin.dashboard'],
             ['Manajemen Pengguna', 'admin.users'],
             ['Unit Bisnis', 'admin.departments'],
             ['Departemen', 'admin.units'],
@@ -127,16 +127,6 @@
             <span class="mt-1 block text-[10px] font-semibold uppercase tracking-[0.18em] text-primary-dark">Program TSU</span>
             </span>
         </a>
-
-        <div class="mt-3 flex items-center gap-3 rounded-2xl bg-[#173d32] px-3 py-2.5 text-white shadow-lg shadow-[#173d32]/10">
-            <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15">
-                <span class="material-symbols-outlined text-[20px]">{{ $role === 'admin' ? 'admin_panel_settings' : ($role === 'mentor' ? 'support_agent' : 'school') }}</span>
-            </span>
-            <div class="min-w-0">
-                <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9ce1c2]">Area {{ $role === 'admin' ? 'Pengelola' : ($role === 'mentor' ? 'Pendamping' : 'Dosen') }}</p>
-                <p class="mt-0.5 truncate text-sm font-medium">{{ $authUser->name }}</p>
-            </div>
-        </div>
 
         @if($role === 'participant')
             <x-sidebar-profile-card class="mt-5 shrink-0" />
