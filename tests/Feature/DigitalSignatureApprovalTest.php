@@ -191,6 +191,43 @@ class DigitalSignatureApprovalTest extends TestCase
             ->assertDontSee('value="rejected"', false);
     }
 
+    public function test_participant_can_sign_agreement_from_table_modal(): void
+    {
+        $this->seed();
+        $dosen = $this->newDosen();
+        $mentor = Mentor::whereHas('user', fn ($q) => $q->where('email', 'mentor@imersi.id'))->firstOrFail();
+        $unit = BusinessUnit::where('name', 'Digital Business')->firstOrFail();
+
+        $program = Program::create([
+            'participant_id' => $dosen->participant->id,
+            'mentor_id' => $mentor->id,
+            'department_id' => $unit->department_id,
+            'business_unit_id' => $unit->id,
+            'status' => 'draft',
+        ]);
+        $agreement = Agreement::create([
+            'program_id' => $program->id,
+            'objective' => 'Tujuan bersama.',
+            'activities' => 'Observasi.',
+            'problem_statement' => 'Masalah.',
+            'main_output' => 'Output.',
+            'status' => 'draft',
+        ]);
+
+        $this->actingAs($dosen)
+            ->post(route('participant.agreement.sign'), ['participant_signature' => 'bukan-gambar'])
+            ->assertSessionHasErrors('participant_signature');
+
+        $this->actingAs($dosen)
+            ->post(route('participant.agreement.sign'), ['participant_signature' => $this->sampleSignature()])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame('submitted', $agreement->fresh()->status);
+        $this->assertNotNull($agreement->fresh()->participant_signature);
+        $this->assertNotNull($agreement->fresh()->participant_approved_at);
+    }
+
     public function test_agreement_requires_both_signatures_and_generates_printable_letter(): void
     {
         $this->seed();
@@ -221,9 +258,12 @@ class DigitalSignatureApprovalTest extends TestCase
         $this->actingAs($dosen)
             ->get(route('participant.agreement'))
             ->assertOk()
-            ->assertSee('Hubungi via WhatsApp')
-            ->assertSee('https://wa.me/6281234567890', false)
-            ->assertSee('Hubungi via WhatsApp');
+            ->assertDontSee('Hubungi via WhatsApp')
+            ->assertSee('Nomor Surat')
+            ->assertSee('Tandatangani')
+            ->assertSee('Tanda tangani surat perjanjian')
+            ->assertSee('Detail informasi')
+            ->assertSee('Tujuan');
 
         $payload = [
             'objective' => $agreement->objective,
@@ -261,8 +301,9 @@ class DigitalSignatureApprovalTest extends TestCase
         $this->actingAs($dosen)
             ->get(route('participant.agreement.print'))
             ->assertOk()
-            ->assertSee('PIHAK PERTAMA')
-            ->assertSee('PIHAK KEDUA')
+            ->assertSee('Perjanjian Magang Dosen')
+            ->assertSee('Indikator Keberhasilan')
+            ->assertSee('Aktif setelah')
             ->assertSee('Cetak / Simpan PDF')
             ->assertSee('MD/TSU/TS/')
             ->assertSee('Unduh PDF');

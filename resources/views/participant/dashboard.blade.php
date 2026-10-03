@@ -66,19 +66,81 @@
         if (str_starts_with($mentorPhone, '0')) {
             $mentorPhone = '62'.substr($mentorPhone, 1);
         }
+        $mentorAvatar = $program->mentor->user->avatarUrl();
+        $mentorInitials = collect(preg_split('/\s+/', trim($program->mentor->user->name)))->filter()->map(fn ($part) => mb_strtoupper(mb_substr($part, 0, 1)))->take(2)->implode('');
     @endphp
-    <section class="mt-5 flex flex-col gap-4 rounded-2xl border border-[#cde8dc] bg-[#f1fbf6] p-5 sm:flex-row sm:items-center sm:justify-between">
+    <section class="mt-5 flex flex-col gap-4 rounded-2xl border border-[#cde8dc] bg-[#f1fbf6] p-5 sm:flex-row sm:items-center sm:justify-between" x-data="{ mentorOpen: false }">
         <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.14em] text-primary-dark">Kontak pendamping</p>
+            <p class="text-xs font-semibold uppercase tracking-[0.14em] text-primary-dark">Mentor</p>
             <h2 class="mt-1 text-lg font-semibold">{{ $program->mentor->user->name }}</h2>
-            <p class="mt-1 text-sm text-muted">Mentor industri untuk program Anda. Silakan berkoordinasi langsung di luar sistem.</p>
+            <p class="mt-1 text-sm text-muted">Mentor industri untuk program magang Anda. Silakan berkoordinasi langsung dengan mentor.</p>
         </div>
-        @if($mentorPhone)
-            <a href="https://wa.me/{{ $mentorPhone }}" target="_blank" rel="noreferrer" class="inline-flex items-center justify-center gap-2 rounded-lg bg-[#159447] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#107c3a]">
-                <span class="material-symbols-outlined text-[19px]">chat</span>
-                Buka WhatsApp
-            </a>
-        @endif
+        <div class="flex shrink-0 flex-wrap items-center gap-2">
+            <button type="button" @click="mentorOpen = true" class="inline-flex items-center justify-center gap-2 rounded-lg border border-primary/30 bg-white px-4 py-2.5 text-sm font-semibold text-primary-dark transition hover:bg-primary/5">
+                <span class="material-symbols-outlined text-[19px]">person</span>
+                Lihat Profil
+            </button>
+            @if($mentorPhone)
+                <a href="https://wa.me/{{ $mentorPhone }}" target="_blank" rel="noreferrer" class="inline-flex items-center justify-center gap-2 rounded-lg bg-[#159447] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#107c3a]">
+                    <span class="material-symbols-outlined text-[19px]">chat</span>
+                    Buka WhatsApp
+                </a>
+            @endif
+        </div>
+
+        <div x-show="mentorOpen" x-cloak class="fixed inset-0 z-50 items-center justify-center bg-black/40 p-4" :class="mentorOpen && 'flex'" @click.self="mentorOpen = false" @keydown.escape.window="mentorOpen = false" role="dialog" aria-modal="true" aria-label="Profil mentor">
+            <div class="w-full max-w-2xl overflow-hidden rounded-3xl bg-white shadow-xl">
+                <div class="hero-grid px-6 py-6">
+                    <div class="flex items-center gap-4">
+                        @if($mentorAvatar)
+                            <img src="{{ $mentorAvatar }}" alt="" width="64" height="64" class="h-16 w-16 shrink-0 rounded-2xl object-cover shadow-sm" referrerpolicy="no-referrer">
+                        @else
+                            <span class="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white text-xl font-semibold text-primary-dark shadow-sm">{{ $mentorInitials }}</span>
+                        @endif
+                        <div class="min-w-0 text-white">
+                            <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-secondary">Mentor Industri</p>
+                            <h3 class="mt-0.5 truncate text-xl font-semibold">{{ $program->mentor->user->name }}</h3>
+                            <p class="mt-0.5 truncate text-sm text-white/75">{{ $program->mentor->user->email }}</p>
+                        </div>
+                        <button type="button" @click="mentorOpen = false" class="ml-auto flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/15 text-white transition hover:bg-white/25" aria-label="Tutup">
+                            <span class="material-symbols-outlined text-[18px]">close</span>
+                        </button>
+                    </div>
+                </div>
+                <dl class="grid gap-3 p-6 text-sm sm:grid-cols-2">
+                    <div class="rounded-xl bg-bg px-3 py-2.5">
+                        <dt class="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">NIK</dt>
+                        <dd class="mt-0.5 font-medium">{{ $program->mentor->nik ?: '—' }}</dd>
+                    </div>
+                    <div class="rounded-xl bg-bg px-3 py-2.5">
+                        <dt class="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">Telepon</dt>
+                        <dd class="mt-0.5 font-medium">{{ $program->mentor->user->phone ?: '—' }}</dd>
+                    </div>
+                    <div class="rounded-xl bg-bg px-3 py-2.5">
+                        <dt class="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">Posisi</dt>
+                        <dd class="mt-0.5 font-medium">{{ $program->mentor->position ?: 'Mentor Industri' }}</dd>
+                    </div>
+                    <div class="rounded-xl bg-bg px-3 py-2.5">
+                        <dt class="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">Unit Bisnis</dt>
+                        <dd class="mt-0.5 font-medium">{{ $program->mentor->department?->name ?: '—' }}</dd>
+                    </div>
+                    <div class="rounded-xl bg-bg px-3 py-2.5 sm:col-span-2">
+                        <dt class="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">Departemen</dt>
+                        <dd class="mt-0.5 font-medium">{{ $program->mentor->businessUnit?->name ?: '—' }}</dd>
+                    </div>
+                    <div class="rounded-xl bg-bg px-3 py-2.5 sm:col-span-2">
+                        <dt class="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">Keahlian</dt>
+                        <dd class="mt-1.5 flex flex-wrap gap-1.5">
+                            @forelse($program->mentor->expertise ?? [] as $skill)
+                                <span class="rounded-full bg-primary/15 px-2.5 py-0.5 text-xs font-medium text-primary-dark">{{ $skill }}</span>
+                            @empty
+                                <span class="text-muted">—</span>
+                            @endforelse
+                        </dd>
+                    </div>
+                </dl>
+            </div>
+        </div>
     </section>
 @endif
 

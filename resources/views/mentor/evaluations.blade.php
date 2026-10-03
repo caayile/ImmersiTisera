@@ -32,7 +32,7 @@
         return total > 0 ? Math.round((weighted / total) * 10) / 10 : null;
     },
     reportPredicate(value) {
-        if (value === null || value === undefined) return '—';
+        if (value === null || value === undefined || value === '') return '—';
         if (value >= 85) return 'A';
         if (value >= 70) return 'B';
         if (value >= 60) return 'C';
@@ -149,7 +149,6 @@
         </div>
     </div>
     <p id="eval-empty" class="mt-4 hidden text-center text-sm text-muted">Tidak ada penilaian yang cocok dengan pencarian.</p>
-</div>
 
 <div id="eval-modal" x-show="reportModal" x-cloak class="fixed inset-0 z-50 items-center justify-center bg-black/40 p-4" :class="reportModal && 'flex'" @click.self="reportModal = false" @keydown.escape.window="reportModal = false">
     <div class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
@@ -226,6 +225,7 @@
             </div>
         </form>
     </div>
+</div>
 </div>
 
 <script>

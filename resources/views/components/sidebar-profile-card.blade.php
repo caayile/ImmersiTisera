@@ -10,33 +10,34 @@
     $profileReady = filled($prodi) && filled($faculty);
 @endphp
 
-<div {{ $attributes->merge(['class' => 'rounded-2xl border border-line bg-white p-4 shadow-sm']) }}>
-    <div class="flex flex-col items-center text-center">
+<div {{ $attributes->merge(['class' => 'relative rounded-2xl border border-line bg-white p-4 shadow-sm']) }}>
+    <span @class([
+        'absolute left-4 top-4 inline-flex rounded-full px-1.5 py-px text-[9px] font-semibold',
+        'bg-primary/15 text-primary-dark' => $profileReady,
+        'bg-amber-50 text-amber-800' => ! $profileReady,
+    ])>
+        {{ $profileReady ? 'Profil lengkap' : 'Lengkapi profil' }}
+    </span>
+    <div class="flex items-center gap-3 pt-8 text-left">
         @if($avatar)
             <img
                 src="{{ $avatar }}"
                 alt=""
-                width="72"
-                height="72"
-                class="h-[72px] w-[72px] rounded-full object-cover ring-2 ring-line"
+                width="56"
+                height="56"
+                class="h-14 w-14 shrink-0 rounded-full object-cover ring-2 ring-line"
                 referrerpolicy="no-referrer"
             >
         @else
-            <span class="flex h-[72px] w-[72px] items-center justify-center rounded-full bg-primary/15 text-lg font-semibold text-primary-dark ring-2 ring-line">
+            <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary/15 text-base font-semibold text-primary-dark ring-2 ring-line">
                 {{ $initials }}
             </span>
         @endif
 
-        <p class="mt-3 text-sm font-semibold leading-snug text-ink">{{ $user->name }}</p>
-        <p class="mt-0.5 text-xs text-muted">{{ $nidn ?: 'NIDN belum diisi' }}</p>
-
-        <span @class([
-            'mt-2 inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-semibold',
-            'bg-primary/15 text-primary-dark' => $profileReady,
-            'bg-amber-50 text-amber-800' => ! $profileReady,
-        ])>
-            {{ $profileReady ? 'Profil lengkap' : 'Lengkapi profil' }}
-        </span>
+        <div class="min-w-0">
+            <p class="truncate text-sm font-semibold leading-snug text-ink">{{ $user->name }}</p>
+            <p class="mt-0.5 truncate text-xs text-muted">{{ $nidn ?: 'NIDN belum diisi' }}</p>
+        </div>
     </div>
 
     <dl class="mt-4 space-y-3 border-t border-line pt-4 text-left">

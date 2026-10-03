@@ -101,7 +101,6 @@ class DatabaseSeeder extends Seeder
             'business_unit_id' => $units['Digital Business']->id,
             'position' => 'Head of Digital Business',
             'expertise' => ['Product Analytics', 'Digital Publishing', 'Machine Learning'],
-            'availability' => 'Selasa & Kamis, 09.00-12.00',
         ]);
 
         $mentorItUser = User::create([

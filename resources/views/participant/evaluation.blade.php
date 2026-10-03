@@ -95,27 +95,54 @@
                             <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Nilai raport dari {{ $eval->evaluator->name }}</p>
                             <p class="mt-1 text-3xl font-semibold">{{ $eval->reportAverage() }} <span class="text-lg text-primary-dark">{{ $eval->predicate() }}</span></p>
                         </div>
-                        @if(filled($eval->comments))
-                            <p class="max-w-md text-sm text-muted">{{ $eval->comments }}</p>
-                        @endif
-                    </div>
-                    @foreach($eval->grade_groups as $group)
-                        @php $groupScores = collect($group['aspects'] ?? [])->map(fn ($a) => (float) ($a['score'] ?? 0)); @endphp
-                        <div class="border-b border-line p-5 last:border-0">
-                            <div class="flex items-center justify-between gap-3">
-                                <h4 class="font-semibold">{{ $group['name'] }} <span class="text-xs font-medium text-muted">(bobot {{ $group['weight'] }}%)</span></h4>
-                                <p class="text-sm font-semibold">{{ $groupScores->isNotEmpty() ? round($groupScores->avg(), 1) : '—' }}</p>
-                            </div>
-                            <dl class="mt-3 space-y-2">
-                                @foreach($group['aspects'] ?? [] as $aspect)
-                                    <div class="flex items-center justify-between gap-3 rounded-xl bg-bg/60 px-3 py-2 text-sm">
-                                        <dt class="text-muted">{{ $aspect['label'] }}</dt>
-                                        <dd class="font-semibold">{{ $aspect['score'] }}</dd>
-                                    </div>
-                                @endforeach
-                            </dl>
+                        <div class="flex flex-col gap-2 sm:items-end">
+                            @if(filled($eval->comments))
+                                <p class="max-w-md text-sm text-muted sm:text-right">{{ $eval->comments }}</p>
+                            @endif
+                            <a href="{{ route('participant.evaluation.report-preview') }}" class="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-dark">
+                                <span class="material-symbols-outlined text-[18px]">print</span>
+                                Cetak PDF
+                            </a>
                         </div>
-                    @endforeach
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full min-w-[560px] text-left text-sm">
+                            <thead>
+                                <tr class="border-b border-line text-sm font-semibold">
+                                    <th class="px-4 py-3">No.</th>
+                                    <th class="px-4 py-3">Aspek Penilaian</th>
+                                    <th class="px-4 py-3">Bobot</th>
+                                    <th class="px-4 py-3">Nilai</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @php $reportNo = 1; @endphp
+                                @foreach($eval->grade_groups as $group)
+                                    @php $groupScores = collect($group['aspects'] ?? [])->map(fn ($a) => (float) ($a['score'] ?? 0)); @endphp
+                                    <tr class="border-b border-line bg-[#f4f8f6] font-semibold">
+                                        <td class="px-4 py-3"></td>
+                                        <td class="px-4 py-3">{{ $group['name'] }}</td>
+                                        <td class="px-4 py-3">{{ $group['weight'] }}%</td>
+                                        <td class="px-4 py-3">{{ $groupScores->isNotEmpty() ? round($groupScores->avg(), 1) : '—' }}</td>
+                                    </tr>
+                                    @foreach($group['aspects'] ?? [] as $aspect)
+                                        <tr class="border-b border-line last:border-0">
+                                            <td class="px-4 py-3 align-top text-muted">{{ $reportNo++ }}</td>
+                                            <td class="px-4 py-3 align-top">{{ $aspect['label'] }}</td>
+                                            <td class="px-4 py-3 align-top text-muted">—</td>
+                                            <td class="px-4 py-3 align-top font-semibold">{{ $aspect['score'] }}</td>
+                                        </tr>
+                                    @endforeach
+                                @endforeach
+                            </tbody>
+                            <tfoot>
+                                <tr class="bg-[#eef6f2] font-semibold">
+                                    <td colspan="3" class="px-4 py-3">Rata-rata</td>
+                                    <td class="px-4 py-3 text-primary-dark">{{ $eval->reportAverage() }} ({{ $eval->predicate() }})</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
                 </article>
             @endforeach
             @if($legacyEvaluations->isNotEmpty())

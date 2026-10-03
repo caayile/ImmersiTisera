@@ -34,6 +34,20 @@ class ReportGradeTest extends TestCase
         ];
     }
 
+    public function test_mentor_grade_list_shows_ungraded_status(): void
+    {
+        $this->seed();
+
+        $mentor = User::where('email', 'mentor@imersi.id')->firstOrFail();
+
+        $this->actingAs($mentor)
+            ->get(route('mentor.evaluations'))
+            ->assertOk()
+            ->assertSee('Belum dinilai')
+            ->assertSee('Input Nilai Magang')
+            ->assertSee('Tambah aspek');
+    }
+
     public function test_predicate_boundaries(): void
     {
         foreach ([[100, 'A'], [85, 'A'], [84.9, 'B'], [70, 'B'], [69.9, 'C'], [60, 'C'], [59.9, 'D'], [50, 'D'], [49.9, 'E'], [0, 'E']] as [$score, $expected]) {
@@ -134,5 +148,61 @@ class ReportGradeTest extends TestCase
             ->assertOk()
             ->assertSee('Relasi')
             ->assertDontSee('terkunci');
+    }
+
+    public function test_report_pdf_is_locked_until_own_evaluation_submitted(): void
+    {
+        $this->seed();
+
+        $dosen = User::where('email', 'dosen@imersi.id')->firstOrFail();
+        $mentor = User::where('email', 'mentor@imersi.id')->firstOrFail();
+        $program = $dosen->participant->programs()->latest()->firstOrFail();
+
+        Evaluation::create([
+            'program_id' => $program->id,
+            'evaluator_id' => $mentor->id,
+            'grade_groups' => $this->reportGroups(),
+            'comments' => 'Bagus.',
+        ]);
+
+        $this->actingAs($dosen)
+            ->get(route('participant.evaluation.report-pdf'))
+            ->assertNotFound();
+
+        $this->actingAs($dosen)
+            ->get(route('participant.evaluation.report-preview'))
+            ->assertNotFound();
+    }
+
+    public function test_dosen_can_download_unlocked_report_pdf(): void
+    {
+        $this->seed();
+
+        $dosen = User::where('email', 'dosen@imersi.id')->firstOrFail();
+        $mentor = User::where('email', 'mentor@imersi.id')->firstOrFail();
+        $program = $dosen->participant->programs()->latest()->firstOrFail();
+
+        Evaluation::create([
+            'program_id' => $program->id,
+            'evaluator_id' => $mentor->id,
+            'grade_groups' => $this->reportGroups(),
+            'comments' => 'Bagus.',
+        ]);
+        Evaluation::create([
+            'program_id' => $program->id,
+            'evaluator_id' => $dosen->id,
+            'criteria' => [['label' => 'Umpan Balik', 'score' => 4]],
+        ]);
+
+        $response = $this->actingAs($dosen)->get(route('participant.evaluation.report-pdf'));
+
+        $response->assertOk()->assertHeader('content-type', 'application/pdf');
+        $this->assertStringStartsWith('%PDF', $response->getContent());
+
+        $this->actingAs($dosen)
+            ->get(route('participant.evaluation.report-preview'))
+            ->assertOk()
+            ->assertSee('LAPORAN NILAI MAGANG DOSEN')
+            ->assertSee('Cetak', false);
     }
 }

@@ -58,6 +58,7 @@ Route::middleware(['auth', 'role:participant'])->prefix('participant')->name('pa
     Route::get('/agreement/print', [ParticipantController::class, 'printAgreement'])->name('agreement.print');
     Route::get('/agreement/download-pdf', [ParticipantController::class, 'downloadAgreementPdf'])->name('agreement.download');
     Route::post('/agreement', [ParticipantController::class, 'updateAgreement']);
+    Route::post('/agreement/sign', [ParticipantController::class, 'signAgreement'])->name('agreement.sign');
     Route::get('/timeline', [ParticipantController::class, 'timeline'])->name('timeline');
     Route::post('/timeline/{timeline}', [ParticipantController::class, 'updateTimeline'])->name('timeline.update');
     Route::get('/logbooks', [ParticipantController::class, 'logbooks'])->name('logbooks');
@@ -69,6 +70,8 @@ Route::middleware(['auth', 'role:participant'])->prefix('participant')->name('pa
     Route::post('/final-report', [ParticipantController::class, 'storeOutput']);
     Route::get('/evaluation', [ParticipantController::class, 'evaluation'])->name('evaluation');
     Route::post('/evaluation', [ParticipantController::class, 'storeEvaluation']);
+    Route::get('/evaluation/report-preview', [ParticipantController::class, 'printReport'])->name('evaluation.report-preview');
+    Route::get('/evaluation/report-pdf', [ParticipantController::class, 'downloadReportPdf'])->name('evaluation.report-pdf');
     Route::get('/collaboration', [ParticipantController::class, 'collaboration'])->name('collaboration');
     Route::get('/notifications', [ParticipantController::class, 'notifications'])->name('notifications');
     Route::get('/settings', [ParticipantController::class, 'settings'])->name('settings');
@@ -77,6 +80,8 @@ Route::middleware(['auth', 'role:participant'])->prefix('participant')->name('pa
 
 Route::middleware(['auth', 'role:mentor'])->prefix('mentor')->name('mentor.')->group(function () {
     Route::get('/dashboard', [MentorController::class, 'dashboard'])->name('dashboard');
+    Route::get('/profile', [MentorController::class, 'profile'])->name('profile');
+    Route::post('/profile', [MentorController::class, 'updateProfile'])->name('profile.update');
     Route::get('/applications', [MentorController::class, 'applications'])->name('applications');
     Route::get('/applications/{application}', [MentorController::class, 'showApplication'])->name('applications.show');
     Route::post('/applications/{application}', [MentorController::class, 'reviewApplication'])->name('applications.review');

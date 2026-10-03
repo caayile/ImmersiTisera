@@ -344,6 +344,7 @@ class AuthController extends Controller
         ];
         if ($role === 'mentor') {
             $rules['department_id'] = ['nullable', 'exists:departments,id'];
+            $rules['nik'] = ['nullable', 'string', 'max:40'];
         }
 
         $validator = Validator::make($request->all(), $rules);
@@ -373,6 +374,7 @@ class AuthController extends Controller
         } else {
             Mentor::create([
                 'user_id' => $user->id,
+                'nik' => $data['nik'] ?? null,
                 'department_id' => $data['department_id'] ?? null,
             ]);
         }

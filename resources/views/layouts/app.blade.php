@@ -35,6 +35,7 @@
         ],
         'mentor' => [
             ['Dashboard Program', 'mentor.dashboard'],
+            ['Profil', 'mentor.profile'],
             ['Peserta', 'mentor.participants'],
             ['Pendaftaran', 'mentor.applications'],
             ['Program Aktif', 'mentor.programs'],
@@ -85,6 +86,7 @@
         'participant.notifications' => 'notifications',
         'participant.settings' => 'settings',
         'mentor.dashboard' => 'space_dashboard',
+        'mentor.profile' => 'person',
         'mentor.participants' => 'groups',
         'mentor.applications' => 'description',
         'mentor.programs' => 'work_history',
@@ -174,60 +176,6 @@
     <div class="min-w-0">
         <header class="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-line bg-white/95 px-5 py-3 backdrop-blur-md lg:px-8">
             <button type="button" class="rounded-lg border border-line px-3 py-1 text-sm lg:hidden" @click="open = !open">Menu</button>
-
-            @if($role === 'participant')
-                <div class="hidden min-w-0 flex-1 max-w-xl md:block relative" 
-                     x-data="{ query: '{{ request('q') }}', results: [], showDropdown: false, loading: false }" 
-                     @click.away="showDropdown = false">
-                    <form action="{{ route('departments.index') }}" method="GET" class="w-full">
-                        <label class="relative block">
-                            <span class="material-symbols-outlined pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted">search</span>
-                            <input
-                                type="search"
-                                name="q"
-                                x-model="query"
-                                @input.debounce.300ms="
-                                    if(query.length > 0) {
-                                        loading = true;
-                                        showDropdown = true;
-                                        fetch('{{ route('api.search') }}?q=' + encodeURIComponent(query))
-                                            .then(res => res.json())
-                                            .then(data => { results = data; loading = false; });
-                                    } else {
-                                        showDropdown = false;
-                                        results = [];
-                                    }
-                                "
-                                @focus="if(query.length > 0) showDropdown = true"
-                                placeholder="Cari mitra atau unit bisnis di sini..."
-                                autocomplete="off"
-                                class="w-full rounded-full border border-line bg-bg py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/15"
-                            >
-                        </label>
-                    </form>
-                    
-                    <div x-show="showDropdown" x-cloak x-transition.opacity
-                         class="absolute left-0 right-0 top-full mt-2 overflow-hidden rounded-xl border border-line bg-white shadow-lg z-50 max-h-[400px] overflow-y-auto">
-                        <div x-show="loading" class="p-4 text-center text-sm text-muted">Mencari...</div>
-                        <div x-show="!loading && results.length === 0" class="p-4 text-center text-sm text-muted">Tidak ada hasil ditemukan.</div>
-                        <ul x-show="!loading && results.length > 0" class="divide-y divide-line">
-                            <template x-for="item in results" :key="item.type + item.id">
-                                <li>
-                                    <a :href="item.url" class="flex items-center gap-3 p-3 hover:bg-bg transition group">
-                                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition">
-                                            <span class="material-symbols-outlined" x-text="item.type === 'Departemen' ? 'domain' : 'storefront'"></span>
-                                        </div>
-                                        <div>
-                                            <div class="text-sm font-semibold text-ink" x-text="item.name"></div>
-                                            <div class="text-[11px] font-medium text-muted uppercase tracking-wider mt-0.5" x-text="item.type"></div>
-                                        </div>
-                                    </a>
-                                </li>
-                            </template>
-                        </ul>
-                    </div>
-                </div>
-            @endif
 
             <div class="ml-auto flex items-center gap-2">
                 @if(in_array($role, ['participant', 'mentor'], true))

@@ -101,23 +101,26 @@ class Evaluation extends Model
     }
 
     /**
-     * Predikat raport ala Indonesia: A ≥85, B ≥70, C ≥60, D ≥50, E <50.
+     * Predikat raport: A ≥85, B ≥70, C ≥60, D ≥50, E <50.
      */
-    public function predicate(): ?string
+    public static function predicateFor(?float $score): ?string
     {
-        $average = $this->reportAverage();
-
-        if ($average === null) {
+        if ($score === null) {
             return null;
         }
 
         return match (true) {
-            $average >= 85 => 'A',
-            $average >= 70 => 'B',
-            $average >= 60 => 'C',
-            $average >= 50 => 'D',
+            $score >= 85 => 'A',
+            $score >= 70 => 'B',
+            $score >= 60 => 'C',
+            $score >= 50 => 'D',
             default => 'E',
         };
+    }
+
+    public function predicate(): ?string
+    {
+        return self::predicateFor($this->reportAverage());
     }
 
     public function average(): float

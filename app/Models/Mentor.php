@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 
-#[Fillable(['user_id', 'department_id', 'business_unit_id', 'position', 'expertise', 'availability'])]
+#[Fillable(['user_id', 'nik', 'department_id', 'business_unit_id', 'position', 'expertise'])]
 class Mentor extends Model
 {
     protected function casts(): array

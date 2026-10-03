@@ -73,7 +73,6 @@ class ProfileController extends Controller
                 'problems' => ['nullable', 'string'],
                 'opportunities' => ['nullable', 'string'],
                 'dosen_needs' => ['nullable', 'string'],
-                'availability' => ['nullable', 'string', 'max:120'],
             ]);
 
             $user->update([
@@ -93,7 +92,6 @@ class ProfileController extends Controller
                     'business_unit_id' => $unit?->id ?? $user->mentor?->business_unit_id,
                     'position' => $data['job_title'] ?? null,
                     'expertise' => $data['expertise'],
-                    'availability' => $data['availability'] ?? null,
                 ]
             );
 

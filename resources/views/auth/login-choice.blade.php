@@ -379,6 +379,14 @@
                             </div>
                         </div>
 
+                        <!-- Row 2b: NIK (khusus Mentor) -->
+                        <div id="container-mentor-nik"
+                            class="{{ $defaultRole === 'mentor' ? 'block' : 'hidden' }}">
+                            <label class="block text-[11px] font-bold text-charcoal mb-1">Nomor Induk Karyawan (NIK)</label>
+                            <input type="text" name="nik" value="{{ old('nik') }}" placeholder="NIK karyawan perusahaan"
+                                class="w-full px-2.5 py-1.5 sm:py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-charcoal placeholder-gray-400 focus:bg-white focus:outline-none focus:border-forest focus:ring-2 focus:ring-forest/10 transition">
+                        </div>
+
                         <!-- Row 3: Password & Confirm Password -->
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             <div>
@@ -529,6 +537,7 @@
             const formReg = document.getElementById('form-register');
             const btnRegText = document.getElementById('btn-reg-text');
             const containerMentorDept = document.getElementById('container-mentor-dept');
+            const containerMentorNik = document.getElementById('container-mentor-nik');
             const containerDosenInstansi = document.getElementById('container-dosen-instansi');
 
             // Add smooth transition
@@ -549,6 +558,8 @@
 
                     containerMentorDept.classList.add('hidden');
                     containerMentorDept.classList.remove('block');
+                    containerMentorNik.classList.add('hidden');
+                    containerMentorNik.classList.remove('block');
                     containerDosenInstansi.classList.add('block');
                     containerDosenInstansi.classList.remove('hidden');
                 } else {
@@ -560,6 +571,8 @@
 
                     containerMentorDept.classList.add('block');
                     containerMentorDept.classList.remove('hidden');
+                    containerMentorNik.classList.add('block');
+                    containerMentorNik.classList.remove('hidden');
                     containerDosenInstansi.classList.add('hidden');
                     containerDosenInstansi.classList.remove('block');
                 }

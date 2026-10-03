@@ -43,7 +43,7 @@ class ParticipantController extends Controller
 
         return view('participant.dashboard', [
             'participant' => $request->user()->participant,
-            'program' => $program?->fresh(['department', 'businessUnit', 'mentor.user', 'agreement', 'logbooks', 'timelines']),
+            'program' => $program?->fresh(['department', 'businessUnit', 'mentor.user', 'mentor.department', 'mentor.businessUnit', 'agreement', 'logbooks', 'timelines']),
             'notifications' => $request->user()->unreadNotifications()->latest()->take(5)->get(),
             'application' => $application,
             'stats' => [
@@ -308,6 +308,37 @@ class ParticipantController extends Controller
         $program->mentor->user->notify(new ImersiAlert('Perjanjian diajukan', 'Menunggu persetujuan mentor.', route('mentor.agreements')));
 
         return back()->with('status', 'Perjanjian diajukan ke mentor.');
+    }
+
+    public function signAgreement(Request $request)
+    {
+        $program = $this->currentProgram($request, true);
+        $agreement = $program->agreement;
+        abort_unless($program && $agreement && in_array($agreement->status, ['draft', 'revision'], true), 403);
+
+        $data = $request->validate([
+            'participant_signature' => [
+                'required',
+                'string',
+                'regex:/^data:image\/(png|jpeg|jpg|webp);base64,/i',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if (strlen((string) $value) > 900_000) {
+                        $fail('Tanda tangan dosen terlalu besar.');
+                    }
+                },
+            ],
+        ]);
+
+        $agreement->update([
+            'participant_signature' => $data['participant_signature'],
+            'participant_approved_at' => now(),
+            'status' => 'submitted',
+            'mentor_approved_at' => null,
+            'mentor_signature' => null,
+        ]);
+        $program->mentor->user->notify(new ImersiAlert('Perjanjian diajukan', 'Menunggu persetujuan mentor.', route('mentor.agreements')));
+
+        return back()->with('status', 'Surat perjanjian ditandatangani dan diajukan ke mentor.');
     }
 
     public function timeline(Request $request)
@@ -598,6 +629,46 @@ class ParticipantController extends Controller
         );
 
         return back()->with('status', 'Evaluasi tersimpan.');
+    }
+
+    public function printReport(Request $request)
+    {
+        $program = $this->currentProgram($request);
+        abort_unless($program, 404);
+        $program->loadMissing(['participant.user', 'mentor.user', 'department', 'businessUnit', 'evaluations.evaluator']);
+
+        $mine = $program->evaluations->where('evaluator_id', $request->user()->id)->first();
+        $report = $program->evaluations->whereNotIn('evaluator_id', [$request->user()->id])->first(fn ($eval) => $eval->hasReport());
+
+        // Nilai raport hanya bisa dilihat setelah dosen mengisi evaluasinya sendiri.
+        abort_unless($mine && $report, 404);
+
+        return view('participant.evaluation-report-print', [
+            'program' => $program,
+            'report' => $report,
+            'pdf' => false,
+        ]);
+    }
+
+    public function downloadReportPdf(Request $request)
+    {
+        $program = $this->currentProgram($request);
+        abort_unless($program, 404);
+        $program->loadMissing(['participant.user', 'mentor.user', 'department', 'businessUnit', 'evaluations.evaluator']);
+
+        $mine = $program->evaluations->where('evaluator_id', $request->user()->id)->first();
+        $report = $program->evaluations->whereNotIn('evaluator_id', [$request->user()->id])->first(fn ($eval) => $eval->hasReport());
+
+        // Nilai raport hanya bisa diunduh setelah dosen mengisi evaluasinya sendiri.
+        abort_unless($mine && $report, 404);
+
+        $filename = 'Rapor-Magang-'.preg_replace('/[^A-Za-z0-9]+/', '-', (string) $program->participant->user->name).'.pdf';
+
+        return Pdf::loadView('participant.evaluation-report-print', [
+            'program' => $program,
+            'report' => $report,
+            'pdf' => true,
+        ])->setPaper('a4', 'portrait')->download($filename);
     }
 
     public function finalReport(Request $request)

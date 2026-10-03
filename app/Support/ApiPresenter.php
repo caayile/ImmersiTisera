@@ -65,7 +65,6 @@ class ApiPresenter
             'problems' => $mentor->businessUnit?->description,
             'opportunities' => $mentor->businessUnit?->work_done,
             'dosen_needs' => $mentor->businessUnit?->example_activities,
-            'availability' => $mentor->availability,
         ];
     }
 

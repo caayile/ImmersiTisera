@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Agreement;
 use App\Models\Application;
+use App\Models\BusinessUnit;
 use App\Models\CollaborationPipeline;
 use App\Models\Evaluation;
 use App\Models\Logbook;
+use App\Models\Mentor;
 use App\Models\MentorSession;
 use App\Models\Program;
 use App\Models\ProgramOutput;
@@ -14,6 +16,7 @@ use App\Models\Timeline;
 use App\Notifications\ImersiAlert;
 use App\Services\AgreementLetterService;
 use App\Services\ApplicationApprovalService;
+use App\Services\AvatarStorageService;
 use App\Support\Status;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -41,6 +44,51 @@ class MentorController extends Controller
         $programs = $this->mine($request)->with(['participant.user', 'businessUnit', 'logbooks', 'outputs'])->get();
 
         return view('mentor.participants', compact('programs'));
+    }
+
+    public function profile(Request $request)
+    {
+        $mentor = $request->user()->mentor ?? Mentor::create(['user_id' => $request->user()->id]);
+
+        return view('mentor.profile', [
+            'mentor' => $mentor->loadMissing(['department', 'businessUnit']),
+            'businessUnits' => BusinessUnit::with('department:id,name')->orderBy('name')->get(['id', 'name', 'department_id']),
+        ]);
+    }
+
+    public function updateProfile(Request $request, AvatarStorageService $avatars)
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:30'],
+            'avatar' => ['sometimes', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'nik' => ['nullable', 'string', 'max:40'],
+            'position' => ['nullable', 'string', 'max:180'],
+            'expertise' => ['nullable', 'string'],
+            'business_unit_id' => ['nullable', 'exists:business_units,id'],
+        ]);
+
+        $request->user()->update([
+            'name' => $data['name'],
+            'phone' => $data['phone'] ?? null,
+            'avatar' => $request->hasFile('avatar') ? $avatars->store($request->file('avatar'), $request->user()->avatar) : $request->user()->avatar,
+        ]);
+
+        $expertise = collect(explode(',', (string) ($data['expertise'] ?? '')))->map(fn ($item) => trim($item))->filter()->values()->all();
+        $unit = isset($data['business_unit_id']) ? BusinessUnit::find($data['business_unit_id']) : null;
+
+        Mentor::query()->updateOrCreate(
+            ['user_id' => $request->user()->id],
+            [
+                'nik' => $data['nik'] ?? null,
+                'business_unit_id' => $unit?->id,
+                'department_id' => $unit?->department_id ?? $request->user()->mentor?->department_id,
+                'position' => $data['position'] ?? null,
+                'expertise' => $expertise,
+            ]
+        );
+
+        return back()->with('status', 'Profil disimpan.');
     }
 
     public function showParticipant(Request $request, Program $program)
@@ -403,11 +451,13 @@ class MentorController extends Controller
                         ], $group['aspects']),
                     ], $data['groups']),
                     'criteria' => null,
-                    'industry_understanding' => null,
-                    'relationship' => null,
-                    'output' => null,
-                    'mutual_benefit' => null,
-                    'collaboration_potential' => null,
+                    // Kolom legacy NOT NULL (default 0): nol dianggap "tidak ada"
+                    // oleh Evaluation::average() sehingga konversi raport dipakai.
+                    'industry_understanding' => 0,
+                    'relationship' => 0,
+                    'output' => 0,
+                    'mutual_benefit' => 0,
+                    'collaboration_potential' => 0,
                     'comments' => $data['comments'] ?? null,
                 ]
             );

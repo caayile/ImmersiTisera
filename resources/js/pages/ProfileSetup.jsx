@@ -30,7 +30,6 @@ const emptyMentor = {
   problems: '',
   opportunities: '',
   dosen_needs: '',
-  availability: '',
 }
 
 function csv(value) {
@@ -203,7 +202,6 @@ export default function ProfileSetup() {
                 </Field>
                 <Field label="Fungsi / department"><input className={inputClass} value={form.department_function} onChange={(e) => set('department_function', e.target.value)} /></Field>
                 <Field label="Jabatan"><input className={inputClass} value={form.job_title} onChange={(e) => set('job_title', e.target.value)} /></Field>
-                <Field label="Ketersediaan"><input className={inputClass} value={form.availability} onChange={(e) => set('availability', e.target.value)} /></Field>
                 <div className="md:col-span-2"><Field label="Expertise"><input className={inputClass} value={form.expertise} onChange={(e) => set('expertise', e.target.value)} required /></Field></div>
                 <div className="md:col-span-2"><Field label="Kebutuhan industri"><textarea className={inputClass} rows="3" value={form.industry_needs} onChange={(e) => set('industry_needs', e.target.value)} required /></Field></div>
                 <div className="md:col-span-2"><Field label="Problem"><textarea className={inputClass} rows="3" value={form.problems} onChange={(e) => set('problems', e.target.value)} required /></Field></div>

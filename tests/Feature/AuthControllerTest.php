@@ -17,6 +17,31 @@ class AuthControllerTest extends TestCase
             ->assertSee('name="institution"', false);
     }
 
+    public function test_register_form_includes_mentor_nik_field(): void
+    {
+        $this->get(route('register'))
+            ->assertOk()
+            ->assertSee('name="nik"', false);
+    }
+
+    public function test_mentor_registration_stores_nik(): void
+    {
+        $this->post(route('register.mentor'), [
+            'name' => 'Budi Industri',
+            'email' => 'budi.industri@imersi.id',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+            'phone' => '081234567891',
+            'nik' => 'TS-2026-001',
+        ])->assertRedirect();
+
+        $user = User::where('email', 'budi.industri@imersi.id')->firstOrFail();
+
+        $this->assertAuthenticatedAs($user);
+        $this->assertSame('mentor', $user->role);
+        $this->assertSame('TS-2026-001', $user->mentor?->nik);
+    }
+
     public function test_dosen_registration_stores_institution_in_profile_data(): void
     {
         $this->post(route('register.user'), [

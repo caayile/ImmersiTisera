@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 #[Fillable([
     'user_id', 'company_name', 'industry_field', 'business_unit', 'department_function',
     'job_title', 'expertise', 'industry_needs', 'problems', 'opportunities',
-    'dosen_needs', 'availability',
+    'dosen_needs',
 ])]
 class MentorProfile extends Model
 {

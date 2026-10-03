@@ -22,6 +22,8 @@
                     </div>
                     @if($user->isParticipant())
                         <a href="{{ route('participant.profile') }}" class="rounded-full bg-white px-4 py-2 text-sm font-semibold text-ink sm:ml-auto">Ubah profil</a>
+                    @elseif($user->isMentor())
+                        <a href="{{ route('mentor.profile') }}" class="rounded-full bg-white px-4 py-2 text-sm font-semibold text-ink sm:ml-auto">Ubah profil</a>
                     @else
                         <a href="{{ route($user->homeRoute()) }}" class="rounded-full bg-white px-4 py-2 text-sm font-semibold text-ink sm:ml-auto">Buka dasbor</a>
                     @endif
@@ -89,7 +91,7 @@
 
                 @if($user->isMentor())
                     <div class="rounded-2xl bg-bg p-5">
-                        <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Jabatan</p>
+                        <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Posisi</p>
                         <p class="mt-1 font-medium">{{ $user->mentor?->position ?: 'Belum diisi' }}</p>
                     </div>
                     <div class="rounded-2xl bg-bg p-5">
@@ -101,8 +103,8 @@
                         <p class="mt-1 font-medium">{{ $user->mentor?->businessUnit?->name ?: 'Belum diisi' }}</p>
                     </div>
                     <div class="rounded-2xl bg-bg p-5">
-                        <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Ketersediaan</p>
-                        <p class="mt-1 font-medium">{{ $user->mentor?->availability ?: 'Belum diisi' }}</p>
+                        <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">NIK</p>
+                        <p class="mt-1 font-medium">{{ $user->mentor?->nik ?: 'Belum diisi' }}</p>
                     </div>
                 @endif
             </div>

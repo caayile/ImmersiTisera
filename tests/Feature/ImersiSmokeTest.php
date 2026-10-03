@@ -256,14 +256,13 @@ class ImersiSmokeTest extends TestCase
 
         $this->actingAs($dosen)
             ->post(route('participant.evaluation'), [
-                'industry_understanding' => 5,
-                'relationship' => 4,
-                'output' => 4,
-                'mutual_benefit' => 5,
-                'collaboration_potential' => 4,
+                'criteria' => [
+                    ['label' => 'Umpan Balik Mentor', 'score' => 5],
+                ],
                 'comments' => 'Mentor sangat membantu.',
             ])
-            ->assertRedirect();
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
 
         $this->actingAs(User::where('email', 'mentor@imersi.id')->firstOrFail())
             ->get(route('mentor.evaluations'))
