@@ -626,6 +626,41 @@ body {
     will-change: transform, opacity;
 }
 
+/* Lencana sudut menyatu (inverted corner): pil menempel di sudut kartu
+   dengan coakan melengkung di kanan dan bawahnya. */
+.profile-badge {
+    --badge-bg: #e7f6f0;
+    --badge-card: #ffffff;
+    background: var(--badge-bg);
+    border-top-left-radius: 18px;
+    border-bottom-right-radius: 14px;
+}
+
+.profile-badge::before,
+.profile-badge::after {
+    content: "";
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    pointer-events: none;
+}
+
+.profile-badge::before {
+    top: 0;
+    left: 100%;
+    background: radial-gradient(circle at 0% 100%, var(--badge-bg) 12.5px, var(--badge-card) 14px);
+}
+
+.profile-badge::after {
+    top: 100%;
+    left: 0;
+    background: radial-gradient(circle at 100% 0%, var(--badge-bg) 12.5px, var(--badge-card) 14px);
+}
+
+.profile-badge--warn {
+    --badge-bg: #fffbeb;
+}
+
 .departments-hero {
     background-color: #0f2a24;
 }

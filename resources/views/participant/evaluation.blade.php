@@ -110,35 +110,31 @@
                             <thead>
                                 <tr class="border-b border-line text-sm font-semibold">
                                     <th class="px-4 py-3">No.</th>
-                                    <th class="px-4 py-3">Aspek Penilaian</th>
-                                    <th class="px-4 py-3">Bobot</th>
-                                    <th class="px-4 py-3">Nilai</th>
+                                    <th class="px-4 py-3">Kompetensi</th>
+                                    <th class="px-4 py-3">Nilai dalam Angka</th>
+                                    <th class="px-4 py-3">Nilai dalam Huruf</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @php $reportNo = 1; @endphp
                                 @foreach($eval->grade_groups as $group)
-                                    @php $groupScores = collect($group['aspects'] ?? [])->map(fn ($a) => (float) ($a['score'] ?? 0)); @endphp
                                     <tr class="border-b border-line bg-[#f4f8f6] font-semibold">
-                                        <td class="px-4 py-3"></td>
-                                        <td class="px-4 py-3">{{ $group['name'] }}</td>
-                                        <td class="px-4 py-3">{{ $group['weight'] }}%</td>
-                                        <td class="px-4 py-3">{{ $groupScores->isNotEmpty() ? round($groupScores->avg(), 1) : '—' }}</td>
+                                        <td colspan="4" class="px-4 py-3">{{ $group['name'] }} (bobot {{ $group['weight'] }}%)</td>
                                     </tr>
-                                    @foreach($group['aspects'] ?? [] as $aspect)
+                                    @foreach($group['aspects'] ?? [] as $aspectIndex => $aspect)
                                         <tr class="border-b border-line last:border-0">
-                                            <td class="px-4 py-3 align-top text-muted">{{ $reportNo++ }}</td>
+                                            <td class="px-4 py-3 align-top text-muted">{{ $aspectIndex + 1 }}</td>
                                             <td class="px-4 py-3 align-top">{{ $aspect['label'] }}</td>
-                                            <td class="px-4 py-3 align-top text-muted">—</td>
                                             <td class="px-4 py-3 align-top font-semibold">{{ $aspect['score'] }}</td>
+                                            <td class="px-4 py-3 align-top font-semibold">{{ \App\Models\Evaluation::predicateFor(isset($aspect['score']) ? (float) $aspect['score'] : null) ?? '—' }}</td>
                                         </tr>
                                     @endforeach
                                 @endforeach
                             </tbody>
                             <tfoot>
                                 <tr class="bg-[#eef6f2] font-semibold">
-                                    <td colspan="3" class="px-4 py-3">Rata-rata</td>
-                                    <td class="px-4 py-3 text-primary-dark">{{ $eval->reportAverage() }} ({{ $eval->predicate() }})</td>
+                                    <td colspan="2" class="px-4 py-3">Nilai Akhir</td>
+                                    <td class="px-4 py-3">{{ $eval->reportAverage() }}</td>
+                                    <td class="px-4 py-3 text-primary-dark">{{ $eval->predicate() }}</td>
                                 </tr>
                             </tfoot>
                         </table>
