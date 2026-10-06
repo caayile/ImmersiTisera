@@ -1,12 +1,16 @@
+@props([
+    'unread' => null,
+])
+
 @php
     $user = auth()->user();
-    $unread = $user->unreadNotifications()->count();
+    $unreadCount = $unread ?? $user->unreadNotifications()->count();
     $inbox = $user->notifications()->latest()->limit(5)->get();
     $index = route($user->notificationsRoute());
 @endphp
 
-<div {{ $attributes->merge(['class' => 'relative']) }} x-data="{ panel: false, toast: {{ $unread ? 'true' : 'false' }} }" @click.outside="panel = false">
-    @if($unread && $user->isParticipant() && $inbox->first())
+<div {{ $attributes->merge(['class' => 'relative']) }} x-data="{ panel: false, toast: {{ $unreadCount ? 'true' : 'false' }} }" @click.outside="panel = false">
+    @if($unreadCount && $user->isParticipant() && $inbox->first())
         <div x-show="toast" x-transition class="fixed right-5 top-20 z-[60] w-[min(24rem,calc(100vw-2rem))] rounded-2xl border border-[#b8e4ce] bg-white p-4 shadow-2xl shadow-[#173d32]/15" role="status">
             <div class="flex items-start gap-3">
                 <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#e5f8ee] text-primary-dark"><span class="material-symbols-outlined text-[20px]">campaign</span></span>
@@ -25,11 +29,11 @@
         class="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-line bg-white text-ink hover:bg-bg"
         aria-haspopup="true"
         :aria-expanded="panel.toString()"
-        aria-label="{{ $unread ? 'Notifikasi, '.$unread.' belum dibaca' : 'Notifikasi' }}"
+        aria-label="{{ $unreadCount ? 'Notifikasi, '.$unreadCount.' belum dibaca' : 'Notifikasi' }}"
     >
         <span class="material-symbols-outlined text-[22px]">notifications</span>
-        @if($unread)
-            <span class="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-none text-white">{{ $unread > 9 ? '9+' : $unread }}</span>
+        @if($unreadCount)
+            <span class="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-none text-white">{{ $unreadCount > 9 ? '9+' : $unreadCount }}</span>
         @endif
     </button>
 

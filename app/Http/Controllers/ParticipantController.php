@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Application;
 use App\Models\BusinessUnit;
+use App\Models\Certificate;
 use App\Models\CollaborationPipeline;
 use App\Models\Department;
 use App\Models\Evaluation;
@@ -343,7 +344,16 @@ class ParticipantController extends Controller
 
     public function timeline(Request $request)
     {
-        return view('participant.timeline', ['program' => $this->currentProgram($request)]);
+        $program = $this->currentProgram($request);
+        $program?->refreshProgress();
+
+        return view('participant.timeline', [
+            'program' => $program?->fresh([
+                'department',
+                'businessUnit',
+                'timelines',
+            ]),
+        ]);
     }
 
     public function updateTimeline(Request $request, Timeline $timeline)
@@ -351,6 +361,9 @@ class ParticipantController extends Controller
         $participantId = $request->user()->participant?->id;
         abort_unless($timeline->program && (int) $timeline->program->participant_id === (int) $participantId, 403);
         abort_unless(in_array($timeline->week, Status::CHECKPOINT_WEEKS, true), 404);
+
+        $timeline->program->refreshProgress();
+        abort_unless($timeline->program->fresh()->isCheckpointOpen((int) $timeline->week), 403);
 
         $data = $request->validate([
             'title' => ['required', 'string', 'max:180'],
@@ -689,6 +702,31 @@ class ParticipantController extends Controller
         $program = $this->currentProgram($request);
 
         return view('participant.collaboration', compact('program'));
+    }
+
+    public function certificates(Request $request)
+    {
+        $certificates = Certificate::query()
+            ->with(['program.businessUnit', 'program.department', 'program.mentor.user', 'program.participant.user'])
+            ->whereHas('program', fn ($query) => $query->where('participant_id', $request->user()->participant?->id))
+            ->where('status', 'issued')
+            ->latest('issued_at')
+            ->get();
+
+        return view('participant.certificates', compact('certificates'));
+    }
+
+    public function printCertificate(Request $request, Certificate $certificate)
+    {
+        abort_unless(
+            (int) $certificate->program?->participant_id === (int) $request->user()->participant?->id
+            && $certificate->isIssued(),
+            403
+        );
+
+        $certificate->load(['program.businessUnit', 'program.department', 'program.mentor.user', 'program.participant.user']);
+
+        return view('certificates.print', compact('certificate'));
     }
 
     public function notifications(Request $request)

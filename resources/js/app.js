@@ -116,15 +116,16 @@ Alpine.start();
         }, 700);
     });
 
-    // 3. Listen to link clicks for internal page navigation
+    // 3. Show a thin loader on internal navigation without delaying the click.
     document.addEventListener('click', (e) => {
         const link = e.target.closest('a');
-        if (!link) return;
+        if (!link || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) {
+            return;
+        }
 
         const href = link.getAttribute('href');
         const target = link.getAttribute('target');
 
-        // Check if internal navigation link
         if (
             href &&
             !href.startsWith('#') &&
@@ -135,25 +136,12 @@ Alpine.start();
             link.origin === window.location.origin &&
             !link.hasAttribute('download')
         ) {
-            if (document.documentElement.classList.contains('is-page-leaving')) return;
-
-            e.preventDefault();
             sessionStorage.setItem('is-page-transition', 'true');
             loaderBar.classList.remove('page-loader--done');
             loaderBar.classList.add('page-loader--loading');
-
-            document.documentElement.classList.add('is-page-leaving');
-            const navigate = () => window.location.assign(link.href);
-
-            if (reduceMotion) {
-                navigate();
-            } else {
-                window.setTimeout(navigate, 250);
-            }
         }
     });
 
-    // Also on GET form submit
     document.addEventListener('submit', (e) => {
         const form = e.target;
         if (form.method && form.method.toLowerCase() === 'get') {
@@ -162,21 +150,4 @@ Alpine.start();
             loaderBar.classList.add('page-loader--loading');
         }
     });
-
-    // 4. Handle login transition specifically
-    const isLoginPage = document.body.classList.contains('auth-sky') || 
-                       window.location.pathname.includes('/login') || 
-                       window.location.pathname.includes('/register');
-    
-    if (isLoginPage && !sessionStorage.getItem('login-transition')) {
-        sessionStorage.setItem('login-transition', 'true');
-        document.body.style.opacity = '0';
-        document.body.style.transform = 'translateY(20px)';
-        
-        window.addEventListener('load', () => {
-            document.body.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
-            document.body.style.opacity = '1';
-            document.body.style.transform = 'translateY(0)';
-        });
-    }
 })();

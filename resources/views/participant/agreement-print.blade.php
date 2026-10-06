@@ -7,55 +7,124 @@
     <style>
         * { box-sizing: border-box; }
         body { margin: 0; background: #ffffff; color: #000000; font-family: Georgia, 'Times New Roman', serif; }
-        .toolbar { display: flex; justify-content: space-between; gap: .75rem; max-width: 850px; margin: 1.5rem auto; font-family: Arial, sans-serif; }
+        .toolbar { display: flex; justify-content: space-between; gap: .75rem; max-width: 210mm; margin: 1.5rem auto; font-family: Arial, sans-serif; }
         .toolbar .left { display: flex; gap: .5rem; }
         .toolbar a, .toolbar button { border: 0; border-radius: 7px; padding: .7rem 1rem; background: #1f6b4d; color: #fff; cursor: pointer; font-size: .9rem; text-decoration: none; display: inline-block; }
         .toolbar a.back { background: transparent; color: #1f6b4d; }
         .toolbar a.download { background: #0f2a24; }
-        .paper { max-width: 850px; margin: 0 auto 2rem; padding: 3rem 3.5rem; background: #ffffff; }
-        .kop { border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 18px; }
+        /* Pratinjau layar meniru margin surat resmi: kiri 4cm, atas/kanan/bawah 3cm */
+        .paper {
+            width: 210mm;
+            min-height: 297mm;
+            max-width: 100%;
+            margin: 0 auto 2rem;
+            padding: 3cm 3cm 3cm 4cm;
+            background: #ffffff;
+            box-shadow: 0 0 0 1px #e5e7eb;
+        }
+        .kop {
+            position: static;
+            border-bottom: 2px solid #000;
+            padding-bottom: 8px;
+            margin: 0 0 10px;
+        }
         .kop table { width: 100%; border-collapse: collapse; }
         .kop td { vertical-align: middle; padding: 0; }
-        .kop h1 { margin: 0; font-size: 16pt; letter-spacing: .04em; text-align: center; }
-        .kop p { margin: 4px 0 0; font-style: italic; font-size: 11pt; text-align: center; }
-        .kop img.logo { display: block; width: 72px; }
-        .judul { margin: 18px 0 14px; }
-        .judul h2 { margin: 0; font-size: 12pt; text-align: center; font-weight: normal; }
-        .judul p { margin: 4px 0 0; font-size: 13pt; text-align: center; }
-        p, li, td, th { font-size: 12pt; line-height: 1.65; color: #000; }
-        p.isi { margin: 0 0 10px; text-align: justify; }
-        .identitas { width: 100%; border-collapse: collapse; margin: 8px 0 12px; }
-        .identitas td { vertical-align: top; padding: 2px 4px; text-align: left; }
+        .kop h1 { margin: 0; font-size: 14pt; letter-spacing: .04em; text-align: center; }
+        .kop p { margin: 2px 0 0; font-style: italic; font-size: 10pt; text-align: center; }
+        .kop img.logo { display: block; width: 56px; }
+        .judul { margin: 8px 0 6px; }
+        .judul h2 { margin: 0; font-size: 11pt; text-align: center; font-weight: normal; }
+        .judul p { margin: 2px 0 0; font-size: 12pt; text-align: center; }
+        p, li, td, th { font-size: 11pt; line-height: 1.4; color: #000; }
+        p.isi { margin: 0 0 6px; text-align: justify; }
+        .identitas { width: 100%; border-collapse: collapse; margin: 2px 0 6px; }
+        .identitas td { vertical-align: top; padding: 1px 4px; text-align: left; }
         .identitas td.lbl { font-weight: bold; white-space: nowrap; }
-        .ttd { width: 100%; border-collapse: collapse; table-layout: fixed; margin-top: 16px; }
-        .ttd td { width: 50%; text-align: center; vertical-align: top; padding: 0 12px; }
-        .ttd td p { text-align: center; margin: 2px 0; }
-        .ttd img { display: block; height: 80px; width: 100%; object-fit: contain; margin: 6px auto 4px; }
-        .ttd .nama { font-weight: bold; text-decoration: underline; margin: 2px 0; text-align: center; }
-        .ttd .nomor { margin: 2px 0; text-align: center; }
-        .kota-tanggal { text-align: right; margin: 18px 0 0; }
-        @media (max-width: 640px) { .toolbar { margin: 1rem; } .paper { margin: 0; padding: 2rem 1.3rem; } }
-        @page { size: A4; margin: 1.6cm 2cm 2cm; }
+        .signatures {
+            margin-top: 8px;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+        .ttd {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            margin-top: 6px;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+        .ttd td { width: 50%; text-align: center; vertical-align: top; padding: 0 8px; }
+        .ttd td p { text-align: center; margin: 1px 0; }
+        .ttd img { display: block; height: 48px; width: 100%; max-width: 200px; object-fit: contain; margin: 4px auto 2px; }
+        .ttd .sig-slot { height: 48px; }
+        .ttd .nama { font-weight: bold; text-decoration: underline; margin: 1px 0; text-align: center; }
+        .ttd .nomor { margin: 1px 0; text-align: center; }
+        .kota-tanggal { text-align: right; margin: 0; }
+        @media (max-width: 640px) {
+            .toolbar { margin: 1rem; }
+            .paper { width: auto; min-height: 0; margin: 0; padding: 1.5rem 1.25rem; box-shadow: none; }
+        }
+        /* Surat resmi: kiri 4cm, atas/kanan/bawah 3cm. Kop mengikuti alur dokumen (hanya halaman 1). */
+        @page { size: A4; margin: 3cm 3cm 3cm 4cm; }
         @media print {
             body { background: #fff; }
             .toolbar { display: none !important; }
-            .paper { max-width: none; margin: 0; padding: 0; }
-            .kop { position: fixed; top: 0; left: 0; right: 0; padding: 0 2cm; background: #fff; }
-            .kop img.logo { width: 40px; }
+            .paper {
+                width: auto;
+                min-height: 0;
+                max-width: none;
+                margin: 0;
+                padding: 0;
+                box-shadow: none;
+            }
+            .kop {
+                position: static !important;
+                margin-bottom: 8px;
+                padding-bottom: 6px;
+            }
+            .kop img.logo { width: 48px; }
             .kop h1 { font-size: 13pt; }
             .kop p { font-size: 9pt; }
-            .kop { padding-bottom: 8px; margin-bottom: 0; }
+            .judul { margin: 6px 0; }
+            p, li, td, th { font-size: 10.5pt; line-height: 1.35; }
+            p.isi { margin: 0 0 5px; }
+            .identitas { margin: 2px 0 5px; }
+            .signatures, .ttd {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+            .ttd img, .ttd .sig-slot { height: 44px; }
             * { color: #000 !important; box-shadow: none !important; text-shadow: none !important; }
             a { text-decoration: none !important; }
         }
         @if(($pdf ?? false))
         .toolbar { display: none !important; }
-        .paper { max-width: none; margin: 0; padding: 0; }
-        .kop { position: fixed; top: 0; left: 0; right: 0; padding: 0 2cm; background: #fff; }
-        .kop img.logo { width: 40px; }
+        .paper {
+            width: auto;
+            min-height: 0;
+            max-width: none;
+            margin: 0;
+            padding: 0;
+            box-shadow: none;
+        }
+        .kop {
+            position: static !important;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+        }
+        .kop img.logo { width: 48px; }
         .kop h1 { font-size: 13pt; }
         .kop p { font-size: 9pt; }
-        .kop { padding-bottom: 8px; margin-bottom: 0; }
+        .judul { margin: 6px 0; }
+        p, li, td, th { font-size: 10.5pt; line-height: 1.35; }
+        p.isi { margin: 0 0 5px; }
+        .identitas { margin: 2px 0 5px; }
+        .signatures, .ttd {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+        }
+        .ttd img, .ttd .sig-slot { height: 44px; }
         @endif
     </style>
 </head>
@@ -77,10 +146,6 @@
     $minggu = ($periodeMulai && $periodeSelesai) ? max(1, (int) floor($periodeMulai->diffInDays($periodeSelesai) / 7)) : 8;
     $periode = $periodeMulai && $periodeSelesai
         ? $tglSurat($periodeMulai).' s.d. '.$tglSurat($periodeSelesai).' (± '.$minggu.' minggu)'
-        : '—';
-    $indicators = collect($agreement->success_indicators ?? [])->filter()->values();
-    $indikatorTeks = $indicators->isNotEmpty()
-        ? $indicators->map(fn ($ind, $i) => ($i + 1).') '.trim((string) $ind))->implode(' ')
         : '—';
     $backUrl = auth()->check() && auth()->user()->isMentor() ? route('mentor.agreements') : route('participant.agreement');
     $downloadUrl = isset($agreement->id) && auth()->check()
@@ -134,7 +199,6 @@
             <tr><td class="lbl">Mentor</td><td>:</td><td>{{ $mentorUser->name ?? '-' }}</td></tr>
             <tr><td class="lbl">Unit Bisnis / Departemen</td><td>:</td><td>{{ trim(($program->department?->name ?? '').' / '.($program->businessUnit?->name ?? ''), ' /') ?: '-' }}</td></tr>
             <tr><td class="lbl">Periode Program</td><td>:</td><td>{{ $periode }}</td></tr>
-            <tr><td class="lbl">Indikator Keberhasilan</td><td>:</td><td>{{ $indikatorTeks }}</td></tr>
         </table>
 
         <p class="isi">Berdasarkan data tersebut, Dosen dan Mentor sepakat menjalankan Program Magang Dosen TSU dengan ketentuan sebagai berikut: selama periode magang aktif, Peserta Dosen wajib mengisi logbook aktivitas setiap hari, mengikuti sesi mentoring bersama Mentor setiap minggu, serta mengikuti checkpoint evaluasi bersama Mentor setiap 2 minggu sekali; pada akhir periode magang, Dosen wajib menyerahkan hasil tugas observasi atau riset kepada Mentor.</p>
@@ -145,32 +209,34 @@
 
         <p class="isi">Atas perhatian dan kerja samanya, kami ucapkan terima kasih.</p>
 
-        <p class="kota-tanggal">Surakarta, {{ ltrim($issued->format('d'), '0').' '.$namaBulan($issued).' '.$issued->format('Y') }}</p>
+        <div class="signatures">
+            <p class="kota-tanggal">Surakarta, {{ ltrim($issued->format('d'), '0').' '.$namaBulan($issued).' '.$issued->format('Y') }}</p>
 
-        <table class="ttd">
-            <tr>
-                <td>
-                    <p>Dosen,</p>
-                    @if(!empty($agreement->participant_signature))
-                        <img src="{{ $agreement->participant_signature }}" alt="Tanda tangan {{ $dosenUser->name ?? '' }}">
-                    @else
-                        <div style="height:80px"></div>
-                    @endif
-                    <p class="nama">{{ $dosenUser->name ?? '........................' }}</p>
-                    <p class="nomor">NIDN: {{ $dosen->nidn ?? '—' }}</p>
-                </td>
-                <td>
-                    <p>Mentor,</p>
-                    @if(!empty($agreement->mentor_signature))
-                        <img src="{{ $agreement->mentor_signature }}" alt="Tanda tangan {{ $mentorUser->name ?? '' }}">
-                    @else
-                        <div style="height:80px"></div>
-                    @endif
-                    <p class="nama">{{ $mentorUser->name ?? '........................' }}</p>
-                    <p class="nomor">NIK: {{ $mentor->nik ?? '—' }}</p>
-                </td>
-            </tr>
-        </table>
+            <table class="ttd">
+                <tr>
+                    <td>
+                        <p>Dosen,</p>
+                        @if(!empty($agreement->participant_signature))
+                            <img src="{{ $agreement->participant_signature }}" alt="Tanda tangan {{ $dosenUser->name ?? '' }}">
+                        @else
+                            <div class="sig-slot"></div>
+                        @endif
+                        <p class="nama">{{ $dosenUser->name ?? '........................' }}</p>
+                        <p class="nomor">NIDN: {{ $dosen->nidn ?? '—' }}</p>
+                    </td>
+                    <td>
+                        <p>Mentor,</p>
+                        @if(!empty($agreement->mentor_signature))
+                            <img src="{{ $agreement->mentor_signature }}" alt="Tanda tangan {{ $mentorUser->name ?? '' }}">
+                        @else
+                            <div class="sig-slot"></div>
+                        @endif
+                        <p class="nama">{{ $mentorUser->name ?? '........................' }}</p>
+                        <p class="nomor">NIK: {{ $mentor->nik ?? '—' }}</p>
+                    </td>
+                </tr>
+            </table>
+        </div>
     </main>
 </body>
 </html>

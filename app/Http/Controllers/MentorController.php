@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Agreement;
 use App\Models\Application;
 use App\Models\BusinessUnit;
+use App\Models\Certificate;
 use App\Models\CollaborationPipeline;
 use App\Models\Evaluation;
 use App\Models\Logbook;
@@ -388,12 +389,21 @@ class MentorController extends Controller
 
     public function outputs(Request $request)
     {
-        $outputs = ProgramOutput::with(['program.participant.user'])
-            ->whereHas('program', fn ($q) => $q->where('mentor_id', $request->user()->mentor?->id))
-            ->latest()
+        $programs = $this->mine($request)
+            ->with(['participant.user', 'businessUnit', 'department', 'outputs'])
+            ->whereHas('outputs')
             ->get();
 
-        return view('mentor.outputs', compact('outputs'));
+        return view('mentor.outputs', compact('programs'));
+    }
+
+    public function showOutputs(Request $request, Program $program)
+    {
+        $this->authorizeProgram($request, $program);
+
+        return view('mentor.outputs-show', [
+            'program' => $program->load(['participant.user', 'businessUnit', 'department', 'outputs']),
+        ]);
     }
 
     public function reviewOutput(Request $request, ProgramOutput $output)
@@ -407,6 +417,71 @@ class MentorController extends Controller
         $output->program->participant->user->notify(new ImersiAlert('Hasil: '.Status::outputLabel($data['status']), $output->title, route('participant.outputs')));
 
         return back()->with('status', 'Hasil berhasil divalidasi.');
+    }
+
+    public function certificates(Request $request)
+    {
+        $mentor = $request->user()->mentor;
+        $programs = $this->mine($request)
+            ->with(['participant.user', 'businessUnit', 'department', 'certificate'])
+            ->whereIn('status', ['active', 'completed'])
+            ->get();
+
+        return view('mentor.certificates', [
+            'mentor' => $mentor,
+            'programs' => $programs,
+        ]);
+    }
+
+    public function updateCertificateSignature(Request $request)
+    {
+        $data = $request->validate([
+            'certificate_signature' => ['required', 'string'],
+        ]);
+
+        $mentor = $request->user()->mentor ?? Mentor::create(['user_id' => $request->user()->id]);
+        $mentor->update(['certificate_signature' => $data['certificate_signature']]);
+
+        return back()->with('status', 'Tanda tangan sertifikat disimpan.');
+    }
+
+    public function issueCertificate(Request $request, Program $program)
+    {
+        $this->authorizeProgram($request, $program);
+
+        $mentor = $request->user()->mentor;
+        if (! filled($mentor?->certificate_signature)) {
+            return back()->withErrors(['certificate_signature' => 'Simpan tanda tangan sertifikat terlebih dahulu.']);
+        }
+
+        $existingNumber = Certificate::query()->where('program_id', $program->id)->value('number');
+
+        $certificate = Certificate::query()->updateOrCreate(
+            ['program_id' => $program->id],
+            [
+                'status' => 'issued',
+                'mentor_signature' => $mentor->certificate_signature,
+                'issued_at' => now(),
+                'number' => $existingNumber ?: sprintf('CERT/%s/%03d', now()->format('Y'), $program->id),
+            ]
+        );
+
+        $program->participant->user->notify(new ImersiAlert(
+            'Sertifikat tersedia',
+            'Sertifikat magang Anda sudah diterbitkan.',
+            route('participant.certificates')
+        ));
+
+        return back()->with('status', 'Sertifikat diterbitkan untuk '.$program->participant->user->name.'. Nomor: '.$certificate->number);
+    }
+
+    public function printCertificate(Request $request, Certificate $certificate)
+    {
+        abort_unless((int) $certificate->program?->mentor_id === (int) $request->user()->mentor?->id, 403);
+
+        $certificate->load(['program.businessUnit', 'program.department', 'program.mentor.user', 'program.participant.user']);
+
+        return view('certificates.print', compact('certificate'));
     }
 
     public function evaluations(Request $request)

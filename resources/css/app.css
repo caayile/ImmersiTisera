@@ -16,6 +16,15 @@
     --color-muted: #5b6b66;
     --color-line: #e4eee9;
     --color-bg: #f6fbf8;
+    --color-forest: #0d221d;
+    --color-forest-dark: #081713;
+    --color-forest-light: #14332c;
+    --color-forest-card: #102b24;
+    --color-mint: #73d9b0;
+    --color-mint-hover: #8ce3c2;
+    --color-mint-light: #e6f9f2;
+    --color-mint-dark: #41b588;
+    --color-charcoal: #1a1a1a;
 }
 
 [x-cloak] { display: none !important; }

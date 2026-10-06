@@ -5,21 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', 'Dashboard Program') Magang Dosen</title>
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap"></noscript>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    @stack('head')
 </head>
 <body class="bg-bg text-ink" data-no-reveal x-data="{ open: false }">
 <style>[x-cloak] { display: none !important; }</style>
 @php
     $authUser = auth()->user();
-    $authUser->loadMissing('participant');
     $role = $authUser->isAdmin() ? 'admin' : ($authUser->isMentor() ? 'mentor' : 'participant');
-    $unread = $authUser->unreadNotifications()->count();
+    if ($role === 'participant') {
+        $authUser->loadMissing('participant');
+    }
+    $unread = in_array($role, ['participant', 'mentor'], true)
+        ? $authUser->unreadNotifications()->count()
+        : 0;
     $menus = [
         'participant' => [
             ['Dashboard Program', 'participant.dashboard'],
-            ['Profil', 'participant.profile'],
             ['Riwayat Pendaftaran', 'participant.applications'],
             ['Program', 'participant.program'],
             ['Perjanjian', 'participant.agreement'],
@@ -30,12 +36,12 @@
             ['Laporan Akhir', 'participant.final-report'],
             ['Evaluasi', 'participant.evaluation'],
             ['Kolaborasi', 'participant.collaboration'],
+            ['Sertifikat', 'participant.certificates'],
             ['Notifikasi', 'participant.notifications'],
             ['Pengaturan', 'participant.settings'],
         ],
         'mentor' => [
             ['Dashboard Program', 'mentor.dashboard'],
-            ['Profil', 'mentor.profile'],
             ['Peserta', 'mentor.participants'],
             ['Pendaftaran', 'mentor.applications'],
             ['Program Aktif', 'mentor.programs'],
@@ -46,6 +52,7 @@
             ['Hasil & Bukti', 'mentor.outputs'],
             ['Evaluasi', 'mentor.evaluations'],
             ['Alur Kolaborasi', 'mentor.collaborations'],
+            ['Sertifikat', 'mentor.certificates'],
             ['Notifikasi', 'mentor.notifications'],
         ],
         'admin' => [
@@ -72,7 +79,6 @@
     $menuIcons = [
         'home' => 'home',
         'participant.dashboard' => 'space_dashboard',
-        'participant.profile' => 'person',
         'participant.applications' => 'description',
         'participant.program' => 'work_history',
         'participant.agreement' => 'draw',
@@ -83,10 +89,10 @@
         'participant.final-report' => 'summarize',
         'participant.evaluation' => 'rate_review',
         'participant.collaboration' => 'handshake',
+        'participant.certificates' => 'workspace_premium',
         'participant.notifications' => 'notifications',
         'participant.settings' => 'settings',
         'mentor.dashboard' => 'space_dashboard',
-        'mentor.profile' => 'person',
         'mentor.participants' => 'groups',
         'mentor.applications' => 'description',
         'mentor.programs' => 'work_history',
@@ -97,6 +103,7 @@
         'mentor.outputs' => 'folder_special',
         'mentor.evaluations' => 'rate_review',
         'mentor.collaborations' => 'handshake',
+        'mentor.certificates' => 'workspace_premium',
         'mentor.notifications' => 'notifications',
         'admin.dashboard' => 'space_dashboard',
         'admin.users' => 'manage_accounts',
@@ -179,7 +186,7 @@
 
             <div class="ml-auto flex items-center gap-2">
                 @if(in_array($role, ['participant', 'mentor'], true))
-                    <x-notification-bell />
+                    <x-notification-bell :unread="$unread" />
                 @endif
                 <x-user-menu />
             </div>
@@ -196,5 +203,6 @@
         </main>
     </div>
 </div>
+@stack('scripts')
 </body>
 </html>

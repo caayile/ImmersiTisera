@@ -21,6 +21,9 @@
         <p class="mt-4 text-sm text-muted">Indeks kepatuhan buku catatan: {{ $logbookCompliance }}</p>
     </article>
 </div>
+@endsection
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
     new Chart(document.getElementById('statusChart'), {
         type: 'doughnut',
@@ -38,4 +41,4 @@
         options: { plugins: { legend: { display: false } } }
     });
 </script>
-@endsection
+@endpush

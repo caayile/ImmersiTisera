@@ -66,6 +66,8 @@ Route::middleware(['auth', 'role:participant'])->prefix('participant')->name('pa
     Route::get('/mentoring', [ParticipantController::class, 'mentoring'])->name('mentoring');
     Route::get('/outputs', [ParticipantController::class, 'outputs'])->name('outputs');
     Route::post('/outputs', [ParticipantController::class, 'storeOutput']);
+    Route::get('/certificates', [ParticipantController::class, 'certificates'])->name('certificates');
+    Route::get('/certificates/{certificate}/print', [ParticipantController::class, 'printCertificate'])->name('certificates.print');
     Route::get('/final-report', [ParticipantController::class, 'finalReport'])->name('final-report');
     Route::post('/final-report', [ParticipantController::class, 'storeOutput']);
     Route::get('/evaluation', [ParticipantController::class, 'evaluation'])->name('evaluation');
@@ -101,7 +103,12 @@ Route::middleware(['auth', 'role:mentor'])->prefix('mentor')->name('mentor.')->g
     Route::get('/mentoring', [MentorController::class, 'mentoring'])->name('mentoring');
     Route::post('/mentoring', [MentorController::class, 'storeMentoring']);
     Route::get('/outputs', [MentorController::class, 'outputs'])->name('outputs');
-    Route::post('/outputs/{output}', [MentorController::class, 'reviewOutput'])->name('outputs.review');
+    Route::get('/outputs/{program}', [MentorController::class, 'showOutputs'])->name('outputs.show');
+    Route::post('/outputs/{output}/review', [MentorController::class, 'reviewOutput'])->name('outputs.review');
+    Route::get('/certificates', [MentorController::class, 'certificates'])->name('certificates');
+    Route::post('/certificates/signature', [MentorController::class, 'updateCertificateSignature'])->name('certificates.signature');
+    Route::post('/certificates/{program}/issue', [MentorController::class, 'issueCertificate'])->name('certificates.issue');
+    Route::get('/certificates/{certificate}/print', [MentorController::class, 'printCertificate'])->name('certificates.print');
     Route::get('/evaluations', [MentorController::class, 'evaluations'])->name('evaluations');
     Route::post('/evaluations/{program}', [MentorController::class, 'storeEvaluation'])->name('evaluations.store');
     Route::get('/collaborations', [MentorController::class, 'collaborations'])->name('collaborations');

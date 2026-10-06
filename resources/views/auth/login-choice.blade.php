@@ -11,41 +11,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portal Dosen & Mentor - TS Group</title>
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
-        rel="stylesheet">
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        forest: {
-                            DEFAULT: '#0D221D',
-                            dark: '#081713',
-                            light: '#14332C',
-                            card: '#102B24'
-                        },
-                        mint: {
-                            DEFAULT: '#73D9B0',
-                            hover: '#8CE3C2',
-                            light: '#E6F9F2',
-                            dark: '#41B588'
-                        },
-                        charcoal: '#1A1A1A'
-                    },
-                    fontFamily: {
-                        sans: ['Plus Jakarta Sans', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" media="print" onload="this.media='all'">
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         .bg-grid-pattern {
             background-color: #0D221D;
@@ -74,27 +44,14 @@
             transform: translateY(0);
         }
 
-        ::-webkit-scrollbar {
-            width: 5px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #081713;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #14332C;
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #73D9B0;
+        body {
+            font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
         }
     </style>
 </head>
 
 <body
-    class="bg-grid-pattern font-sans text-white min-h-screen flex flex-col justify-between selection:bg-mint selection:text-forest">
+    class="bg-grid-pattern min-h-screen flex flex-col justify-between text-white selection:bg-mint selection:text-forest">
 
     <!-- Header / Navbar -->
     <header class="w-full bg-white border-b border-gray-200 z-10 shrink-0 shadow-xs">

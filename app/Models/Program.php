@@ -70,6 +70,11 @@ class Program extends Model
         return $this->hasMany(ProgramOutput::class);
     }
 
+    public function certificate()
+    {
+        return $this->hasOne(Certificate::class);
+    }
+
     public function evaluations()
     {
         return $this->hasMany(Evaluation::class);
@@ -82,12 +87,51 @@ class Program extends Model
 
     public function refreshProgress(): void
     {
-        $week = min(8, max(1, (int) ceil((($this->start_date?->diffInDays(now()) ?? 0) + 1) / 7)));
+        $week = $this->computedWeek();
         $logPct = min(100, $this->logbooks()->count() * 8);
         $this->update([
             'current_week' => $this->status === 'active' ? $week : $this->current_week,
             'progress' => $this->status === 'completed' ? 100 : min(95, $logPct),
         ]);
+    }
+
+    /**
+     * Minggu program berjalan berdasarkan tanggal mulai (1–8).
+     */
+    public function computedWeek(): int
+    {
+        if ($this->status !== 'active' || ! $this->start_date) {
+            return min(8, max(1, (int) ($this->current_week ?: 1)));
+        }
+
+        return min(8, max(1, (int) ceil(($this->start_date->diffInDays(now()) + 1) / 7)));
+    }
+
+    /**
+     * Checkpoint minggu W terbuka dari minggu W sampai sebelum checkpoint berikutnya.
+     * Contoh: minggu 2 terbuka di minggu 2–3; tertutup saat masuk minggu 4.
+     */
+    public function isCheckpointOpen(int $week): bool
+    {
+        if ($this->status !== 'active' || ! in_array($week, Status::CHECKPOINT_WEEKS, true)) {
+            return false;
+        }
+
+        $current = $this->computedWeek();
+
+        if ($current < $week) {
+            return false;
+        }
+
+        $next = null;
+        foreach (Status::CHECKPOINT_WEEKS as $candidate) {
+            if ($candidate > $week) {
+                $next = $candidate;
+                break;
+            }
+        }
+
+        return $next === null || $current < $next;
     }
 
     public function canComplete(): bool

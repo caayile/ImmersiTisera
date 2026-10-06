@@ -162,6 +162,11 @@ class ProgramController extends Controller
             'mentor_notes' => ['nullable', 'string'],
         ]);
 
+        if ($request->user()->isParticipant()) {
+            $program->refreshProgress();
+            abort_unless($program->fresh()->isCheckpointOpen((int) $data['week']), 403);
+        }
+
         $checkpoint = Timeline::updateOrCreate(
             ['program_id' => $program->id, 'week' => $data['week']],
             [

@@ -30,9 +30,11 @@ class TimelineCheckpointTest extends TestCase
             ->assertSee('Checkpoint Saya')
             ->assertSee('Minggu '.$item->week)
             ->assertSee('Isi atau perbarui checkpoint')
+            ->assertSee('Dapat diisi')
             ->assertSee('Minggu 4')
             ->assertSee('Minggu 6')
             ->assertSee('Minggu 8')
+            ->assertSee('Terkunci')
             ->assertSee('Pilih File')
             ->assertSee('Keterangan laporan (opsional)');
 
@@ -62,6 +64,58 @@ class TimelineCheckpointTest extends TestCase
             ->assertSee('Unduh laporan terlampir');
     }
 
+    public function test_future_checkpoint_stays_locked_and_past_checkpoint_cannot_be_edited(): void
+    {
+        $this->seed();
+
+        $dosen = User::where('email', 'dosen@imersi.id')->firstOrFail();
+        $program = $dosen->participant->programs()->latest()->firstOrFail();
+        $week2 = $program->timelines()->where('week', 2)->firstOrFail();
+        $week4 = $program->timelines()->where('week', 4)->firstOrFail();
+
+        // Minggu 2 berjalan: minggu 4 masih terkunci.
+        $this->actingAs($dosen)
+            ->post(route('participant.timeline.update', $week4), [
+                'title' => 'Terlalu dini minggu 4',
+            ])
+            ->assertForbidden();
+
+        // Masuk minggu 4: minggu 4 bisa diisi, minggu 2 sudah ditutup.
+        $program->update([
+            'start_date' => now()->subDays(21),
+            'current_week' => 4,
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($dosen)
+            ->from(route('participant.timeline'))
+            ->post(route('participant.timeline.update', $week2), [
+                'title' => 'Terlambat mengedit minggu 2',
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($dosen)
+            ->post(route('participant.timeline.update', $week4), [
+                'title' => 'Checkpoint minggu 4 aktif',
+                'description' => 'Isi saat jendela minggu 4.',
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('timelines', [
+            'id' => $week4->id,
+            'title' => 'Checkpoint minggu 4 aktif',
+            'status' => 'submitted',
+        ]);
+
+        $this->actingAs($dosen)
+            ->get(route('participant.timeline'))
+            ->assertOk()
+            ->assertSee('Ditutup')
+            ->assertSee('Dapat diisi')
+            ->assertSee('Checkpoint minggu 4 aktif');
+    }
+
     public function test_checkpoint_accepts_word_documents_and_images(): void
     {
         Storage::fake('public');
@@ -70,11 +124,17 @@ class TimelineCheckpointTest extends TestCase
         $dosen = User::where('email', 'dosen@imersi.id')->firstOrFail();
         $program = $dosen->participant->programs()->latest()->firstOrFail();
         $uploads = [
-            [4, UploadedFile::fake()->create('laporan.docx', 100, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')],
-            [6, UploadedFile::fake()->image('bukti.png')],
+            [4, 21, UploadedFile::fake()->create('laporan.docx', 100, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')],
+            [6, 35, UploadedFile::fake()->image('bukti.png')],
         ];
 
-        foreach ($uploads as [$week, $upload]) {
+        foreach ($uploads as [$week, $daysAgo, $upload]) {
+            $program->update([
+                'start_date' => now()->subDays($daysAgo),
+                'current_week' => $week,
+                'status' => 'active',
+            ]);
+
             $item = $program->timelines()->where('week', $week)->firstOrFail();
 
             $this->actingAs($dosen)
@@ -223,5 +283,32 @@ class TimelineCheckpointTest extends TestCase
         $this->actingAs(User::where('email', 'mentor-it@imersi.id')->firstOrFail())
             ->post(route('mentor.timeline.review', $item), ['status' => 'done'])
             ->assertForbidden();
+    }
+
+    public function test_checkpoint_window_stays_open_until_next_checkpoint_week(): void
+    {
+        $this->seed();
+
+        $dosen = User::where('email', 'dosen@imersi.id')->firstOrFail();
+        $program = $dosen->participant->programs()->latest()->firstOrFail();
+        $week2 = $program->timelines()->where('week', 2)->firstOrFail();
+
+        // Minggu 3 (hari ke-15–21): checkpoint minggu 2 masih bisa diisi.
+        $program->update([
+            'start_date' => now()->subDays(14),
+            'current_week' => 3,
+            'status' => 'active',
+        ]);
+
+        $this->assertSame(3, $program->fresh()->computedWeek());
+        $this->assertTrue($program->fresh()->isCheckpointOpen(2));
+        $this->assertFalse($program->fresh()->isCheckpointOpen(4));
+
+        $this->actingAs($dosen)
+            ->post(route('participant.timeline.update', $week2), [
+                'title' => 'Masih bisa di minggu 3',
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
     }
 }

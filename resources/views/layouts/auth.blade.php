@@ -5,40 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title') — TS Group Portal Akademik</title>
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        forest: {
-                            DEFAULT: '#0D221D',
-                            dark: '#081713',
-                            light: '#14332C',
-                            card: '#102B24'
-                        },
-                        mint: {
-                            DEFAULT: '#73D9B0',
-                            hover: '#8CE3C2',
-                            light: '#E6F9F2',
-                            dark: '#41B588'
-                        },
-                        charcoal: '#1A1A1A'
-                    },
-                    fontFamily: {
-                        sans: ['Plus Jakarta Sans', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" media="print" onload="this.media='all'">
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         .bg-grid-pattern {
             background-color: #0D221D;
@@ -54,60 +25,42 @@
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
-        ::-webkit-scrollbar {
-            width: 5px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #081713;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #14332C;
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #73D9B0;
+        body.auth-shell {
+            font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
         }
     </style>
 </head>
-<body class="bg-grid-pattern font-sans text-white min-h-screen flex flex-col justify-between selection:bg-mint selection:text-forest">
+<body class="auth-shell bg-grid-pattern min-h-screen flex flex-col justify-between text-white selection:bg-mint selection:text-forest">
 
-    <!-- Header / Navbar -->
-    <header class="w-full bg-white border-b border-gray-200 z-10 shrink-0 shadow-xs">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-1 sm:py-1.5 flex justify-between items-center">
-            <a href="{{ url('/') }}" class="flex items-center space-x-2 group">
-                <div class="w-6 h-6 sm:w-6.5 sm:h-6.5 overflow-hidden flex items-center justify-center bg-white rounded-none border border-gray-200 shadow-2xs">
-                    <img src="{{ asset('images/logo-tsu.svg') }}" alt="TS Group" class="w-full h-full object-contain rounded-none">
+    <header class="w-full shrink-0 border-b border-gray-200 bg-white z-10 shadow-xs">
+        <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-1 sm:px-6 sm:py-1.5">
+            <a href="{{ url('/') }}" class="group flex items-center space-x-2">
+                <div class="flex h-6 w-6 items-center justify-center overflow-hidden rounded-none border border-gray-200 bg-white shadow-2xs sm:h-6.5 sm:w-6.5">
+                    <img src="{{ asset('images/logo-tsu.svg') }}" alt="TS Group" class="h-full w-full rounded-none object-contain">
                 </div>
                 <div>
-                    <span class="font-extrabold text-xs sm:text-sm tracking-tight text-forest block leading-none">TS Group</span>
-                    <span class="text-[7.5px] sm:text-[8px] text-forest/70 font-semibold uppercase tracking-wider block mt-0.5">Portal Akademik</span>
+                    <span class="block text-xs font-extrabold leading-none tracking-tight text-forest sm:text-sm">TS Group</span>
+                    <span class="mt-0.5 block text-[7.5px] font-semibold uppercase tracking-wider text-forest/70 sm:text-[8px]">Portal Akademik</span>
                 </div>
             </a>
 
-            <div class="flex items-center space-x-1.5 bg-gray-50 border border-gray-200 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-medium text-gray-700 shadow-2xs">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <div class="flex items-center space-x-1.5 rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[10px] font-medium text-gray-700 shadow-2xs sm:text-[11px]">
+                <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500"></span>
                 <span>Gelombang 2026 · Sekarang Dibuka</span>
             </div>
         </div>
     </header>
 
-    <!-- Main Content Container -->
-    <main class="w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 flex-1 flex items-center justify-center min-h-0">
-        <div class="w-full flex items-center justify-center">
-            <div class="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-7 shadow-2xl text-charcoal border border-gray-100 w-full max-w-md">
+    <main class="mx-auto flex w-full max-w-7xl flex-1 items-center justify-center px-4 py-6 sm:px-6 min-h-0">
+        <div class="flex w-full items-center justify-center">
+            <div class="w-full max-w-md rounded-2xl border border-gray-100 bg-white p-5 text-charcoal shadow-2xl sm:rounded-3xl sm:p-7">
                 @yield('content')
             </div>
         </div>
     </main>
 
-    <!-- Footer Simple -->
-    <footer class="w-full max-w-7xl mx-auto px-4 sm:px-6 py-2 sm:py-2.5 flex justify-center items-center text-[11px] sm:text-xs text-gray-400 shrink-0 text-center">
-        <div>
-            &copy; 2026 Program Kolaborasi TS Group & TSU. Hak cipta dilindungi.
-        </div>
+    <footer class="mx-auto flex w-full max-w-7xl shrink-0 items-center justify-center px-4 py-2 text-center text-[11px] text-gray-400 sm:px-6 sm:py-2.5 sm:text-xs">
+        <div>&copy; 2026 Program Kolaborasi TS Group & TSU. Hak cipta dilindungi.</div>
     </footer>
 
 </body>

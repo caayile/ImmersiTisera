@@ -12,14 +12,12 @@ const menus = {
     ['Program', '/app/programs'],
     ['Logbook', '/app/logbooks'],
     ['Riwayat Logbook', '/app/logbooks/history'],
-    ['Profil', '/app/profile'],
   ],
   mentor: [
     ['Dasbor', '/app'],
     ['Opportunity', '/app/mentor/opportunities'],
     ['Review minat', '/app/applications'],
     ['Program', '/app/programs'],
-    ['Profil', '/app/profile'],
   ],
   admin: [
     ['Dasbor', '/app'],

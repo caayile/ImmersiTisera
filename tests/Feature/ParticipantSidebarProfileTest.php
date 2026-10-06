@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Mentor;
 use App\Models\Participant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -40,6 +41,25 @@ class ParticipantSidebarProfileTest extends TestCase
             ->assertSee('Fakultas')
             ->assertDontSee('Universitas')
             ->assertDontSee('University');
+    }
+
+    public function test_sidebar_nav_does_not_include_profil_menu_for_participant_or_mentor(): void
+    {
+        $dosen = User::factory()->create(['role' => 'participant']);
+        Participant::create(['user_id' => $dosen->id]);
+
+        $this->actingAs($dosen)
+            ->get(route('participant.dashboard'))
+            ->assertOk()
+            ->assertDontSee('<span class="truncate">Profil</span>', false);
+
+        $mentorUser = User::factory()->create(['role' => 'mentor']);
+        Mentor::create(['user_id' => $mentorUser->id]);
+
+        $this->actingAs($mentorUser)
+            ->get(route('mentor.dashboard'))
+            ->assertOk()
+            ->assertDontSee('<span class="truncate">Profil</span>', false);
     }
 
     public function test_sidebar_nav_persists_scroll_position_across_pages(): void

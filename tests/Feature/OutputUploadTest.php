@@ -43,6 +43,14 @@ class OutputUploadTest extends TestCase
         $this->actingAs($mentor)
             ->get(route('mentor.outputs'))
             ->assertOk()
+            ->assertSee('Pilih peserta untuk meninjau')
+            ->assertSee($participant->name)
+            ->assertSee($program->businessUnit->name)
+            ->assertSee('Lihat hasil');
+
+        $this->actingAs($mentor)
+            ->get(route('mentor.outputs.show', $program))
+            ->assertOk()
             ->assertSee('Bukti Dokumentasi Observasi')
             ->assertSee('Lihat / unduh bukti');
     }

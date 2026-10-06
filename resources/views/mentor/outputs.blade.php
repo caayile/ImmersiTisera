@@ -2,38 +2,25 @@
 @section('title', 'Hasil')
 @section('content')
 <h1 class="text-2xl font-semibold">Validasi Hasil</h1>
-<div class="mt-6 space-y-4">
-    @forelse($outputs as $output)
-        <article class="rounded-2xl border border-line bg-white p-5">
-            <div class="flex flex-wrap items-center justify-between gap-2">
-                <p class="font-medium">{{ $output->title }} · {{ $output->program->participant->user->name }}</p>
-                <x-badge :status="$output->status" :label="\App\Support\Status::outputLabel($output->status)" />
-            </div>
-            <p class="mt-2 text-sm text-muted">{{ \App\Support\Status::outputTypeLabel($output->type) }}
-                @if($output->is_main_output)
-                    · Hasil utama
-                @endif
-                @if($output->is_final_report)
-                    · Laporan akhir
-                @endif
-            </p>
-            <p class="mt-2 text-sm">{{ $output->description }}</p>
-            @if($output->linkUrl())<a href="{{ $output->linkUrl() }}" target="_blank" rel="noopener" class="mt-2 inline-block text-sm font-semibold text-primary-dark">Buka tautan hasil</a>@endif
-            @if($output->hasilFileUrl())<a href="{{ $output->hasilFileUrl() }}" target="_blank" rel="noopener" class="mt-2 inline-block text-sm font-semibold text-primary-dark">Unduh berkas hasil</a>@endif
-            @if($output->laporanLinkUrl())<a href="{{ $output->laporanLinkUrl() }}" target="_blank" rel="noopener" class="mt-2 inline-block text-sm font-semibold text-primary-dark">Buka tautan laporan</a>@endif
-            @if($output->file_path)<a href="{{ asset('storage/'.$output->file_path) }}" target="_blank" rel="noopener" class="mt-2 inline-block text-sm font-semibold text-primary-dark">Lihat / unduh bukti</a>@else<p class="mt-2 text-xs text-muted">Belum ada berkas dilampirkan.</p>@endif
-            <form method="POST" action="{{ route('mentor.outputs.review', $output) }}" class="mt-3 grid gap-2 md:grid-cols-[1fr_160px_auto]">
-                @csrf
-                <input name="mentor_feedback" value="{{ $output->mentor_feedback }}" class="rounded-lg border border-line px-3 py-2 text-sm">
-                <select name="status" class="rounded-lg border border-line px-3 py-2 text-sm">
-                    <option value="approved">Setujui</option>
-                    <option value="revision">Minta revisi</option>
-                </select>
-                <button class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white">Simpan</button>
-            </form>
-        </article>
+<p class="mt-1 text-sm text-muted">Pilih peserta untuk meninjau hasil dan bukti yang dikirim.</p>
+<div class="mt-6 overflow-hidden rounded-2xl border border-line bg-white">
+    @forelse($programs as $program)
+        @php $pendingCount = $program->outputs->where('status', 'submitted')->count(); @endphp
+        <a href="{{ route('mentor.outputs.show', $program) }}" class="flex items-center gap-3 border-b border-line px-4 py-3 text-sm transition last:border-0 hover:bg-bg/60">
+            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary-dark">{{ mb_strtoupper(mb_substr(trim($program->participant->user->name), 0, 1)) }}</span>
+            <span class="min-w-0 flex-1">
+                <span class="block truncate font-semibold">{{ $program->participant->user->name }}</span>
+                <span class="mt-0.5 block truncate text-xs text-muted">{{ $program->businessUnit?->name ?? '-' }} · {{ $program->department?->name ?? '-' }}</span>
+            </span>
+            @if($pendingCount)
+                <span class="shrink-0 rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700">{{ $pendingCount }} menunggu</span>
+            @else
+                <span class="shrink-0 rounded-full bg-bg px-2.5 py-1 text-[11px] font-semibold text-muted">{{ $program->outputs->count() }} hasil</span>
+            @endif
+            <span class="shrink-0 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white">Lihat hasil</span>
+        </a>
     @empty
-        <x-empty title="Tidak ada hasil" />
+        <x-empty title="Belum ada peserta dengan hasil" />
     @endforelse
 </div>
 @endsection
