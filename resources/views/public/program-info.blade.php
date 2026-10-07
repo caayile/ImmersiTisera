@@ -9,7 +9,7 @@
         <li>2. Pilih unit bisnis → departemen (pencocokan berjenjang)</li>
         <li>3. Matching ditinjau admin/mentor</li>
         <li>4. Perjanjian Magang Dosen harus disepakati sebelum program aktif</li>
-        <li>5. 8 minggu: Temukan → Pahami → Kontribusi → Serahkan</li>
+        <li>5. 8 minggu (1-3-3-1): Orientasi → Observasi → Kolaborasi → Laporan/Hasil</li>
         <li>6. Logbook harian + mentoring 30 menit setiap minggu</li>
         <li>7. Satu hasil utama + laporan akhir + evaluasi</li>
         <li>8. Kolaborasi setelah magang: Tutup → Perluas</li>

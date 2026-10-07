@@ -9,11 +9,9 @@
         ?: 'https://www.google.com/maps?q='.rawurlencode($location).'&z=15&hl=id&output=embed';
     $mapOpen = $dept?->mapExternalUrl()
         ?: 'https://www.google.com/maps/search/?api=1&query='.rawurlencode($location);
-    $isOpen = $businessUnit->status === 'open';
+    $isOpen = $businessUnit->isOpen();
     $hasWindow = $businessUnit->isScheduled();
-    $beforeStart = $isOpen
-        && $businessUnit->registration_start
-        && now()->lt($businessUnit->registration_start);
+    $beforeStart = $businessUnit->isBeforeRegistrationStart();
     $deadline = $businessUnit->registration_deadline
         ? \Carbon\Carbon::parse($businessUnit->registration_deadline)->locale('id')->translatedFormat('j F Y').' (23.59)'
         : null;
@@ -134,24 +132,22 @@
 
             {{-- CARD 1: ACTION BOX PENDAFTARAN --}}
             <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-[0_10px_30px_rgba(31,42,40,0.08)] md:p-8">
-                <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold {{ $isOpen ? 'bg-primary/12 text-primary-dark' : ($hasWindow ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-700') }}">
-                    <span class="material-symbols-outlined text-[16px]">{{ $isOpen ? 'lock_open' : ($hasWindow ? 'lock' : 'schedule') }}</span>
-                    {{ $isOpen ? 'Terbuka' : ($hasWindow ? 'Tutup' : 'Akan diumumkan') }}
+                <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold {{ $isOpen ? 'bg-primary/12 text-primary-dark' : ($beforeStart ? 'bg-amber-50 text-amber-700' : ($hasWindow ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-700')) }}">
+                    <span class="material-symbols-outlined text-[16px]">{{ $isOpen ? 'lock_open' : ($beforeStart ? 'schedule' : ($hasWindow ? 'lock' : 'schedule')) }}</span>
+                    {{ $isOpen ? 'Terbuka' : ($beforeStart ? 'Belum dibuka' : ($hasWindow ? 'Tutup' : 'Akan diumumkan')) }}
                 </span>
-                @if($isOpen && $beforeStart)
+                @if($beforeStart)
                     <p class="mt-4 text-sm text-ink">Pendaftaran dibuka mulai</p>
                     <p class="mt-1 text-xl font-bold text-ink">{{ $start }}</p>
+                    @if($deadline)
+                        <p class="mt-2 text-xs text-muted">Periode pendaftaran s/d <b>{{ $deadline }}</b></p>
+                    @endif
                 @elseif($isOpen || $hasWindow)
                     <p class="mt-4 text-sm text-ink">Pendaftaran dibuka sampai</p>
                     <p class="mt-1 text-xl font-bold text-ink">{{ $deadline }}</p>
                 @else
                     <p class="mt-4 text-sm text-ink">Jadwal pendaftaran</p>
                     <p class="mt-1 text-xl font-bold text-ink">Akan diumumkan</p>
-                @endif
-                @if($beforeStart && $deadline)
-                    <p class="mt-2 text-xs text-muted">Periode pendaftaran s/d <b>{{ $deadline }}</b></p>
-                @elseif($start && !$isOpen && $hasWindow && $businessUnit->registration_start > now())
-                    <p class="mt-2 text-xs text-muted">Belum dibuka — pemberitahuan aktif sejak <b>{{ $start }}</b></p>
                 @endif
 
                 <p class="mt-3 text-center text-[11px] text-muted">Kuota {{ $applicantsCount }}/{{ $quota }} terisi · Sisa {{ $remainingSlots }} slot</p>
@@ -173,6 +169,12 @@
                         <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
                     </a>
                     <p class="mt-3 text-center text-[11px] text-muted">Daftar untuk memulai proses magang dosen di unit ini.</p>
+                @elseif($beforeStart)
+                    <button type="button" disabled class="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-[#e4eee9] px-5 py-3.5 text-sm font-semibold text-muted">
+                        <span class="material-symbols-outlined text-[18px]">schedule</span>
+                        Belum dibuka
+                    </button>
+                    <p class="mt-3 text-center text-[11px] text-muted">Pendaftaran dibuka mulai {{ $start }}.</p>
                 @elseif($hasWindow)
                     <button type="button" disabled class="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-[#e4eee9] px-5 py-3.5 text-sm font-semibold text-muted">
                         <span class="material-symbols-outlined text-[18px]">lock</span>

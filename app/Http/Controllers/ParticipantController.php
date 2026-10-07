@@ -128,7 +128,7 @@ class ParticipantController extends Controller
         }
 
         $unit = BusinessUnit::with(['department', 'mentors.user'])->find($request->integer('unit'));
-        if (! $unit || $unit->status !== 'open') {
+        if (! $unit || ! $unit->isOpen()) {
             return redirect()->route('departments.index')->with('status', 'Pilih unit bisnis atau departemen terlebih dahulu.');
         }
 
@@ -159,7 +159,7 @@ class ParticipantController extends Controller
         }
 
         $unit = BusinessUnit::with('mentors')->findOrFail($data['business_unit_id']);
-        if ($unit->status !== 'open') {
+        if (! $unit->isOpen()) {
             return redirect()->route('departments.index')->with('status', 'Lowongan departemen ini sudah ditutup.');
         }
 
@@ -345,7 +345,11 @@ class ParticipantController extends Controller
     public function timeline(Request $request)
     {
         $program = $this->currentProgram($request);
-        $program?->refreshProgress();
+
+        if ($program) {
+            $program->seedTimeline();
+            $program->refreshProgress();
+        }
 
         return view('participant.timeline', [
             'program' => $program?->fresh([

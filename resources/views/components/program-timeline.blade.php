@@ -2,51 +2,51 @@
 @php
     $steps = [
         [
-            'week' => 'MINGGU 1 – 2',
-            'tag' => 'TEMUKAN',
-            'title' => 'Orientasi & Observasi Bisnis',
-            'copy' => 'Memahami budaya unit, alur kerja, dan peran tim sebelum mulai berkontribusi.',
+            'week' => 'MINGGU 1',
+            'tag' => 'ORIENTASI',
+            'title' => 'Orientasi',
+            'copy' => 'Mengenal budaya unit, tim, alur kerja, dan menyelaraskan harapan bersama mentor.',
             'items' => ['Orientasi budaya & tim unit bisnis', 'Penyelarasan harapan bersama mentor', 'Akses sistem, data, dan ruang kerja'],
-            'output' => 'Catatan Wawasan Industri',
+            'output' => 'Catatan Orientasi',
             'icon' => 'description',
         ],
         [
-            'week' => 'MINGGU 3 – 4',
-            'tag' => 'PAHAMI',
-            'title' => 'Eksplorasi Masalah & Peluang',
-            'copy' => 'Mengurai hambatan, mendengar pemangku kepentingan, dan merumuskan hipotesis yang bisa diuji.',
-            'items' => ['Analisis hambatan proses bisnis', 'Wawancara pemangku kepentingan terkait', 'Perumusan hipotesis solusi'],
-            'output' => 'Pernyataan Masalah Tervalidasi',
+            'week' => 'MINGGU 2 – 4',
+            'tag' => 'OBSERVASI',
+            'title' => 'Observasi',
+            'copy' => 'Mengamati proses bisnis, memetakan hambatan, dan merangkum temuan lapangan.',
+            'items' => ['Observasi alur kerja dan keputusan bisnis', 'Pemetaan hambatan dan peluang unit', 'Validasi temuan bersama mentor'],
+            'output' => 'Ringkasan Observasi',
             'icon' => 'analytics',
         ],
         [
             'week' => 'MINGGU 5 – 7',
-            'tag' => 'KONTRIBUSI',
-            'title' => 'Riset Terapan & Prototipe',
-            'copy' => 'Membangun solusi, divalidasi tiap minggu, lalu diperbaiki menjadi hasil kerja.',
-            'items' => ['Pengembangan solusi / prototipe', 'Validasi mingguan dengan mentor', 'Perbaikan hasil kerja utama'],
-            'output' => 'Draf Solusi / Prototipe',
+            'tag' => 'KOLABORASI',
+            'title' => 'Kolaborasi',
+            'copy' => 'Bekerja bersama mentor pada tugas terapan, riset, atau perbaikan proses.',
+            'items' => ['Kolaborasi tugas / riset terapan', 'Evaluasi kemajuan mingguan', 'Perbaikan draf hasil kerja'],
+            'output' => 'Draf Kolaborasi',
             'icon' => 'developer_board',
         ],
         [
             'week' => 'MINGGU 8',
-            'tag' => 'SERAHKAN',
-            'title' => 'Finalisasi & Presentasi Unit',
-            'copy' => 'Menyelesaikan hasil, presentasi ke unit, dan menutup program dengan evaluasi menyeluruh.',
-            'items' => ['Presentasi kepada pimpinan unit bisnis', 'Serah terima berkas & dokumentasi akhir', 'Evaluasi menyeluruh dosen × mentor'],
-            'output' => 'Hasil Utama & Nota Kesepahaman',
+            'tag' => 'HASIL',
+            'title' => 'Laporan / Hasil',
+            'copy' => 'Menyelesaikan laporan atau hasil utama, presentasi, dan menutup program.',
+            'items' => ['Finalisasi laporan / hasil utama', 'Presentasi kepada unit bisnis', 'Evaluasi penutupan bersama mentor'],
+            'output' => 'Laporan / Hasil Utama',
             'icon' => 'workspace_premium',
         ],
     ];
     $weeks = [
-        ['n' => 1, 'phase' => 'TEMUKAN', 'title' => 'Pengenalan', 'copy' => 'Budaya unit, akses sistem, pembukaan bersama mentor.'],
-        ['n' => 2, 'phase' => 'TEMUKAN', 'title' => 'Observasi', 'copy' => 'Alur kerja, keputusan bisnis, draf wawasan.'],
-        ['n' => 3, 'phase' => 'PAHAMI', 'title' => 'Pemangku kepentingan', 'copy' => 'Peta aktor, hambatan, kebutuhan unit.'],
-        ['n' => 4, 'phase' => 'PAHAMI', 'title' => 'Masalah', 'copy' => 'Validasi masalah & pernyataan masalah.'],
-        ['n' => 5, 'phase' => 'KONTRIBUSI', 'title' => 'Coba', 'copy' => 'Percobaan awal dan uji pendekatan.'],
-        ['n' => 6, 'phase' => 'KONTRIBUSI', 'title' => 'Uji', 'copy' => 'Validasi mingguan, umpan balik mentor.'],
-        ['n' => 7, 'phase' => 'KONTRIBUSI', 'title' => 'Kembangkan', 'copy' => 'Perbaikan draf solusi / prototipe.'],
-        ['n' => 8, 'phase' => 'SERAHKAN', 'title' => 'Presentasi', 'copy' => 'Finalisasi, presentasi, evaluasi menyeluruh.'],
+        ['n' => 1, 'phase' => 'ORIENTASI', 'title' => 'Orientasi', 'copy' => 'Budaya unit, akses sistem, pembukaan bersama mentor.'],
+        ['n' => 2, 'phase' => 'OBSERVASI', 'title' => 'Observasi', 'copy' => 'Alur kerja, keputusan bisnis, catatan awal.'],
+        ['n' => 3, 'phase' => 'OBSERVASI', 'title' => 'Observasi', 'copy' => 'Pemetaan hambatan dan peluang unit.'],
+        ['n' => 4, 'phase' => 'OBSERVASI', 'title' => 'Observasi', 'copy' => 'Ringkasan temuan dan validasi mentor.'],
+        ['n' => 5, 'phase' => 'KOLABORASI', 'title' => 'Kolaborasi', 'copy' => 'Mulai kerja bersama dan draf awal.'],
+        ['n' => 6, 'phase' => 'KOLABORASI', 'title' => 'Kolaborasi', 'copy' => 'Evaluasi mingguan dan iterasi.'],
+        ['n' => 7, 'phase' => 'KOLABORASI', 'title' => 'Kolaborasi', 'copy' => 'Sempurnakan draf menjelang laporan.'],
+        ['n' => 8, 'phase' => 'HASIL', 'title' => 'Laporan / Hasil', 'copy' => 'Finalisasi, presentasi, penutupan.'],
     ];
 @endphp
 <section {{ $attributes }} x-data="{ mode: 'milestone' }">
@@ -54,7 +54,7 @@
         <div>
             <p class="inline-flex rounded-full bg-primary/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-dark">Perjalanan 60 Hari</p>
             <h2 class="mt-3 text-2xl font-semibold tracking-tight md:text-3xl">Linimasa Magang Dosen 8 Minggu</h2>
-            <p class="mt-2 max-w-xl text-sm text-muted">Setiap tahap punya pemeriksaan, aktivitas, dan target hasil yang harus diselesaikan.</p>
+            <p class="mt-2 max-w-xl text-sm text-muted">Skema 1-3-3-1: Orientasi, Observasi, Kolaborasi, lalu Laporan/Hasil — tiap minggu punya checkpoint.</p>
         </div>
         <div class="inline-flex self-start rounded-full border border-line bg-white p-1 text-sm">
             <button type="button" class="rounded-full px-4 py-1.5 font-medium transition" :class="mode === 'milestone' ? 'bg-primary text-white' : 'text-muted hover:text-ink'" @click="mode = 'milestone'">Mode Tonggak</button>

@@ -52,7 +52,7 @@ class ApplicationController extends Controller
         abort_unless($participant?->study_program, 422, 'Lengkapi profil terlebih dahulu.');
 
         $unit = BusinessUnit::findOrFail($data['opportunity_id']);
-        abort_unless($unit->status === 'open', 422, 'Lowongan departemen ini sudah ditutup.');
+        abort_unless($unit->isOpen(), 422, 'Lowongan departemen ini sudah ditutup.');
         $start = Carbon::parse(now()->toDateString());
 
         $activityTypes = collect([$data['primary_activity'], $data['supporting_activity'] ?? null])

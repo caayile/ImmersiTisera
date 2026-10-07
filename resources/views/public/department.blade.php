@@ -26,21 +26,21 @@
     <div class="flex flex-wrap items-end justify-between gap-3">
         <h2 class="text-2xl font-semibold">Departemen</h2>
         <p class="text-sm text-muted">
-            {{ $department->businessUnits->where('status', 'open')->count() }} lowongan dibuka ·
+            {{ $department->businessUnits->filter->isOpen()->count() }} lowongan dibuka ·
             {{ $department->businessUnits->count() }} departemen
         </p>
     </div>
     <div class="mt-5 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
         @php
             $units = $department->businessUnits
-                ->sortBy(fn ($unit) => [$unit->status !== 'open', $unit->name])
+                ->sortBy(fn ($unit) => [! $unit->isOpen(), $unit->name])
                 ->values();
         @endphp
         @forelse($units as $unit)
             @php
                 $unitImage = $unit->imageUrl()
                     ?? ($department->imageUrl() ?: asset('images/hero/campus.jpg'));
-                $isOpen = $unit->status === 'open';
+                $isOpen = $unit->isOpen();
                 $filled = (int) ($unit->active_applications_count ?? $unit->applications()->forQuota($unit)->count());
                 $quota = \App\Models\BusinessUnit::MAX_APPLICANTS;
                 $isFull = $filled >= $quota;

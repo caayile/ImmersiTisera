@@ -11,7 +11,7 @@
             @foreach($program->timelines->whereIn('week', \App\Support\Status::CHECKPOINT_WEEKS)->sortBy('week') as $timeline)
                 <details class="rounded-xl border border-line p-4 text-sm {{ $timeline->status === 'submitted' ? 'border-amber-300 bg-amber-50/40' : '' }}" @if($timeline->status === 'submitted') open @endif>
                     <summary class="flex cursor-pointer flex-wrap items-center justify-between gap-2">
-                        <span><b>Minggu {{ $timeline->week }}</b> · {{ \App\Support\Status::timelineText($timeline->title) }}</span>
+                        <span><b>{{ \App\Support\Status::checkpointWindowLabel((int) $timeline->week) }}</b> · {{ \App\Support\Status::timelineText($timeline->title) }}</span>
                         <x-badge :status="$timeline->status" />
                     </summary>
                     <div class="mt-3 space-y-1 text-sm">

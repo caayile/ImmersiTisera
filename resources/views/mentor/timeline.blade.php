@@ -2,7 +2,7 @@
 @section('title', 'Checkpoint')
 @section('content')
 <h1 class="text-2xl font-semibold">Checkpoint Peserta</h1>
-<p class="mt-1 text-sm text-muted">Tinjau dan sahkan laporan checkpoint minggu 2, 4, 6, dan 8.</p>
+<p class="mt-1 text-sm text-muted">Tinjau dan sahkan 4 checkpoint (1 Orientasi · 2–4 Observasi · 5–7 Kolaborasi · 8 Laporan/Hasil).</p>
 <div class="mt-6 overflow-hidden rounded-2xl border border-line bg-white">
     @forelse($programs as $program)
         @php $pendingCount = $program->timelines->whereIn('week', \App\Support\Status::CHECKPOINT_WEEKS)->where('status', 'submitted')->count(); @endphp

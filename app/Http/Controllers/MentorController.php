@@ -253,8 +253,9 @@ class MentorController extends Controller
     public function showTimeline(Request $request, Program $program)
     {
         $this->authorizeProgram($request, $program);
+        $program->seedTimeline();
 
-        return view('mentor.timeline-show', ['program' => $program->load(['participant.user', 'businessUnit', 'department', 'timelines'])]);
+        return view('mentor.timeline-show', ['program' => $program->fresh(['participant.user', 'businessUnit', 'department', 'timelines'])]);
     }
 
     public function reviewTimeline(Request $request, Timeline $timeline)

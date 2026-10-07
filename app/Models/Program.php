@@ -108,8 +108,8 @@ class Program extends Model
     }
 
     /**
-     * Checkpoint minggu W terbuka dari minggu W sampai sebelum checkpoint berikutnya.
-     * Contoh: minggu 2 terbuka di minggu 2–3; tertutup saat masuk minggu 4.
+     * Checkpoint fase W terbuka dari minggu W sampai sebelum checkpoint berikutnya.
+     * Skema 1-3-3-1: minggu 1 hanya di minggu 1; observasi di minggu 2–4; kolaborasi di 5–7; hasil di minggu 8.
      */
     public function isCheckpointOpen(int $week): bool
     {
@@ -143,23 +143,35 @@ class Program extends Model
 
     public function seedTimeline(): void
     {
-        if ($this->timelines()->exists()) {
-            return;
-        }
-
         foreach (Status::TIMELINE as $week => $meta) {
             if (! in_array($week, Status::CHECKPOINT_WEEKS, true)) {
                 continue;
             }
 
-            $this->timelines()->create([
-                'week' => $week,
-                'phase' => $meta['phase'],
-                'title' => $meta['title'],
-                'description' => $meta['description'],
-                'expected_output' => $meta['output'],
-                'status' => 'pending',
-            ]);
+            $timeline = $this->timelines()->firstOrNew(['week' => $week]);
+
+            if (! $timeline->exists) {
+                $timeline->fill([
+                    'phase' => $meta['phase'],
+                    'title' => $meta['title'],
+                    'description' => $meta['description'],
+                    'expected_output' => $meta['output'],
+                    'status' => 'pending',
+                ])->save();
+
+                continue;
+            }
+
+            // Sinkronkan label fase 1-3-3-1; jangan menimpa judul laporan yang sudah diisi peserta.
+            $payload = ['phase' => $meta['phase']];
+
+            if ($timeline->status === 'pending' || Status::isLegacyCheckpointLabel($timeline->title)) {
+                $payload['title'] = $meta['title'];
+                $payload['description'] = $meta['description'];
+                $payload['expected_output'] = $meta['output'];
+            }
+
+            $timeline->fill($payload)->save();
         }
     }
 }

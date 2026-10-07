@@ -4,8 +4,10 @@ namespace Tests\Feature;
 
 use App\Http\Controllers\AdminController;
 use App\Models\BusinessUnit;
+use App\Models\Participant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
 class LowonganAdminTest extends TestCase
@@ -358,5 +360,72 @@ class LowonganAdminTest extends TestCase
             ->assertSessionHasErrors('status');
 
         $this->assertDatabaseHas('business_units', ['id' => $unit->id, 'status' => $unit->status]);
+    }
+
+    public function test_user_sees_open_lowongan_only_within_admin_registration_period(): void
+    {
+        $this->seed();
+
+        $unit = BusinessUnit::where('name', 'Digital Business')->firstOrFail();
+
+        $this->actingAs($this->admin())
+            ->post(route('admin.lowongan.open-all'), [
+                'batch' => 'Batch Uji Periode',
+                'registration_start' => now()->subDay()->toDateString(),
+                'registration_deadline' => now()->addDays(14)->toDateString(),
+            ])
+            ->assertRedirect();
+
+        $unit->refresh();
+        $this->assertTrue($unit->isOpen());
+
+        $this->get(route('units.show', $unit))
+            ->assertOk()
+            ->assertSee('Terbuka')
+            ->assertSee('Daftar Program');
+
+        $this->actingAs($this->admin())
+            ->post(route('admin.lowongan.period', $unit), [
+                'registration_start' => now()->subDays(30)->toDateString(),
+                'registration_deadline' => now()->subDay()->toDateString(),
+            ])
+            ->assertRedirect();
+
+        $unit->refresh();
+        $this->assertSame('open', $unit->status);
+        $this->assertFalse($unit->isOpen());
+
+        $this->get(route('units.show', $unit))
+            ->assertOk()
+            ->assertSee('Pendaftaran ditutup')
+            ->assertDontSee('Daftar Program');
+
+        $dosen = User::factory()->create(['role' => 'participant']);
+        Participant::create([
+            'user_id' => $dosen->id,
+            'study_program' => 'Informatika',
+            'faculty' => 'Fakultas Teknik',
+        ]);
+
+        $this->actingAs($dosen)
+            ->get(route('participant.applications.create', ['unit' => $unit->id]))
+            ->assertRedirect(route('departments.index'));
+    }
+
+    public function test_opening_lowongan_clears_public_home_cache(): void
+    {
+        $this->seed();
+
+        Cache::put('public.home.html', '<html>stale</html>', now()->addMinutes(10));
+
+        $this->actingAs($this->admin())
+            ->post(route('admin.lowongan.open-all'), [
+                'batch' => 'Batch Cache',
+                'registration_start' => now()->toDateString(),
+                'registration_deadline' => now()->addDays(14)->toDateString(),
+            ])
+            ->assertRedirect();
+
+        $this->assertFalse(Cache::has('public.home.html'));
     }
 }

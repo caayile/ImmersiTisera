@@ -201,7 +201,7 @@
             <tr><td class="lbl">Periode Program</td><td>:</td><td>{{ $periode }}</td></tr>
         </table>
 
-        <p class="isi">Berdasarkan data tersebut, Dosen dan Mentor sepakat menjalankan Program Magang Dosen TSU dengan ketentuan sebagai berikut: selama periode magang aktif, Peserta Dosen wajib mengisi logbook aktivitas setiap hari, mengikuti sesi mentoring bersama Mentor setiap minggu, serta mengikuti checkpoint evaluasi bersama Mentor setiap 2 minggu sekali; pada akhir periode magang, Dosen wajib menyerahkan hasil tugas observasi atau riset kepada Mentor.</p>
+        <p class="isi">Berdasarkan data tersebut, Dosen dan Mentor sepakat menjalankan Program Magang Dosen TSU dengan ketentuan sebagai berikut: selama periode magang aktif, Peserta Dosen wajib mengisi logbook aktivitas setiap hari, mengikuti sesi mentoring bersama Mentor setiap minggu, serta mengikuti checkpoint evaluasi mingguan bersama Mentor (minggu 1 Orientasi, minggu 2–4 Observasi, minggu 5–7 Kolaborasi, dan minggu 8 Laporan/Hasil); pada akhir periode magang, Dosen wajib menyerahkan hasil tugas observasi atau riset kepada Mentor.</p>
 
         <p class="isi">Mentor berkomitmen membimbing dan memberikan evaluasi pada setiap checkpoint di atas. Dosen dan Mentor sepakat menjaga kerahasiaan data ataupun informasi selama program berlangsung, dan setiap perubahan atas Perjanjian ini hanya berlaku apabila disetujui secara tertulis/digital melalui sistem Program Magang Dosen TSU.</p>
 

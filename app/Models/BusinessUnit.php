@@ -25,10 +25,6 @@ class BusinessUnit extends Model
 
     public function isOpen(): bool
     {
-        if (! $this->registration_deadline) {
-            return false;
-        }
-
         if ($this->status !== 'open') {
             return false;
         }
@@ -37,7 +33,7 @@ class BusinessUnit extends Model
             return false;
         }
 
-        if (now()->gt($this->registration_deadline)) {
+        if ($this->registration_deadline && now()->gt($this->registration_deadline)) {
             return false;
         }
 
@@ -49,9 +45,36 @@ class BusinessUnit extends Model
         return (bool) $this->registration_deadline;
     }
 
+    public function isBeforeRegistrationStart(): bool
+    {
+        return $this->status === 'open'
+            && $this->registration_start
+            && now()->lt($this->registration_start);
+    }
+
     public function isClosed(): bool
     {
         return ! $this->isOpen();
+    }
+
+    /**
+     * Units that are currently accepting registrations (status + period window).
+     *
+     * @param  Builder<BusinessUnit>  $query
+     */
+    public function scopeCurrentlyOpen($query)
+    {
+        $now = now();
+
+        return $query->where('status', 'open')
+            ->where(function ($inner) use ($now) {
+                $inner->whereNull('registration_start')
+                    ->orWhere('registration_start', '<=', $now);
+            })
+            ->where(function ($inner) use ($now) {
+                $inner->whereNull('registration_deadline')
+                    ->orWhere('registration_deadline', '>=', $now);
+            });
     }
 
     /**

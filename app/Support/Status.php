@@ -14,7 +14,11 @@ class Status
 
     public const OUTPUT = ['draft', 'submitted', 'revision', 'approved'];
 
-    public const CHECKPOINT_WEEKS = [2, 4, 6, 8];
+    /**
+     * Empat checkpoint skema 1-3-3-1:
+     * minggu 1 Orientasi · minggu 2–4 Observasi · minggu 5–7 Kolaborasi · minggu 8 Laporan/Hasil.
+     */
+    public const CHECKPOINT_WEEKS = [1, 2, 5, 8];
 
     public const OUTPUT_TYPES = [
         'Project', 'Improvement', 'SOP', 'Prototype', 'Design', 'Campaign',
@@ -44,38 +48,95 @@ class Status
     ];
 
     public const TIMELINE = [
-        1 => ['phase' => 'discover', 'title' => 'TEMUKAN', 'output' => 'Wawasan Industri', 'description' => 'Orientasi, observasi bisnis, serta pemahaman departemen, tim, dan alur kerja.'],
-        2 => ['phase' => 'discover', 'title' => 'TEMUKAN', 'output' => 'Wawasan Industri', 'description' => 'Lanjutkan observasi dan rangkum wawasan industri.'],
-        3 => ['phase' => 'understand', 'title' => 'PAHAMI', 'output' => 'Rumusan Masalah', 'description' => 'Eksplorasi masalah, identifikasi peluang, analisis, dan validasi.'],
-        4 => ['phase' => 'understand', 'title' => 'PAHAMI', 'output' => 'Rumusan Masalah', 'description' => 'Finalisasi rumusan masalah bersama mentor berdasarkan kondisi nyata.'],
-        5 => ['phase' => 'contribute', 'title' => 'BERKONTRIBUSI', 'output' => 'Draf Solusi / Prototipe / Laporan', 'description' => 'Kerjakan tugas, riset, analisis, dan perbaikan bersama mentor.'],
-        6 => ['phase' => 'contribute', 'title' => 'BERKONTRIBUSI', 'output' => 'Draf Solusi / Prototipe / Laporan', 'description' => 'Lanjutkan kontribusi dan evaluasi kemajuan mingguan.'],
-        7 => ['phase' => 'contribute', 'title' => 'BERKONTRIBUSI', 'output' => 'Draf Solusi / Prototipe / Laporan', 'description' => 'Sempurnakan hasil sebelum minggu terakhir.'],
-        8 => ['phase' => 'deliver', 'title' => 'SERAHKAN', 'output' => 'Hasil Utama', 'description' => 'Finalisasi, presentasi, dan refleksi.'],
+        1 => [
+            'phase' => 'orientasi',
+            'title' => 'ORIENTASI',
+            'output' => 'Catatan Orientasi',
+            'description' => 'Khusus minggu 1: orientasi budaya unit, tim, alur kerja, dan penyelarasan harapan bersama mentor.',
+            'window' => 'Minggu 1',
+        ],
+        2 => [
+            'phase' => 'observasi',
+            'title' => 'OBSERVASI',
+            'output' => 'Ringkasan Observasi',
+            'description' => 'Minggu 2–4: observasi proses bisnis, petakan hambatan/peluang, dan rangkum temuan bersama mentor.',
+            'window' => 'Minggu 2–4',
+        ],
+        5 => [
+            'phase' => 'kolaborasi',
+            'title' => 'KOLABORASI',
+            'output' => 'Draf Kolaborasi',
+            'description' => 'Minggu 5–7: kolaborasi terapan (tugas bersama, riset, atau perbaikan proses) dan evaluasi kemajuan.',
+            'window' => 'Minggu 5–7',
+        ],
+        8 => [
+            'phase' => 'hasil',
+            'title' => 'LAPORAN / HASIL',
+            'output' => 'Laporan / Hasil Utama',
+            'description' => 'Khusus minggu 8: finalisasi laporan atau hasil, presentasi, dan refleksi penutupan program.',
+            'window' => 'Minggu 8',
+        ],
     ];
 
     private const LEGACY_TIMELINE_TEXT = [
-        'DISCOVER' => 'TEMUKAN',
-        'UNDERSTAND' => 'PAHAMI',
-        'CONTRIBUTE' => 'BERKONTRIBUSI',
-        'DELIVER' => 'SERAHKAN',
-        'Industry Insight' => 'Wawasan Industri',
-        'Problem Statement' => 'Rumusan Masalah',
-        'Draft Solution / Prototype / Report' => 'Draf Solusi / Prototipe / Laporan',
-        'Main Deliverable' => 'Hasil Utama',
-        'Orientation, business observation, understanding department, team, and workflow.' => 'Orientasi, observasi bisnis, serta pemahaman departemen, tim, dan alur kerja.',
-        'Continue observation and capture industry insight.' => 'Lanjutkan observasi dan rangkum wawasan industri.',
-        'Problem exploration, opportunity identification, analysis, validation.' => 'Eksplorasi masalah, identifikasi peluang, analisis, dan validasi.',
-        'Finalize problem statement with mentor reality check.' => 'Finalisasi rumusan masalah bersama mentor berdasarkan kondisi nyata.',
-        'Task, research, analysis, improvement, iteration with mentor.' => 'Kerjakan tugas, riset, analisis, dan perbaikan bersama mentor.',
-        'Continue contribution and weekly checkpoint.' => 'Lanjutkan kontribusi dan evaluasi kemajuan mingguan.',
-        'Iterate deliverable before final week.' => 'Sempurnakan hasil sebelum minggu terakhir.',
-        'Finalization, presentation, and reflection.' => 'Finalisasi, presentasi, dan refleksi.',
+        'DISCOVER' => 'ORIENTASI',
+        'UNDERSTAND' => 'OBSERVASI',
+        'CONTRIBUTE' => 'KOLABORASI',
+        'DELIVER' => 'LAPORAN / HASIL',
+        'TEMUKAN' => 'ORIENTASI',
+        'PAHAMI' => 'OBSERVASI',
+        'BERKONTRIBUSI' => 'KOLABORASI',
+        'SERAHKAN' => 'LAPORAN / HASIL',
+        'Industry Insight' => 'Catatan Orientasi',
+        'Problem Statement' => 'Ringkasan Observasi',
+        'Draft Solution / Prototype / Report' => 'Draf Kolaborasi',
+        'Main Deliverable' => 'Laporan / Hasil Utama',
+        'Wawasan Industri' => 'Catatan Orientasi',
+        'Rumusan Masalah' => 'Ringkasan Observasi',
+        'Draf Solusi / Prototipe / Laporan' => 'Draf Kolaborasi',
+        'Hasil Utama' => 'Laporan / Hasil Utama',
+        'Orientation, business observation, understanding department, team, and workflow.' => 'Orientasi budaya unit, tim, alur kerja, dan penyelarasan harapan bersama mentor.',
+        'Continue observation and capture industry insight.' => 'Mulai observasi proses bisnis, keputusan, dan pola kerja di unit.',
+        'Problem exploration, opportunity identification, analysis, validation.' => 'Lanjutkan observasi dan petakan hambatan serta peluang unit.',
+        'Finalize problem statement with mentor reality check.' => 'Rangkum temuan observasi dan validasikan bersama mentor.',
+        'Task, research, analysis, improvement, iteration with mentor.' => 'Mulai kolaborasi terapan: tugas bersama, riset, atau perbaikan proses.',
+        'Continue contribution and weekly checkpoint.' => 'Lanjutkan kolaborasi dan evaluasi kemajuan mingguan bersama mentor.',
+        'Iterate deliverable before final week.' => 'Sempurnakan hasil kolaborasi menjelang minggu laporan.',
+        'Finalization, presentation, and reflection.' => 'Finalisasi laporan atau hasil, presentasi, dan refleksi penutupan program.',
     ];
 
     public static function timelineText(?string $value): ?string
     {
         return $value === null ? null : (self::LEGACY_TIMELINE_TEXT[$value] ?? $value);
+    }
+
+    public static function checkpointWindowLabel(int $week): string
+    {
+        return self::TIMELINE[$week]['window'] ?? 'Minggu '.$week;
+    }
+
+    /**
+     * @return array{phase: string, title: string, output: string, description: string, window: string}|null
+     */
+    public static function checkpointMeta(int $week): ?array
+    {
+        return self::TIMELINE[$week] ?? null;
+    }
+
+    public static function isLegacyCheckpointLabel(?string $value): bool
+    {
+        if ($value === null || $value === '') {
+            return true;
+        }
+
+        return array_key_exists($value, self::LEGACY_TIMELINE_TEXT)
+            || in_array($value, [
+                'TEMUKAN', 'PAHAMI', 'BERKONTRIBUSI', 'SERAHKAN',
+                'DISCOVER', 'UNDERSTAND', 'CONTRIBUTE', 'DELIVER',
+                'ORIENTASI', 'OBSERVASI', 'KOLABORASI', 'LAPORAN / HASIL',
+                'Wawasan Industri', 'Rumusan Masalah', 'Draf Solusi / Prototipe / Laporan', 'Hasil Utama',
+                'Catatan Orientasi', 'Ringkasan Observasi', 'Draf Kolaborasi', 'Laporan / Hasil Utama',
+            ], true);
     }
 
     public static function label(string $status): string

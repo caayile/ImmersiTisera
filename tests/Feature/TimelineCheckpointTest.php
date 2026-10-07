@@ -28,17 +28,31 @@ class TimelineCheckpointTest extends TestCase
             ->get(route('participant.timeline'))
             ->assertOk()
             ->assertSee('Checkpoint Saya')
-            ->assertSee('Minggu '.$item->week)
+            ->assertSee('Minggu 2–4')
             ->assertSee('Isi atau perbarui checkpoint')
             ->assertSee('Dapat diisi')
-            ->assertSee('Minggu 4')
-            ->assertSee('Minggu 6')
+            ->assertSee('Minggu 1')
+            ->assertSee('Minggu 5–7')
             ->assertSee('Minggu 8')
+            ->assertSee('ORIENTASI')
+            ->assertSee('OBSERVASI')
+            ->assertSee('KOLABORASI')
+            ->assertSee('LAPORAN / HASIL')
             ->assertSee('Terkunci')
             ->assertSee('Pilih File')
             ->assertSee('Keterangan laporan (opsional)');
 
-        $this->assertSame([2, 4, 6, 8], $program->timelines()->pluck('week')->all());
+        $this->assertSame([1, 2, 5, 8], $program->timelines()->orderBy('week')->pluck('week')->all());
+        $this->assertDatabaseHas('timelines', [
+            'program_id' => $program->id,
+            'week' => 1,
+            'title' => 'ORIENTASI',
+        ]);
+        $this->assertDatabaseHas('timelines', [
+            'program_id' => $program->id,
+            'week' => 2,
+            'title' => 'OBSERVASI',
+        ]);
 
         $this->actingAs($dosen)
             ->post(route('participant.timeline.update', $item), [
@@ -71,40 +85,40 @@ class TimelineCheckpointTest extends TestCase
         $dosen = User::where('email', 'dosen@imersi.id')->firstOrFail();
         $program = $dosen->participant->programs()->latest()->firstOrFail();
         $week2 = $program->timelines()->where('week', 2)->firstOrFail();
-        $week4 = $program->timelines()->where('week', 4)->firstOrFail();
+        $week5 = $program->timelines()->where('week', 5)->firstOrFail();
 
-        // Minggu 2 berjalan: minggu 4 masih terkunci.
+        // Minggu 2 berjalan: checkpoint kolaborasi (minggu 5–7) masih terkunci.
         $this->actingAs($dosen)
-            ->post(route('participant.timeline.update', $week4), [
-                'title' => 'Terlalu dini minggu 4',
+            ->post(route('participant.timeline.update', $week5), [
+                'title' => 'Terlalu dini minggu 5',
             ])
             ->assertForbidden();
 
-        // Masuk minggu 4: minggu 4 bisa diisi, minggu 2 sudah ditutup.
+        // Masuk minggu 5: kolaborasi bisa diisi, observasi (2–4) sudah ditutup.
         $program->update([
-            'start_date' => now()->subDays(21),
-            'current_week' => 4,
+            'start_date' => now()->subDays(28),
+            'current_week' => 5,
             'status' => 'active',
         ]);
 
         $this->actingAs($dosen)
             ->from(route('participant.timeline'))
             ->post(route('participant.timeline.update', $week2), [
-                'title' => 'Terlambat mengedit minggu 2',
+                'title' => 'Terlambat mengedit observasi',
             ])
             ->assertForbidden();
 
         $this->actingAs($dosen)
-            ->post(route('participant.timeline.update', $week4), [
-                'title' => 'Checkpoint minggu 4 aktif',
-                'description' => 'Isi saat jendela minggu 4.',
+            ->post(route('participant.timeline.update', $week5), [
+                'title' => 'Checkpoint kolaborasi aktif',
+                'description' => 'Isi saat jendela minggu 5–7.',
             ])
             ->assertRedirect()
             ->assertSessionHasNoErrors();
 
         $this->assertDatabaseHas('timelines', [
-            'id' => $week4->id,
-            'title' => 'Checkpoint minggu 4 aktif',
+            'id' => $week5->id,
+            'title' => 'Checkpoint kolaborasi aktif',
             'status' => 'submitted',
         ]);
 
@@ -113,7 +127,7 @@ class TimelineCheckpointTest extends TestCase
             ->assertOk()
             ->assertSee('Ditutup')
             ->assertSee('Dapat diisi')
-            ->assertSee('Checkpoint minggu 4 aktif');
+            ->assertSee('Checkpoint kolaborasi aktif');
     }
 
     public function test_checkpoint_accepts_word_documents_and_images(): void
@@ -124,8 +138,8 @@ class TimelineCheckpointTest extends TestCase
         $dosen = User::where('email', 'dosen@imersi.id')->firstOrFail();
         $program = $dosen->participant->programs()->latest()->firstOrFail();
         $uploads = [
-            [4, 21, UploadedFile::fake()->create('laporan.docx', 100, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')],
-            [6, 35, UploadedFile::fake()->image('bukti.png')],
+            [2, 10, UploadedFile::fake()->create('laporan.docx', 100, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')],
+            [5, 28, UploadedFile::fake()->image('bukti.png')],
         ];
 
         foreach ($uploads as [$week, $daysAgo, $upload]) {
@@ -176,15 +190,15 @@ class TimelineCheckpointTest extends TestCase
         $dosen = User::where('email', 'dosen@imersi.id')->firstOrFail();
         $program = $dosen->participant->programs()->latest()->firstOrFail();
         $legacyTimeline = $program->timelines()->create([
-            'week' => 1,
-            'phase' => 'discover',
-            'title' => 'Minggu 1',
+            'week' => 3,
+            'phase' => 'observasi',
+            'title' => 'Minggu 3',
             'status' => 'pending',
         ]);
 
         $this->actingAs($dosen)
             ->post(route('participant.timeline.update', $legacyTimeline), [
-                'title' => 'Minggu 1 bukan checkpoint',
+                'title' => 'Minggu 3 bukan checkpoint terpisah',
             ])
             ->assertNotFound();
     }
@@ -258,8 +272,9 @@ class TimelineCheckpointTest extends TestCase
         $this->actingAs($mentor)
             ->get(route('mentor.timeline.show', $program))
             ->assertOk()
-            ->assertSee('Minggu 2')
-            ->assertDontSee('Minggu 1')
+            ->assertSee('Minggu 1')
+            ->assertSee('Minggu 2–4')
+            ->assertSee('ORIENTASI')
             ->assertSee('Minta revisi');
     }
 
@@ -285,7 +300,7 @@ class TimelineCheckpointTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_checkpoint_window_stays_open_until_next_checkpoint_week(): void
+    public function test_observasi_window_stays_open_through_weeks_two_to_four(): void
     {
         $this->seed();
 
@@ -293,22 +308,90 @@ class TimelineCheckpointTest extends TestCase
         $program = $dosen->participant->programs()->latest()->firstOrFail();
         $week2 = $program->timelines()->where('week', 2)->firstOrFail();
 
-        // Minggu 3 (hari ke-15–21): checkpoint minggu 2 masih bisa diisi.
+        // Minggu 3–4: checkpoint observasi (dimulai minggu 2) masih terbuka.
         $program->update([
-            'start_date' => now()->subDays(14),
-            'current_week' => 3,
+            'start_date' => now()->subDays(21),
+            'current_week' => 4,
             'status' => 'active',
         ]);
 
-        $this->assertSame(3, $program->fresh()->computedWeek());
+        $this->assertSame(4, $program->fresh()->computedWeek());
         $this->assertTrue($program->fresh()->isCheckpointOpen(2));
-        $this->assertFalse($program->fresh()->isCheckpointOpen(4));
+        $this->assertFalse($program->fresh()->isCheckpointOpen(1));
+        $this->assertFalse($program->fresh()->isCheckpointOpen(5));
 
         $this->actingAs($dosen)
             ->post(route('participant.timeline.update', $week2), [
-                'title' => 'Masih bisa di minggu 3',
+                'title' => 'Masih bisa di minggu 4',
             ])
             ->assertRedirect()
             ->assertSessionHasNoErrors();
+    }
+
+    public function test_orientasi_only_open_in_week_one_and_hasil_only_in_week_eight(): void
+    {
+        $this->seed();
+
+        $dosen = User::where('email', 'dosen@imersi.id')->firstOrFail();
+        $program = $dosen->participant->programs()->latest()->firstOrFail();
+
+        $program->update([
+            'start_date' => now(),
+            'current_week' => 1,
+            'status' => 'active',
+        ]);
+
+        $this->assertTrue($program->fresh()->isCheckpointOpen(1));
+        $this->assertFalse($program->fresh()->isCheckpointOpen(2));
+
+        $program->update([
+            'start_date' => now()->subDays(49),
+            'current_week' => 8,
+            'status' => 'active',
+        ]);
+
+        $this->assertFalse($program->fresh()->isCheckpointOpen(1));
+        $this->assertFalse($program->fresh()->isCheckpointOpen(2));
+        $this->assertFalse($program->fresh()->isCheckpointOpen(5));
+        $this->assertTrue($program->fresh()->isCheckpointOpen(8));
+    }
+
+    public function test_timeline_page_repairs_legacy_checkpoint_labels_and_shows_closed_orientasi(): void
+    {
+        $this->seed();
+
+        $dosen = User::where('email', 'dosen@imersi.id')->firstOrFail();
+        $program = $dosen->participant->programs()->latest()->firstOrFail();
+
+        $program->timelines()->where('week', 1)->delete();
+        $program->timelines()->where('week', 2)->update([
+            'title' => 'TEMUKAN',
+            'description' => 'Lanjutkan observasi dan rangkum wawasan industri.',
+            'expected_output' => 'Wawasan Industri',
+            'status' => 'pending',
+        ]);
+
+        $this->actingAs($dosen)
+            ->get(route('participant.timeline'))
+            ->assertOk()
+            ->assertSee('Minggu 1')
+            ->assertSee('ORIENTASI')
+            ->assertSee('Ditutup. Waktu ORIENTASI (Minggu 1) sudah lewat')
+            ->assertSee('Minggu 2–4')
+            ->assertSee('OBSERVASI')
+            ->assertSee('Dapat diisi')
+            ->assertDontSee('TEMUKAN')
+            ->assertDontSee('Lanjutkan observasi dan rangkum wawasan industri.');
+
+        $this->assertDatabaseHas('timelines', [
+            'program_id' => $program->id,
+            'week' => 1,
+            'title' => 'ORIENTASI',
+        ]);
+        $this->assertDatabaseHas('timelines', [
+            'program_id' => $program->id,
+            'week' => 2,
+            'title' => 'OBSERVASI',
+        ]);
     }
 }

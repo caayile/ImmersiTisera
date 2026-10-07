@@ -9,8 +9,7 @@ Kerangka program: **IDENTIFY → IMMERSION → INTERACTION → IMPACT → INTEGR
 ## Stack
 
 - Laravel 13 (API + Blade) + React (Vite) + Tailwind CSS
-- PostgreSQL lokal (default), MySQL/SQL, dan Neon Postgres, bisa aktif bersamaan
-- SQLite hanya untuk tes otomatis
+- SQLite (default lokal, tanpa password), PostgreSQL, MySQL, dan Neon Postgres
 - Session authentication + role middleware
 - Eloquent, validation, storage upload, database notifications, Chart.js
 
@@ -21,6 +20,10 @@ Dari folder project ini (tidak perlu `cd frontend` / `cd backend`):
 ```bash
 composer install
 npm install
+cp .env.example .env
+php artisan key:generate
+# Windows PowerShell: New-Item database/database.sqlite -ItemType File
+# macOS/Linux: touch database/database.sqlite
 php artisan migrate:fresh --seed
 php artisan storage:link
 composer run dev
@@ -30,22 +33,40 @@ Buka [http://127.0.0.1:8000](http://127.0.0.1:8000)
 
 ## Database
 
-Default koneksi adalah **PostgreSQL lokal** (`DB_CONNECTION=pgsql`). MySQL (`mysql`) dan Neon (`neon`) tetap terdaftar dan bisa dipakai bersamaan.
+Default lokal adalah **SQLite** (`DB_CONNECTION=sqlite`) supaya clone baru langsung jalan tanpa setup PostgreSQL.
 
-1. Buat database `imersi` di PostgreSQL dan/atau MySQL.
-2. Isi kredensial di `.env`:
-   - PostgreSQL lokal: `DB_HOST`, `DB_PORT=5432`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`
-   - MySQL: `MYSQL_HOST`, `MYSQL_PORT=3306`, `MYSQL_DATABASE`, `MYSQL_USERNAME`, `MYSQL_PASSWORD`
-   - Neon: `NEON_DATABASE_URL` (salin connection string pooled dari Neon Console; host mengandung `-pooler`)
-3. Jalankan migrate di koneksi yang dipakai:
+### Error umum: `fe_sendauth: no password supplied` / connection `pgsql`
 
-```bash
-php artisan migrate:fresh --seed
-php artisan migrate --database=mysql --force
-php artisan migrate --database=neon --force
+Artinya `.env` masih pakai PostgreSQL lokal tanpa `DB_PASSWORD`. Perbaiki dengan salah satu:
+
+**A. Paling mudah — pakai SQLite**
+
+```env
+DB_CONNECTION=sqlite
+DB_DATABASE=database/database.sqlite
+SESSION_DRIVER=file
+CACHE_STORE=file
+QUEUE_CONNECTION=sync
 ```
 
-Ganti default ke MySQL dengan `DB_CONNECTION=mysql`, atau ke Neon dengan `DB_CONNECTION=neon`. Jika MySQL jadi default, isi `PGSQL_*` agar koneksi PostgreSQL lokal tidak ikut memakai host/port MySQL.
+Lalu:
+
+```bash
+# pastikan file sqlite ada
+php artisan config:clear
+php artisan migrate:fresh --seed
+```
+
+**B. Tetap pakai PostgreSQL lokal**
+
+1. Buat database `imersi`
+2. Isi password di `.env`: `DB_PASSWORD=...` (password user `postgres` di mesin itu)
+3. `php artisan config:clear && php artisan migrate:fresh --seed`
+
+### Koneksi lain (opsional)
+
+- MySQL: `DB_CONNECTION=mysql` + kredensial `MYSQL_*`
+- Neon: `DB_CONNECTION=neon` + `NEON_DATABASE_URL` (connection string pooled; host mengandung `-pooler`)
 
 `composer run dev` menyalakan server Laravel dan Vite sekaligus. Satu terminal sudah cukup.
 

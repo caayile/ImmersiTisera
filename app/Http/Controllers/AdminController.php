@@ -25,6 +25,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -33,6 +34,11 @@ use Illuminate\Validation\Rule;
 class AdminController extends Controller
 {
     public function __construct(private readonly MediaStorageService $mediaStorage) {}
+
+    private function forgetPublicHomeCache(): void
+    {
+        Cache::forget('public.home.html');
+    }
 
     public function dashboard()
     {
@@ -254,6 +260,8 @@ class AdminController extends Controller
             ]);
         }
 
+        $this->forgetPublicHomeCache();
+
         return back()->with('status', 'Departemen dibuat.');
     }
 
@@ -298,6 +306,8 @@ class AdminController extends Controller
             ]);
         }
 
+        $this->forgetPublicHomeCache();
+
         return back()->with('status', 'Departemen diperbarui.');
     }
 
@@ -310,6 +320,7 @@ class AdminController extends Controller
         $imagePath = $businessUnit->image_path;
         $businessUnit->delete();
         $this->deleteDepartmentImage($imagePath);
+        $this->forgetPublicHomeCache();
 
         return back()->with('status', 'Departemen dihapus.');
     }
@@ -388,6 +399,8 @@ class AdminController extends Controller
             'status' => 'open',
         ]);
 
+        $this->forgetPublicHomeCache();
+
         return back()->with('status', 'Batch pembukaan diterapkan dan semua lowongan dibuka.');
     }
 
@@ -434,6 +447,8 @@ class AdminController extends Controller
 
         BusinessUnit::query()->update(['status' => $data['status']]);
 
+        $this->forgetPublicHomeCache();
+
         return back()->with('status', $data['status'] === 'open'
             ? 'Semua lowongan dibuka.'
             : 'Semua lowongan ditutup.');
@@ -452,6 +467,8 @@ class AdminController extends Controller
         }
 
         $businessUnit->update(['status' => $data['status']]);
+
+        $this->forgetPublicHomeCache();
 
         return back()->with('status', $data['status'] === 'open'
             ? 'Lowongan diaktifkan.'
@@ -472,6 +489,8 @@ class AdminController extends Controller
 
         $businessUnit->update(self::normalizePeriod($data));
 
+        $this->forgetPublicHomeCache();
+
         return back()->with('status', 'Periode pendaftaran diperbarui.');
     }
 
@@ -483,6 +502,8 @@ class AdminController extends Controller
         ]);
 
         BusinessUnit::query()->update(self::normalizePeriod($data));
+
+        $this->forgetPublicHomeCache();
 
         return back()->with('status', 'Periode semua lowongan diperbarui.');
     }

@@ -110,7 +110,7 @@ class PublicController extends Controller
             });
 
         $units = BusinessUnit::query()
-            ->where('status', 'open')
+            ->currentlyOpen()
             ->where('name', 'like', '%'.$search.'%')
             ->get()
             ->map(function ($unit) {

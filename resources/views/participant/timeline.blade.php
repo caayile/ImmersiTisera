@@ -3,7 +3,7 @@
 @section('content')
 <div>
     <h1 class="text-2xl font-semibold">Checkpoint Saya</h1>
-    <p class="mt-1 text-sm text-muted">Kirim laporan perkembangan pada minggu 2, 4, 6, dan 8. Tiap checkpoint hanya bisa diisi pada minggunya (sampai checkpoint berikutnya dibuka).</p>
+    <p class="mt-1 text-sm text-muted">Empat checkpoint (1-3-3-1): minggu 1 Orientasi, minggu 2–4 Observasi, minggu 5–7 Kolaborasi, minggu 8 Laporan/Hasil. Tiap fase hanya bisa diisi selama jendela minggunya.</p>
 </div>
 @unless($program)
     <x-empty class="mt-6" title="Checkpoint belum aktif">Checkpoint muncul setelah program dimulai.</x-empty>
@@ -23,19 +23,28 @@
 <div class="mt-6 space-y-0">
     @forelse($program->timelines->whereIn('week', \App\Support\Status::CHECKPOINT_WEEKS)->sortBy('week') as $item)
         @php
-            $isOpen = $program->isCheckpointOpen((int) $item->week);
-            $isFuture = $currentWeek < (int) $item->week;
+            $week = (int) $item->week;
+            $meta = \App\Support\Status::checkpointMeta($week);
+            $windowLabel = \App\Support\Status::checkpointWindowLabel($week);
+            $phaseTitle = $meta['title'] ?? \App\Support\Status::timelineText($item->title);
+            $phaseDescription = $meta['description'] ?? \App\Support\Status::timelineText($item->description);
+            $phaseOutput = $meta['output'] ?? \App\Support\Status::timelineText($item->expected_output);
+            $isOpen = $program->isCheckpointOpen($week);
+            $isFuture = $currentWeek < $week;
+            $formTitle = \App\Support\Status::isLegacyCheckpointLabel($item->title) ? ($meta['title'] ?? $item->title) : $item->title;
+            $formDescription = \App\Support\Status::isLegacyCheckpointLabel($item->description) ? ($meta['description'] ?? $item->description) : $item->description;
+            $formOutput = \App\Support\Status::isLegacyCheckpointLabel($item->expected_output) ? ($meta['output'] ?? $item->expected_output) : $item->expected_output;
         @endphp
         <div class="flex gap-4">
             <div class="flex flex-col items-center">
-                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold {{ $isOpen ? 'bg-primary text-white' : ($item->status === 'done' ? 'bg-primary/15 text-primary-dark' : 'border border-line bg-white text-muted') }}">{{ $item->week }}</span>
+                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold {{ $isOpen ? 'bg-primary text-white' : ($item->status === 'done' ? 'bg-primary/15 text-primary-dark' : 'border border-line bg-white text-muted') }}">{{ $loop->iteration }}</span>
                 @if(! $loop->last)
                     <span class="w-0.5 flex-1 {{ $item->status === 'done' ? 'bg-primary/40' : 'bg-line' }}"></span>
                 @endif
             </div>
             <article class="mb-5 flex-1 rounded-2xl border border-line bg-white p-5 {{ $isOpen ? 'border-primary shadow-sm ring-1 ring-primary/30' : ($isFuture ? 'opacity-70' : '') }}">
                 <div class="flex flex-wrap items-center justify-between gap-2">
-                    <p class="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Minggu {{ $item->week }}</p>
+                    <p class="text-xs font-semibold uppercase tracking-[0.14em] text-muted">{{ $windowLabel }}</p>
                     <div class="flex flex-wrap items-center gap-2">
                         @if($isOpen)
                             <span class="rounded-full bg-primary/15 px-2.5 py-0.5 text-[11px] font-semibold text-primary-dark">Dapat diisi</span>
@@ -47,12 +56,12 @@
                         <x-badge :status="$item->status" />
                     </div>
                 </div>
-                <h2 class="mt-1 font-semibold">{{ \App\Support\Status::timelineText($item->title) }}</h2>
-                @if($item->description)
-                    <p class="mt-1 text-sm text-muted">{{ \App\Support\Status::timelineText($item->description) }}</p>
+                <h2 class="mt-1 font-semibold">{{ $phaseTitle }}</h2>
+                @if($phaseDescription)
+                    <p class="mt-1 text-sm text-muted">{{ $phaseDescription }}</p>
                 @endif
-                @if($item->expected_output)
-                    <p class="mt-2 text-sm"><b>Target hasil:</b> {{ \App\Support\Status::timelineText($item->expected_output) }}</p>
+                @if($phaseOutput)
+                    <p class="mt-2 text-sm"><b>Target hasil:</b> {{ $phaseOutput }}</p>
                 @endif
                 @if($item->attachment_path)
                     <a href="{{ asset('storage/'.$item->attachment_path) }}" target="_blank" rel="noopener" class="mt-2 inline-block text-sm font-semibold text-primary-dark">Unduh laporan terlampir</a>
@@ -71,15 +80,15 @@
                             @csrf
                             <div>
                                 <label class="text-xs font-medium text-muted">Judul checkpoint</label>
-                                <input name="title" value="{{ $item->title }}" maxlength="180" class="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-sm" required>
+                                <input name="title" value="{{ $formTitle }}" maxlength="180" class="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-sm" required>
                             </div>
                             <div>
                                 <label class="text-xs font-medium text-muted">Keterangan laporan (opsional)</label>
-                                <textarea name="description" rows="3" class="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-sm">{{ $item->description }}</textarea>
+                                <textarea name="description" rows="3" class="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-sm">{{ $formDescription }}</textarea>
                             </div>
                             <div>
                                 <label class="text-xs font-medium text-muted">Target hasil</label>
-                                <textarea name="expected_output" rows="2" class="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-sm">{{ $item->expected_output }}</textarea>
+                                <textarea name="expected_output" rows="2" class="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-sm">{{ $formOutput }}</textarea>
                             </div>
                             <div>
                                 <label class="text-xs font-medium text-muted">Laporan (PDF, Word, atau gambar, opsional)</label>
@@ -97,9 +106,9 @@
                         </form>
                     </details>
                 @elseif($isFuture)
-                    <p class="mt-3 rounded-lg border border-dashed border-line bg-bg/50 px-3 py-2 text-sm text-muted">Terkunci. Checkpoint minggu {{ $item->week }} dibuka saat program memasuki minggu {{ $item->week }}.</p>
+                    <p class="mt-3 rounded-lg border border-dashed border-line bg-bg/50 px-3 py-2 text-sm text-muted">Terkunci. Checkpoint {{ $phaseTitle }} ({{ $windowLabel }}) dibuka saat program memasuki fase ini.</p>
                 @else
-                    <p class="mt-3 rounded-lg border border-dashed border-line bg-bg/50 px-3 py-2 text-sm text-muted">Ditutup. Checkpoint minggu {{ $item->week }} tidak dapat diedit lagi setelah minggu checkpoint berikutnya dimulai.</p>
+                    <p class="mt-3 rounded-lg border border-dashed border-line bg-bg/50 px-3 py-2 text-sm text-muted">Ditutup. Waktu {{ $phaseTitle }} ({{ $windowLabel }}) sudah lewat — tidak bisa diisi lagi.</p>
                 @endif
             </article>
         </div>
