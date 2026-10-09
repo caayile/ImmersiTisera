@@ -123,7 +123,7 @@ class AdminController extends Controller
             'description' => ['nullable', 'string'],
             'area' => ['nullable', 'string'],
             'map_url' => ['nullable', 'string', 'max:8192'],
-            'image' => ['nullable', 'image', 'max:5120'],
+            'image' => ['nullable', 'image', 'max:20480'],
         ]);
         Department::create([
             ...collect($data)->except('image')->toArray(),
@@ -145,7 +145,7 @@ class AdminController extends Controller
             'area' => ['nullable', 'string'],
             'map_url' => ['nullable', 'string', 'max:8192'],
             'status' => ['required', Rule::in(['active', 'disabled'])],
-            'image' => ['nullable', 'image', 'max:5120'],
+            'image' => ['nullable', 'image', 'max:20480'],
         ]);
 
         $previousImagePath = $department->image_path;
@@ -668,7 +668,7 @@ class AdminController extends Controller
         $data = $request->validate([
             'title' => ['required', 'string', 'max:120'],
             'subtitle' => ['nullable', 'string', 'max:255'],
-            'background' => ['nullable', 'image', 'max:5120'],
+            'background' => ['nullable', 'image', 'max:20480'],
         ]);
 
         $setting = HeroSetting::forPage('departments');

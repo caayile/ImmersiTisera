@@ -28,31 +28,32 @@
     ];
 @endphp
 
-<section class="hero-grid" data-reveal>
-    <div class="mx-auto grid max-w-6xl items-center gap-10 px-5 py-16 lg:grid-cols-2">
-        <div>
-            <p class="inline-flex rounded-full bg-black/25 px-3 py-1 text-xs font-medium text-white">GELOMBANG 2026 · SEKARANG DIBUKA</p>
-            <h1 class="mt-5 text-4xl font-semibold leading-tight text-white md:text-5xl">Mulai kolaborasi dari <span class="text-secondary">unit bisnis yang tepat</span> di sini.</h1>
-            <p class="mt-4 max-w-xl text-sm leading-6 text-white/80">Program ini menghubungkan Dosen TSU dengan Unit Bisnis dengan TS Group.</p>
-            <a href="{{ route('departments.index') }}" class="mt-8 inline-flex max-w-xl items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-semibold text-ink shadow-sm transition hover:bg-secondary hover:text-white">
-                Jelajahi unit bisnis
-                <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
-            </a>
+{{-- ===== HERO BERANDA ===== --}}
+<section class="home-hero relative overflow-hidden" data-reveal>
+    <div class="home-hero__image absolute inset-0" aria-hidden="true">
+        <img
+            src="{{ asset('images/hero/hero-clean.png') }}"
+            alt="Gedung Tiga Serangkai"
+            class="home-hero__photo home-hero__photo--full"
+            loading="eager"
+        >
+    </div>
+
+    <div class="home-hero__panel relative z-10">
+        <div class="home-hero__copy">
+            <h1 class="font-bold text-white">
+                Mulai kolaborasi dari<br class="hidden md:block"> unit bisnis yang tepat<br class="hidden md:block"> di sini.
+            </h1>
+            <p class="font-semibold text-white">
+                Program ini menghubungkan Dosen TSU dengan Unit Bisnis TS Group.
+            </p>
         </div>
-        <div class="grid gap-3 sm:grid-cols-2">
-            @foreach([
-                ['Wawasan Industri', 'Memahami alur kerja dan keputusan bisnis secara langsung.'],
-                ['Mentor Profesional', 'Mentoring 30 menit setiap minggu.'],
-                ['Hasil Utama', 'Satu hasil kerja nyata untuk dosen dan unit bisnis.'],
-                ['Kolaborasi Lanjutan', 'Kuliah tamu, riset, hingga kurikulum.'],
-                ['Logbook Harian', 'Rekaman aktivitas, pembelajaran, dan bukti kerja.'],
-                ['Evaluasi Terukur', 'Pemahaman, relasi, hasil, dan dampak.'],
-            ] as [$title, $copy])
-                <article class="rounded-2xl bg-white p-4 shadow-lg tap-feedback" data-reveal data-reveal-delay="{{ $loop->index % 4 }}">
-                    <p class="font-semibold">{{ $title }}</p>
-                    <p class="mt-1 text-sm text-muted">{{ $copy }}</p>
-                </article>
-            @endforeach
+        <div class="home-hero__actions">
+            <span class="home-hero__batch">Batch 1<br>Di Buka</span>
+            <a href="{{ route('departments.index') }}" class="home-hero__cta">
+                Jelajahi Unit Bisnis
+                <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+            </a>
         </div>
     </div>
 </section>
