@@ -1,10 +1,7 @@
 @extends('layouts.app')
-@section('title', 'Sertifikat')
+@section('title', 'Sertifikat Saya')
 @section('content')
-<div>
-    <h1 class="text-2xl font-semibold">Sertifikat Saya</h1>
-    <p class="mt-1 text-sm text-muted">Sertifikat muncul otomatis setelah mentor menerbitkannya.</p>
-</div>
+<p class="text-sm text-muted">Sertifikat muncul otomatis setelah mentor menerbitkannya.</p>
 <div class="mt-6 space-y-4">
     @forelse($certificates as $certificate)
         <article class="rounded-2xl border border-line bg-white p-5">

@@ -8,6 +8,9 @@ use App\Models\Certificate;
 use App\Models\CollaborationPipeline;
 use App\Models\Department;
 use App\Models\Evaluation;
+use App\Models\EvaluationQuestion;
+use App\Models\EvaluationScale;
+use App\Models\EvaluationSection;
 use App\Models\Logbook;
 use App\Models\MentorSession;
 use App\Models\Participant;
@@ -44,7 +47,7 @@ class ParticipantController extends Controller
 
         return view('participant.dashboard', [
             'participant' => $request->user()->participant,
-            'program' => $program?->fresh(['department', 'businessUnit', 'mentor.user', 'mentor.department', 'mentor.businessUnit', 'agreement', 'logbooks', 'timelines']),
+            'program' => $program?->fresh(['department', 'businessUnit', 'mentor.user', 'mentor.department', 'mentor.businessUnit', 'agreement', 'logbooks', 'timelines', 'mentorSessions', 'outputs', 'evaluations', 'collaboration']),
             'notifications' => $request->user()->unreadNotifications()->latest()->take(5)->get(),
             'application' => $application,
             'stats' => [
@@ -222,9 +225,9 @@ class ParticipantController extends Controller
 
     public function program(Request $request)
     {
-        $program = $this->currentProgram($request);
-
-        return view('participant.program', compact('program'));
+        // Menu Program dilebur ke Beranda (dashboard). Pertahankan route lama
+        // agar tautan lama/notifikasi tidak 404.
+        return redirect()->route('participant.dashboard');
     }
 
     public function agreement(Request $request)
@@ -368,24 +371,33 @@ class ParticipantController extends Controller
 
         $timeline->program->refreshProgress();
         abort_unless($timeline->program->fresh()->isCheckpointOpen((int) $timeline->week), 403);
+        abort_if(in_array($timeline->status, ['done', 'approved'], true), 403, 'Checkpoint sudah disetujui dan tidak dapat diubah.');
 
         $data = $request->validate([
             'title' => ['required', 'string', 'max:180'],
             'description' => ['nullable', 'string'],
             'expected_output' => ['nullable', 'string'],
+            'evidence_link' => ['nullable', 'string', 'max:2048'],
             'attachment' => ['nullable', 'file', 'max:10240', 'mimes:pdf,doc,docx,jpg,jpeg,png,webp'],
         ]);
 
         $previousAttachmentPath = $timeline->attachment_path;
         $attachmentPath = $request->file('attachment')?->store('timeline-reports', 'public');
 
-        $timeline->update([
+        $payload = [
             'title' => $data['title'],
             'description' => $data['description'] ?? null,
-            'expected_output' => $data['expected_output'] ?? null,
+            'evidence_link' => $data['evidence_link'] ?? null,
             'attachment_path' => $attachmentPath ?? $previousAttachmentPath,
             'status' => 'submitted',
-        ]);
+        ];
+
+        // expected_output hanya ditimpa jika form mengirimnya (popup baru tidak punya field ini).
+        if (array_key_exists('expected_output', $data)) {
+            $payload['expected_output'] = $data['expected_output'];
+        }
+
+        $timeline->update($payload);
 
         if ($attachmentPath && $previousAttachmentPath) {
             Storage::disk('public')->delete($previousAttachmentPath);
@@ -501,26 +513,77 @@ class ParticipantController extends Controller
 
     public function mentoring(Request $request)
     {
-        return view('participant.mentoring', ['program' => $this->currentProgram($request)]);
+        $program = $this->currentProgram($request);
+        $sessions = $program
+            ? $program->mentorSessions()->orderByDesc('session_date')->orderByDesc('id')->get()
+            : collect();
+
+        return view('participant.mentoring', compact('program', 'sessions'));
+    }
+
+    public function storeMentoring(Request $request)
+    {
+        $program = $this->currentProgram($request, true);
+        abort_unless($program && $program->status === 'active', 403);
+
+        $data = $request->validate([
+            'session_date' => ['required', 'date'],
+            'activity' => ['required', 'string', 'max:180'],
+            'findings' => ['nullable', 'string'],
+            'current_work' => ['nullable', 'string'],
+            'next_action' => ['nullable', 'string'],
+            'evidence_link' => ['nullable', 'string', 'max:2048'],
+            'attachment' => ['nullable', 'file', 'max:10240', 'mimes:pdf,doc,docx,jpg,jpeg,png,webp'],
+        ]);
+
+        $sessionDate = Carbon::parse($data['session_date'])->startOfDay();
+        $week = 1;
+        if ($program->start_date) {
+            $week = min(8, max(1, (int) ceil(($program->start_date->diffInDays($sessionDate) + 1) / 7)));
+        }
+
+        $program->mentorSessions()->create([
+            'mentor_id' => $program->mentor_id,
+            'participant_id' => $program->participant_id,
+            'week' => $week,
+            'session_date' => $sessionDate->toDateString(),
+            'activity' => $data['activity'],
+            'findings' => $data['findings'] ?? null,
+            'current_work' => $data['current_work'] ?? null,
+            'next_action' => $data['next_action'] ?? null,
+            'evidence_link' => $data['evidence_link'] ?? null,
+            'attachment_path' => $request->file('attachment')?->store('mentoring-docs', 'public'),
+        ]);
+
+        $program->mentor?->user?->notify(new ImersiAlert(
+            'Sesi mentoring baru',
+            $data['activity'].' · '.$sessionDate->format('d M Y'),
+            route('mentor.mentoring')
+        ));
+
+        return back()->with('status', 'Sesi mentoring dikirim.');
     }
 
     public function outputs(Request $request)
     {
-        return view('participant.outputs', [
-            'program' => $this->currentProgram($request),
-            'programs' => $this->allPrograms($request),
-            'types' => Status::OUTPUT_TYPES,
-        ]);
+        // Menu Hasil dilebur: logbook + mentoring + checkpoint sudah cukup.
+        // Laporan akhir tetap lewat menu Laporan Akhir.
+        return redirect()->route('participant.final-report');
     }
 
     public function storeOutput(Request $request)
     {
-        $program = $this->currentProgram($request);
+        // Laporan akhir bisa diisi per siklus (baris tabel), bukan hanya siklus berjalan.
+        $targetId = $request->integer('program_id');
+        $program = $targetId
+            ? Program::where('id', $targetId)->where('participant_id', $request->user()->participant?->id)->first()
+            : $this->currentProgram($request);
         abort_unless($program, 404);
 
         $data = $request->validate([
             'title' => ['required', 'string', 'max:180'],
             'type' => ['required', 'string'],
+            'program_id' => ['nullable', 'integer', 'exists:programs,id'],
             'description' => ['nullable', 'string'],
             'link' => ['nullable', 'string', 'max:2048'],
             'hasil_file' => ['nullable', 'file', 'max:10240', 'mimes:pdf,jpg,jpeg,png,doc,docx,ppt,pptx,zip'],
@@ -601,7 +664,7 @@ class ParticipantController extends Controller
                 ['level' => (int) $data['level']]
             );
         }
-        $program->mentor->user->notify(new ImersiAlert('Hasil dikirim', $data['title'].' menunggu validasi.', route('mentor.outputs')));
+        $program->mentor->user->notify(new ImersiAlert('Hasil dikirim', $data['title'].' menunggu validasi.', route('mentor.participants.show', $program)));
 
         return back()->with('status', 'Hasil dikirim.');
     }
@@ -626,7 +689,32 @@ class ParticipantController extends Controller
         $program = $this->currentProgram($request);
         $mine = $program?->evaluations()->where('evaluator_id', $request->user()->id)->first();
 
-        return view('participant.evaluation', compact('program', 'mine'));
+        $sections = EvaluationSection::with(['questions' => fn ($query) => $query->where('is_active', true)->orderBy('position')])
+            ->orderBy('position')
+            ->get();
+
+        $bank = $sections->isNotEmpty()
+            ? $sections->map(fn (EvaluationSection $section) => [
+                'key' => $section->key,
+                'title' => $section->title,
+                'questions' => $section->questions->pluck('question')->all(),
+            ])->all()
+            : EvaluationQuestion::defaultBank();
+
+        $scales = EvaluationScale::orderBy('position')->get();
+        $scaleList = $scales->isNotEmpty()
+            ? $scales->map(fn (EvaluationScale $scale) => ['label' => $scale->label, 'value' => $scale->value])->all()
+            : EvaluationScale::defaultScales();
+        $scaleMax = collect($scaleList)->max('value') ?? 5;
+        $certificates = $this->participantCertificates($request);
+        // Kartu atas hanya untuk siklus berjalan; siklus selesai turun ke riwayat.
+        $topCycle = ($program && $program->status !== 'completed') ? $program : null;
+        // Riwayat memuat semua siklus kecuali yang tampil di kartu atas, dari terbaru.
+        $history = $program
+            ? $this->allPrograms($request)->reject(fn ($cycle) => $topCycle && $cycle->id === $topCycle->id)->values()
+            : collect();
+
+        return view('participant.evaluation', compact('program', 'mine', 'bank', 'scaleList', 'scaleMax', 'certificates', 'history', 'topCycle'));
     }
 
     public function storeEvaluation(Request $request)
@@ -645,7 +733,34 @@ class ParticipantController extends Controller
             ]
         );
 
-        return back()->with('status', 'Evaluasi tersimpan.');
+        return redirect(route('participant.evaluation').'#riwayat')->with('status', 'Evaluasi tersimpan.');
+    }
+
+    public function report(Request $request, ?Program $program = null)
+    {
+        $current = $this->currentProgram($request);
+        abort_unless($current, 404);
+
+        $target = $program ?? $current;
+        abort_unless((int) $target->participant_id === (int) $request->user()->participant?->id, 404);
+        $target->loadMissing(['participant.user', 'mentor.user', 'department', 'businessUnit', 'evaluations.evaluator']);
+
+        $mine = $target->evaluations->where('evaluator_id', $request->user()->id)->first();
+        $report = $target->evaluations->whereNotIn('evaluator_id', [$request->user()->id])->first(fn ($eval) => $eval->hasReport());
+        abort_unless($report, 404);
+
+        // Kuesioner wajib hanya untuk siklus berjalan; siklus lama bersifat arsip.
+        if ($target->id === $current->id) {
+            abort_unless($mine, 404);
+        }
+
+        $program = $target;
+
+        $ownCriteria = collect($mine?->criteriaForDisplay() ?? []);
+        $scales = EvaluationScale::orderBy('position')->get();
+        $scaleMax = $scales->isNotEmpty() ? $scales->max('value') : 5;
+
+        return view('participant.evaluation-report', compact('program', 'mine', 'report', 'ownCriteria', 'scaleMax'));
     }
 
     public function printReport(Request $request)
@@ -698,6 +813,22 @@ class ParticipantController extends Controller
             'programs' => $programs,
             'departments' => Department::orderBy('name')->get(['id', 'name']),
             'businessUnits' => BusinessUnit::with('department:id,name')->orderBy('name')->get(['id', 'name', 'department_id']),
+            'reportFormData' => $programs->mapWithKeys(function (Program $cycle) {
+                $report = $cycle->outputs->firstWhere('is_final_report', true);
+
+                return [(string) $cycle->id => [
+                    'exists' => (bool) $report,
+                    'title' => $report?->title ?? '',
+                    'year' => $report?->year ?? $cycle->end_date?->format('Y') ?? $cycle->start_date?->format('Y') ?? '',
+                    'dept' => (string) ($report?->department_id ?? $cycle->department_id ?? ''),
+                    'unit' => (string) ($report?->business_unit_id ?? $cycle->business_unit_id ?? ''),
+                    'level' => (string) ($cycle->collaboration?->level ?? ''),
+                    'link' => $report?->link ?? '',
+                    'lapLink' => $report?->laporan_link ?? '',
+                    'hasilNote' => $report?->hasil_file_path ? 'Sudah ada file (pilih baru untuk mengganti)' : 'Pilih File Dokumen',
+                    'lapNote' => $report?->file_path ? 'Sudah ada file (pilih baru untuk mengganti)' : 'Pilih File Dokumen',
+                ]];
+            }),
         ]);
     }
 
@@ -710,14 +841,23 @@ class ParticipantController extends Controller
 
     public function certificates(Request $request)
     {
-        $certificates = Certificate::query()
+        // Menu Sertifikat dilebur ke Hasil Studi.
+        return redirect()->route('participant.evaluation');
+    }
+
+    /**
+     * Sertifikat terbit milik peserta, dipakai menu Hasil Studi.
+     *
+     * @return Collection<int, Certificate>
+     */
+    private function participantCertificates(Request $request)
+    {
+        return Certificate::query()
             ->with(['program.businessUnit', 'program.department', 'program.mentor.user', 'program.participant.user'])
             ->whereHas('program', fn ($query) => $query->where('participant_id', $request->user()->participant?->id))
             ->where('status', 'issued')
             ->latest('issued_at')
             ->get();
-
-        return view('participant.certificates', compact('certificates'));
     }
 
     public function printCertificate(Request $request, Certificate $certificate)
@@ -849,11 +989,14 @@ class ParticipantController extends Controller
 
     private function evalRules(Request $request): array
     {
+        // Nilai yang sah mengikuti skala Likert kelolaan admin.
+        $scores = EvaluationScale::orderBy('position')->pluck('value')->all() ?: [1, 2, 3, 4, 5];
+
         return $request->validate([
-            'criteria' => ['required', 'array', 'min:1', 'max:15'],
+            'criteria' => ['required', 'array', 'min:1', 'max:50'],
             'criteria.*' => ['required', 'array:label,score'],
             'criteria.*.label' => ['required', 'string', 'max:120'],
-            'criteria.*.score' => ['required', 'integer', 'min:1', 'max:5'],
+            'criteria.*.score' => ['required', 'integer', Rule::in($scores)],
             'comments' => ['nullable', 'string'],
         ]);
     }

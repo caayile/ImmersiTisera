@@ -24,13 +24,7 @@ class OutputUploadTest extends TestCase
 
         $this->actingAs($participant)
             ->get(route('participant.outputs'))
-            ->assertOk()
-            ->assertSee('Hasil dan Bukti')
-            ->assertSee('Form unggah bukti')
-            ->assertSee('Jadikan hasil utama')
-            ->assertSee('Unggah bukti')
-            ->assertSee('Langkah 1')
-            ->assertSee('Hasil program ini');
+            ->assertRedirect(route('participant.final-report'));
 
         $this->actingAs($participant)
             ->post('/participant/outputs', [
@@ -45,17 +39,21 @@ class OutputUploadTest extends TestCase
         Storage::disk('public')->assertExists($output->file_path);
 
         $this->actingAs($mentor)
-            ->get(route('mentor.outputs'))
+            ->get(route('mentor.participants.show', $program))
             ->assertOk()
-            ->assertSee('Pilih peserta untuk meninjau')
+            ->assertSee('Laporan Akhir')
             ->assertSee($participant->name)
-            ->assertSee($program->businessUnit->name)
-            ->assertSee('Lihat hasil');
+            ->assertSee('Bukti Dokumentasi Observasi');
+
+        $output = $program->outputs()->latest()->firstOrFail();
 
         $this->actingAs($mentor)
-            ->get(route('mentor.outputs.show', $program))
-            ->assertOk()
-            ->assertSee('Bukti Dokumentasi Observasi')
-            ->assertSee('Lihat / unduh bukti');
+            ->post(route('mentor.outputs.review', $output), [
+                'status' => 'approved',
+                'mentor_feedback' => 'Baik.',
+            ])
+            ->assertRedirect();
+
+        $this->assertSame('approved', $output->fresh()->status);
     }
 }

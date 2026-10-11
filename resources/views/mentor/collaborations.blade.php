@@ -1,7 +1,6 @@
 @extends('layouts.app')
-@section('title', 'Kolaborasi')
+@section('title', 'Rencana Kolaborasi')
 @section('content')
-<h1 class="text-2xl font-semibold">Rencana Kolaborasi</h1>
 @foreach($programs as $program)
     @php $item = $program->collaboration; @endphp
     <form method="POST" action="{{ route('mentor.collaborations.update', $program) }}" class="mt-6 space-y-3 rounded-2xl border border-line bg-white p-5">

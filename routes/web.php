@@ -64,6 +64,7 @@ Route::middleware(['auth', 'role:participant'])->prefix('participant')->name('pa
     Route::get('/logbooks', [ParticipantController::class, 'logbooks'])->name('logbooks');
     Route::post('/logbooks', [ParticipantController::class, 'storeLogbook']);
     Route::get('/mentoring', [ParticipantController::class, 'mentoring'])->name('mentoring');
+    Route::post('/mentoring', [ParticipantController::class, 'storeMentoring'])->name('mentoring.store');
     Route::get('/outputs', [ParticipantController::class, 'outputs'])->name('outputs');
     Route::post('/outputs', [ParticipantController::class, 'storeOutput']);
     Route::get('/certificates', [ParticipantController::class, 'certificates'])->name('certificates');
@@ -72,6 +73,7 @@ Route::middleware(['auth', 'role:participant'])->prefix('participant')->name('pa
     Route::post('/final-report', [ParticipantController::class, 'storeOutput']);
     Route::get('/evaluation', [ParticipantController::class, 'evaluation'])->name('evaluation');
     Route::post('/evaluation', [ParticipantController::class, 'storeEvaluation']);
+    Route::get('/evaluation/report/{program?}', [ParticipantController::class, 'report'])->whereNumber('program')->name('evaluation.report');
     Route::get('/evaluation/report-preview', [ParticipantController::class, 'printReport'])->name('evaluation.report-preview');
     Route::get('/evaluation/report-pdf', [ParticipantController::class, 'downloadReportPdf'])->name('evaluation.report-pdf');
     Route::get('/collaboration', [ParticipantController::class, 'collaboration'])->name('collaboration');
@@ -102,15 +104,15 @@ Route::middleware(['auth', 'role:mentor'])->prefix('mentor')->name('mentor.')->g
     Route::post('/logbooks/{logbook}', [MentorController::class, 'reviewLogbook'])->name('logbooks.review');
     Route::get('/mentoring', [MentorController::class, 'mentoring'])->name('mentoring');
     Route::post('/mentoring', [MentorController::class, 'storeMentoring']);
-    Route::get('/outputs', [MentorController::class, 'outputs'])->name('outputs');
-    Route::get('/outputs/{program}', [MentorController::class, 'showOutputs'])->name('outputs.show');
     Route::post('/outputs/{output}/review', [MentorController::class, 'reviewOutput'])->name('outputs.review');
-    Route::get('/certificates', [MentorController::class, 'certificates'])->name('certificates');
+    Route::get('/certificates', fn () => redirect()->route('mentor.penilaian'))->name('certificates');
     Route::post('/certificates/signature', [MentorController::class, 'updateCertificateSignature'])->name('certificates.signature');
-    Route::post('/certificates/{program}/issue', [MentorController::class, 'issueCertificate'])->name('certificates.issue');
     Route::get('/certificates/{certificate}/print', [MentorController::class, 'printCertificate'])->name('certificates.print');
     Route::get('/evaluations', [MentorController::class, 'evaluations'])->name('evaluations');
+    Route::get('/penilaian', [MentorController::class, 'penilaian'])->name('penilaian');
+    Route::get('/penilaian/{program}', [MentorController::class, 'showPenilaian'])->name('penilaian.show');
     Route::post('/evaluations/{program}', [MentorController::class, 'storeEvaluation'])->name('evaluations.store');
+    Route::post('/evaluations/{program}/approve', [MentorController::class, 'approveReport'])->name('evaluations.approve');
     Route::get('/collaborations', [MentorController::class, 'collaborations'])->name('collaborations');
     Route::post('/collaborations/{program}', [MentorController::class, 'updateCollaboration'])->name('collaborations.update');
     Route::get('/notifications', [MentorController::class, 'notifications'])->name('notifications');
@@ -149,6 +151,12 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/monitoring', [AdminController::class, 'monitoring'])->name('monitoring');
     Route::get('/monitoring/{program}', [AdminController::class, 'showMonitoringLogbooks'])->name('monitoring.show');
     Route::get('/evaluations', [AdminController::class, 'evaluations'])->name('evaluations');
+    Route::get('/questionnaires', [AdminController::class, 'questionnaires'])->name('questionnaires');
+    Route::get('/questionnaires/sections/{section}', [AdminController::class, 'showQuestionSection'])->name('questionnaires.show');
+    Route::post('/questionnaires/sections/{section}', [AdminController::class, 'saveQuestionSection'])->name('questionnaires.save');
+    Route::post('/questionnaires/scales', [AdminController::class, 'storeScale'])->name('scales.store');
+    Route::put('/questionnaires/scales/{scale}', [AdminController::class, 'updateScale'])->name('scales.update');
+    Route::delete('/questionnaires/scales/{scale}', [AdminController::class, 'destroyScale'])->name('scales.destroy');
     Route::get('/collaborations', [AdminController::class, 'collaborations'])->name('collaborations');
     Route::get('/reports', [AdminController::class, 'reports'])->name('reports');
     Route::get('/news', [AdminController::class, 'news'])->name('news');

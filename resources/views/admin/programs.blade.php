@@ -1,8 +1,7 @@
 @extends('layouts.app')
-@section('title', 'Program')
+@section('title', 'Manajemen Program')
 @section('content')
-<h1 class="text-2xl font-semibold">Manajemen Program</h1>
-<form class="mt-4 flex flex-wrap gap-3">
+<form class="flex flex-wrap gap-3">
     <select name="status" class="rounded-lg border border-line px-3 py-2 text-sm">
         <option value="">Semua status</option>
         @foreach(['draft','submitted','revision','agreed','active','completed'] as $status)

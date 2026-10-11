@@ -8,6 +8,8 @@ use App\Models\BusinessUnit;
 use App\Models\Certificate;
 use App\Models\CollaborationPipeline;
 use App\Models\Evaluation;
+use App\Models\EvaluationQuestion;
+use App\Models\EvaluationSection;
 use App\Models\Logbook;
 use App\Models\Mentor;
 use App\Models\MentorSession;
@@ -239,7 +241,7 @@ class MentorController extends Controller
                 'end_date' => now()->addDays(60)->toDateString(),
             ]);
             $program->seedTimeline();
-            $program->participant->user->notify(new ImersiAlert('Program aktif', 'Perjanjian disetujui. Masa magang dimulai.', route('participant.program')));
+            $program->participant->user->notify(new ImersiAlert('Program aktif', 'Perjanjian disetujui. Masa magang dimulai.', route('participant.dashboard')));
         }
 
         return back()->with('status', 'Keputusan perjanjian disimpan.');
@@ -262,50 +264,33 @@ class MentorController extends Controller
     {
         $this->authorizeProgram($request, $timeline->program);
 
+        // Checkpoint tidak mengenal revisi: mentor cukup memvalidasi sekali.
         $data = $request->validate([
-            'status' => ['required', 'in:done,pending'],
-            'mentor_note' => ['required_if:status,pending', 'nullable', 'string'],
+            'mentor_note' => ['nullable', 'string'],
         ]);
 
         $timeline->update([
-            'status' => $data['status'],
-            'mentor_note' => $data['status'] === 'pending' ? $data['mentor_note'] : null,
+            'status' => 'done',
+            'mentor_note' => $data['mentor_note'] ?? null,
         ]);
         $timeline->program->participant->user->notify(new ImersiAlert(
-            'Checkpoint minggu '.$timeline->week.' '.$data['status'],
-            $data['status'] === 'done' ? 'Mentor mengesahkan checkpoint.' : ($data['mentor_note'] ?? 'Mentor meminta perbaikan.'),
+            'Checkpoint minggu '.$timeline->week.' divalidasi',
+            'Mentor memvalidasi checkpoint.',
             route('participant.timeline')
         ));
 
-        return back()->with('status', 'Checkpoint diperbarui.');
+        return back()->with('status', 'Checkpoint divalidasi.');
     }
 
     public function logbooks(Request $request)
     {
         $query = $this->mine($request)->with(['participant.user', 'department', 'businessUnit', 'logbooks']);
 
-        if ($request->filled('q')) {
-            $needle = mb_strtolower($request->string('q')->toString(), 'UTF-8');
-            $query->whereHas('participant.user', fn ($q) => $q->whereRaw('LOWER(name) LIKE ?', ['%'.$needle.'%']));
-        }
-
-        foreach (['department_id', 'business_unit_id'] as $filter) {
-            if ($request->filled($filter)) {
-                $query->where($filter, $request->input($filter));
-            }
-        }
-
         if ($request->filled('status')) {
             $query->whereHas('logbooks', fn ($q) => $q->where('status', $request->input('status')));
         }
 
-        $programs = $query->get();
-
-        return view('mentor.logbooks', [
-            'programs' => $programs,
-            'departments' => $programs->pluck('department')->filter()->unique('id')->sortBy('name'),
-            'businessUnits' => $programs->pluck('businessUnit')->filter()->unique('id')->sortBy('name'),
-        ]);
+        return view('mentor.logbooks', ['programs' => $query->get()]);
     }
 
     public function showLogbooks(Request $request, Program $program)
@@ -388,25 +373,6 @@ class MentorController extends Controller
         return back()->with('status', 'Sesi mentoring disimpan.');
     }
 
-    public function outputs(Request $request)
-    {
-        $programs = $this->mine($request)
-            ->with(['participant.user', 'businessUnit', 'department', 'outputs'])
-            ->whereHas('outputs')
-            ->get();
-
-        return view('mentor.outputs', compact('programs'));
-    }
-
-    public function showOutputs(Request $request, Program $program)
-    {
-        $this->authorizeProgram($request, $program);
-
-        return view('mentor.outputs-show', [
-            'program' => $program->load(['participant.user', 'businessUnit', 'department', 'outputs']),
-        ]);
-    }
-
     public function reviewOutput(Request $request, ProgramOutput $output)
     {
         $this->authorizeProgram($request, $output->program);
@@ -415,23 +381,9 @@ class MentorController extends Controller
             'mentor_feedback' => ['nullable', 'string'],
         ]);
         $output->update($data);
-        $output->program->participant->user->notify(new ImersiAlert('Hasil: '.Status::outputLabel($data['status']), $output->title, route('participant.outputs')));
+        $output->program->participant->user->notify(new ImersiAlert('Hasil: '.Status::outputLabel($data['status']), $output->title, route('participant.final-report')));
 
         return back()->with('status', 'Hasil berhasil divalidasi.');
-    }
-
-    public function certificates(Request $request)
-    {
-        $mentor = $request->user()->mentor;
-        $programs = $this->mine($request)
-            ->with(['participant.user', 'businessUnit', 'department', 'certificate'])
-            ->whereIn('status', ['active', 'completed'])
-            ->get();
-
-        return view('mentor.certificates', [
-            'mentor' => $mentor,
-            'programs' => $programs,
-        ]);
     }
 
     public function updateCertificateSignature(Request $request)
@@ -446,18 +398,45 @@ class MentorController extends Controller
         return back()->with('status', 'Tanda tangan sertifikat disimpan.');
     }
 
-    public function issueCertificate(Request $request, Program $program)
+    /**
+     * Pengesahan bersama: nilai raport dianggap final sekaligus
+     * menerbitkan sertifikat dalam satu aksi.
+     */
+    public function approveReport(Request $request, Program $program)
     {
         $this->authorizeProgram($request, $program);
 
+        $evaluation = Evaluation::where('program_id', $program->id)
+            ->where('evaluator_id', $request->user()->id)
+            ->first();
+
+        abort_unless($evaluation?->hasReport(), 404, 'Isi nilai raport terlebih dahulu.');
+
         $mentor = $request->user()->mentor;
         if (! filled($mentor?->certificate_signature)) {
-            return back()->withErrors(['certificate_signature' => 'Simpan tanda tangan sertifikat terlebih dahulu.']);
+            return back()->withErrors(['certificate_signature' => 'Simpan tanda tangan sertifikat terlebih dahulu pada bagian tanda tangan di halaman ini.']);
         }
 
+        $certificate = $this->issueCertificateFor($mentor, $program);
+
+        $program->participant->user->notify(new ImersiAlert(
+            'Raport disahkan',
+            'Nilai raport '.$evaluation->reportAverage().' ('.$evaluation->predicate().') disahkan dan sertifikat diterbitkan.',
+            route('participant.evaluation')
+        ));
+
+        return back()->with('status', 'Raport disahkan dan sertifikat diterbitkan untuk '.$program->participant->user->name.'. Nomor: '.$certificate->number);
+    }
+
+    /**
+     * Terbitkan (atau kembalikan) sertifikat program. Idempoten:
+     * nomor yang sudah ada dipertahankan.
+     */
+    private function issueCertificateFor(Mentor $mentor, Program $program): Certificate
+    {
         $existingNumber = Certificate::query()->where('program_id', $program->id)->value('number');
 
-        $certificate = Certificate::query()->updateOrCreate(
+        return Certificate::query()->updateOrCreate(
             ['program_id' => $program->id],
             [
                 'status' => 'issued',
@@ -466,14 +445,6 @@ class MentorController extends Controller
                 'number' => $existingNumber ?: sprintf('CERT/%s/%03d', now()->format('Y'), $program->id),
             ]
         );
-
-        $program->participant->user->notify(new ImersiAlert(
-            'Sertifikat tersedia',
-            'Sertifikat magang Anda sudah diterbitkan.',
-            route('participant.certificates')
-        ));
-
-        return back()->with('status', 'Sertifikat diterbitkan untuk '.$program->participant->user->name.'. Nomor: '.$certificate->number);
     }
 
     public function printCertificate(Request $request, Certificate $certificate)
@@ -496,8 +467,66 @@ class MentorController extends Controller
         $received = $programs->flatMap(fn (Program $program) => $program->evaluations)
             ->whereNotIn('evaluator_id', [$evaluatorId])
             ->values();
+        $certificates = Certificate::whereIn('program_id', $programs->pluck('id'))->get()->keyBy('program_id');
+        $hasSignature = filled($request->user()->mentor?->certificate_signature);
 
-        return view('mentor.evaluations', compact('programs', 'given', 'received'));
+        $sections = EvaluationSection::with(['questions' => fn ($query) => $query->where('is_active', true)->orderBy('position')])
+            ->orderBy('position')
+            ->get();
+        $bank = $sections->isNotEmpty()
+            ? $sections->map(fn (EvaluationSection $section) => [
+                'key' => $section->key,
+                'title' => $section->title,
+                'questions' => $section->questions->pluck('question')->all(),
+            ])->all()
+            : EvaluationQuestion::defaultBank();
+
+        return view('mentor.evaluations', compact('programs', 'given', 'received', 'certificates', 'hasSignature', 'bank'));
+    }
+
+    /**
+     * Menu Penilaian: khusus membuat dan mengesahkan raport
+     * sekaligus menerbitkan sertifikat.
+     */
+    public function penilaian(Request $request)
+    {
+        $programs = $this->mine($request)->with(['participant.user', 'businessUnit', 'evaluations.evaluator', 'evaluations.program.participant.user', 'evaluations.program.businessUnit'])->get();
+        $evaluatorId = $request->user()->id;
+
+        $given = $programs->flatMap(fn (Program $program) => $program->evaluations)
+            ->where('evaluator_id', $evaluatorId)
+            ->values();
+        $certificates = Certificate::whereIn('program_id', $programs->pluck('id'))->get()->keyBy('program_id');
+        $hasSignature = filled($request->user()->mentor?->certificate_signature);
+        $mentor = $request->user()->mentor;
+
+        return view('mentor.penilaian', compact('programs', 'given', 'certificates', 'hasSignature', 'mentor'));
+    }
+
+    /**
+     * Detail penilaian per peserta: input nilai + tanda tangan,
+     * lalu sahkan sekaligus terbitkan sertifikat di bagian bawah.
+     */
+    public function showPenilaian(Request $request, Program $program)
+    {
+        $this->authorizeProgram($request, $program);
+
+        $program->load(['participant.user', 'businessUnit', 'department', 'certificate']);
+        $evaluation = Evaluation::where('program_id', $program->id)
+            ->where('evaluator_id', $request->user()->id)
+            ->first();
+        $mentor = $request->user()->mentor;
+
+        return view('mentor.penilaian-show', [
+            'program' => $program,
+            'evaluation' => $evaluation,
+            'average' => $evaluation?->reportAverage(),
+            'certificate' => $program->certificate,
+            'hasSignature' => filled($mentor?->certificate_signature),
+            'mentor' => $mentor,
+            'groups' => $evaluation?->grade_groups ?: Evaluation::defaultGradeGroups(),
+            'comments' => $evaluation?->comments ?? '',
+        ]);
     }
 
     public function storeEvaluation(Request $request, Program $program)

@@ -12,7 +12,6 @@
         <img src="{{ $businessUnit->imageUrl() }}" alt="{{ $businessUnit->name }}" class="h-14 w-20 rounded-xl object-cover">
     @endif
     <div>
-        <h1 class="text-2xl font-semibold">Ubah Departemen</h1>
         <p class="text-sm text-muted">{{ $businessUnit->name }} · {{ $dept->name }}</p>
     </div>
 </div>

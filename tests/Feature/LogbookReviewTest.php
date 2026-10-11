@@ -11,20 +11,29 @@ class LogbookReviewTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_mentor_sees_participant_logbooks_with_business_unit_and_department_filter(): void
+    public function test_mentor_sees_participant_logbooks_with_status_filter(): void
     {
         $this->seed();
 
         $mentor = User::where('email', 'mentor@imersi.id')->firstOrFail();
 
         $this->actingAs($mentor)
-            ->get(route('mentor.logbooks', ['q' => 'Andi']))
+            ->get(route('mentor.logbooks'))
             ->assertOk()
             ->assertSee('Dr. Andi Pratama')
             ->assertSee('Digital Business')
             ->assertSee('TSPM')
             ->assertSee('Lihat rincian')
-            ->assertDontSee('Dr. Maya Kusuma');
+            ->assertSee('Semua status logbook')
+            ->assertDontSee('Cari nama peserta');
+
+        $program = Program::whereHas('participant.user', fn ($query) => $query->where('name', 'Dr. Andi Pratama'))->firstOrFail();
+        $status = $program->logbooks()->firstOrFail()->status;
+
+        $this->actingAs($mentor)
+            ->get(route('mentor.logbooks', ['status' => $status]))
+            ->assertOk()
+            ->assertSee('Dr. Andi Pratama');
 
         $program = Program::whereHas('participant.user', fn ($query) => $query->where('name', 'Dr. Andi Pratama'))->firstOrFail();
 

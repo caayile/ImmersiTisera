@@ -39,11 +39,17 @@ class ReportGradeTest extends TestCase
         $this->seed();
 
         $mentor = User::where('email', 'mentor@imersi.id')->firstOrFail();
+        $program = Program::whereHas('mentor.user', fn ($query) => $query->whereKey($mentor->id))->firstOrFail();
 
         $this->actingAs($mentor)
-            ->get(route('mentor.evaluations'))
+            ->get(route('mentor.penilaian'))
             ->assertOk()
             ->assertSee('Belum dinilai')
+            ->assertSee('Penilaian');
+
+        $this->actingAs($mentor)
+            ->get(route('mentor.penilaian.show', $program))
+            ->assertOk()
             ->assertSee('Input Nilai Magang')
             ->assertSee('Tambah aspek');
     }
@@ -122,10 +128,15 @@ class ReportGradeTest extends TestCase
         $this->actingAs($dosen)
             ->get(route('participant.evaluation'))
             ->assertOk()
+            ->assertSee('Lihat Detail')
+            ->assertDontSee('terkunci');
+
+        $this->actingAs($dosen)
+            ->get(route('participant.evaluation.report'))
+            ->assertOk()
             ->assertSee('Nilai raport dari')
             ->assertSee('Bagus.')
-            ->assertSee('91')
-            ->assertDontSee('terkunci');
+            ->assertSee('91');
     }
 
     public function test_legacy_mentor_evaluation_stays_visible_without_own_evaluation(): void
@@ -204,5 +215,49 @@ class ReportGradeTest extends TestCase
             ->assertOk()
             ->assertSee('LAPORAN NILAI MAGANG DOSEN')
             ->assertSee('Cetak', false);
+    }
+
+    public function test_history_lists_past_cycles_and_archive_detail_opens(): void
+    {
+        $this->seed();
+
+        $dosen = User::where('email', 'dosen@imersi.id')->firstOrFail();
+        $mentor = User::where('email', 'mentor@imersi.id')->firstOrFail();
+        $current = $dosen->participant->programs()->latest()->firstOrFail();
+
+        $old = Program::create([
+            'participant_id' => $current->participant_id,
+            'mentor_id' => $current->mentor_id,
+            'department_id' => $current->department_id,
+            'business_unit_id' => $current->business_unit_id,
+            'start_date' => '2024-10-01',
+            'end_date' => '2024-12-01',
+            'status' => 'completed',
+        ]);
+        $old->created_at = now()->subYears(2);
+        $old->updated_at = now()->subYears(2);
+        $old->save();
+
+        Evaluation::create([
+            'program_id' => $old->id,
+            'evaluator_id' => $mentor->id,
+            'grade_groups' => $this->reportGroups(),
+            'comments' => 'Arsip dua tahun lalu.',
+        ]);
+
+        // Tanpa mengisi kuesioner siklus berjalan: arsip tetap terlihat.
+        $this->actingAs($dosen)
+            ->get(route('participant.evaluation'))
+            ->assertOk()
+            ->assertSee('Riwayat Hasil Magang Dosen')
+            ->assertSee('Oct 2024')
+            ->assertSee('2024');
+
+        // Detail arsip terbuka tanpa kuesioner; rapor tertulis di sana.
+        $this->actingAs($dosen)
+            ->get(route('participant.evaluation.report', $old))
+            ->assertOk()
+            ->assertSee('Nilai raport dari')
+            ->assertSee('Arsip dua tahun lalu.');
     }
 }

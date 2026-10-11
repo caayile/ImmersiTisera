@@ -1,7 +1,6 @@
 @extends('layouts.app')
-@section('title', 'Kolaborasi')
+@section('title', 'Kolaborasi Lanjutan')
 @section('content')
-<h1 class="text-2xl font-semibold">Kolaborasi Lanjutan</h1>
 @unless($program)
     <x-empty class="mt-6" title="Pipeline kolaborasi belum ada" />
 @else

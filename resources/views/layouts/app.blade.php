@@ -27,16 +27,13 @@
         'participant' => [
             ['Dashboard Program', 'participant.dashboard'],
             ['Riwayat Pendaftaran', 'participant.applications'],
-            ['Program', 'participant.program'],
             ['Perjanjian', 'participant.agreement'],
             ['Checkpoint', 'participant.timeline'],
             ['Logbook', 'participant.logbooks'],
-            ['Pendampingan', 'participant.mentoring'],
-            ['Hasil', 'participant.outputs'],
+            ['Mentoring', 'participant.mentoring'],
             ['Laporan Akhir', 'participant.final-report'],
-            ['Evaluasi', 'participant.evaluation'],
+            ['Hasil Studi', 'participant.evaluation'],
             ['Kolaborasi', 'participant.collaboration'],
-            ['Sertifikat', 'participant.certificates'],
             ['Notifikasi', 'participant.notifications'],
             ['Pengaturan', 'participant.settings'],
         ],
@@ -48,11 +45,10 @@
             ['Perjanjian Magang Dosen', 'mentor.agreements'],
             ['Checkpoint', 'mentor.timeline'],
             ['Pemeriksaan Logbook', 'mentor.logbooks'],
-            ['Pendampingan', 'mentor.mentoring'],
-            ['Hasil & Bukti', 'mentor.outputs'],
+            ['Mentoring', 'mentor.mentoring'],
+            ['Penilaian', 'mentor.penilaian'],
             ['Evaluasi', 'mentor.evaluations'],
             ['Alur Kolaborasi', 'mentor.collaborations'],
-            ['Sertifikat', 'mentor.certificates'],
             ['Notifikasi', 'mentor.notifications'],
         ],
         'admin' => [
@@ -69,6 +65,7 @@
             ['Perjanjian', 'admin.agreements'],
             ['Logbook Peserta', 'admin.monitoring'],
             ['Evaluasi', 'admin.evaluations'],
+            ['Kuesioner', 'admin.questionnaires'],
             ['Alur Kolaborasi', 'admin.collaborations'],
             ['Laporan', 'admin.reports'],
             ['Berita', 'admin.news'],
@@ -80,16 +77,13 @@
         'home' => 'home',
         'participant.dashboard' => 'space_dashboard',
         'participant.applications' => 'description',
-        'participant.program' => 'work_history',
         'participant.agreement' => 'draw',
         'participant.timeline' => 'fact_check',
         'participant.logbooks' => 'edit_note',
         'participant.mentoring' => 'forum',
-        'participant.outputs' => 'folder_special',
         'participant.final-report' => 'summarize',
-        'participant.evaluation' => 'rate_review',
+        'participant.evaluation' => 'badge',
         'participant.collaboration' => 'handshake',
-        'participant.certificates' => 'workspace_premium',
         'participant.notifications' => 'notifications',
         'participant.settings' => 'settings',
         'mentor.dashboard' => 'space_dashboard',
@@ -100,10 +94,9 @@
         'mentor.timeline' => 'fact_check',
         'mentor.logbooks' => 'menu_book',
         'mentor.mentoring' => 'forum',
-        'mentor.outputs' => 'folder_special',
+        'mentor.penilaian' => 'grade',
         'mentor.evaluations' => 'rate_review',
         'mentor.collaborations' => 'handshake',
-        'mentor.certificates' => 'workspace_premium',
         'mentor.notifications' => 'notifications',
         'admin.dashboard' => 'space_dashboard',
         'admin.users' => 'manage_accounts',
@@ -117,6 +110,7 @@
         'admin.agreements' => 'draw',
         'admin.monitoring' => 'monitoring',
         'admin.evaluations' => 'rate_review',
+        'admin.questionnaires' => 'quiz',
         'admin.collaborations' => 'handshake',
         'admin.reports' => 'bar_chart',
         'admin.news' => 'newspaper',
@@ -181,10 +175,12 @@
     </aside>
 
     <div class="min-w-0">
-        <header class="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-line bg-white/95 px-5 py-3 backdrop-blur-md lg:px-8">
-            <button type="button" class="rounded-lg border border-line px-3 py-1 text-sm lg:hidden" @click="open = !open">Menu</button>
+        <header class="sticky top-0 z-20 flex items-center gap-3 border-b border-line bg-white/95 px-5 py-3 backdrop-blur-md lg:px-8">
+            <button type="button" class="shrink-0 rounded-lg border border-line px-3 py-1 text-sm lg:hidden" @click="open = !open">Menu</button>
 
-            <div class="ml-auto flex items-center gap-2">
+            <h1 class="min-w-0 flex-1 truncate text-lg font-semibold lg:text-xl">@yield('title', 'Dashboard Program')</h1>
+
+            <div class="ml-auto flex shrink-0 items-center gap-2">
                 @if(in_array($role, ['participant', 'mentor'], true))
                     <x-notification-bell :unread="$unread" />
                 @endif

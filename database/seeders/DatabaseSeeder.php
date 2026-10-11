@@ -314,6 +314,7 @@ class DatabaseSeeder extends Seeder
         $mentorUser->notify(new ImersiAlert('Logbook pending review', 'Ada logbook dari Dr. Andi Pratama.', '/mentor/logbooks'));
 
         $this->call(NewsSeeder::class);
+        $this->call(QuestionnaireBankSeeder::class);
         $this->call(DepartmentK33WjlSeeder::class);
         $this->call(DepartmentAhAlFirdausPuspaSeeder::class);
         $this->call(DepartmentHeroSeeder::class);

@@ -1,8 +1,7 @@
 @extends('layouts.app')
 @section('title', 'Perjanjian')
 @section('content')
-<h1 class="text-2xl font-semibold">Perjanjian</h1>
-<div class="mt-6 overflow-x-auto rounded-2xl border border-line bg-white">
+<div class="overflow-x-auto rounded-2xl border border-line bg-white">
     <table class="min-w-full text-left text-sm">
         <thead class="bg-bg text-xs uppercase text-muted"><tr><th class="px-4 py-3">Peserta</th><th class="px-4 py-3">Nomor Surat</th><th class="px-4 py-3">Status</th><th class="px-4 py-3">Hasil Utama</th><th class="px-4 py-3">PDF</th></tr></thead>
         <tbody>

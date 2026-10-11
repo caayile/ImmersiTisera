@@ -1,278 +1,255 @@
 @extends('layouts.app')
-@section('title', 'Evaluasi')
+@section('title', 'Hasil Magang')
 @section('content')
 @php
-    $myEvaluations = $program ? $program->evaluations->where('evaluator_id', auth()->id())->values() : collect();
-    $mentorEvaluations = $program ? $program->evaluations->whereNotIn('evaluator_id', [auth()->id()])->values() : collect();
-    $columnLabels = function ($evaluations) {
-        $labels = $evaluations->flatMap(fn ($eval) => collect($eval->criteriaForDisplay())->pluck('label'))->unique()->values();
-        return $labels->isNotEmpty() ? $labels : collect((new \App\Models\Evaluation)->criteriaForDisplay())->pluck('label');
-    };
-    $myColumns = $columnLabels($myEvaluations);
-    $mentorColumns = $columnLabels($mentorEvaluations);
+    $myId = auth()->id();
+    $topReport = $topCycle ? $topCycle->evaluations->whereNotIn('evaluator_id', [$myId])->first(fn ($eval) => $eval->hasReport()) : null;
+    $legacyEvals = $program ? $program->evaluations->whereNotIn('evaluator_id', [$myId])->reject(fn ($eval) => $eval->hasReport())->values() : collect();
+    $ownFilled = (bool) $mine;
+    $legacyLabels = $legacyEvals->flatMap(fn ($eval) => collect($eval->criteriaForDisplay())->pluck('label'))->unique()->values();
+    $quizIndex = 0;
+    $topCertificate = $topCycle ? $certificates->firstWhere('program_id', $topCycle->id) : null;
 @endphp
-<div>
-    <h1 class="text-2xl font-semibold">Evaluasi</h1>
-    <p class="mt-1 text-sm text-muted">Penilaian dua arah di akhir program: dosen menilai pelaksanaan magang dan mentor menilai capaian dosen, sebagai syarat penyelesaian program.</p>
-</div>
+<p class="text-sm text-muted">Lihat riwayat, nilai, dan sertifikat dari kegiatan magangmu.</p>
+
 @unless($program)
-    <x-empty class="mt-6" title="Evaluasi belum dibuka" />
+    <x-empty class="mt-6" title="Hasil studi belum tersedia">Hasil studi muncul setelah program dimulai.</x-empty>
 @else
-<div class="mt-6" x-data="{ tab: 'mine' }">
-    <div class="grid grid-cols-2 gap-1 rounded-xl border border-line bg-white p-1 text-sm font-semibold">
-        <button type="button" @click="tab = 'mine'" :class="tab === 'mine' ? 'rounded-lg bg-primary/12 text-primary-dark' : 'rounded-lg text-muted hover:text-ink'" class="px-4 py-2.5 transition">Penilaian untuk mentor</button>
-        <button type="button" @click="tab = 'mentor'" :class="tab === 'mentor' ? 'rounded-lg bg-primary/12 text-primary-dark' : 'rounded-lg text-muted hover:text-ink'" class="px-4 py-2.5 transition">Penilaian dari mentor</button>
-    </div>
+<div x-data="{ flow: 'table', quizStep: 1 }">
+    @if($topCycle)
+        {{-- Kartu Magang Saat Ini --}}
+        <div x-show="flow === 'table'" class="mt-4 rounded-2xl border border-line bg-white p-5 shadow-sm sm:p-6">
+            <div class="flex items-start justify-between gap-3">
+                <p class="flex items-center gap-2 font-semibold">
+                    <span class="material-symbols-outlined text-[20px]">work</span>
+                    Magang saat ini
+                </p>
+                @if(! $topReport)
+                    <span class="shrink-0 rounded-full bg-orange-100 px-3 py-1 text-[11px] font-semibold text-orange-700">Nilai belum diberikan oleh mentor.</span>
+                @elseif(! $ownFilled)
+                    <span class="shrink-0 rounded-full bg-emerald-100 px-3 py-1 text-[11px] font-semibold text-emerald-800">Mentor sudah memberikan nilai dan sertifikat, segera isi kuesioner untuk melihat</span>
+                @endif
+            </div>
+            <p class="mt-3 text-lg font-bold">{{ $topCycle->department?->name ?? '—' }} - Departemen {{ $topCycle->businessUnit?->name ?? '—' }}</p>
+            <p class="mt-0.5 text-sm text-muted">{{ $topCycle->start_date?->format('F Y') ?? '—' }} – {{ $topCycle->end_date?->format('F Y') ?? '—' }}</p>
 
-    <div class="mt-4 flex flex-col gap-3 md:flex-row md:items-center">
-        <div class="relative flex-1">
-            <span class="material-symbols-outlined pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[20px] text-muted">search</span>
-            <input id="eval-search" type="search" placeholder="Cari penilaian..." class="w-full rounded-xl border border-line bg-white py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/15">
+            @if(! $topReport)
+                @if($legacyEvals->isEmpty())
+                    <p class="mt-3 border-t border-line pt-3 text-sm text-muted">Nilai raport dari mentor terkunci. Pengumuman nilai periode ini ditutup.</p>
+                @endif
+                @if($topCertificate)
+                    <div class="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4 text-sm">
+                        <div>
+                            <p class="font-semibold">Sertifikat</p>
+                            <p class="mt-1 font-medium">{{ $topCertificate->number }}</p>
+                            <p class="mt-0.5 text-muted">{{ $topCycle->businessUnit?->name ?? '—' }} · Terbit {{ $topCertificate->issued_at?->format('d M Y') ?? '—' }}</p>
+                        </div>
+                        <a href="{{ route('participant.certificates.print', $topCertificate) }}" target="_blank" rel="noopener" class="inline-flex shrink-0 items-center gap-1 rounded-xl bg-[#22b07d] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1a9a6d]">Lihat Sertifikat <span aria-hidden="true">↗</span></a>
+                    </div>
+                @endif
+            @elseif(! $ownFilled)
+                <div class="mt-4 flex justify-end border-t border-line pt-4">
+                    <button type="button" @click="flow = 'quiz'; quizStep = 1" class="rounded-xl bg-[#22b07d] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1a9a6d]">Isi Kuesioner Mentor</button>
+                </div>
+                <p class="mt-3 flex items-center gap-1.5 border-t border-line bg-bg/60 px-5 py-3 text-sm text-muted">
+                    <span class="material-symbols-outlined text-[16px]">lock</span>
+                    Nilai raport terkunci sampai kuesioner diisi.
+                </p>
+            @else
+                <div class="mt-4 space-y-4 border-t border-line pt-4">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <p class="text-2xl font-bold {{ \App\Models\Evaluation::predicateColor($topReport->predicate()) }}">{{ $topReport->predicate() ?? '—' }}</p>
+                        <a href="{{ route('participant.evaluation.report') }}" class="inline-flex shrink-0 items-center gap-1 rounded-xl bg-[#22b07d] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1a9a6d]">Lihat Detail <span aria-hidden="true">↗</span></a>
+                    </div>
+                    <div class="flex flex-wrap items-start justify-between gap-3 text-sm">
+                        <div>
+                            <p class="font-semibold">Sertifikat</p>
+                            @if($topCertificate)
+                                <p class="mt-1 font-medium">{{ $topCertificate->number }}</p>
+                                <p class="mt-0.5 text-muted">{{ $topCycle->businessUnit?->name ?? '—' }} · Terbit {{ $topCertificate->issued_at?->format('d M Y') ?? '—' }}</p>
+                            @else
+                                <p class="mt-1 font-medium text-[#22b07d]">Tersedia jika sudah diterbitkan</p>
+                            @endif
+                        </div>
+                        @if($topCertificate)
+                            <a href="{{ route('participant.certificates.print', $topCertificate) }}" target="_blank" rel="noopener" class="inline-flex shrink-0 items-center gap-1 rounded-xl bg-[#22b07d] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1a9a6d]">Lihat Sertifikat <span aria-hidden="true">↗</span></a>
+                        @endif
+                    </div>
+                </div>
+            @endif
         </div>
-        <button id="eval-modal-open" type="button" x-show="tab === 'mine'" x-cloak class="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-dark">
-            <span class="material-symbols-outlined text-[18px]">add</span>
-            Isi evaluasi
-        </button>
-    </div>
 
-    <div x-show="tab === 'mine'">
-        <div class="mt-4 overflow-x-auto rounded-2xl border border-line bg-white">
-            <table class="w-full min-w-[860px] text-left text-sm">
-                <thead>
-                    <tr class="border-b border-line text-sm font-semibold">
-                        <th class="px-4 py-3">No.</th>
-                        @foreach($myColumns as $label)
-                            <th class="px-4 py-3">{{ $label }}</th>
+        {{-- Kuesioner 3 langkah --}}
+        @if($topReport && ! $ownFilled)
+            <div x-show="flow !== 'table'" x-cloak>
+                <button type="button" @click="flow = 'table'" class="mt-6 text-sm font-medium text-primary-dark">&larr; Kembali ke hasil magang</button>
+                <form method="POST" action="{{ route('participant.evaluation') }}" class="mt-3">
+                    @csrf
+                    @if($errors->any())
+                        <p class="mb-4 rounded-xl bg-red-50 px-4 py-2.5 text-sm text-red-700">{{ $errors->first() }}</p>
+                    @endif
+                    @foreach($bank as $sectionIndex => $section)
+                        <section x-show="quizStep === {{ $sectionIndex + 1 }}" class="overflow-hidden rounded-2xl border border-line bg-white shadow-sm">
+                            <p class="border-b border-line px-5 py-3 text-sm font-semibold">{{ $section['title'] }}</p>
+                            <div class="overflow-x-auto">
+                                <table class="w-full min-w-[720px] text-sm">
+                                    <thead>
+                                        <tr class="border-b border-line text-muted">
+                                            <th class="w-10 px-4 py-3 text-left font-medium">No</th>
+                                            <th class="px-4 py-3 text-left font-medium">Pertanyaan</th>
+                                            @foreach($scaleList as $scale)
+                                                <th class="w-24 px-2 py-3 text-center font-medium">{{ $scale['label'] }}</th>
+                                            @endforeach
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($section['questions'] as $question)
+                                            <tr class="border-b border-line last:border-0">
+                                                <td class="px-4 py-3 text-muted">{{ $loop->iteration }}</td>
+                                                <td class="px-4 py-3">{{ $question }}</td>
+                                                <input type="hidden" name="criteria[{{ $quizIndex }}][label]" value="{{ $question }}">
+                                                @foreach($scaleList as $scale)
+                                                    <td class="px-2 py-3 text-center">
+                                                        <input type="radio" name="criteria[{{ $quizIndex }}][score]" value="{{ $scale['value'] }}" class="h-5 w-5 accent-[#22b07d]" required>
+                                                    </td>
+                                                @endforeach
+                                            </tr>
+                                            @php $quizIndex++; @endphp
+                                        @endforeach
+                                        @if($loop->last)
+                                            <tr>
+                                                <td class="px-4 py-3 text-muted">{{ count($section['questions']) + 1 }}</td>
+                                                <td class="px-4 py-3 font-medium">Kritik Dan Saran</td>
+                                                <td colspan="{{ count($scaleList) }}" class="px-4 py-3">
+                                                    <textarea name="comments" rows="3" class="w-full rounded-xl border border-line px-4 py-2.5 text-sm">{{ old('comments', $mine?->comments) }}</textarea>
+                                                </td>
+                                            </tr>
+                                        @endif
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="flex items-center justify-between gap-2 px-5 py-4">
+                                <p class="text-xs text-muted">Langkah {{ $sectionIndex + 1 }} dari {{ count($bank) }}</p>
+                                <div class="flex gap-2">
+                                    @if($sectionIndex > 0)
+                                        <button type="button" @click="quizStep--" class="rounded-xl border border-primary/40 px-5 py-2.5 text-sm font-semibold text-primary-dark transition hover:bg-primary/5">&lsaquo; Sebelumnya</button>
+                                    @endif
+                                    @if($sectionIndex < count($bank) - 1)
+                                        <button type="button" @click="quizStep++" class="rounded-xl bg-[#22b07d] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1a9a6d]">Selanjutnya &rsaquo;</button>
+                                    @else
+                                        <button class="rounded-xl bg-[#22b07d] px-8 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1a9a6d]">Kirim</button>
+                                    @endif
+                                </div>
+                            </div>
+                        </section>
+                    @endforeach
+                </form>
+            </div>
+        @endif
+    @endif
+
+    {{-- Riwayat hasil magang --}}
+    @if($history->isNotEmpty())
+        <h2 id="riwayat" class="mt-8 scroll-mt-24 text-lg font-semibold">Riwayat Hasil Magang Dosen</h2>
+        <div class="mt-3 overflow-hidden rounded-2xl border border-line bg-white shadow-sm">
+            <div class="overflow-x-auto">
+                <table class="w-full min-w-[680px] text-sm">
+                    <thead>
+                        <tr class="border-b border-line text-muted">
+                            <th class="w-10 px-5 py-3 text-left font-medium">No</th>
+                            <th class="px-5 py-3 text-left font-medium">Periode</th>
+                            <th class="px-5 py-3 text-left font-medium">Unit Bisnis</th>
+                            <th class="px-5 py-3 text-left font-medium">Departemen</th>
+                            <th class="px-5 py-3 text-left font-medium">Nilai</th>
+                            <th class="px-5 py-3 text-left font-medium">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($history as $cycle)
+                            @php
+                                $cycleReport = $cycle->evaluations->whereNotIn('evaluator_id', [auth()->id()])->first(fn ($eval) => $eval->hasReport());
+                                $cycleCertificate = $certificates->firstWhere('program_id', $cycle->id);
+                            @endphp
+                            @if($cycleReport || $cycleCertificate)
+                                <tr class="border-b border-line">
+                                    <td class="px-5 py-3 align-top text-muted" rowspan="2">{{ $loop->iteration }}</td>
+                                    <td class="whitespace-nowrap px-5 py-3 align-top font-medium">Periode {{ $cycle->start_date?->format('M Y') ?? '—' }} – {{ $cycle->end_date?->format('M Y') ?? '—' }}</td>
+                                    <td class="px-5 py-3 align-top">{{ $cycle->department?->name ?? '—' }}</td>
+                                    <td class="px-5 py-3 align-top">{{ $cycle->businessUnit?->name ?? '—' }}</td>
+                                    <td class="px-5 py-3 align-top">
+                                        @if($cycleReport)
+                                            <span class="font-semibold {{ \App\Models\Evaluation::predicateColor($cycleReport->predicate()) }}">{{ $cycleReport->predicate() ?? '—' }}</span>
+                                        @else
+                                            <span class="text-muted">—</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-5 py-3 align-top">
+                                        @if($cycleReport)
+                                            <a href="{{ route('participant.evaluation.report', $cycle) }}" class="font-semibold text-[#22b07d] hover:underline">Lihat Detail Nilai</a>
+                                        @else
+                                            <span class="text-muted">—</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                                <tr class="border-b border-line last:border-0">
+                                    <td class="whitespace-nowrap px-5 py-3 align-top font-medium">Sertifikat</td>
+                                    <td class="px-5 py-3 align-top" colspan="2">
+                                        @if($cycleCertificate)
+                                            <span class="font-medium">{{ $cycleCertificate->number }}</span>
+                                            <span class="text-muted">{{ $cycle->businessUnit?->name ?? '' }} · Terbit {{ $cycleCertificate->issued_at?->format('d M Y') ?? '—' }}</span>
+                                        @else
+                                            <span class="text-muted">—</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-5 py-3 align-top"><span class="text-muted">—</span></td>
+                                    <td class="px-5 py-3 align-top">
+                                        @if($cycleCertificate)
+                                            <a href="{{ route('participant.certificates.print', $cycleCertificate) }}" target="_blank" rel="noopener" class="font-semibold text-[#22b07d] hover:underline">Lihat Sertifikat</a>
+                                        @else
+                                            <span class="text-muted">—</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endif
                         @endforeach
-                        <th class="px-4 py-3">Rata-rata</th>
-                        <th class="px-4 py-3">Catatan</th>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    @endif
+
+    @if($legacyEvals->isNotEmpty())
+        <div class="mt-6 overflow-x-auto rounded-2xl border border-line bg-white shadow-sm">
+            <table class="w-full min-w-[560px] text-left text-sm">
+                <thead>
+                    <tr class="border-b border-line text-muted">
+                        <th class="px-5 py-3 font-medium">No</th>
+                        <th class="px-5 py-3 font-medium">Penilai</th>
+                        @foreach($legacyLabels as $label)
+                            <th class="px-5 py-3 font-medium">{{ $label }}</th>
+                        @endforeach
+                        <th class="px-5 py-3 font-medium">Rata-rata</th>
+                        <th class="px-5 py-3 font-medium">Catatan</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($myEvaluations as $index => $eval)
-                        @php $myScores = collect($eval->criteriaForDisplay())->keyBy('label'); @endphp
-                        <tr class="eval-row border-b border-line last:border-0" data-search="{{ strtolower($myScores->map(fn ($c) => $c['label'].' '.$c['score'])->implode(' ').' '.($eval->comments ?: '')) }}">
-                            <td class="row-no px-4 py-3 align-top">{{ $index + 1 }}</td>
-                            @foreach($myColumns as $label)
-                                <td class="px-4 py-3 align-top">{{ $myScores->has($label) ? $myScores[$label]['score'].' / 5' : '—' }}</td>
+                    @foreach($legacyEvals as $index => $legacy)
+                        @php $legacyScores = collect($legacy->criteriaForDisplay())->keyBy('label'); @endphp
+                        <tr class="border-b border-line last:border-0">
+                            <td class="px-5 py-3 align-top">{{ $index + 1 }}</td>
+                            <td class="px-5 py-3 align-top font-medium">{{ $legacy->evaluator->name }}</td>
+                            @foreach($legacyLabels as $label)
+                                <td class="px-5 py-3 align-top">{{ $legacyScores->has($label) ? $legacyScores[$label]['score'].' / 5' : '—' }}</td>
                             @endforeach
-                            <td class="px-4 py-3 align-top font-semibold">{{ $eval->average() }} / 5</td>
-                            <td class="px-4 py-3 align-top text-muted">{{ $eval->comments ?: '—' }}</td>
+                            <td class="px-5 py-3 align-top font-semibold">{{ $legacy->average() }} / 5</td>
+                            <td class="px-5 py-3 align-top text-muted">{{ $legacy->comments ?: '—' }}</td>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="{{ $myColumns->count() + 3 }}" class="px-4 py-8 text-center text-sm text-muted">Belum ada penilaian untuk mentor. Klik Isi evaluasi untuk mulai.</td>
-                        </tr>
-                    @endforelse
+                    @endforeach
                 </tbody>
             </table>
         </div>
-    </div>
+    @endif
 
-    <div x-show="tab === 'mentor'" x-cloak>
-        @php
-            $reportEvaluations = $mentorEvaluations->filter(fn ($eval) => $eval->hasReport())->values();
-            $legacyEvaluations = $mentorEvaluations->reject(fn ($eval) => $eval->hasReport())->values();
-            $reportLocked = $reportEvaluations->isNotEmpty() && $myEvaluations->isEmpty();
-        @endphp
-        @if($reportLocked)
-            <div class="mt-4 rounded-2xl border border-line bg-white p-6 text-center">
-                <span class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/15 text-primary-dark">
-                    <span class="material-symbols-outlined text-[26px]">lock</span>
-                </span>
-                <h3 class="mt-3 font-semibold">Nilai raport dari mentor terkunci</h3>
-                <p class="mx-auto mt-1 max-w-md text-sm text-muted">Mentor sudah memberikan nilai raport. Isi evaluasi untuk mentor terlebih dahulu untuk membuka nilaimu.</p>
-                <button type="button" @click="tab = 'mine'" class="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-dark">
-                    <span class="material-symbols-outlined text-[18px]">add</span>
-                    Isi evaluasi
-                </button>
-            </div>
-        @else
-            @foreach($reportEvaluations as $eval)
-                <article class="eval-row mt-4 overflow-hidden rounded-2xl border border-line bg-white" data-search="{{ strtolower($eval->evaluator->name.' raport '.($eval->comments ?: '')) }}">
-                    <div class="flex flex-col gap-1 border-b border-line bg-[#f4f8f6] p-5 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                            <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Nilai raport dari {{ $eval->evaluator->name }}</p>
-                            <p class="mt-1 text-3xl font-semibold">{{ $eval->reportAverage() }} <span class="text-lg text-primary-dark">{{ $eval->predicate() }}</span></p>
-                        </div>
-                        <div class="flex flex-col gap-2 sm:items-end">
-                            @if(filled($eval->comments))
-                                <p class="max-w-md text-sm text-muted sm:text-right">{{ $eval->comments }}</p>
-                            @endif
-                            <a href="{{ route('participant.evaluation.report-preview') }}" class="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-dark">
-                                <span class="material-symbols-outlined text-[18px]">print</span>
-                                Cetak PDF
-                            </a>
-                        </div>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full min-w-[560px] text-left text-sm">
-                            <thead>
-                                <tr class="border-b border-line text-sm font-semibold">
-                                    <th class="px-4 py-3">No.</th>
-                                    <th class="px-4 py-3">Kompetensi</th>
-                                    <th class="px-4 py-3">Nilai dalam Angka</th>
-                                    <th class="px-4 py-3">Nilai dalam Huruf</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($eval->grade_groups as $group)
-                                    <tr class="border-b border-line bg-[#f4f8f6] font-semibold">
-                                        <td colspan="4" class="px-4 py-3">{{ $group['name'] }} (bobot {{ $group['weight'] }}%)</td>
-                                    </tr>
-                                    @foreach($group['aspects'] ?? [] as $aspectIndex => $aspect)
-                                        <tr class="border-b border-line last:border-0">
-                                            <td class="px-4 py-3 align-top text-muted">{{ $aspectIndex + 1 }}</td>
-                                            <td class="px-4 py-3 align-top">{{ $aspect['label'] }}</td>
-                                            <td class="px-4 py-3 align-top font-semibold">{{ $aspect['score'] }}</td>
-                                            <td class="px-4 py-3 align-top font-semibold">{{ \App\Models\Evaluation::predicateFor(isset($aspect['score']) ? (float) $aspect['score'] : null) ?? '—' }}</td>
-                                        </tr>
-                                    @endforeach
-                                @endforeach
-                            </tbody>
-                            <tfoot>
-                                <tr class="bg-[#eef6f2] font-semibold">
-                                    <td colspan="2" class="px-4 py-3">Nilai Akhir</td>
-                                    <td class="px-4 py-3">{{ $eval->reportAverage() }}</td>
-                                    <td class="px-4 py-3 text-primary-dark">{{ $eval->predicate() }}</td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-                </article>
-            @endforeach
-            @if($legacyEvaluations->isNotEmpty())
-                <div class="mt-4 overflow-x-auto rounded-2xl border border-line bg-white">
-                    <table class="w-full min-w-[860px] text-left text-sm">
-                        <thead>
-                            <tr class="border-b border-line text-sm font-semibold">
-                                <th class="px-4 py-3">No.</th>
-                                <th class="px-4 py-3">Penilai</th>
-                                @foreach($mentorColumns as $label)
-                                    <th class="px-4 py-3">{{ $label }}</th>
-                                @endforeach
-                                <th class="px-4 py-3">Rata-rata</th>
-                                <th class="px-4 py-3">Catatan</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($legacyEvaluations as $index => $eval)
-                                @php $mentorScores = collect($eval->criteriaForDisplay())->keyBy('label'); @endphp
-                                <tr class="eval-row border-b border-line last:border-0" data-search="{{ strtolower($eval->evaluator->name.' '.$mentorScores->map(fn ($c) => $c['label'].' '.$c['score'])->implode(' ').' '.($eval->comments ?: '')) }}">
-                                    <td class="row-no px-4 py-3 align-top">{{ $index + 1 }}</td>
-                                    <td class="px-4 py-3 align-top font-medium">{{ $eval->evaluator->name }}</td>
-                                    @foreach($mentorColumns as $label)
-                                        <td class="px-4 py-3 align-top">{{ $mentorScores->has($label) ? $mentorScores[$label]['score'].' / 5' : '—' }}</td>
-                                    @endforeach
-                                    <td class="px-4 py-3 align-top font-semibold">{{ $eval->average() }} / 5</td>
-                                    <td class="px-4 py-3 align-top text-muted">{{ $eval->comments ?: '—' }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            @endif
-            @if($mentorEvaluations->isEmpty())
-                <p class="mt-4 rounded-2xl border border-line bg-white px-4 py-8 text-center text-sm text-muted">Belum ada penilaian dari mentor.</p>
-            @endif
-        @endif
-    </div>
-    <p id="eval-empty" class="mt-4 hidden text-center text-sm text-muted">Tidak ada penilaian yang cocok dengan pencarian.</p>
 </div>
-
-<div id="eval-modal" class="{{ $errors->any() ? 'flex' : 'hidden' }} fixed inset-0 z-50 items-center justify-center bg-black/40 p-4">
-    <div class="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
-        <div class="flex items-start justify-between gap-3">
-            <div>
-                <h3 class="text-lg font-bold text-ink">Form Evaluasi</h3>
-                <p class="mt-1 text-xs text-muted">Nilai 1–5 untuk setiap aspek.</p>
-            </div>
-            <button type="button" id="eval-modal-x" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-line text-muted hover:text-ink">
-                <span class="material-symbols-outlined text-[18px]">close</span>
-            </button>
-        </div>
-        @if($errors->any())
-            <p class="mt-4 rounded-xl bg-red-50 px-3 py-2 text-xs text-red-700">{{ $errors->first() }}</p>
-        @endif
-        <form method="POST" class="mt-5 space-y-4">
-            @csrf
-            <x-evaluation-criteria-fields :criteria="$mine?->criteriaForDisplay() ?? []" />
-            <textarea name="comments" rows="3" class="w-full rounded-xl border border-line px-4 py-2.5 text-sm outline-none focus:border-primary focus:ring-4 focus:ring-primary/15" placeholder="Catatan">{{ old('comments') }}</textarea>
-            <div class="flex justify-end gap-3 pt-1">
-                <button type="button" id="eval-modal-cancel" class="rounded-xl border border-line px-4 py-2.5 text-sm font-semibold text-muted">Batal</button>
-                <button class="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-dark">Simpan evaluasi</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<script>
-(function () {
-    var search = document.getElementById('eval-search');
-    var emptyMsg = document.getElementById('eval-empty');
-    var rows = Array.prototype.slice.call(document.querySelectorAll('.eval-row'));
-
-    function render() {
-        var query = search ? search.value.trim().toLowerCase() : '';
-        var visible = 0;
-        var counters = {};
-        rows.forEach(function (row) {
-            var show = !query || row.dataset.search.indexOf(query) !== -1;
-            row.classList.toggle('hidden', !show);
-            if (show) {
-                var tbody = row.closest('tbody');
-                var key = tbody ? Array.prototype.indexOf.call(tbody.parentNode.querySelectorAll('tbody'), tbody) : 0;
-                counters[key] = (counters[key] || 0) + 1;
-                var no = row.querySelector('.row-no');
-                if (no) no.textContent = counters[key];
-                visible += 1;
-            }
-        });
-        if (emptyMsg) emptyMsg.classList.toggle('hidden', visible > 0);
-    }
-
-    if (search) search.addEventListener('input', render);
-
-    var modal = document.getElementById('eval-modal');
-    var openBtn = document.getElementById('eval-modal-open');
-
-    function openModal() {
-        if (!modal) return;
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-    }
-
-    function closeModal() {
-        if (!modal) return;
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-    }
-
-    if (openBtn) openBtn.addEventListener('click', openModal);
-
-    function wireClose(id) {
-        var button = document.getElementById(id);
-        if (button) button.addEventListener('click', closeModal);
-    }
-
-    wireClose('eval-modal-x');
-    wireClose('eval-modal-cancel');
-
-    if (modal) {
-        var downTarget = null;
-        modal.addEventListener('mousedown', function (event) {
-            downTarget = event.target;
-        });
-        modal.addEventListener('click', function (event) {
-            if (event.target === modal && downTarget === modal) closeModal();
-            downTarget = null;
-        });
-    }
-
-    document.addEventListener('keydown', function (event) {
-        if (event.key === 'Escape' && modal && !modal.classList.contains('hidden')) closeModal();
-    });
-})();
-</script>
 @endunless
 @endsection

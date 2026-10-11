@@ -1,8 +1,7 @@
 @extends('layouts.app')
-@section('title', 'Pendaftaran')
+@section('title', 'Pendaftaran & surat persetujuan')
 @section('content')
-<h1 class="text-2xl font-semibold">Pendaftaran & surat persetujuan</h1>
-<p class="mt-1 text-sm text-muted">Tinjau surat yang diteruskan admin. Minta revisi ke dosen bila perlu, atau buka halaman tanda tangan untuk menyetujui.</p>
+<p class="text-sm text-muted">Tinjau surat yang diteruskan admin. Minta revisi ke dosen bila perlu, atau buka halaman tanda tangan untuk menyetujui.</p>
 <div class="mt-6 space-y-4">
     @forelse($applications as $application)
         <article class="rounded-2xl border border-line bg-white p-5" x-data="{ open: false }">

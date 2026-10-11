@@ -1,8 +1,7 @@
 @extends('layouts.app')
 @section('title', 'Dashboard Program')
 @section('content')
-<h1 class="text-2xl font-semibold">Dashboard Program</h1>
-<div class="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+<div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
     @foreach([
         ['Peserta aktif', $programs->where('status','active')->count()],
         ['Program aktif', $programs->where('status','active')->count()],

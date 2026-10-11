@@ -428,4 +428,25 @@ class LowonganAdminTest extends TestCase
 
         $this->assertFalse(Cache::has('public.home.html'));
     }
+
+    public function test_admin_lowongan_shows_ditutup_when_deadline_passed_but_status_still_open(): void
+    {
+        $this->seed();
+
+        $unit = BusinessUnit::where('name', 'Digital Business')->firstOrFail();
+        $unit->update([
+            'registration_start' => now()->subDays(5)->startOfDay(),
+            'registration_deadline' => now()->subDay()->setTime(23, 59, 59),
+            'status' => 'open',
+        ]);
+
+        $this->assertFalse($unit->fresh()->isOpen());
+
+        $this->actingAs($this->admin())
+            ->get(route('admin.lowongan', ['unit' => $unit->id]))
+            ->assertOk()
+            ->assertSee('Ditutup')
+            ->assertSee('Masa pendaftaran telah berakhir')
+            ->assertDontSee('Buka ·');
+    }
 }

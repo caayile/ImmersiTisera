@@ -1,11 +1,8 @@
 @extends('layouts.app')
-@section('title', 'Pendaftaran')
+@section('title', 'Program / Pendaftaran')
 @section('content')
 <div class="flex flex-wrap items-center justify-between gap-3">
-    <div>
-        <h1 class="text-2xl font-semibold">Program / Pendaftaran</h1>
-        <p class="mt-1 text-sm text-muted">Form pendaftaran dan surat persetujuan: dosen → admin → mentor → admin → dosen.</p>
-    </div>
+    <p class="text-sm text-muted">Form pendaftaran dan surat persetujuan: dosen → admin → mentor → admin → dosen.</p>
     <a href="{{ route('departments.index') }}" class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white">Daftar program</a>
 </div>
 <div class="mt-6 overflow-x-auto rounded-2xl border border-line bg-white">

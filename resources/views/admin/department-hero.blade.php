@@ -2,10 +2,7 @@
 @section('title', 'Hero Unit Bisnis')
 @section('content')
 <div class="max-w-5xl">
-    <div>
-        <h1 class="text-2xl font-semibold">Hero Unit Bisnis</h1>
-        <p class="mt-1 text-sm text-muted">Atur gambar, judul, dan deskripsi unit bisnis pada carousel di halaman Unit Bisnis.</p>
-    </div>
+    <p class="text-sm text-muted">Atur gambar, judul, dan deskripsi unit bisnis pada carousel di halaman Unit Bisnis.</p>
 
     <form method="POST" action="{{ route('admin.department-hero.background') }}" enctype="multipart/form-data" class="mt-6 space-y-4 rounded-2xl border border-line bg-white p-6">
         @csrf

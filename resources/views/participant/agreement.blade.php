@@ -1,7 +1,6 @@
 ﻿@extends('layouts.app')
-@section('title', 'Perjanjian')
+@section('title', 'Perjanjian Magang Dosen')
 @section('content')
-<h1 class="text-2xl font-semibold">Perjanjian Magang Dosen</h1>
 @unless($program)
     <x-empty class="mt-6" title="Perjanjian belum tersedia">Perjanjian dibuat setelah penempatan disetujui.</x-empty>
 @else

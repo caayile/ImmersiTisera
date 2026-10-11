@@ -1,8 +1,7 @@
 @extends('layouts.app')
-@section('title', 'Matching')
+@section('title', 'Pendaftaran & pencocokan')
 @section('content')
-<h1 class="text-2xl font-semibold">Pendaftaran & pencocokan</h1>
-<p class="mt-1 text-sm text-muted">Alur: dosen mengajukan → admin meninjau → mentor menyetujui → admin mengesahkan → dosen menerima hasil.</p>
+<p class="text-sm text-muted">Alur: dosen mengajukan → admin meninjau → mentor menyetujui → admin mengesahkan → dosen menerima hasil.</p>
 @if($errors->any())
     <p class="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">Gagal menyimpan: {{ $errors->first() }}</p>
 @endif

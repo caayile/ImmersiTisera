@@ -12,10 +12,11 @@
 
 <div {{ $attributes->merge(['class' => 'relative rounded-2xl border border-line bg-white p-4 shadow-sm']) }}>
     <span @class([
-        'profile-badge absolute -left-[2px] -top-[2px] inline-flex px-3 py-1 text-[9px] font-semibold',
+        'profile-badge absolute -left-[2px] -top-[2px] inline-flex items-center gap-1.5 px-3 py-1 text-[9px] font-semibold',
         'text-primary-dark' => $profileReady,
         'profile-badge--warn text-amber-800' => ! $profileReady,
     ])>
+        <span @class(['h-1.5 w-1.5 shrink-0 rounded-full', 'bg-emerald-500' => $profileReady, 'bg-amber-500' => ! $profileReady])></span>
         {{ $profileReady ? 'Profil lengkap' : 'Lengkapi profil' }}
     </span>
     <div class="flex items-center gap-3 pt-8 text-left">

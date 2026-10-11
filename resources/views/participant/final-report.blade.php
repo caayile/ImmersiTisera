@@ -1,107 +1,117 @@
 @extends('layouts.app')
-@section('title', 'Laporan Akhir')
+@section('title', 'Laporan Akhir Masa Magang')
 @section('content')
+@php
+    $programReport = $program?->outputs?->firstWhere('is_final_report', true);
+    $reportYearFallback = $program?->end_date?->format('Y') ?? $program?->start_date?->format('Y') ?? now()->format('Y');
+@endphp
+<div x-data="reportForm()">
 <div class="flex flex-wrap items-start justify-between gap-3">
-    <div>
-        <h1 class="text-2xl font-semibold">Laporan Akhir</h1>
-        <p class="mt-1 text-sm text-muted">Laporan akhir terkait perjanjian dan hasil utama program.</p>
-    </div>
-    @if($program)
-        <button id="report-modal-open" type="button" class="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-dark">
-            <span class="material-symbols-outlined text-[18px]">add</span>
-            Laporan akhir
+    <p class="text-sm text-muted">Laporan akhir diisi di akhir masa program.</p>
+    @if($program && ! $programReport)
+        <button type="button" @click="openReport('{{ $program->id }}')" class="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[#22b07d] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1a9a6d]">
+            <span class="text-lg leading-none">+</span>
+            Buat Laporan
         </button>
     @endif
 </div>
+
 @unless($program)
-    <x-empty class="mt-6" title="Laporan akhir belum tersedia" />
+    <x-empty class="mt-6 w-full" title="Laporan akhir belum tersedia" />
 @else
-<div id="report-modal" class="{{ $errors->any() ? 'flex' : 'hidden' }} fixed inset-0 z-50 items-center justify-center bg-black/40 p-4">
-    <div class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
-        <div class="flex items-start justify-between gap-3">
-            <div>
-                <h3 class="text-lg font-bold text-ink">Form Laporan Akhir</h3>
-                <p class="mt-1 text-xs text-muted">Lengkapi metadata katalog laporan siklus berjalan.</p>
+    {{-- Popup Form Laporan Akhir --}}
+    <div x-show="reportOpen" x-cloak class="fixed inset-0 z-50 items-center justify-center bg-black/40 p-4" :class="reportOpen && 'flex'" @click.self="reportOpen = false" @keydown.escape.window="reportOpen = false" role="dialog" aria-modal="true" aria-label="Form laporan akhir">
+        <div class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl sm:p-8">
+            <div class="flex items-start justify-between gap-3">
+                <div>
+                    <h2 class="text-lg font-semibold">Form Laporan Akhir</h2>
+                    <p class="mt-0.5 text-sm text-muted">Lengkapi metadata Laporan Akhir</p>
+                </div>
+                <button type="button" @click="reportOpen = false" class="flex h-8 w-8 items-center justify-center rounded-lg text-xl leading-none transition hover:bg-slate-100" aria-label="Tutup">&times;</button>
             </div>
-            <button type="button" id="report-modal-x" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-line text-muted hover:text-ink">
-                <span class="material-symbols-outlined text-[18px]">close</span>
-            </button>
+            @if($errors->any())
+                <p class="mt-4 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">{{ $errors->first() }}</p>
+            @endif
+            <form method="POST" action="{{ route('participant.final-report') }}" enctype="multipart/form-data" class="mt-5">
+                @csrf
+                <input type="hidden" name="is_final_report" value="1">
+                <input type="hidden" name="type" value="Research Report">
+                <input type="hidden" name="program_id" :value="reportCycle">
+                <div class="grid gap-4 sm:grid-cols-2">
+                    <div>
+                        <label class="text-sm font-semibold">Unit Bisnis</label>
+                        <select name="department_id" x-ref="dept" class="mt-2 w-full rounded-xl border border-line bg-white px-4 py-2.5 text-sm">
+                            <option value="">Pilih Unit Bisnis</option>
+                            @foreach($departments as $department)
+                                <option value="{{ $department->id }}" @selected((int) old('department_id', $programReport?->department_id ?? $program->department_id) === (int) $department->id)>{{ $department->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold">Departement</label>
+                        <select name="business_unit_id" x-ref="unit" class="mt-2 w-full rounded-xl border border-line bg-white px-4 py-2.5 text-sm">
+                            <option value="">Pilih Departement</option>
+                            @foreach($businessUnits->groupBy(fn ($unit) => $unit->department?->name ?: 'Lainnya') as $groupName => $groupUnits)
+                                <optgroup label="{{ $groupName }}">
+                                    @foreach($groupUnits as $unit)
+                                        <option value="{{ $unit->id }}" @selected((int) old('business_unit_id', $programReport?->business_unit_id ?? $program->business_unit_id) === (int) $unit->id)>{{ $unit->name }}</option>
+                                    @endforeach
+                                </optgroup>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <label for="report-title" class="text-sm font-semibold">Judul Laporan</label>
+                    <textarea id="report-title" name="title" x-ref="title" rows="3" placeholder="Masukkan judul laporan" class="mt-2 w-full rounded-xl border border-line bg-white px-4 py-2.5 text-sm placeholder:text-slate-400" required>{{ old('title', $programReport?->title) }}</textarea>
+                </div>
+                <div class="mt-4 grid gap-4 sm:grid-cols-2">
+                    <div>
+                        <label class="text-sm font-semibold">Tahun</label>
+                        <input name="year" x-ref="year" inputmode="numeric" maxlength="4" placeholder="cth. 2026" value="{{ old('year', $programReport?->year ?? $reportYearFallback) }}" class="mt-2 w-full rounded-xl border border-line bg-white px-4 py-2.5 text-sm">
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold">Level Kolaborasi</label>
+                        <select name="level" x-ref="level" class="mt-2 w-full rounded-xl border border-line bg-white px-4 py-2.5 text-sm">
+                            <option value="">Pilih Level</option>
+                            @for($level = 0; $level <= 4; $level++)
+                                <option value="{{ $level }}" @selected((string) old('level', $program?->collaboration?->level) === (string) $level)>Level {{ $level }} — {{ \App\Support\Status::collaborationLevelLabel($level) }}</option>
+                            @endfor
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <p class="text-sm font-semibold">Hasil Akhir</p>
+                    <p class="mt-0.5 text-xs text-muted">Pilih Salah Satu teknik pengumpulan</p>
+                    <input id="hasil_link" name="link" x-ref="link" placeholder="Link Hasil Laporan Akhir" value="{{ old('link', $programReport?->link) }}" class="mt-2 w-full rounded-xl border border-line bg-white px-4 py-2.5 text-sm placeholder:text-slate-400">
+                    <div class="mt-3">
+                        <input id="hasil_file" type="file" name="hasil_file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.ppt,.pptx,.zip" class="sr-only">
+                        <div class="flex items-center justify-between gap-3 rounded-xl border border-line px-4 py-2.5">
+                            <span id="hasil_file_name" x-ref="hasilNote" class="truncate text-sm text-muted">{{ $programReport?->hasil_file_path ? 'Sudah ada file (pilih baru untuk mengganti)' : 'Pilih File Dokumen' }}</span>
+                            <label for="hasil_file" class="shrink-0 cursor-pointer rounded-lg bg-mint-light px-3 py-1.5 text-xs font-semibold text-primary-dark transition hover:bg-primary/15">Pilih File</label>
+                        </div>
+                    </div>
+                    <p class="mt-1.5 text-xs text-muted">Maksimal 10 MB.</p>
+                </div>
+                <div class="mt-4">
+                    <p class="text-sm font-semibold">Laporan Akhir</p>
+                    <p class="mt-0.5 text-xs text-muted">Pilih Salah Satu teknik pengumpulan</p>
+                    <input id="laporan_link" name="laporan_link" x-ref="lapLink" placeholder="Link Hasil Laporan Akhir" value="{{ old('laporan_link', $programReport?->laporan_link) }}" class="mt-2 w-full rounded-xl border border-line bg-white px-4 py-2.5 text-sm placeholder:text-slate-400">
+                    <div class="mt-3">
+                        <input id="report_file" type="file" name="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.ppt,.pptx,.zip" class="sr-only">
+                        <div class="flex items-center justify-between gap-3 rounded-xl border border-line px-4 py-2.5">
+                            <span id="report_file_name" x-ref="lapNote" class="truncate text-sm text-muted">{{ $programReport?->file_path ? 'Sudah ada file (pilih baru untuk mengganti)' : 'Pilih File Dokumen' }}</span>
+                            <label for="report_file" class="shrink-0 cursor-pointer rounded-lg bg-mint-light px-3 py-1.5 text-xs font-semibold text-primary-dark transition hover:bg-primary/15">Pilih File</label>
+                        </div>
+                    </div>
+                    <p class="mt-1.5 text-xs text-muted">Maksimal 10 MB.</p>
+                </div>
+                <div class="mt-5 flex justify-end gap-2">
+                    <button type="button" @click="reportOpen = false" class="rounded-xl border border-primary/40 px-5 py-2.5 text-sm font-semibold text-primary-dark transition hover:bg-primary/5">Batal</button>
+                    <button x-text="(reports[reportCycle] && reports[reportCycle].exists) ? 'Update' : 'Kirim'" class="rounded-xl bg-[#22b07d] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1a9a6d]">{{ $programReport ? 'Update' : 'Kirim' }}</button>
+                </div>
+            </form>
         </div>
-        @if($errors->any())
-            <p class="mt-4 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">{{ $errors->first() }}</p>
-        @endif
-<form method="POST" action="{{ route('participant.final-report') }}" enctype="multipart/form-data" class="mt-5 space-y-4">
-    @csrf
-    <input type="hidden" name="is_final_report" value="1">
-    <input type="hidden" name="type" value="Research Report">
-    <div class="grid gap-4 md:grid-cols-2">
-        <div>
-            <label class="text-xs font-medium text-muted">Unit Bisnis</label>
-            <select name="department_id" class="mt-1 w-full rounded-lg border border-line px-4 py-2.5 text-sm">
-                <option value="">— Pilih unit bisnis —</option>
-                @foreach($departments as $department)
-                    <option value="{{ $department->id }}" @selected((int) old('department_id') === (int) $department->id)>{{ $department->name }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div>
-            <label class="text-xs font-medium text-muted">Departement</label>
-            <select name="business_unit_id" class="mt-1 w-full rounded-lg border border-line px-4 py-2.5 text-sm">
-                <option value="">— Pilih departement —</option>
-                @foreach($businessUnits->groupBy(fn ($unit) => $unit->department?->name ?: 'Lainnya') as $groupName => $groupUnits)
-                    <optgroup label="{{ $groupName }}">
-                        @foreach($groupUnits as $unit)
-                            <option value="{{ $unit->id }}" @selected((int) old('business_unit_id') === (int) $unit->id)>{{ $unit->name }}</option>
-                        @endforeach
-                    </optgroup>
-                @endforeach
-            </select>
-        </div>
-    </div>
-    <div>
-        <label class="text-xs font-medium text-muted">Judul Laporan</label>
-        <textarea name="title" rows="3" placeholder="Masukkan Judul Laporan" class="mt-1 w-full rounded-lg border border-line px-4 py-2.5 text-sm" required>{{ old('title') }}</textarea>
-    </div>
-    <div class="grid gap-4 md:grid-cols-2">
-        <div>
-            <label class="text-xs font-medium text-muted">Tahun</label>
-            <input name="year" inputmode="numeric" maxlength="4" placeholder="cth. 2026" value="{{ old('year', $program->end_date?->format('Y') ?? $program->start_date?->format('Y') ?? now()->format('Y')) }}" class="mt-1 w-full rounded-lg border border-line px-4 py-2.5 text-sm">
-        </div>
-        <div>
-            <label class="text-xs font-medium text-muted">Level Kolaborasi</label>
-            <select name="level" class="mt-1 w-full rounded-lg border border-line px-4 py-2.5 text-sm">
-                <option value="">— Pilih level —</option>
-                @for($level = 0; $level <= 4; $level++)
-                    <option value="{{ $level }}" @selected((string) old('level') === (string) $level)>Tahap {{ $level }} — {{ \App\Support\Status::collaborationLevelLabel($level) }}: {{ \App\Support\Status::COLLABORATION_LEVEL_DESCRIPTIONS[$level] }}</option>
-                @endfor
-            </select>
-        </div>
-    </div>
-    <div>
-        <label class="text-xs font-medium text-muted">Hasil</label>
-        <p class="mt-0.5 text-[11px] text-muted">Pilih salah satu.</p>
-        <input id="hasil_link" name="link" placeholder="cth. https://..." value="{{ old('link') }}" class="mt-1 w-full rounded-lg border border-line px-4 py-2.5 text-sm disabled:opacity-50">
-        <div class="mt-2 flex items-center gap-3">
-            <label for="hasil_file" class="cursor-pointer whitespace-nowrap rounded-lg bg-primary/12 px-4 py-2 text-xs font-semibold text-primary-dark transition hover:bg-primary hover:text-white">Pilih file</label>
-            <span id="hasil_file_name" class="min-w-0 truncate text-xs text-muted">Belum ada file dipilih</span>
-            <input id="hasil_file" type="file" name="hasil_file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.ppt,.pptx,.zip" class="hidden">
-        </div>
-    </div>
-    <div>
-        <label class="text-xs font-medium text-muted">Laporan</label>
-        <p class="mt-0.5 text-[11px] text-muted">Pilih salah satu.</p>
-        <input id="laporan_link" name="laporan_link" placeholder="cth. https://..." value="{{ old('laporan_link') }}" class="mt-1 w-full rounded-lg border border-line px-4 py-2.5 text-sm disabled:opacity-50">
-        <div class="mt-2 flex items-center gap-3">
-            <label for="report_file" class="cursor-pointer whitespace-nowrap rounded-lg bg-primary/12 px-4 py-2 text-xs font-semibold text-primary-dark transition hover:bg-primary hover:text-white">Pilih file</label>
-            <span id="report_file_name" class="min-w-0 truncate text-xs text-muted">Belum ada file dipilih</span>
-            <input id="report_file" type="file" name="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.ppt,.pptx,.zip" class="hidden">
-        </div>
-    </div>
-    <div class="flex justify-end gap-3 pt-1">
-        <button type="button" id="report-modal-cancel" class="rounded-lg border border-line px-4 py-2.5 text-sm font-semibold text-muted">Batal</button>
-        <button class="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-dark">Kirim laporan akhir</button>
-    </div>
-</form>
     </div>
 </div>
 
@@ -125,28 +135,32 @@
             @endforeach
         </select>
     </div>
-    <div class="mt-4 overflow-x-auto rounded-2xl border border-line bg-white">
-        <table class="w-full min-w-[820px] text-left text-sm">
+    <div class="mt-4 overflow-x-auto rounded-2xl border border-line bg-white shadow-sm">
+        <table class="w-full min-w-[1020px] text-left text-sm">
             <thead>
-                <tr class="border-b border-line text-sm font-semibold">
-                    <th class="px-4 py-3">No.</th>
-                    <th class="px-4 py-3">Unit Bisnis</th>
-                    <th class="px-4 py-3">Departement</th>
-                    <th class="px-4 py-3">Judul Laporan</th>
-                    <th class="px-4 py-3">Tahun</th>
-                    <th class="px-4 py-3">Hasil</th>
-                    <th class="px-4 py-3">Laporan</th>
-                    <th class="px-4 py-3">Level</th>
+                <tr class="border-b border-line text-muted">
+                    <th class="px-4 py-3 font-medium">No</th>
+                    <th class="px-4 py-3 font-medium">Unit Bisnis</th>
+                    <th class="px-4 py-3 font-medium">Departemen</th>
+                    <th class="px-4 py-3 font-medium">Judul Laporan</th>
+                    <th class="px-4 py-3 font-medium">Tahun</th>
+                    <th class="px-4 py-3 font-medium">Hasil</th>
+                    <th class="px-4 py-3 font-medium">Laporan</th>
+                    <th class="px-4 py-3 font-medium">Level</th>
+                    <th class="px-4 py-3 font-medium">Aksi</th>
+                    <th class="px-4 py-3 font-medium">Status</th>
                 </tr>
             </thead>
             <tbody id="report-rows">
                 @foreach($programs as $index => $cycle)
                     @php
                         $cycleReport = $cycle->outputs->firstWhere('is_final_report', true);
-                        $mainOutput = $cycle->outputs->where('is_final_report', false)->firstWhere('is_main_output', true);
                         $rowUnitBisnis = $cycleReport?->department?->name ?? $cycle->department?->name;
                         $rowDepartement = $cycleReport?->businessUnit?->name ?? $cycle->businessUnit?->name;
                         $cycleYear = $cycleReport?->year ?? $cycle->end_date?->format('Y') ?? $cycle->start_date?->format('Y') ?? $cycleReport?->created_at?->format('Y') ?? '';
+                        $hasilUrl = $cycleReport?->linkUrl() ?? $cycleReport?->hasilFileUrl();
+                        $laporanUrl = $cycleReport?->laporanFileUrl() ?? $cycleReport?->laporanLinkUrl();
+                        $isCurrentCycle = $cycle->id === $program->id;
                     @endphp
                     <tr class="report-row border-b border-line last:border-0"
                         data-search="{{ strtolower(($cycleReport?->title ?: '').' '.($rowUnitBisnis ?: '').' '.($rowDepartement ?: '')) }}"
@@ -156,46 +170,47 @@
                         <td class="px-4 py-3 align-top">{{ $rowDepartement ?: '—' }}</td>
                         <td class="px-4 py-3 align-top">
                             <span class="font-medium">{{ $cycleReport?->title ?: 'Laporan Akhir — '.($cycle->businessUnit?->name ?: 'Unit Bisnis') }}</span>
-                            <span class="mt-1 block text-xs text-muted">
+                            <span class="mt-0.5 block text-xs text-muted">
                                 @if($cycle->start_date || $cycle->end_date)
                                     {{ $cycle->start_date?->format('M Y') ?: '—' }} – {{ $cycle->end_date?->format('M Y') ?: '—' }}
                                 @endif
-                                @if($cycle->id === $program->id)
+                                @if($isCurrentCycle)
                                     · <span class="font-semibold text-primary-dark">Siklus berjalan</span>
-                                @endif
-                                @if(! $cycleReport)
-                                    · <span class="font-semibold text-muted">Belum ada laporan</span>
+                                @elseif(! $cycleReport)
+                                    · <span>Belum ada laporan</span>
                                 @endif
                             </span>
-                            @if($cycleReport)
-                                <span class="mt-2 block"><x-badge :status="$cycleReport->status" :label="\App\Support\Status::outputLabel($cycleReport->status)" /></span>
-                            @endif
                         </td>
                         <td class="px-4 py-3 align-top">{{ $cycleYear ?: '—' }}</td>
                         <td class="px-4 py-3 align-top">
-                            @if($cycleReport && $cycleReport->linkUrl())
-                                <a href="{{ $cycleReport->linkUrl() }}" target="_blank" rel="noopener" class="inline-block whitespace-nowrap rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white transition hover:bg-primary-dark">Lihat Hasil</a>
-                            @elseif($cycleReport && $cycleReport->hasilFileUrl())
-                                <a href="{{ $cycleReport->hasilFileUrl() }}" target="_blank" rel="noopener" class="inline-block whitespace-nowrap rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white transition hover:bg-primary-dark">Lihat Hasil</a>
+                            @if($hasilUrl)
+                                <a href="{{ $hasilUrl }}" target="_blank" rel="noopener" class="inline-block whitespace-nowrap rounded-lg bg-[#22b07d] px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-[#1a9a6d]">Lihat Hasil</a>
                             @else
                                 <span class="text-muted">—</span>
                             @endif
                         </td>
                         <td class="px-4 py-3 align-top">
-                            @if($cycleReport && $cycleReport->laporanFileUrl())
-                                <a href="{{ $cycleReport->laporanFileUrl() }}" target="_blank" rel="noopener" class="inline-block whitespace-nowrap rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white transition hover:bg-primary-dark">Lihat Laporan</a>
-                            @elseif($cycleReport && $cycleReport->laporanLinkUrl())
-                                <a href="{{ $cycleReport->laporanLinkUrl() }}" target="_blank" rel="noopener" class="inline-block whitespace-nowrap rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white transition hover:bg-primary-dark">Lihat Laporan</a>
+                            @if($laporanUrl)
+                                <a href="{{ $laporanUrl }}" target="_blank" rel="noopener" class="inline-block whitespace-nowrap rounded-lg bg-[#22b07d] px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-[#1a9a6d]">Lihat Laporan</a>
                             @else
                                 <span class="text-muted">—</span>
                             @endif
                         </td>
                         <td class="px-4 py-3 align-top">
                             @if($cycle->collaboration)
-                                <span class="inline-flex whitespace-nowrap rounded-full bg-primary/12 px-2.5 py-1 text-[11px] font-semibold text-primary-dark">L{{ $cycle->collaboration->level }} · {{ \App\Support\Status::COLLABORATION_LEVELS[$cycle->collaboration->level] ?? '' }}</span>
-                                @if($cycle->collaboration->collaboration_type)
-                                    <span class="mt-1 block text-xs text-muted">{{ $cycle->collaboration->collaboration_type }}</span>
-                                @endif
+                                <span class="inline-flex whitespace-nowrap rounded-full border border-primary/40 px-2.5 py-1 text-[11px] font-semibold text-primary-dark">Level {{ $cycle->collaboration->level }} · {{ \App\Support\Status::collaborationLevelLabel($cycle->collaboration->level) }}</span>
+                            @else
+                                <span class="text-muted">—</span>
+                            @endif
+                        </td>
+                        <td class="px-4 py-3 align-top">
+                            <button type="button" @click="openReport('{{ $cycle->id }}')" title="Isi atau ubah laporan" aria-label="Isi atau ubah laporan" class="flex h-8 w-8 items-center justify-center rounded-lg border border-primary/40 text-primary-dark transition hover:bg-primary/5">
+                                <span class="material-symbols-outlined text-[18px]">edit_square</span>
+                            </button>
+                        </td>
+                        <td class="px-4 py-3 align-top">
+                            @if($cycleReport)
+                                <x-badge :status="$cycleReport->status" :label="$cycleReport->status === 'approved' ? 'Diterima Mentor' : \App\Support\Status::outputLabel($cycleReport->status)" />
                             @else
                                 <span class="text-muted">—</span>
                             @endif
@@ -209,53 +224,64 @@
 </div>
 
 <script>
+function reportForm() {
+    return {
+        reportOpen: {{ $errors->any() ? 'true' : 'false' }},
+        reportCycle: @json((string) old('program_id', $program->id)),
+        reports: @json($reportFormData ?? []),
+        openReport(id) {
+            this.reportCycle = String(id);
+            var d = this.reports[this.reportCycle] || {};
+            this.$refs.title.value = d.title || '';
+            this.$refs.year.value = d.year || '';
+            this.$refs.dept.value = d.dept || '';
+            this.$refs.unit.value = d.unit || '';
+            this.$refs.level.value = d.level || '';
+            this.$refs.link.value = d.link || '';
+            this.$refs.lapLink.value = d.lapLink || '';
+            var hasilFile = document.getElementById('hasil_file');
+            var lapFile = document.getElementById('report_file');
+            if (hasilFile) {
+                hasilFile.value = '';
+                hasilFile.disabled = (d.link || '').trim() !== '';
+            }
+            if (lapFile) {
+                lapFile.value = '';
+                lapFile.disabled = (d.lapLink || '').trim() !== '';
+            }
+            this.$refs.hasilNote.textContent = d.hasilNote || 'Pilih File Dokumen';
+            this.$refs.lapNote.textContent = d.lapNote || 'Pilih File Dokumen';
+            this.reportOpen = true;
+        },
+    };
+}
 (function () {
     var search = document.getElementById('report-search');
     var year = document.getElementById('report-year');
     var emptyMsg = document.getElementById('report-empty');
     var rows = Array.prototype.slice.call(document.querySelectorAll('.report-row'));
-    if (!rows.length || !search) return;
-
-    function render() {
-        var query = search.value.trim().toLowerCase();
-        var visible = 0;
-        rows.forEach(function (row) {
-            var okSearch = !query || row.dataset.search.indexOf(query) !== -1;
-            var okYear = !year.value || row.dataset.year === year.value;
-            var show = okSearch && okYear;
-            row.classList.toggle('hidden', !show);
-            if (show) {
-                visible += 1;
-                var no = row.querySelector('.row-no');
-                if (no) no.textContent = visible;
-            }
-        });
-        emptyMsg.classList.toggle('hidden', visible > 0);
+    if (search && rows.length) {
+        var render = function () {
+            var query = search.value.trim().toLowerCase();
+            var visible = 0;
+            rows.forEach(function (row) {
+                var okSearch = !query || row.dataset.search.indexOf(query) !== -1;
+                var okYear = !year.value || row.dataset.year === year.value;
+                var show = okSearch && okYear;
+                row.classList.toggle('hidden', !show);
+                if (show) {
+                    visible += 1;
+                    var no = row.querySelector('.row-no');
+                    if (no) no.textContent = visible;
+                }
+            });
+            emptyMsg.classList.toggle('hidden', visible > 0);
+        };
+        search.addEventListener('input', render);
+        year.addEventListener('change', render);
     }
 
-    search.addEventListener('input', render);
-    year.addEventListener('change', render);
-})();
-
-(function () {
-    var openBtn = document.getElementById('report-modal-open');
-    var modal = document.getElementById('report-modal');
-
-    function openModal() {
-        if (!modal) return;
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-    }
-
-    function closeModal() {
-        if (!modal) return;
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-    }
-
-    if (openBtn) openBtn.addEventListener('click', openModal);
-
-    function pairExclusive(textInputId, fileInputId, nameId) {
+    function pairExclusive(textInputId, fileInputId, nameId, existingText) {
         var textInput = document.getElementById(textInputId);
         var fileInput = document.getElementById(fileInputId);
         var nameLabel = document.getElementById(nameId);
@@ -264,44 +290,29 @@
         textInput.addEventListener('input', function () {
             var hasText = textInput.value.trim() !== '';
             fileInput.disabled = hasText;
+            fileInput.classList.toggle('opacity-50', hasText);
             if (hasText) {
                 fileInput.value = '';
-                if (nameLabel) nameLabel.textContent = 'Belum ada file dipilih';
+                if (nameLabel) nameLabel.textContent = existingText || 'Belum ada file dipilih';
             }
         });
 
         fileInput.addEventListener('change', function () {
             var hasFile = fileInput.files.length > 0;
-            if (nameLabel) nameLabel.textContent = hasFile ? fileInput.files[0].name : 'Belum ada file dipilih';
+            if (nameLabel) nameLabel.textContent = hasFile ? fileInput.files[0].name : (existingText || 'Belum ada file dipilih');
             textInput.disabled = hasFile;
             if (hasFile) textInput.value = '';
         });
+
+        if (textInput.value.trim() !== '') {
+            fileInput.disabled = true;
+        }
     }
 
-    pairExclusive('hasil_link', 'hasil_file', 'hasil_file_name');
-    pairExclusive('laporan_link', 'report_file', 'report_file_name');
-
-    var xButton = document.getElementById('report-modal-x');
-    if (xButton) xButton.addEventListener('click', closeModal);
-
-    var cancelButton = document.getElementById('report-modal-cancel');
-    if (cancelButton) cancelButton.addEventListener('click', closeModal);
-
-    if (modal) {
-        var downTarget = null;
-        modal.addEventListener('mousedown', function (event) {
-            downTarget = event.target;
-        });
-        modal.addEventListener('click', function (event) {
-            if (event.target === modal && downTarget === modal) closeModal();
-            downTarget = null;
-        });
-    }
-
-    document.addEventListener('keydown', function (event) {
-        if (event.key === 'Escape' && modal && !modal.classList.contains('hidden')) closeModal();
-    });
+    pairExclusive('hasil_link', 'hasil_file', 'hasil_file_name', @json($programReport?->hasil_file_path ? 'Sudah ada file (pilih baru untuk mengganti)' : 'Belum ada file dipilih'));
+    pairExclusive('laporan_link', 'report_file', 'report_file_name', @json($programReport?->file_path ? 'Sudah ada file (pilih baru untuk mengganti)' : 'Belum ada file dipilih'));
 })();
 </script>
 @endunless
+</div>
 @endsection

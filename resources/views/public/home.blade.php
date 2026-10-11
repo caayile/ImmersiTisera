@@ -49,7 +49,13 @@
             </p>
         </div>
         <div class="home-hero__actions">
-            <span class="home-hero__batch">Batch 1<br>Di Buka</span>
+            @if(($heroRegistration['mode'] ?? 'closed') === 'full')
+                <span class="home-hero__batch">{{ $heroRegistration['batch'] ?? 'Pendaftaran' }}<br>Dibuka</span>
+            @elseif(($heroRegistration['mode'] ?? 'closed') === 'partial')
+                <span class="home-hero__batch home-hero__batch--closed">Ada Lowongan<br>Terbuka</span>
+            @else
+                <span class="home-hero__batch home-hero__batch--closed">Pendaftaran<br>Ditutup</span>
+            @endif
             <a href="{{ route('departments.index') }}" class="home-hero__cta">
                 Jelajahi Unit Bisnis
                 <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
@@ -141,10 +147,22 @@
                 <div>
                     <p class="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-white">
                         <span class="material-symbols-outlined text-[15px]">campaign</span>
-                        Pendaftaran gelombang terbaru telah dibuka
+                        @if(($heroRegistration['mode'] ?? 'closed') === 'full')
+                            Pendaftaran {{ $heroRegistration['batch'] ?? 'gelombang terbaru' }} telah dibuka
+                        @elseif(($heroRegistration['mode'] ?? 'closed') === 'partial')
+                            Ada lowongan yang masih dibuka
+                        @else
+                            Pendaftaran saat ini ditutup
+                        @endif
                     </p>
                     <h3 class="mt-4 text-2xl font-semibold tracking-tight md:text-3xl">Siap menemukan lingkungan industri yang tepat untuk bidang keahlian Anda?</h3>
-                    <p class="mt-3 max-w-xl text-sm leading-6 text-muted">Magang Dosen menuntun peserta dari pencocokan hingga kolaborasi lanjutan dengan sistem yang terukur dan transparan.</p>
+                    @if(($heroRegistration['mode'] ?? 'closed') === 'closed')
+                        <p class="mt-3 max-w-xl text-sm leading-6 text-muted">Semua gelombang pendaftaran sedang ditutup. Pantau beranda ini untuk pengumuman batch berikutnya.</p>
+                    @elseif(($heroRegistration['mode'] ?? 'closed') === 'partial')
+                        <p class="mt-3 max-w-xl text-sm leading-6 text-muted">Beberapa unit bisnis masih membuka pendaftaran. Jelajahi dan daftar sebelum periodenya berakhir.</p>
+                    @else
+                        <p class="mt-3 max-w-xl text-sm leading-6 text-muted">Magang Dosen menuntun peserta dari pencocokan hingga kolaborasi lanjutan dengan sistem yang terukur dan transparan.</p>
+                    @endif
                 </div>
                 <div class="flex flex-col gap-3 sm:flex-row lg:justify-end">
                     <a href="{{ route('departments.index') }}" class="inline-flex items-center justify-center gap-1 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white">

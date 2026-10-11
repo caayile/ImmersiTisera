@@ -123,6 +123,36 @@ class Evaluation extends Model
         return self::predicateFor($this->reportAverage());
     }
 
+    /**
+     * Keterangan predikat ala transkrip akademik.
+     */
+    public static function predicateLabel(?string $predicate): ?string
+    {
+        return match ($predicate) {
+            'A' => 'Sangat Baik',
+            'B' => 'Baik',
+            'C' => 'Cukup',
+            'D' => 'Kurang',
+            'E' => 'Sangat Kurang',
+            default => null,
+        };
+    }
+
+    /**
+     * Warna teks predikat: hijau → biru → kuning → oranye → merah.
+     */
+    public static function predicateColor(?string $predicate): string
+    {
+        return match ($predicate) {
+            'A' => 'text-emerald-600',
+            'B' => 'text-amber-600',
+            'C' => 'text-amber-600',
+            'D' => 'text-orange-600',
+            'E' => 'text-red-600',
+            default => 'text-muted',
+        };
+    }
+
     public function average(): float
     {
         if (is_array($this->criteria) && $this->criteria !== []) {

@@ -1,8 +1,7 @@
 @extends('layouts.app')
 @section('title', 'Departemen')
 @section('content')
-<h1 class="text-2xl font-semibold">Departemen</h1>
-<p class="mt-1 text-sm text-muted">Pilih unit bisnis untuk mengelola departemen, program, pendaftaran, dan lokasi di dalamnya.</p>
+<p class="text-sm text-muted">Pilih unit bisnis untuk mengelola departemen, program, pendaftaran, dan lokasi di dalamnya.</p>
 
 <div class="mt-6 overflow-hidden rounded-2xl border border-line bg-white">
     @forelse($departments as $department)

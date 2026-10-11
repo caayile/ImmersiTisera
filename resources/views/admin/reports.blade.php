@@ -1,8 +1,7 @@
 @extends('layouts.app')
 @section('title', 'Laporan')
 @section('content')
-<div class="flex items-center justify-between">
-    <h1 class="text-2xl font-semibold">Laporan</h1>
+<div class="flex items-center justify-end">
     <a href="{{ route('admin.reports', ['export' => 'csv']) }}" class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white">Ekspor CSV</a>
 </div>
 <div class="mt-6 overflow-x-auto rounded-2xl border border-line bg-white">

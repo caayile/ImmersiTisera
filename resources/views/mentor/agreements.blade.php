@@ -1,8 +1,7 @@
 @extends('layouts.app')
-@section('title', 'Perjanjian')
+@section('title', 'Perjanjian Magang Dosen')
 @section('content')
-<h1 class="text-2xl font-semibold">Perjanjian Magang Dosen</h1>
-<div class="mt-6 space-y-4">
+<div class="space-y-4">
     @forelse($agreements as $agreement)
         <article class="rounded-2xl border border-line bg-white p-5">
             <div class="flex flex-wrap items-center justify-between gap-2">

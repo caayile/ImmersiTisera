@@ -196,8 +196,12 @@ class Status
         };
     }
 
-    public static function collaborationTypeLabel(string $type): string
+    public static function collaborationTypeLabel(?string $type): string
     {
+        if (! filled($type)) {
+            return '—';
+        }
+
         return match ($type) {
             'Guest Lecture' => 'Kuliah Tamu',
             'Student Project' => 'Proyek Mahasiswa',
@@ -210,8 +214,12 @@ class Status
         };
     }
 
-    public static function collaborationLevelLabel(int $level): string
+    public static function collaborationLevelLabel(?int $level): string
     {
+        if ($level === null) {
+            return '—';
+        }
+
         return self::COLLABORATION_LEVELS[$level] ?? 'Tidak diketahui';
     }
 

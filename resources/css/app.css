@@ -610,6 +610,13 @@ body {
     padding: 10px 8px;
 }
 
+.home-hero__batch--closed {
+    width: auto;
+    min-width: 108px;
+    padding-left: 18px;
+    padding-right: 18px;
+}
+
 .home-hero__cta {
     min-width: 220px;
     gap: 6px;

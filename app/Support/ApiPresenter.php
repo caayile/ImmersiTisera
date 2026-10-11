@@ -91,7 +91,7 @@ class ApiPresenter
             'opportunity' => $unit->work_done ?: $unit->function,
             'needed_expertise' => $unit->relevant_programs ?? [],
             'expected_output' => $unit->example_activities,
-            'status' => $unit->status,
+            'status' => $unit->isOpen() ? 'open' : 'closed',
             'match_score' => $score,
             'match_label' => $this->matchLabel($score),
             'applied' => $applied,

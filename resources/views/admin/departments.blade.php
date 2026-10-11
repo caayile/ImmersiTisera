@@ -3,10 +3,7 @@
 @section('content')
 <div x-data="{ showAdd: false }">
     <div class="flex flex-wrap items-end justify-between gap-3">
-        <div>
-            <h1 class="text-2xl font-semibold">Unit Bisnis</h1>
-            <p class="mt-1 text-sm text-muted">Pilih unit bisnis untuk mengelola informasi, lokasi, dan departemen di dalamnya.</p>
-        </div>
+        <p class="text-sm text-muted">Pilih unit bisnis untuk mengelola informasi, lokasi, dan departemen di dalamnya.</p>
         <button type="button" @click="showAdd = !showAdd" class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-dark">
             <span class="material-symbols-outlined text-[18px]">add</span>
             Tambah Unit Bisnis

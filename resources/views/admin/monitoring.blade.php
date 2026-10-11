@@ -1,8 +1,7 @@
 @extends('layouts.app')
 @section('title', 'Logbook Peserta')
 @section('content')
-<h1 class="text-2xl font-semibold">Logbook Peserta</h1>
-<p class="mt-1 text-sm text-muted">Klik nama peserta untuk melihat seluruh isi logbook.</p>
+<p class="text-sm text-muted">Klik nama peserta untuk melihat seluruh isi logbook.</p>
 <form method="GET" class="mt-5 grid gap-3 rounded-2xl border border-line bg-white p-4 md:grid-cols-4">
     <input name="q" value="{{ request('q') }}" placeholder="Cari nama peserta" class="rounded-lg border border-line px-3 py-2 text-sm">
     <select name="department_id" onchange="this.form.submit()" class="rounded-lg border border-line px-3 py-2 text-sm"><option value="">Semua unit bisnis</option>@foreach($departments as $department)<option value="{{ $department->id }}" @selected(request('department_id') == $department->id)>{{ $department->name }}</option>@endforeach</select>

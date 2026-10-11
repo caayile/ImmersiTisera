@@ -1,12 +1,14 @@
 @extends('layouts.app')
-@section('title', 'Detail Logbook')
+@section('title', 'Logbook ' . $program->participant->user->name)
 @section('content')
-<div class="flex flex-wrap items-start justify-between gap-4">
-    <div>
-        <a href="{{ route($backRoute) }}" class="text-sm font-medium text-primary-dark">&larr; Kembali ke daftar logbook</a>
-        <h1 class="mt-3 text-2xl font-semibold">Logbook {{ $program->participant->user->name }}</h1>
-        <p class="mt-1 text-sm text-muted">{{ $program->businessUnit?->name ?? '-' }} · {{ $program->department?->name ?? '-' }}</p>
-    </div>
+<div class="flex flex-wrap items-start justify-between gap-3">
+    <p class="text-lg font-semibold">{{ $program->businessUnit?->name ?? '-' }} · {{ $program->department?->name ?? '-' }}</p>
+    <a href="{{ route($backRoute) }}" class="inline-flex items-center gap-1.5 rounded-xl border border-line bg-white px-4 py-2 text-sm font-semibold text-primary-dark transition hover:bg-primary/5">
+        <span aria-hidden="true">&larr;</span>
+        Kembali ke daftar logbook
+    </a>
+</div>
+<div class="mt-2 flex justify-end">
     <span class="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary-dark">{{ $program->logbooks->count() }} entri</span>
 </div>
 

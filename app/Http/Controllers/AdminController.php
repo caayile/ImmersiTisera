@@ -8,6 +8,8 @@ use App\Models\BusinessUnit;
 use App\Models\CollaborationPipeline;
 use App\Models\Department;
 use App\Models\Evaluation;
+use App\Models\EvaluationScale;
+use App\Models\EvaluationSection;
 use App\Models\HeroSetting;
 use App\Models\HeroSlide;
 use App\Models\Logbook;
@@ -22,6 +24,7 @@ use App\Services\ApplicationApprovalService;
 use App\Services\MediaStorageService;
 use App\Support\Status;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Database\Seeders\QuestionnaireBankSeeder;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
@@ -610,9 +613,171 @@ class AdminController extends Controller
         ]);
     }
 
-    public function evaluations()
+    public function evaluations(Request $request)
     {
-        return view('admin.evaluations', ['evaluations' => Evaluation::with(['program.participant.user', 'evaluator'])->latest()->get()]);
+        $evaluations = Evaluation::with(['program.participant.user', 'program.department', 'program.businessUnit', 'evaluator'])
+            ->latest()
+            ->get();
+
+        // Kuesioner peserta = evaluasi criteria yang diisi akun peserta
+        // (bukan nilai raport mentor). Ini bahan menilai departemen.
+        $questionnaires = $evaluations->filter(fn (Evaluation $evaluation): bool => is_array($evaluation->criteria)
+            && $evaluation->criteria !== []
+            && $evaluation->evaluator?->isParticipant());
+
+        $sections = EvaluationSection::with(['questions' => fn ($query) => $query->where('is_active', true)->orderBy('position')])
+            ->orderBy('position')
+            ->get();
+        $bank = $sections->isNotEmpty()
+            ? $sections->map(fn (EvaluationSection $section) => [
+                'key' => $section->key,
+                'title' => $section->title,
+                'questions' => $section->questions->pluck('question')->all(),
+            ])->all()
+            : EvaluationQuestion::defaultBank();
+
+        $sectionOf = [];
+        foreach ($bank as $section) {
+            foreach ($section['questions'] as $question) {
+                $sectionOf[$question] = $section['title'];
+            }
+        }
+
+        if ($request->filled('department_id')) {
+            $questionnaires = $questionnaires
+                ->filter(fn (Evaluation $evaluation): bool => (int) $evaluation->program?->department_id === (int) $request->input('department_id'))
+                ->values();
+            $evaluations = $evaluations
+                ->filter(fn (Evaluation $evaluation): bool => (int) $evaluation->program?->department_id === (int) $request->input('department_id'))
+                ->values();
+        }
+
+        $recap = $questionnaires
+            ->filter(fn (Evaluation $evaluation): bool => $evaluation->program?->department !== null)
+            ->groupBy(fn (Evaluation $evaluation) => $evaluation->program->department->id)
+            ->map(function ($group) use ($sectionOf) {
+                $items = $group->flatMap(fn (Evaluation $evaluation) => $evaluation->criteriaForDisplay());
+                $byQuestion = $items->groupBy('label')
+                    ->map(fn ($rows) => round($rows->avg('score'), 1))
+                    ->sort();
+
+                return [
+                    'department' => $group->first()->program->department,
+                    'respondents' => $group->count(),
+                    'overall' => round($items->avg('score'), 1),
+                    'bySection' => $items->groupBy(fn ($criterion) => $sectionOf[$criterion['label']] ?? 'Lainnya')
+                        ->map(fn ($rows) => round($rows->avg('score'), 1)),
+                    'lowestQuestion' => $byQuestion->keys()->first(),
+                    'lowestScore' => $byQuestion->first(),
+                ];
+            })
+            ->sortBy('department.name')
+            ->values();
+
+        return view('admin.evaluations', [
+            'evaluations' => $evaluations,
+            'questionnaires' => $questionnaires->values(),
+            'recap' => $recap,
+            'bank' => $bank,
+            'departments' => Department::orderBy('name')->get(),
+        ]);
+    }
+
+    public function questionnaires()
+    {
+        if (EvaluationSection::count() === 0) {
+            QuestionnaireBankSeeder::ensure();
+        }
+
+        $sections = EvaluationSection::withCount('questions')->orderBy('position')->get();
+        $scales = EvaluationScale::orderBy('position')->get();
+
+        return view('admin.questionnaires', compact('sections', 'scales'));
+    }
+
+    public function showQuestionSection(EvaluationSection $section)
+    {
+        $section->load(['questions' => fn ($query) => $query->orderBy('position')]);
+
+        return view('admin.questionnaire-show', compact('section'));
+    }
+
+    public function saveQuestionSection(Request $request, EvaluationSection $section)
+    {
+        // Hapus satu pertanyaan dari form yang sama.
+        if ($request->filled('delete_id')) {
+            $section->questions()->where('id', $request->integer('delete_id'))->firstOrFail()->delete();
+
+            return back()->with('status', 'Pertanyaan dihapus.');
+        }
+
+        $data = $request->validate([
+            'key' => ['required', 'string', 'max:50', 'alpha_dash', 'unique:evaluation_sections,key,'.$section->id],
+            'title' => ['required', 'string', 'max:255'],
+            'questions' => ['nullable', 'array'],
+            'questions.*.id' => ['required', 'integer'],
+            'questions.*.question' => ['required', 'string', 'max:1000'],
+            'questions.*.is_active' => ['required', 'in:0,1'],
+            'new_question' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $section->update(['key' => $data['key'], 'title' => $data['title']]);
+
+        foreach ($data['questions'] ?? [] as $row) {
+            $question = $section->questions()->where('id', $row['id'])->first();
+            if ($question) {
+                $question->update([
+                    'question' => $row['question'],
+                    'is_active' => $row['is_active'] === '1',
+                ]);
+            }
+        }
+
+        if (filled($data['new_question'] ?? null)) {
+            $position = $section->questions()->max('position') ?? 0;
+            $section->questions()->create([
+                'question' => $data['new_question'],
+                'position' => $position + 1,
+                'is_active' => true,
+            ]);
+        }
+
+        return back()->with('status', 'Bank kuesioner diperbarui.');
+    }
+
+    public function storeScale(Request $request)
+    {
+        $data = $request->validate([
+            'label' => ['required', 'string', 'max:50'],
+            'value' => ['required', 'integer', 'min:1', 'max:10', 'unique:evaluation_scales,value'],
+        ]);
+
+        $data['position'] = EvaluationScale::max('position') ?? 0 + 1;
+
+        EvaluationScale::create($data);
+
+        return back()->with('status', 'Skala ditambahkan.');
+    }
+
+    public function updateScale(Request $request, EvaluationScale $scale)
+    {
+        $data = $request->validate([
+            'label' => ['required', 'string', 'max:50'],
+            'value' => ['required', 'integer', 'min:1', 'max:10', 'unique:evaluation_scales,value,'.$scale->id],
+        ]);
+
+        $scale->update($data);
+
+        return back()->with('status', 'Skala diperbarui.');
+    }
+
+    public function destroyScale(EvaluationScale $scale)
+    {
+        abort_if(EvaluationScale::count() <= 1, 403, 'Minimal tersisa satu skala.');
+
+        $scale->delete();
+
+        return back()->with('status', 'Skala dihapus.');
     }
 
     public function collaborations()

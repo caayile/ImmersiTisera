@@ -1,8 +1,7 @@
 @extends('layouts.app')
-@section('title', 'Pengguna')
+@section('title', 'Manajemen Pengguna')
 @section('content')
-<h1 class="text-2xl font-semibold">Manajemen Pengguna</h1>
-<form method="POST" class="mt-6 grid gap-3 rounded-2xl border border-line bg-white p-5 md:grid-cols-5">
+<form method="POST" class="grid gap-3 rounded-2xl border border-line bg-white p-5 md:grid-cols-5">
     @csrf
     <input name="name" placeholder="Nama" class="rounded-lg border border-line px-3 py-2 text-sm" required>
     <input name="email" type="email" placeholder="Email" class="rounded-lg border border-line px-3 py-2 text-sm" required>

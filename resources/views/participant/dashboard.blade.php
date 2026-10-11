@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Dashboard Program')
+@section('title', 'Program Saya')
 @section('content')
 @php
     $next = ['Lengkapi profil kompetensi Anda.', route('participant.profile')];
@@ -27,155 +27,173 @@
             default => $next,
         };
     }
-    $timelineStep = 1;
-    if ($program?->status === 'completed') {
-        $timelineStep = 5;
-    } elseif ($program?->status === 'active') {
-        $week = $program->current_week ?? 1;
-        $timelineStep = $week <= 2 ? 1 : ($week <= 4 ? 2 : ($week <= 7 ? 3 : 4));
+    $logbookCount = $program?->logbooks?->count() ?? 0;
+    $checkpointDone = $program?->timelines?->whereNotIn('status', ['pending', 'draft'])->count() ?? 0;
+    $mentoringCount = $program?->mentorSessions?->count() ?? 0;
+    $agreementLabel = \App\Support\Status::label($program?->agreement?->status ?? 'draft');
+    $progress = (int) ($program?->progress ?? 0);
+    $week = (int) ($program?->current_week ?? 1);
+    $mentorPhone = $program?->mentor?->user?->phone ? preg_replace('/\D+/', '', (string) $program->mentor->user->phone) : '';
+    if ($mentorPhone && str_starts_with($mentorPhone, '0')) {
+        $mentorPhone = '62'.substr($mentorPhone, 1);
     }
 @endphp
 
-<div class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-white px-5 py-4 shadow-sm">
-    <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
-        <div>
-            <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">Unit Bisnis</p>
-            <p class="mt-0.5 font-medium">{{ $program?->department?->name ?? 'Belum dipilih' }}</p>
-        </div>
-        <div>
-            <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">Departemen</p>
-            <p class="mt-0.5 font-medium">{{ $program?->businessUnit?->name ?? 'Belum dipilih' }}</p>
-        </div>
-        <div>
-            <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">Mentor</p>
-            <p class="mt-0.5 font-medium">{{ $program?->mentor?->user?->name ?? 'Belum ditugaskan' }}</p>
-        </div>
-        @if($program)
-            <x-badge :status="$program->status" />
-        @endif
-    </div>
-    <div class="flex flex-wrap items-center gap-3">
-        <p class="max-w-xs text-sm text-muted">{{ $next[0] }}</p>
+@unless($program)
+    <x-empty class="mt-6" title="Belum ada program" :action="route('departments.index')" label="Daftar program">Pengajuan Anda akan menjadi program setelah surat persetujuan disahkan admin.</x-empty>
+    <div class="mt-4 flex flex-wrap items-center gap-3 rounded-2xl border border-line bg-white px-5 py-4 shadow-sm">
+        <p class="text-sm text-muted">{{ $next[0] }}</p>
         <a href="{{ $next[1] }}" class="inline-flex rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white">Lanjutkan</a>
     </div>
-</div>
+@else
+    {{-- Ringkasan atas: Total Magang + Mentor --}}
+    <div class="mt-6 grid gap-4 lg:grid-cols-[220px_1fr]">
+        <article class="rounded-2xl border border-line bg-white p-5 shadow-sm">
+            <p class="flex items-center gap-2 text-sm text-ink">
+                <span class="material-symbols-outlined text-[20px] text-muted">work</span>
+                Total Magang
+            </p>
+            <p class="mt-2 text-center text-2xl font-semibold">{{ $stats['programs'] ?? 0 }}</p>
+        </article>
 
-@if($program?->mentor?->user)
-    @php
-        $mentorPhone = preg_replace('/\D+/', '', (string) $program->mentor->user->phone);
-        if (str_starts_with($mentorPhone, '0')) {
-            $mentorPhone = '62'.substr($mentorPhone, 1);
-        }
-        $mentorAvatar = $program->mentor->user->avatarUrl();
-        $mentorInitials = collect(preg_split('/\s+/', trim($program->mentor->user->name)))->filter()->map(fn ($part) => mb_strtoupper(mb_substr($part, 0, 1)))->take(2)->implode('');
-    @endphp
-    <section class="mt-5 flex flex-col gap-4 rounded-2xl border border-[#cde8dc] bg-[#f1fbf6] p-5 sm:flex-row sm:items-center sm:justify-between" x-data="{ mentorOpen: false }">
-        <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.14em] text-primary-dark">Mentor</p>
-            <h2 class="mt-1 text-lg font-semibold">{{ $program->mentor->user->name }}</h2>
-            <p class="mt-1 text-sm text-muted">Mentor industri untuk program magang Anda. Silakan berkoordinasi langsung dengan mentor.</p>
-        </div>
-        <div class="flex shrink-0 flex-wrap items-center gap-2">
-            <button type="button" @click="mentorOpen = true" class="inline-flex items-center justify-center gap-2 rounded-lg border border-primary/30 bg-white px-4 py-2.5 text-sm font-semibold text-primary-dark transition hover:bg-primary/5">
-                <span class="material-symbols-outlined text-[19px]">person</span>
-                Lihat Profil
-            </button>
-            @if($mentorPhone)
-                <a href="https://wa.me/{{ $mentorPhone }}" target="_blank" rel="noreferrer" class="inline-flex items-center justify-center gap-2 rounded-lg bg-[#159447] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#107c3a]">
-                    <span class="material-symbols-outlined text-[19px]">chat</span>
-                    Buka WhatsApp
-                </a>
-            @endif
-        </div>
+        <section class="flex flex-col gap-3 rounded-2xl border border-line bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between" x-data="{ mentorOpen: false }">
+            <div class="min-w-0">
+                <p class="text-sm font-medium text-primary-dark">Mentor</p>
+                <h2 class="mt-0.5 text-lg font-semibold">{{ $program->mentor?->user?->name ?? 'Belum ditugaskan' }}</h2>
+                <p class="mt-1 text-sm text-muted">Mentor industri untuk program magang Anda. Silakan berkoordinasi langsung dengan mentor.</p>
+            </div>
+            @if($program->mentor?->user)
+                <div class="flex shrink-0 items-center gap-2">
+                    <button type="button" @click="mentorOpen = true" class="inline-flex items-center gap-2 rounded-xl border border-primary/40 px-4 py-2.5 text-sm font-medium text-primary-dark transition hover:bg-primary/5">
+                        <span class="material-symbols-outlined text-[19px]">person</span>
+                        Lihat Profil
+                    </button>
+                </div>
 
-        <div x-show="mentorOpen" x-cloak class="fixed inset-0 z-50 items-center justify-center bg-black/40 p-4" :class="mentorOpen && 'flex'" @click.self="mentorOpen = false" @keydown.escape.window="mentorOpen = false" role="dialog" aria-modal="true" aria-label="Profil mentor">
-            <div class="w-full max-w-2xl overflow-hidden rounded-3xl bg-white shadow-xl">
-                <div class="hero-grid px-6 py-6">
-                    <div class="flex items-center gap-4">
-                        @if($mentorAvatar)
-                            <img src="{{ $mentorAvatar }}" alt="" width="64" height="64" class="h-16 w-16 shrink-0 rounded-2xl object-cover shadow-sm" referrerpolicy="no-referrer">
-                        @else
-                            <span class="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white text-xl font-semibold text-primary-dark shadow-sm">{{ $mentorInitials }}</span>
-                        @endif
-                        <div class="min-w-0 text-white">
-                            <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-secondary">Mentor Industri</p>
-                            <h3 class="mt-0.5 truncate text-xl font-semibold">{{ $program->mentor->user->name }}</h3>
-                            <p class="mt-0.5 truncate text-sm text-white/75">{{ $program->mentor->user->email }}</p>
+                <div x-show="mentorOpen" x-cloak class="fixed inset-0 z-50 items-center justify-center bg-black/40 p-4" :class="mentorOpen && 'flex'" @click.self="mentorOpen = false" @keydown.escape.window="mentorOpen = false" role="dialog" aria-modal="true" aria-label="Profil mentor">
+                    <div class="w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-xl">
+                        <div class="hero-grid px-6 py-5">
+                            <div class="flex items-center gap-3">
+                                <div class="min-w-0 text-white">
+                                    <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-secondary">Mentor Industri</p>
+                                    <h3 class="mt-0.5 truncate text-xl font-semibold">{{ $program->mentor->user->name }}</h3>
+                                    <p class="mt-0.5 truncate text-sm text-white/75">{{ $program->mentor->user->email }}</p>
+                                </div>
+                                <button type="button" @click="mentorOpen = false" class="ml-auto flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/15 text-white transition hover:bg-white/25" aria-label="Tutup">
+                                    <span class="material-symbols-outlined text-[18px]">close</span>
+                                </button>
+                            </div>
                         </div>
-                        <button type="button" @click="mentorOpen = false" class="ml-auto flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/15 text-white transition hover:bg-white/25" aria-label="Tutup">
-                            <span class="material-symbols-outlined text-[18px]">close</span>
-                        </button>
+                        <dl class="grid gap-3 p-6 text-sm sm:grid-cols-2">
+                            <div class="rounded-xl bg-bg px-3 py-2.5">
+                                <dt class="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">Telepon</dt>
+                                <dd class="mt-0.5 font-medium">{{ $program->mentor->user->phone ?: '—' }}</dd>
+                            </div>
+                            <div class="rounded-xl bg-bg px-3 py-2.5">
+                                <dt class="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">Posisi</dt>
+                                <dd class="mt-0.5 font-medium">{{ $program->mentor->position ?: 'Mentor Industri' }}</dd>
+                            </div>
+                            <div class="rounded-xl bg-bg px-3 py-2.5">
+                                <dt class="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">Unit Bisnis</dt>
+                                <dd class="mt-0.5 font-medium">{{ $program->mentor->department?->name ?: '—' }}</dd>
+                            </div>
+                            <div class="rounded-xl bg-bg px-3 py-2.5">
+                                <dt class="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">Departemen</dt>
+                                <dd class="mt-0.5 font-medium">{{ $program->mentor->businessUnit?->name ?: '—' }}</dd>
+                            </div>
+                            @if($mentorPhone)
+                                <div class="sm:col-span-2">
+                                    <a href="https://wa.me/{{ $mentorPhone }}" target="_blank" rel="noreferrer" class="inline-flex items-center gap-2 rounded-xl bg-[#159447] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#107c3a]">
+                                        <span class="material-symbols-outlined text-[19px]">chat</span>
+                                        Buka WhatsApp
+                                    </a>
+                                </div>
+                            @endif
+                        </dl>
                     </div>
                 </div>
-                <dl class="grid gap-3 p-6 text-sm sm:grid-cols-2">
-                    <div class="rounded-xl bg-bg px-3 py-2.5">
-                        <dt class="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">NIK</dt>
-                        <dd class="mt-0.5 font-medium">{{ $program->mentor->nik ?: '—' }}</dd>
+            @endif
+        </section>
+    </div>
+
+    {{-- Informasi Program + Jejak Program --}}
+    <article class="mt-4 grid gap-6 rounded-2xl border border-line bg-white p-6 shadow-sm lg:grid-cols-[1fr_280px]">
+        <div>
+            <h2 class="text-xl font-medium tracking-[0.08em]">Informasi Program</h2>
+            <dl class="mt-5 grid gap-x-8 gap-y-5 sm:grid-cols-2">
+                <div>
+                    <dt class="text-sm tracking-[0.08em] text-muted">Unit Bisnis</dt>
+                    <dd class="mt-1 text-lg font-medium">{{ $program->department?->name ?? 'Belum dipilih' }}</dd>
+                </div>
+                <div>
+                    <dt class="text-sm tracking-[0.08em] text-muted">Departemen</dt>
+                    <dd class="mt-1 text-lg font-medium">{{ $program->businessUnit?->name ?? 'Belum dipilih' }}</dd>
+                </div>
+                <div>
+                    <dt class="text-sm tracking-[0.08em] text-muted">Mentor</dt>
+                    <dd class="mt-1 text-lg font-medium">{{ $program->mentor?->user?->name ?? 'Belum ditugaskan' }}</dd>
+                </div>
+                <div>
+                    <dt class="text-sm tracking-[0.08em] text-muted">Periode</dt>
+                    <dd class="mt-1 text-lg font-medium">{{ $program->start_date?->format('d M Y') ?? '—' }} – {{ $program->end_date?->format('d M Y') ?? '—' }}</dd>
+                </div>
+                <div class="sm:col-span-2">
+                    <dt class="text-sm tracking-[0.08em] text-muted">Progress Magang</dt>
+                    <dd class="mt-1 text-lg font-medium">{{ $progress }}% · Minggu {{ $week }}</dd>
+                    <div class="mt-2 h-2 max-w-md overflow-hidden rounded-full bg-line" role="progressbar" aria-valuenow="{{ $progress }}" aria-valuemin="0" aria-valuemax="100">
+                        <div class="h-full rounded-full bg-primary" style="width: {{ $progress }}%"></div>
                     </div>
-                    <div class="rounded-xl bg-bg px-3 py-2.5">
-                        <dt class="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">Telepon</dt>
-                        <dd class="mt-0.5 font-medium">{{ $program->mentor->user->phone ?: '—' }}</dd>
-                    </div>
-                    <div class="rounded-xl bg-bg px-3 py-2.5">
-                        <dt class="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">Posisi</dt>
-                        <dd class="mt-0.5 font-medium">{{ $program->mentor->position ?: 'Mentor Industri' }}</dd>
-                    </div>
-                    <div class="rounded-xl bg-bg px-3 py-2.5">
-                        <dt class="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">Unit Bisnis</dt>
-                        <dd class="mt-0.5 font-medium">{{ $program->mentor->department?->name ?: '—' }}</dd>
-                    </div>
-                    <div class="rounded-xl bg-bg px-3 py-2.5 sm:col-span-2">
-                        <dt class="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">Departemen</dt>
-                        <dd class="mt-0.5 font-medium">{{ $program->mentor->businessUnit?->name ?: '—' }}</dd>
-                    </div>
-                    <div class="rounded-xl bg-bg px-3 py-2.5 sm:col-span-2">
-                        <dt class="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">Keahlian</dt>
-                        <dd class="mt-1.5 flex flex-wrap gap-1.5">
-                            @forelse($program->mentor->expertise ?? [] as $skill)
-                                <span class="rounded-full bg-primary/15 px-2.5 py-0.5 text-xs font-medium text-primary-dark">{{ $skill }}</span>
-                            @empty
-                                <span class="text-muted">—</span>
-                            @endforelse
-                        </dd>
-                    </div>
-                </dl>
+                </div>
+            </dl>
+        </div>
+        <div class="border-t border-line pt-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
+            <h3 class="text-lg font-medium tracking-[0.08em]">Jejak Program</h3>
+            <ul class="mt-4 space-y-3 text-lg">
+                <li class="flex items-baseline gap-2">
+                    <span class="text-sm tracking-[0.08em] text-muted">Perjanjian :</span>
+                    <span class="font-medium">{{ $agreementLabel }}</span>
+                </li>
+                <li class="flex items-baseline gap-2">
+                    <span class="text-sm tracking-[0.08em] text-muted">Logbook :</span>
+                    <span class="font-medium">{{ $logbookCount }}</span>
+                </li>
+                <li class="flex items-baseline gap-2">
+                    <span class="text-sm tracking-[0.08em] text-muted">Checkpoint :</span>
+                    <span class="font-medium">{{ $checkpointDone }}</span>
+                </li>
+                <li class="flex items-baseline gap-2">
+                    <span class="text-sm tracking-[0.08em] text-muted">Mentoring :</span>
+                    <span class="font-medium">{{ $mentoringCount }}</span>
+                </li>
+            </ul>
+            <div class="mt-5 flex flex-wrap items-center gap-3">
+                <x-badge :status="$program->status" />
             </div>
         </div>
-    </section>
-@endif
+    </article>
 
-<div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-    @foreach([
-        ['person', 'Profil', 'Lengkapi prodi & kompetensi', route('participant.profile')],
-        ['send', 'Pendaftaran', 'Ajukan ke unit mitra', route('participant.applications')],
-        ['edit_note', 'Logbook', 'Isi refleksi harian', route('participant.logbooks')],
-        ['fact_check', 'Checkpoint', '4 fase: Orientasi · Observasi · Kolaborasi · Laporan/Hasil', route('participant.timeline')],
-    ] as [$icon, $title, $copy, $url])
-        <a href="{{ $url }}" class="rounded-2xl border border-line bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary hover:shadow-md">
-            <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary-dark">
-                <span class="material-symbols-outlined text-[22px]">{{ $icon }}</span>
-            </span>
-            <p class="mt-4 font-semibold">{{ $title }}</p>
-            <p class="mt-1 text-sm text-muted">{{ $copy }}</p>
-        </a>
-    @endforeach
-</div>
+    {{-- Tambahan relevan: langkah selanjutnya --}}
+    <div class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-white px-5 py-4 shadow-sm">
+        <p class="text-sm text-muted">{{ $next[0] }}</p>
+        <a href="{{ $next[1] }}" class="inline-flex rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white">Lanjutkan</a>
+    </div>
 
-<div class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-    @foreach([
-        ['work_history', 'Total Magang', $stats['programs'] ?? 0, 'Siklus', route('participant.program')],
-        ['edit_note', 'Entri Logbook', $stats['logbooks'] ?? 0, 'Entri', route('participant.logbooks')],
-        ['forum', 'Sesi Mentoring', $stats['mentorings'] ?? 0, 'Sesi', route('participant.mentoring')],
-        ['folder_special', 'Hasil', $stats['outputs'] ?? 0, 'Berkas', route('participant.outputs')],
-    ] as [$icon, $title, $count, $unit, $url])
-        <a href="{{ $url }}" class="rounded-2xl border border-line bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary hover:shadow-md">
-            <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary-dark">
-                <span class="material-symbols-outlined text-[22px]">{{ $icon }}</span>
-            </span>
-            <p class="mt-4 text-3xl font-semibold">{{ $count }}</p>
-            <p class="mt-1 text-sm font-semibold">{{ $title }}</p>
-            <p class="text-xs text-muted">{{ $unit }}</p>
-        </a>
-    @endforeach
-</div>
+    {{-- Tambahan relevan: aksi cepat --}}
+    <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        @foreach([
+            ['edit_note', 'Logbook', 'Isi refleksi harian', route('participant.logbooks')],
+            ['forum', 'Mentoring', 'Jadwal & sesi mentor', route('participant.mentoring')],
+            ['fact_check', 'Checkpoint', '4 fase magang', route('participant.timeline')],
+            ['summarize', 'Laporan Akhir', 'Hasil & laporan', route('participant.final-report')],
+        ] as [$icon, $title, $copy, $url])
+            <a href="{{ $url }}" class="rounded-2xl border border-line bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary hover:shadow-md">
+                <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary-dark">
+                    <span class="material-symbols-outlined text-[22px]">{{ $icon }}</span>
+                </span>
+                <p class="mt-4 font-semibold">{{ $title }}</p>
+                <p class="mt-1 text-sm text-muted">{{ $copy }}</p>
+            </a>
+        @endforeach
+    </div>
+@endunless
 @endsection

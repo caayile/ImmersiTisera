@@ -25,21 +25,23 @@ class ImersiSmokeTest extends TestCase
 
         $this->actingAs(User::where('email', 'dosen@imersi.id')->firstOrFail())
             ->get(route('participant.outputs'))
-            ->assertOk()
-            ->assertSee('Hasil dan Bukti', false);
+            ->assertRedirect(route('participant.final-report'));
 
         $this->actingAs(User::where('email', 'dosen@imersi.id')->firstOrFail())
             ->get(route('participant.final-report'))
             ->assertOk()
             ->assertSee('Laporan Akhir', false);
 
-        $this->actingAs(User::where('email', 'mentor@imersi.id')->firstOrFail())
-            ->get(route('mentor.outputs'))
+        $mentor = User::where('email', 'mentor@imersi.id')->firstOrFail();
+        $mentorProgram = Program::where('mentor_id', $mentor->mentor->id)->firstOrFail();
+
+        $this->actingAs($mentor)
+            ->get(route('mentor.participants.show', $mentorProgram))
             ->assertOk()
-            ->assertSee('Validasi Hasil', false);
+            ->assertSee('Laporan Akhir', false);
     }
 
-    public function test_outputs_pages_show_history_across_cycles(): void
+    public function test_final_report_shows_history_across_cycles(): void
     {
         $this->seed();
 
@@ -91,16 +93,15 @@ class ImersiSmokeTest extends TestCase
         ]);
 
         $this->actingAs($dosen)
-            ->get(route('participant.outputs'))
+            ->get(route('participant.final-report'))
             ->assertOk()
-            ->assertSee('Riset Lapangan Terdahulu')
-            ->assertSee('Industry Insight: Teori vs Praktik Predictive Analytics')
-            ->assertSee('Riwayat hasil lintas magang');
+            ->assertSee('Laporan Akhir — Siklus Lama')
+            ->assertSee('https://example.com/hasil-lama', false);
 
         $this->actingAs($dosen)
             ->get(route('participant.final-report'))
             ->assertOk()
-            ->assertSee('report-modal-open', false)
+            ->assertSee('Buat Laporan', false)
             ->assertSee('Laporan Akhir — Siklus Lama')
             ->assertSee('Unit Bisnis')
             ->assertSee('Departement')
@@ -267,8 +268,8 @@ class ImersiSmokeTest extends TestCase
         $this->actingAs(User::where('email', 'mentor@imersi.id')->firstOrFail())
             ->get(route('mentor.evaluations'))
             ->assertOk()
-            ->assertSee('Penilaian dari peserta')
-            ->assertSee('Penilaian untuk peserta')
+            ->assertSee('Umpan balik kuesioner')
+            ->assertSee('Umpan Balik Mentor')
             ->assertSee('Mentor sangat membantu.');
     }
 
@@ -290,7 +291,9 @@ class ImersiSmokeTest extends TestCase
         $this->actingAs($dosen)
             ->get(route('participant.evaluation'))
             ->assertOk()
-            ->assertSee('Tambah indikator');
+            ->assertSee('Hasil Magang')
+            ->assertSee('Nilai raport dari mentor terkunci')
+            ->assertSee('Pengumuman nilai periode ini ditutup');
 
         $this->actingAs($dosen)
             ->post(route('participant.evaluation'), [
@@ -312,9 +315,8 @@ class ImersiSmokeTest extends TestCase
         $this->actingAs($dosen)
             ->get(route('participant.evaluation'))
             ->assertOk()
-            ->assertSee('Relasi Mentor')
-            ->assertSee('Penerapan Teknologi')
-            ->assertSee("x-show=\"tab === 'mine'\"", false);
+            ->assertSee('Nilai raport dari mentor terkunci')
+            ->assertSee('Pengumuman nilai periode ini ditutup');
     }
 
     public function test_mentor_can_input_weighted_report_grades(): void
@@ -325,7 +327,12 @@ class ImersiSmokeTest extends TestCase
         $program = Program::whereHas('mentor.user', fn ($query) => $query->whereKey($mentor->id))->firstOrFail();
 
         $this->actingAs($mentor)
-            ->get(route('mentor.evaluations'))
+            ->get(route('mentor.penilaian'))
+            ->assertOk()
+            ->assertSee('Penilaian');
+
+        $this->actingAs($mentor)
+            ->get(route('mentor.penilaian.show', $program))
             ->assertOk()
             ->assertSee('Tambah aspek');
 
@@ -363,7 +370,7 @@ class ImersiSmokeTest extends TestCase
         $this->assertSame('A', $evaluation->predicate());
 
         $this->actingAs($mentor)
-            ->get(route('mentor.evaluations'))
+            ->get(route('mentor.penilaian.show', $program))
             ->assertOk()
             ->assertSee('91')
             ->assertSee('Kehadiran');
@@ -415,8 +422,8 @@ class ImersiSmokeTest extends TestCase
             ->assertSee('Fakultas Teknik')
             ->assertSee('Lanjutkan')
             ->assertSee('Total Magang')
-            ->assertSee('Entri Logbook')
-            ->assertSee('Sesi Mentoring')
+            ->assertSee('Logbook')
+            ->assertSee('Mentoring')
             ->assertDontSee('Universitas')
             ->assertDontSee('Pilih mitra magang dosen Anda');
 

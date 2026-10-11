@@ -27,20 +27,20 @@ class TimelineCheckpointTest extends TestCase
         $this->actingAs($dosen)
             ->get(route('participant.timeline'))
             ->assertOk()
-            ->assertSee('Checkpoint Saya')
-            ->assertSee('Minggu 2–4')
-            ->assertSee('Isi atau perbarui checkpoint')
-            ->assertSee('Dapat diisi')
+            ->assertSee('Checkpoint')
+            ->assertSee('Minggu 2-4')
+            ->assertSee('Isi Checkpoint')
+            ->assertSee('Dibuka')
             ->assertSee('Minggu 1')
-            ->assertSee('Minggu 5–7')
+            ->assertSee('Minggu 5-7')
             ->assertSee('Minggu 8')
-            ->assertSee('ORIENTASI')
+            ->assertSee('Orientasi')
             ->assertSee('OBSERVASI')
             ->assertSee('KOLABORASI')
-            ->assertSee('LAPORAN / HASIL')
+            ->assertSee('HASIL')
             ->assertSee('Terkunci')
             ->assertSee('Pilih File')
-            ->assertSee('Keterangan laporan (opsional)');
+            ->assertSee('Deskripsi Aktivitas');
 
         $this->assertSame([1, 2, 5, 8], $program->timelines()->orderBy('week')->pluck('week')->all());
         $this->assertDatabaseHas('timelines', [
@@ -126,7 +126,7 @@ class TimelineCheckpointTest extends TestCase
             ->get(route('participant.timeline'))
             ->assertOk()
             ->assertSee('Ditutup')
-            ->assertSee('Dapat diisi')
+            ->assertSee('Dibuka')
             ->assertSee('Checkpoint kolaborasi aktif');
     }
 
@@ -231,7 +231,7 @@ class TimelineCheckpointTest extends TestCase
         $this->assertDatabaseHas('timelines', ['id' => $item->id, 'status' => 'done']);
     }
 
-    public function test_mentor_revision_requires_note(): void
+    public function test_mentor_validates_timeline_with_optional_note(): void
     {
         $this->seed();
 
@@ -239,20 +239,15 @@ class TimelineCheckpointTest extends TestCase
         $item->update(['status' => 'submitted']);
 
         $this->actingAs(User::where('email', 'mentor@imersi.id')->firstOrFail())
-            ->post(route('mentor.timeline.review', $item), ['status' => 'pending'])
-            ->assertSessionHasErrors('mentor_note');
-
-        $this->actingAs(User::where('email', 'mentor@imersi.id')->firstOrFail())
             ->post(route('mentor.timeline.review', $item), [
-                'status' => 'pending',
-                'mentor_note' => 'Perjelas target hasilnya.',
+                'mentor_note' => 'Dokumentasi sudah lengkap.',
             ])
             ->assertRedirect();
 
         $this->assertDatabaseHas('timelines', [
             'id' => $item->id,
-            'status' => 'pending',
-            'mentor_note' => 'Perjelas target hasilnya.',
+            'status' => 'done',
+            'mentor_note' => 'Dokumentasi sudah lengkap.',
         ]);
     }
 
@@ -275,7 +270,7 @@ class TimelineCheckpointTest extends TestCase
             ->assertSee('Minggu 1')
             ->assertSee('Minggu 2–4')
             ->assertSee('ORIENTASI')
-            ->assertSee('Minta revisi');
+            ->assertSee('Lihat Detail');
     }
 
     public function test_other_mentor_cannot_view_timeline_detail(): void
@@ -375,11 +370,11 @@ class TimelineCheckpointTest extends TestCase
             ->get(route('participant.timeline'))
             ->assertOk()
             ->assertSee('Minggu 1')
-            ->assertSee('ORIENTASI')
-            ->assertSee('Ditutup. Waktu ORIENTASI (Minggu 1) sudah lewat')
-            ->assertSee('Minggu 2–4')
+            ->assertSee('Orientasi')
+            ->assertSee('Ditutup. Jendela fase ini sudah lewat.')
+            ->assertSee('Minggu 2-4')
             ->assertSee('OBSERVASI')
-            ->assertSee('Dapat diisi')
+            ->assertSee('Dibuka')
             ->assertDontSee('TEMUKAN')
             ->assertDontSee('Lanjutkan observasi dan rangkum wawasan industri.');
 

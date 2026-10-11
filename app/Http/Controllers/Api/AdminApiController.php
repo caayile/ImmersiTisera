@@ -25,7 +25,7 @@ class AdminApiController extends Controller
             'dosen' => Participant::count(),
             'mentors' => Mentor::count(),
             'active_programs' => Program::query()->where('status', 'active')->count(),
-            'opportunities' => BusinessUnit::query()->where('status', 'open')->count(),
+            'opportunities' => BusinessUnit::query()->currentlyOpen()->count(),
             'department_needs' => DepartmentNeed::count(),
         ]);
     }

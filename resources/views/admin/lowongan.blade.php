@@ -1,14 +1,11 @@
 @extends('layouts.app')
-@section('title', 'Lowongan')
+@section('title', 'Lowongan magang dosen')
 @section('content')
 @php
     $hasOpenAllError = $errors->has('batch') || $errors->has('registration_start') || $errors->has('registration_deadline');
 @endphp
 <div class="flex flex-wrap items-center justify-between gap-3">
-    <div>
-        <h1 class="text-2xl font-semibold">Lowongan magang dosen</h1>
-        <p class="mt-1 text-sm text-muted">Kelola daftar lowongan yang sudah tersedia di tiap unit bisnis serta buka atau tutup pendaftarannya.</p>
-    </div>
+    <p class="text-sm text-muted">Kelola daftar lowongan yang sudah tersedia di tiap unit bisnis serta buka atau tutup pendaftarannya.</p>
     <div class="flex items-center gap-3 rounded-xl border border-line bg-white px-4 py-2.5">
         <div>
             <p class="text-xs font-semibold text-muted">Semua lowongan</p>
@@ -118,8 +115,12 @@
 <div class="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
     @forelse($units as $unit)
         @php
-            $open = $unit->status === 'open';
+            $manualOpen = $unit->status === 'open';
+            // Status efektif yang dilihat peserta: status manual + jendela tanggal.
+            $open = $unit->isOpen();
             $scheduled = $unit->registration_start !== null && $unit->registration_deadline !== null;
+            $expired = $manualOpen && $scheduled && $unit->registration_deadline && now()->gt($unit->registration_deadline);
+            $notStarted = $manualOpen && $scheduled && $unit->registration_start && now()->lt($unit->registration_start);
             $quota = \App\Models\BusinessUnit::MAX_APPLICANTS;
             $filled = (int) ($unit->active_applications_count ?? $unit->applications_count ?? 0);
             $isFull = $filled >= $quota;
@@ -211,19 +212,25 @@
                 <div>
                     <p class="text-sm font-semibold text-ink">Status lowongan</p>
                     <p class="mt-0.5 text-[11px] leading-snug text-muted">
-                        @if($scheduled)
-                            {{ $open ? 'Lowongan sedang terbuka.' : 'Lowongan sedang ditutup.' }}
-                        @else
+                        @if(! $scheduled)
                             Atur periode pendaftaran terlebih dahulu untuk mengoperasikan toggle.
+                        @elseif($open)
+                            Lowongan sedang terbuka.
+                        @elseif($expired)
+                            Masa pendaftaran telah berakhir pada {{ $unit->registration_deadline->format('d M Y') }} (23.59). Perpanjang tanggal atau tutup lowongan.
+                        @elseif($notStarted)
+                            Terjadwal, dibuka pada {{ $unit->registration_start->format('d M Y') }} (00.00).
+                        @else
+                            Lowongan sedang ditutup.
                         @endif
                     </p>
                 </div>
                 <form method="POST" action="{{ route('admin.lowongan.toggle', $unit) }}" class="shrink-0 {{ $scheduled ? '' : 'pointer-events-none opacity-40' }}">
                     @csrf
-                    <input type="hidden" name="status" value="{{ $open ? 'closed' : 'open' }}">
-                    <label class="relative inline-flex cursor-pointer items-center" title="{{ $scheduled ? ($open ? 'Lowongan terbuka' : 'Lowongan ditutup') : 'Periode pendaftaran belum diatur' }}">
-                        <input type="checkbox" class="peer sr-only" @checked($open) @disabled(! $scheduled) onchange="this.form.submit()">
-                        <span class="relative inline-block h-6 w-11 rounded-full transition {{ $open ? 'bg-primary' : 'bg-slate-300' }} peer-checked:bg-primary"></span>
+                    <input type="hidden" name="status" value="{{ $manualOpen ? 'closed' : 'open' }}">
+                    <label class="relative inline-flex cursor-pointer items-center" title="{{ $scheduled ? ($manualOpen ? 'Lowongan diaktifkan (efektif: ' . ($open ? 'terbuka' : 'ditutup') . ')' : 'Lowongan ditutup') : 'Periode pendaftaran belum diatur' }}">
+                        <input type="checkbox" class="peer sr-only" @checked($manualOpen) @disabled(! $scheduled) onchange="this.form.submit()">
+                        <span class="relative inline-block h-6 w-11 rounded-full transition {{ $manualOpen ? 'bg-primary' : 'bg-slate-300' }} peer-checked:bg-primary"></span>
                         <span class="pointer-events-none absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition peer-checked:translate-x-5"></span>
                     </label>
                 </form>

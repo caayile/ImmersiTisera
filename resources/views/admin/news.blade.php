@@ -2,10 +2,7 @@
 @section('title', 'Berita')
 @section('content')
 <div class="flex flex-wrap items-end justify-between gap-3">
-    <div>
-        <h1 class="text-2xl font-semibold">Berita</h1>
-        <p class="mt-1 text-sm text-muted">Tambah, ubah, atau hapus berita yang tampil di beranda dan halaman Berita.</p>
-    </div>
+    <p class="text-sm text-muted">Tambah, ubah, atau hapus berita yang tampil di beranda dan halaman Berita.</p>
 </div>
 
 <form method="POST" action="{{ route('admin.news') }}" enctype="multipart/form-data" class="mt-6 grid gap-3 rounded-2xl border border-line bg-white p-5 md:grid-cols-2">

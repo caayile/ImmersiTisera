@@ -1,8 +1,7 @@
 @extends('layouts.app')
 @section('title', 'Dashboard Program')
 @section('content')
-<h1 class="text-2xl font-semibold">Dashboard Program</h1>
-<div class="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+<div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
     @foreach($stats as $label => $value)
         <article class="rounded-2xl border border-line bg-white p-5">
             <p class="text-xs font-semibold uppercase tracking-wide text-muted">{{ $label }}</p>

@@ -1,114 +1,193 @@
 @extends('layouts.app')
 @section('title', 'Checkpoint')
 @section('content')
-<div>
-    <h1 class="text-2xl font-semibold">Checkpoint Saya</h1>
-    <p class="mt-1 text-sm text-muted">Empat checkpoint (1-3-3-1): minggu 1 Orientasi, minggu 2–4 Observasi, minggu 5–7 Kolaborasi, minggu 8 Laporan/Hasil. Tiap fase hanya bisa diisi selama jendela minggunya.</p>
-</div>
 @unless($program)
     <x-empty class="mt-6" title="Checkpoint belum aktif">Checkpoint muncul setelah program dimulai.</x-empty>
 @else
-@php $currentWeek = $program->computedWeek(); @endphp
-<div class="mt-6 flex flex-wrap items-center gap-3 rounded-2xl border border-line bg-white px-5 py-4 shadow-sm">
+@php
+    $currentWeek = $program->computedWeek();
+    $phaseNames = [1 => 'Orientasi', 2 => 'OBSERVASI', 5 => 'KOLABORASI', 8 => 'HASIL'];
+    $phasePlaceholders = [
+        1 => ['Masukkan judul kegiatan di masa orientasi', 'Jelaskan apa yang telah dilakukan/kerjakan dalam masa orientasi. Ceritakan tugas atau aktivitas yang diselesaikan dengan deskripsi yang jelas.'],
+        2 => ['Masukkan judul kegiatan di masa observasi', 'Jelaskan apa yang telah diamati dalam masa observasi. Ceritakan temuan hambatan atau peluang beserta validasi bersama mentor dengan deskripsi yang jelas.'],
+        5 => ['Masukkan judul kegiatan di masa kolaborasi', 'Jelaskan apa yang telah dikerjakan dalam masa kolaborasi. Ceritakan tugas bersama atau kontribusi beserta kemajuannya dengan deskripsi yang jelas.'],
+        8 => ['Masukkan judul laporan atau hasil akhir', 'Jelaskan apa yang telah diselesaikan sebagai laporan atau hasil utama. Ceritakan presentasi dan refleksi penutupan dengan deskripsi yang jelas.'],
+    ];
+@endphp
+<div class="mt-6 flex flex-wrap items-center gap-x-10 gap-y-2 rounded-2xl border border-line bg-white px-5 py-4 shadow-sm">
     <div>
-        <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">Unit Bisnis</p>
-        <p class="mt-0.5 font-medium">{{ $program->department?->name ?? '—' }} · {{ $program->businessUnit?->name ?? '—' }}</p>
+        <p class="text-sm tracking-[0.08em] text-muted">Penempatan</p>
+        <p class="mt-0.5 text-lg font-medium">{{ $program->department?->name ?? '—' }} · {{ $program->businessUnit?->name ?? '—' }}</p>
     </div>
     <div>
-        <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">Minggu berjalan</p>
-        <p class="mt-0.5 font-medium">Minggu {{ $currentWeek }} / 8</p>
+        <p class="text-sm tracking-[0.08em] text-muted">Minggu Berjalan</p>
+        <p class="mt-0.5 text-lg font-medium">Minggu {{ $currentWeek }} / 8</p>
     </div>
     <div class="ml-auto"><x-badge :status="$program->status" /></div>
 </div>
-<div class="mt-6 space-y-0">
+
+<div class="mt-8">
     @forelse($program->timelines->whereIn('week', \App\Support\Status::CHECKPOINT_WEEKS)->sortBy('week') as $item)
         @php
             $week = (int) $item->week;
-            $meta = \App\Support\Status::checkpointMeta($week);
             $windowLabel = \App\Support\Status::checkpointWindowLabel($week);
-            $phaseTitle = $meta['title'] ?? \App\Support\Status::timelineText($item->title);
-            $phaseDescription = $meta['description'] ?? \App\Support\Status::timelineText($item->description);
-            $phaseOutput = $meta['output'] ?? \App\Support\Status::timelineText($item->expected_output);
+            $phaseName = $phaseNames[$week] ?? \App\Support\Status::timelineText($item->title);
             $isOpen = $program->isCheckpointOpen($week);
             $isFuture = $currentWeek < $week;
-            $formTitle = \App\Support\Status::isLegacyCheckpointLabel($item->title) ? ($meta['title'] ?? $item->title) : $item->title;
-            $formDescription = \App\Support\Status::isLegacyCheckpointLabel($item->description) ? ($meta['description'] ?? $item->description) : $item->description;
-            $formOutput = \App\Support\Status::isLegacyCheckpointLabel($item->expected_output) ? ($meta['output'] ?? $item->expected_output) : $item->expected_output;
+            $isDone = in_array($item->status, ['done', 'approved'], true);
+            $reviewPill = match ($item->status) {
+                'submitted' => ['Diajukan', 'bg-sky-100 text-sky-800'],
+                'done', 'approved' => ['Disetujui', 'bg-emerald-100 text-emerald-800'],
+                'revision' => ['Revisi', 'bg-amber-100 text-amber-800'],
+                default => ['Menunggu', 'bg-slate-100 text-slate-600'],
+            };
+            $hasUserContent = ! \App\Support\Status::isLegacyCheckpointLabel($item->title) || filled($item->description) || filled($item->evidence_link) || filled($item->attachment_path);
+            $formTitle = \App\Support\Status::isLegacyCheckpointLabel($item->title) ? '' : $item->title;
+            $formDescription = \App\Support\Status::isLegacyCheckpointLabel($item->description) ? '' : $item->description;
+            [$judulPlaceholder, $deskripsiPlaceholder] = $phasePlaceholders[$week] ?? ['Masukkan judul kegiatan', 'Jelaskan aktivitas yang dilakukan dengan deskripsi yang jelas.'];
         @endphp
-        <div class="flex gap-4">
+        <div class="flex gap-4" x-data="{ open: false }">
             <div class="flex flex-col items-center">
-                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold {{ $isOpen ? 'bg-primary text-white' : ($item->status === 'done' ? 'bg-primary/15 text-primary-dark' : 'border border-line bg-white text-muted') }}">{{ $loop->iteration }}</span>
+                <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-lg font-semibold {{ $isOpen || $isDone ? 'bg-primary text-white' : 'border border-line bg-white text-ink' }}">{{ $loop->iteration }}</span>
                 @if(! $loop->last)
-                    <span class="w-0.5 flex-1 {{ $item->status === 'done' ? 'bg-primary/40' : 'bg-line' }}"></span>
+                    <span class="w-0.5 flex-1 {{ $isDone ? 'bg-primary/60' : 'bg-primary/40' }}"></span>
                 @endif
             </div>
-            <article class="mb-5 flex-1 rounded-2xl border border-line bg-white p-5 {{ $isOpen ? 'border-primary shadow-sm ring-1 ring-primary/30' : ($isFuture ? 'opacity-70' : '') }}">
-                <div class="flex flex-wrap items-center justify-between gap-2">
-                    <p class="text-xs font-semibold uppercase tracking-[0.14em] text-muted">{{ $windowLabel }}</p>
+            <article class="mb-8 flex-1 rounded-2xl border border-primary/60 bg-white p-5 shadow-sm">
+                <div class="flex flex-wrap items-start justify-between gap-2">
+                    <p class="text-sm font-semibold tracking-[0.08em]">Minggu {{ $windowLabel === 'Minggu 1' ? '1' : ($windowLabel === 'Minggu 8' ? '8' : ($week === 2 ? '2-4' : '5-7')) }} · {{ $phaseName }}</p>
                     <div class="flex flex-wrap items-center gap-2">
-                        @if($isOpen)
-                            <span class="rounded-full bg-primary/15 px-2.5 py-0.5 text-[11px] font-semibold text-primary-dark">Dapat diisi</span>
+                        @if($isDone)
+                            <span class="rounded-full bg-emerald-100 px-3 py-1 text-[11px] font-semibold text-emerald-800">Terisi</span>
+                        @elseif($isOpen)
+                            <span class="rounded-full bg-primary/15 px-3 py-1 text-[11px] font-semibold text-primary-dark">Dibuka</span>
                         @elseif($isFuture)
-                            <span class="rounded-full bg-line px-2.5 py-0.5 text-[11px] font-semibold text-muted">Terkunci</span>
+                            <span class="rounded-full bg-slate-200/80 px-3 py-1 text-[11px] font-semibold text-slate-600">Terkunci</span>
                         @else
-                            <span class="rounded-full bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800">Ditutup</span>
+                            <span class="rounded-full bg-slate-200/80 px-3 py-1 text-[11px] font-semibold text-slate-600">Ditutup</span>
                         @endif
-                        <x-badge :status="$item->status" />
+                        <span class="rounded-full px-3 py-1 text-[11px] font-semibold {{ $reviewPill[1] }}">{{ $reviewPill[0] }}</span>
                     </div>
                 </div>
-                <h2 class="mt-1 font-semibold">{{ $phaseTitle }}</h2>
-                @if($phaseDescription)
-                    <p class="mt-1 text-sm text-muted">{{ $phaseDescription }}</p>
+
+                @if($hasUserContent && $formTitle)
+                    <p class="mt-2 text-sm font-medium">{{ $formTitle }}</p>
                 @endif
-                @if($phaseOutput)
-                    <p class="mt-2 text-sm"><b>Target hasil:</b> {{ $phaseOutput }}</p>
+                @if($hasUserContent && $formDescription)
+                    <p class="mt-1 text-sm text-muted">{{ $formDescription }}</p>
+                @endif
+                @if($item->evidence_link)
+                    <a href="{{ $item->evidence_link }}" target="_blank" rel="noopener" class="mt-1 block truncate text-sm font-medium text-primary-dark">{{ $item->evidence_link }}</a>
                 @endif
                 @if($item->attachment_path)
-                    <a href="{{ asset('storage/'.$item->attachment_path) }}" target="_blank" rel="noopener" class="mt-2 inline-block text-sm font-semibold text-primary-dark">Unduh laporan terlampir</a>
+                    <a href="{{ asset('storage/'.$item->attachment_path) }}" target="_blank" rel="noopener" class="mt-1 inline-block text-sm font-semibold text-primary-dark">Unduh bukti terlampir</a>
                 @endif
                 @if($item->mentor_note)
                     <p class="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800"><b>Catatan mentor:</b> {{ $item->mentor_note }}</p>
                 @endif
-                @if($item->status === 'submitted')
-                    <p class="mt-2 text-xs font-semibold text-primary-dark">Diajukan — menunggu pengesahan mentor.</p>
-                @endif
 
-                @if($isOpen)
-                    <details class="mt-3" {{ $item->status !== 'done' ? 'open' : '' }}>
-                        <summary class="cursor-pointer text-sm font-semibold text-primary-dark">Isi atau perbarui checkpoint</summary>
-                        <form method="POST" enctype="multipart/form-data" action="{{ route('participant.timeline.update', $item) }}" class="mt-3 space-y-3 rounded-xl border border-line bg-bg/60 p-4">
+                <div class="mt-3">
+                    @if($isDone)
+                        <button type="button" @click="open = true" class="rounded-xl border border-primary/40 bg-white px-5 py-2.5 text-sm font-semibold tracking-[0.06em] text-primary-dark transition hover:bg-primary/5">Lihat Checkpoint</button>
+                        <p class="mt-2 text-xs text-muted">Sudah disetujui mentor dan tidak dapat diubah lagi.</p>
+                    @elseif($isOpen)
+                        <button type="button" @click="open = true" class="rounded-xl bg-[#22b07d] px-5 py-2.5 text-sm font-semibold tracking-[0.06em] text-white transition hover:bg-[#1a9a6d]">Isi Checkpoint</button>
+                    @else
+                        <button type="button" disabled title="{{ $isFuture ? 'Checkpoint dibuka saat memasuki fase ini' : 'Jendela fase ini sudah lewat' }}" class="cursor-not-allowed rounded-xl bg-slate-200 px-5 py-2.5 text-sm font-semibold tracking-[0.06em] text-slate-500">Isi Checkpoint</button>
+                        <p class="mt-2 text-xs text-muted">{{ $isFuture ? 'Terkunci. Dibuka saat program memasuki fase ini.' : 'Ditutup. Jendela fase ini sudah lewat.' }}</p>
+                    @endif
+                </div>
+
+                @if($isDone)
+                {{-- Popup Lihat Checkpoint (riwayat, tidak bisa diubah) --}}
+                <div x-show="open" x-cloak class="fixed inset-0 z-50 items-center justify-center bg-black/40 p-4" :class="open && 'flex'" @click.self="open = false" @keydown.escape.window="open = false" role="dialog" aria-modal="true" aria-label="Riwayat checkpoint minggu {{ $week }}">
+                    <div class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl sm:p-8">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <h2 class="text-lg font-semibold">Checkpoint</h2>
+                                <p class="mt-0.5 text-sm text-muted">Minggu {{ $week }} · {{ $phaseName }}</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="rounded-full px-3 py-1 text-[11px] font-semibold {{ $reviewPill[1] }}">{{ $reviewPill[0] }}</span>
+                                <button type="button" @click="open = false" class="flex h-8 w-8 items-center justify-center rounded-lg text-xl leading-none transition hover:bg-slate-100" aria-label="Tutup">&times;</button>
+                            </div>
+                        </div>
+
+                        <dl class="mt-5 space-y-4 text-sm">
+                            <div>
+                                <dt class="font-semibold">Judul</dt>
+                                <dd class="mt-1 rounded-xl border border-line bg-bg/60 px-4 py-2.5">{{ $formTitle ?: '—' }}</dd>
+                            </div>
+                            <div>
+                                <dt class="font-semibold">Deskripsi Aktivitas</dt>
+                                <dd class="mt-1 whitespace-pre-line rounded-xl border border-line bg-bg/60 px-4 py-2.5">{{ $formDescription ?: '—' }}</dd>
+                            </div>
+                            <div>
+                                <dt class="font-semibold">Bukti Pendukung</dt>
+                                <dd class="mt-1 space-y-1.5">
+                                    @if($item->evidence_link)
+                                        <a href="{{ $item->evidence_link }}" target="_blank" rel="noopener" class="block truncate font-medium text-primary-dark">{{ $item->evidence_link }}</a>
+                                    @endif
+                                    @if($item->attachment_path)
+                                        <a href="{{ asset('storage/'.$item->attachment_path) }}" target="_blank" rel="noopener" class="inline-block font-semibold text-primary-dark">Unduh bukti terlampir</a>
+                                    @endif
+                                    @unless($item->evidence_link || $item->attachment_path)
+                                        <span class="text-muted">—</span>
+                                    @endunless
+                                </dd>
+                            </div>
+                            @if($item->mentor_note)
+                                <div>
+                                    <dt class="font-semibold">Catatan mentor</dt>
+                                    <dd class="mt-1 rounded-xl bg-amber-50 px-4 py-2.5 text-amber-800">{{ $item->mentor_note }}</dd>
+                                </div>
+                            @endif
+                        </dl>
+                    </div>
+                </div>
+                @elseif($isOpen)
+                {{-- Popup Isi Checkpoint --}}
+                <div x-show="open" x-cloak class="fixed inset-0 z-50 items-center justify-center bg-black/40 p-4" :class="open && 'flex'" @click.self="open = false" @keydown.escape.window="open = false" role="dialog" aria-modal="true" aria-label="Isi checkpoint minggu {{ $week }}">
+                    <div class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl sm:p-8">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <h2 class="text-lg font-semibold">Checkpoint</h2>
+                                <p class="mt-0.5 text-sm text-muted">Minggu {{ $week }} · {{ $phaseName }}</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="rounded-full px-3 py-1 text-[11px] font-semibold {{ $reviewPill[1] }}">{{ $reviewPill[0] }}</span>
+                                <button type="button" @click="open = false" class="flex h-8 w-8 items-center justify-center rounded-lg text-xl leading-none transition hover:bg-slate-100" aria-label="Tutup">&times;</button>
+                            </div>
+                        </div>
+
+                        <form method="POST" enctype="multipart/form-data" action="{{ route('participant.timeline.update', $item) }}" class="mt-5 space-y-5">
                             @csrf
                             <div>
-                                <label class="text-xs font-medium text-muted">Judul checkpoint</label>
-                                <input name="title" value="{{ $formTitle }}" maxlength="180" class="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-sm" required>
+                                <label for="checkpoint-title-{{ $item->id }}" class="text-sm font-semibold">Judul</label>
+                                <input id="checkpoint-title-{{ $item->id }}" name="title" value="{{ old('title', $formTitle) }}" maxlength="180" placeholder="{{ $judulPlaceholder }}" class="mt-2 w-full rounded-xl border border-line bg-white px-4 py-2.5 text-sm placeholder:text-slate-400" required>
                             </div>
                             <div>
-                                <label class="text-xs font-medium text-muted">Keterangan laporan (opsional)</label>
-                                <textarea name="description" rows="3" class="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-sm">{{ $formDescription }}</textarea>
+                                <label for="checkpoint-desc-{{ $item->id }}" class="text-sm font-semibold">Deskripsi Aktivitas</label>
+                                <textarea id="checkpoint-desc-{{ $item->id }}" name="description" rows="4" placeholder="{{ $deskripsiPlaceholder }}" class="mt-2 w-full rounded-xl border border-line bg-white px-4 py-2.5 text-sm placeholder:text-slate-400">{{ old('description', $formDescription) }}</textarea>
                             </div>
                             <div>
-                                <label class="text-xs font-medium text-muted">Target hasil</label>
-                                <textarea name="expected_output" rows="2" class="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-sm">{{ $formOutput }}</textarea>
-                            </div>
-                            <div>
-                                <label class="text-xs font-medium text-muted">Laporan (PDF, Word, atau gambar, opsional)</label>
-                                <div class="mt-1 flex flex-wrap items-center gap-3" x-data="{ fileName: '' }">
-                                    <input id="checkpoint-file-{{ $item->id }}" type="file" name="attachment" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp" class="peer sr-only" @change="fileName = $event.target.files[0]?.name ?? ''">
-                                    <label for="checkpoint-file-{{ $item->id }}" class="inline-flex cursor-pointer items-center rounded-lg border border-line bg-white px-3 py-2 text-sm font-semibold text-primary-dark transition hover:border-primary peer-focus-visible:ring-2 peer-focus-visible:ring-primary">Pilih File</label>
-                                    <span class="min-w-[12rem] flex-1 rounded-lg border border-line bg-white px-3 py-2 text-sm text-muted" x-text="fileName || 'Belum ada file dipilih'">Belum ada file dipilih</span>
+                                <p class="text-sm font-semibold">Bukti Pendukung</p>
+                                <input name="evidence_link" value="{{ old('evidence_link', $item->evidence_link) }}" inputmode="url" placeholder="Link Bukti Pendukung (G-Drive, dll)" class="mt-2 w-full rounded-xl border border-line bg-white px-4 py-2.5 text-sm placeholder:text-slate-400">
+                                <div class="mt-3" x-data="{ fileName: '' }">
+                                    <input id="checkpoint-file-{{ $item->id }}" type="file" name="attachment" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp" class="sr-only" @change="fileName = $event.target.files[0]?.name ?? ''">
+                                    <div class="flex items-center justify-between gap-3 rounded-xl border border-line px-4 py-2.5">
+                                        <span class="truncate text-sm text-muted" x-text="fileName || '{{ $item->attachment_path ? 'Sudah ada lampiran (pilih file baru untuk mengganti)' : 'Pilih File Dokumen' }}'">{{ $item->attachment_path ? 'Sudah ada lampiran (pilih file baru untuk mengganti)' : 'Pilih File Dokumen' }}</span>
+                                        <label for="checkpoint-file-{{ $item->id }}" class="shrink-0 cursor-pointer rounded-lg bg-mint-light px-3 py-1.5 text-xs font-semibold text-primary-dark transition hover:bg-primary/15">Pilih File</label>
+                                    </div>
                                 </div>
-                                <p class="mt-1 text-xs text-muted">Maksimal 10 MB. Unggah file baru untuk mengganti lampiran sebelumnya.</p>
-                                @error('attachment')
-                                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                                @enderror
+                                <p class="mt-1.5 text-xs text-muted">Maksimal 10 MB.</p>
                             </div>
-                            <button class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-dark">Simpan & ajukan checkpoint</button>
+                            <div class="flex justify-end">
+                                <button class="rounded-xl bg-[#22b07d] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1a9a6d]">Ajukan Checkpoint</button>
+                            </div>
                         </form>
-                    </details>
-                @elseif($isFuture)
-                    <p class="mt-3 rounded-lg border border-dashed border-line bg-bg/50 px-3 py-2 text-sm text-muted">Terkunci. Checkpoint {{ $phaseTitle }} ({{ $windowLabel }}) dibuka saat program memasuki fase ini.</p>
-                @else
-                    <p class="mt-3 rounded-lg border border-dashed border-line bg-bg/50 px-3 py-2 text-sm text-muted">Ditutup. Waktu {{ $phaseTitle }} ({{ $windowLabel }}) sudah lewat — tidak bisa diisi lagi.</p>
+                    </div>
+                </div>
                 @endif
             </article>
         </div>

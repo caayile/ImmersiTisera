@@ -1,10 +1,7 @@
 @extends('layouts.app')
 @section('title', 'Logbook')
 @section('content')
-<div class="mt-4">
-    <h1 class="text-2xl font-semibold">Logbook</h1>
-    <p class="mt-1 text-sm text-muted">Refleksi harian selama program magang dosen. Diisi oleh peserta, lalu diverifikasi mentor.</p>
-</div>
+<p class="text-sm text-muted">Refleksi harian selama program magang dosen. Diisi oleh peserta, lalu diverifikasi mentor.</p>
 
 @unless($program)
     <x-empty class="mt-6" title="Logbook terbuka setelah program aktif">

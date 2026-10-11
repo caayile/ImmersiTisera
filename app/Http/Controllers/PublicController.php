@@ -20,12 +20,13 @@ class PublicController extends Controller
         // Dilewati bila ada flash session agar banner status tidak ikut ter-cache.
         if (auth()->user() === null && ! session()->has('status') && ! session()->has('errors')) {
             $html = Cache::remember('public.home.html', now()->addMinutes(10), function () {
-                [$departments, $featuredUnits, $latestNews] = $this->homeData();
+                [$departments, $featuredUnits, $latestNews, $heroRegistration] = $this->homeData();
 
                 return view('public.home', [
                     'departments' => $departments,
                     'featuredUnits' => $featuredUnits,
                     'latestNews' => $latestNews,
+                    'heroRegistration' => $heroRegistration,
                     'nextStep' => null,
                 ])->render();
             });
@@ -33,18 +34,18 @@ class PublicController extends Controller
             return response($html);
         }
 
-        [$departments, $featuredUnits, $latestNews] = $this->homeData();
+        [$departments, $featuredUnits, $latestNews, $heroRegistration] = $this->homeData();
 
         $user = auth()->user();
         $nextStep = $user?->isParticipant()
             ? ParticipantNextStep::for($user)
             : null;
 
-        return view('public.home', compact('departments', 'featuredUnits', 'latestNews', 'nextStep'));
+        return view('public.home', compact('departments', 'featuredUnits', 'latestNews', 'heroRegistration', 'nextStep'));
     }
 
     /**
-     * @return array{0: Collection, 1: Collection, 2: Collection}
+     * @return array{0: Collection, 1: Collection, 2: Collection, 3: array{mode: string, hasOpenings: bool, batch: ?string}}
      */
     private function homeData(): array
     {
@@ -81,7 +82,38 @@ class PublicController extends Controller
 
         $latestNews = News::published()->latest('published_at')->take(3)->get();
 
-        return [$departments, $featuredUnits, $latestNews];
+        return [$departments, $featuredUnits, $latestNews, self::heroRegistration()];
+    }
+
+    /**
+     * Status pendaftaran untuk hero beranda:
+     * - full: semua unit dibuka (tampilkan nama batch admin),
+     * - partial: hanya sebagian unit dibuka (nama batch bisa beda-beda),
+     * - closed: tidak ada yang dibuka.
+     *
+     * @return array{mode: string, hasOpenings: bool, batch: ?string}
+     */
+    public static function heroRegistration(): array
+    {
+        $total = BusinessUnit::count();
+        $openUnits = BusinessUnit::currentlyOpen()->get(['batch', 'registration_deadline']);
+
+        if ($openUnits->isEmpty() || $total === 0) {
+            return ['mode' => 'closed', 'hasOpenings' => false, 'batch' => null];
+        }
+
+        if ($openUnits->count() < $total) {
+            return ['mode' => 'partial', 'hasOpenings' => true, 'batch' => null];
+        }
+
+        $batch = $openUnits
+            ->filter(fn (BusinessUnit $unit): bool => filled($unit->batch))
+            ->groupBy('batch')
+            ->sortByDesc(fn ($group): array => [$group->count(), (string) $group->max('registration_deadline')])
+            ->keys()
+            ->first();
+
+        return ['mode' => 'full', 'hasOpenings' => true, 'batch' => $batch];
     }
 
     public function searchApi(Request $request)

@@ -12,7 +12,6 @@
             <img src="{{ $department->imageUrl() }}" alt="{{ $department->name }}" class="h-14 w-20 rounded-xl object-cover">
         @endif
         <div>
-            <h1 class="text-2xl font-semibold">{{ $department->name }}</h1>
             <p class="text-sm text-muted">{{ $department->subtitle }}{{ $department->subtitle && $department->area ? ' · ' : '' }}{{ $department->area }}</p>
         </div>
     </div>

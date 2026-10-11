@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Tanda tangan surat')
+@section('title', 'Tinjau & tandatangani surat')
 @section('content')
 @php
     $mentorIndicators = $application->normalizedSuccessIndicators();
@@ -18,7 +18,6 @@
 <div class="flex flex-wrap items-start justify-between gap-3">
     <div>
         <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary-dark">Persetujuan mentor</p>
-        <h1 class="mt-1 text-2xl font-semibold">Tinjau & tandatangani surat</h1>
         <p class="mt-1 text-sm text-muted">{{ $application->participant->user->name }} · {{ $application->businessUnit->name }}</p>
     </div>
     <x-badge :status="$application->status" />
