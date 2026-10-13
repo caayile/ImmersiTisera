@@ -17,7 +17,7 @@
                 <div class="min-w-0 flex-1">
                     <p class="text-sm font-semibold">{{ $inbox->first()->data['title'] ?? 'Notifikasi baru' }}</p>
                     <p class="mt-1 text-xs leading-5 text-muted">{{ $inbox->first()->data['message'] ?? '' }}</p>
-                    <a href="{{ $inbox->first()->data['url'] ?? $index }}" class="mt-2 inline-flex text-xs font-semibold text-primary-dark">Buka detail</a>
+                    <a href="{{ \App\Support\NotificationLink::href($inbox->first()->data['url'] ?? null, $index) }}" class="mt-2 inline-flex text-xs font-semibold text-primary-dark">Buka detail</a>
                 </div>
                 <button type="button" @click="toast = false" class="text-muted hover:text-ink" aria-label="Tutup notifikasi"><span class="material-symbols-outlined text-[18px]">close</span></button>
             </div>
@@ -48,7 +48,7 @@
             <a href="{{ $index }}" class="text-xs font-semibold text-primary-dark">Lihat semua</a>
         </div>
         @forelse($inbox as $item)
-            <a href="{{ $item->data['url'] ?? $index }}" class="block border-t border-line px-4 py-3 {{ $item->unread() ? 'bg-primary/5' : '' }}">
+            <a href="{{ \App\Support\NotificationLink::href($item->data['url'] ?? null, $index) }}" class="block border-t border-line px-4 py-3 {{ $item->unread() ? 'bg-primary/5' : '' }}">
                 <p class="text-sm font-medium">{{ $item->data['title'] ?? 'Notifikasi' }}</p>
                 <p class="mt-0.5 text-xs text-muted">{{ $item->data['message'] ?? '' }}</p>
             </a>

@@ -59,4 +59,22 @@ class AuthControllerTest extends TestCase
         $this->assertSame('participant', $user->role);
         $this->assertSame('Telkom University', $user->participant?->profile_data['institution'] ?? null);
     }
+
+    public function test_login_mentor_path_opens_mentor_login_form(): void
+    {
+        $this->followingRedirects()
+            ->get(route('login.mentor'))
+            ->assertOk()
+            ->assertSee('Masuk Portal Mentor')
+            ->assertSee('action="'.route('login.mentor').'"', false);
+    }
+
+    public function test_login_user_path_opens_dosen_login_form(): void
+    {
+        $this->followingRedirects()
+            ->get(route('login.user'))
+            ->assertOk()
+            ->assertSee('Masuk Portal Dosen')
+            ->assertSee('action="'.route('login.user').'"', false);
+    }
 }

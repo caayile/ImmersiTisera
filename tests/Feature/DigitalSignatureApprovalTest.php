@@ -301,13 +301,14 @@ class DigitalSignatureApprovalTest extends TestCase
         $this->actingAs($dosen)
             ->get(route('participant.agreement.print'))
             ->assertOk()
-            ->assertSee('Perjanjian Magang Dosen')
+            ->assertSee('PERJANJIAN KERJA SAMA')
+            ->assertSee('PIHAK PERTAMA')
             ->assertDontSee('Indikator Keberhasilan')
             ->assertSee('Aktif setelah')
             ->assertSee('Cetak / Simpan PDF')
             ->assertSee('MD/TSU/TS/')
             ->assertSee('Unduh PDF')
-            ->assertSee('margin: 3cm 3cm 3cm 4cm', false)
+            ->assertSee('margin: 2.2cm 2.5cm', false)
             ->assertSee('page-break-inside: avoid', false)
             ->assertDontSee('position: fixed', false);
     }

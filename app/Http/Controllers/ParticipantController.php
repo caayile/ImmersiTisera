@@ -707,8 +707,8 @@ class ParticipantController extends Controller
             : EvaluationScale::defaultScales();
         $scaleMax = collect($scaleList)->max('value') ?? 5;
         $certificates = $this->participantCertificates($request);
-        // Kartu atas hanya untuk siklus berjalan; siklus selesai turun ke riwayat.
-        $topCycle = ($program && $program->status !== 'completed') ? $program : null;
+        // Kartu atas = siklus terbaru (aktif atau selesai) agar nilai & sertifikat tetap terlihat.
+        $topCycle = $program;
         // Riwayat memuat semua siklus kecuali yang tampil di kartu atas, dari terbaru.
         $history = $program
             ? $this->allPrograms($request)->reject(fn ($cycle) => $topCycle && $cycle->id === $topCycle->id)->values()
@@ -841,8 +841,11 @@ class ParticipantController extends Controller
 
     public function certificates(Request $request)
     {
-        // Menu Sertifikat dilebur ke Hasil Studi.
-        return redirect()->route('participant.evaluation');
+        $program = $this->currentProgram($request);
+        $certificates = $this->participantCertificates($request);
+        $pendingNotice = $this->certificatePendingNotice($request, $program, $certificates);
+
+        return view('participant.certificates', compact('certificates', 'program', 'pendingNotice'));
     }
 
     /**
@@ -850,27 +853,118 @@ class ParticipantController extends Controller
      *
      * @return Collection<int, Certificate>
      */
-    private function participantCertificates(Request $request)
+    private function participantCertificates(Request $request): Collection
     {
+        $userId = (int) $request->user()->id;
+        $currentProgramId = $this->currentProgram($request)?->id;
+
         return Certificate::query()
-            ->with(['program.businessUnit', 'program.department', 'program.mentor.user', 'program.participant.user'])
+            ->with(['program.businessUnit', 'program.department', 'program.mentor.user', 'program.participant.user', 'program.evaluations'])
             ->whereHas('program', fn ($query) => $query->where('participant_id', $request->user()->participant?->id))
             ->where('status', 'issued')
             ->latest('issued_at')
-            ->get();
+            ->get()
+            ->filter(fn (Certificate $certificate) => $this->participantCanViewCertificate($certificate->program, $userId, $currentProgramId))
+            ->values();
     }
 
     public function printCertificate(Request $request, Certificate $certificate)
     {
+        $certificate->load(['program.businessUnit', 'program.department', 'program.mentor.user', 'program.participant.user', 'program.evaluations']);
+
         abort_unless(
             (int) $certificate->program?->participant_id === (int) $request->user()->participant?->id
-            && $certificate->isIssued(),
+            && $certificate->isIssued()
+            && $this->participantCanViewCertificate(
+                $certificate->program,
+                (int) $request->user()->id,
+                $this->currentProgram($request)?->id,
+            ),
             403
         );
 
-        $certificate->load(['program.businessUnit', 'program.department', 'program.mentor.user', 'program.participant.user']);
-
         return view('certificates.print', compact('certificate'));
+    }
+
+    /**
+     * @return array{title: string, message: string, action_url: string|null, action_label: string|null}|null
+     */
+    private function certificatePendingNotice(Request $request, ?Program $program, Collection $visibleCertificates): ?array
+    {
+        if (! $program) {
+            return null;
+        }
+
+        $userId = (int) $request->user()->id;
+        $issued = Certificate::query()
+            ->where('program_id', $program->id)
+            ->where('status', 'issued')
+            ->exists();
+
+        if ($visibleCertificates->contains(fn (Certificate $certificate) => (int) $certificate->program_id === (int) $program->id)) {
+            return null;
+        }
+
+        $mentorReport = $this->mentorReportFor($program, $userId);
+
+        if (! $mentorReport) {
+            return [
+                'title' => 'Sertifikat belum tersedia',
+                'message' => 'Sertifikat diterbitkan setelah mentor mengumumkan nilai raport dan menandatangani penerbitan sertifikat.',
+                'action_url' => route('participant.evaluation', [], false),
+                'action_label' => 'Lihat Hasil Nilai Magang',
+            ];
+        }
+
+        $ownEvaluation = $program->evaluations->contains(
+            fn (Evaluation $evaluation) => (int) $evaluation->evaluator_id === $userId
+        );
+
+        if ((int) $program->id === (int) $this->currentProgram($request)?->id && ! $ownEvaluation) {
+            return [
+                'title' => 'Sertifikat menunggu kuesioner',
+                'message' => 'Nilai sudah diumumkan. Isi kuesioner singkat di Hasil Nilai Magang untuk membuka sertifikat.',
+                'action_url' => route('participant.evaluation', [], false),
+                'action_label' => 'Isi kuesioner & lihat nilai',
+            ];
+        }
+
+        if ($issued) {
+            return [
+                'title' => 'Sertifikat sedang diproses',
+                'message' => 'Sertifikat sudah diterbitkan mentor. Muat ulang halaman ini jika baru saja menyelesaikan kuesioner.',
+                'action_url' => null,
+                'action_label' => null,
+            ];
+        }
+
+        return [
+            'title' => 'Menunggu penerbitan sertifikat',
+            'message' => 'Nilai raport sudah ada. Mentor akan menerbitkan sertifikat setelah raport disahkan.',
+            'action_url' => route('participant.evaluation', [], false),
+            'action_label' => 'Lihat nilai raport',
+        ];
+    }
+
+    private function mentorReportFor(Program $program, int $participantUserId): ?Evaluation
+    {
+        return $program->evaluations
+            ->first(fn (Evaluation $evaluation) => (int) $evaluation->evaluator_id !== $participantUserId && $evaluation->hasReport());
+    }
+
+    private function participantCanViewCertificate(Program $program, int $participantUserId, ?int $currentProgramId): bool
+    {
+        if (! $this->mentorReportFor($program, $participantUserId)) {
+            return false;
+        }
+
+        if ($currentProgramId !== null && (int) $program->id === (int) $currentProgramId) {
+            return $program->evaluations->contains(
+                fn (Evaluation $evaluation) => (int) $evaluation->evaluator_id === $participantUserId
+            );
+        }
+
+        return true;
     }
 
     public function notifications(Request $request)

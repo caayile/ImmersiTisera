@@ -185,6 +185,8 @@
             ['forum', 'Mentoring', 'Jadwal & sesi mentor', route('participant.mentoring')],
             ['fact_check', 'Checkpoint', '4 fase magang', route('participant.timeline')],
             ['summarize', 'Laporan Akhir', 'Hasil & laporan', route('participant.final-report')],
+            ['grade', 'Hasil Nilai Magang', 'Nilai raport magang', route('participant.evaluation')],
+            ['workspace_premium', 'Sertifikat', 'Unduh sertifikat resmi', route('participant.certificates')],
         ] as [$icon, $title, $copy, $url])
             <a href="{{ $url }}" class="rounded-2xl border border-line bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary hover:shadow-md">
                 <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary-dark">

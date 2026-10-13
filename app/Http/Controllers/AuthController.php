@@ -31,12 +31,12 @@ class AuthController extends Controller
 
     public function showUserLogin()
     {
-        return redirect()->route('login');
+        return redirect()->route('login')->with('auth_side', 'dosen');
     }
 
     public function showMentorLogin()
     {
-        return redirect()->route('login');
+        return redirect()->route('login')->with('auth_side', 'mentor');
     }
 
     public function loginUser(Request $request)

@@ -4,7 +4,7 @@
 <x-back-link />
 <div class="mt-4 space-y-3">
     @forelse($notifications as $item)
-        <a href="{{ $item->data['url'] ?? '#' }}" class="block rounded-2xl border border-line bg-white p-4">
+        <a href="{{ \App\Support\NotificationLink::href($item->data['url'] ?? null, route('mentor.notifications')) }}" class="block rounded-2xl border border-line bg-white p-4">
             <p class="font-medium">{{ $item->data['title'] ?? 'Notifikasi' }}</p>
             <p class="mt-1 text-sm text-muted">{{ $item->data['message'] ?? '' }}</p>
             <p class="mt-2 text-xs text-muted">{{ $item->created_at->diffForHumans() }}</p>

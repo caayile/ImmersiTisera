@@ -420,9 +420,9 @@ class MentorController extends Controller
         $certificate = $this->issueCertificateFor($mentor, $program);
 
         $program->participant->user->notify(new ImersiAlert(
-            'Raport disahkan',
-            'Nilai raport '.$evaluation->reportAverage().' ('.$evaluation->predicate().') disahkan dan sertifikat diterbitkan.',
-            route('participant.evaluation')
+            'Sertifikat tersedia',
+            'Nilai raport '.$evaluation->reportAverage().' ('.$evaluation->predicate().') disahkan. Isi kuesioner lalu buka sertifikat di menu Sertifikat.',
+            route('participant.certificates', [], false)
         ));
 
         return back()->with('status', 'Raport disahkan dan sertifikat diterbitkan untuk '.$program->participant->user->name.'. Nomor: '.$certificate->number);

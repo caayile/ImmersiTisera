@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Agreement;
 use App\Models\Application;
 use App\Models\BusinessUnit;
+use App\Models\Certificate;
 use App\Models\CollaborationPipeline;
 use App\Models\Department;
 use App\Models\Evaluation;
+use App\Models\EvaluationQuestion;
 use App\Models\EvaluationScale;
 use App\Models\EvaluationSection;
 use App\Models\HeroSetting;
@@ -28,6 +30,7 @@ use Database\Seeders\QuestionnaireBankSeeder;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Storage;
@@ -674,13 +677,170 @@ class AdminController extends Controller
             ->sortBy('department.name')
             ->values();
 
+        $spreadsheet = $this->evaluationSpreadsheetRows($request);
+
+        if ($request->get('export') === 'csv') {
+            return $this->downloadEvaluationSpreadsheetCsv($spreadsheet);
+        }
+
         return view('admin.evaluations', [
             'evaluations' => $evaluations,
             'questionnaires' => $questionnaires->values(),
             'recap' => $recap,
             'bank' => $bank,
+            'spreadsheet' => $spreadsheet,
             'departments' => Department::orderBy('name')->get(),
         ]);
+    }
+
+    /**
+     * Satu baris per program untuk laporan nilai magang (spreadsheet admin).
+     *
+     * @return Collection<int, array{
+     *     no: int,
+     *     participant: string,
+     *     nidn: string,
+     *     mentor: string,
+     *     department: string,
+     *     business_unit: string,
+     *     period: string,
+     *     program_status: string,
+     *     report_average: string,
+     *     predicate: string,
+     *     project_average: string,
+     *     attitude_average: string,
+     *     questionnaire: string,
+     *     questionnaire_average: string,
+     *     certificate: string,
+     *     certificate_issued_at: string
+     * }>
+     */
+    private function evaluationSpreadsheetRows(Request $request)
+    {
+        $programs = Program::query()
+            ->with([
+                'participant.user',
+                'mentor.user',
+                'department',
+                'businessUnit',
+                'certificate',
+                'evaluations.evaluator',
+            ])
+            ->when(
+                $request->filled('department_id'),
+                fn ($query) => $query->where('department_id', $request->integer('department_id'))
+            )
+            ->latest()
+            ->get();
+
+        return $programs->values()->map(function (Program $program, int $index) {
+            $mentorReport = $program->evaluations
+                ->first(fn (Evaluation $evaluation) => $evaluation->hasReport() && $evaluation->evaluator?->isMentor());
+
+            $questionnaire = $program->evaluations
+                ->first(fn (Evaluation $evaluation) => is_array($evaluation->criteria)
+                    && $evaluation->criteria !== []
+                    && $evaluation->evaluator?->isParticipant());
+
+            $groupAverage = function (?Evaluation $report, string $name): ?float {
+                if (! $report?->hasReport()) {
+                    return null;
+                }
+
+                $group = collect($report->grade_groups)
+                    ->first(fn (array $row) => strcasecmp((string) ($row['name'] ?? ''), $name) === 0);
+
+                if (! is_array($group)) {
+                    return null;
+                }
+
+                $scores = collect($group['aspects'] ?? [])
+                    ->map(fn ($aspect) => $aspect['score'] ?? null)
+                    ->filter(fn ($score) => $score !== null && $score !== '')
+                    ->map(fn ($score) => (float) $score);
+
+                return $scores->isEmpty() ? null : round($scores->avg(), 1);
+            };
+
+            $certificate = $program->certificate;
+            $issued = $certificate instanceof Certificate && $certificate->isIssued();
+            $periodStart = $program->start_date?->format('d M Y') ?? '—';
+            $periodEnd = $program->end_date?->format('d M Y') ?? '—';
+
+            return [
+                'no' => $index + 1,
+                'participant' => $program->participant?->user?->name ?? '—',
+                'nidn' => $program->participant?->nidn ?? '—',
+                'mentor' => $program->mentor?->user?->name ?? '—',
+                'department' => $program->department?->name ?? '—',
+                'business_unit' => $program->businessUnit?->name ?? '—',
+                'period' => $periodStart.' – '.$periodEnd,
+                'program_status' => Status::label($program->status),
+                'report_average' => $mentorReport?->reportAverage() !== null ? (string) $mentorReport->reportAverage() : '—',
+                'predicate' => $mentorReport?->predicate() ?? '—',
+                'project_average' => ($avg = $groupAverage($mentorReport, 'Project')) !== null ? (string) $avg : '—',
+                'attitude_average' => ($avg = $groupAverage($mentorReport, 'Sikap')) !== null ? (string) $avg : '—',
+                'questionnaire' => $questionnaire ? 'Sudah' : 'Belum',
+                'questionnaire_average' => $questionnaire ? (string) $questionnaire->average() : '—',
+                'certificate' => $issued ? ($certificate->number ?? 'Terbit') : 'Belum',
+                'certificate_issued_at' => $issued && $certificate->issued_at
+                    ? $certificate->issued_at->format('d M Y')
+                    : '—',
+            ];
+        });
+    }
+
+    /**
+     * @param  Collection<int, array<string, string|int>>  $spreadsheet
+     */
+    private function downloadEvaluationSpreadsheetCsv($spreadsheet)
+    {
+        $csv = fopen('php://temp', 'r+');
+        fputcsv($csv, [
+            'No',
+            'Peserta',
+            'NIDN',
+            'Mentor',
+            'Departemen',
+            'Unit Bisnis',
+            'Periode',
+            'Status Program',
+            'Rata-rata Raport',
+            'Predikat',
+            'Rata-rata Project',
+            'Rata-rata Sikap',
+            'Kuesioner',
+            'Rata-rata Kuesioner',
+            'Sertifikat',
+            'Tanggal Terbit',
+        ]);
+
+        foreach ($spreadsheet as $row) {
+            fputcsv($csv, [
+                $row['no'],
+                $row['participant'],
+                $row['nidn'],
+                $row['mentor'],
+                $row['department'],
+                $row['business_unit'],
+                $row['period'],
+                $row['program_status'],
+                $row['report_average'],
+                $row['predicate'],
+                $row['project_average'],
+                $row['attitude_average'],
+                $row['questionnaire'],
+                $row['questionnaire_average'],
+                $row['certificate'],
+                $row['certificate_issued_at'],
+            ]);
+        }
+
+        rewind($csv);
+
+        return Response::streamDownload(function () use ($csv) {
+            echo stream_get_contents($csv);
+        }, 'laporan-hasil-evaluasi-magang.csv');
     }
 
     public function questionnaires()

@@ -1,0 +1,20 @@
+{
+  "name": "selenium-js-test",
+  "version": "1.0.0",
+  "description": "Browser smoke tests Magang Dosen",
+  "main": "run-all.js",
+  "scripts": {
+    "test": "node run-all.js",
+    "test:home": "node 01-home.smoke.test.js",
+    "test:dosen": "node 02-dosen-menu.test.js",
+    "test:mentor": "node 03-mentor-menu.test.js",
+    "test:admin": "node 04-admin-evaluasi.test.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "selenium-webdriver": "^4.51.0"
+  }
+}

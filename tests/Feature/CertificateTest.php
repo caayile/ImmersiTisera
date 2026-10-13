@@ -69,13 +69,15 @@ class CertificateTest extends TestCase
 
         $this->actingAs($participant)
             ->get(route('participant.certificates'))
-            ->assertRedirect(route('participant.evaluation'));
+            ->assertOk()
+            ->assertSee('Belum ada sertifikat yang bisa dibuka')
+            ->assertDontSee('Lihat / Cetak');
 
         // Nilai + sertifikat terkunci sampai peserta mengisi kuesioner balik.
         $this->actingAs($participant)
             ->get(route('participant.evaluation'))
             ->assertOk()
-            ->assertSee('Nilai raport terkunci sampai kuesioner diisi')
+            ->assertSee('Nilai raport dan sertifikat terkunci sampai kuesioner diisi')
             ->assertDontSee($certificate->number);
 
         $this->actingAs($participant)
@@ -88,7 +90,7 @@ class CertificateTest extends TestCase
             ->assertRedirect();
 
         $this->actingAs($participant)
-            ->get(route('participant.evaluation'))
+            ->get(route('participant.certificates'))
             ->assertOk()
             ->assertSee($certificate->number);
 

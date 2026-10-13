@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\User;
+use App\Support\NotificationLink;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -67,7 +68,7 @@ class ImersiAlert extends Notification
             ->line($this->message);
 
         if (filled($this->url)) {
-            $mail->action('Buka di Magang Dosen', url($this->url));
+            $mail->action('Buka di Magang Dosen', url(NotificationLink::normalize($this->url)));
         }
 
         return $mail->salutation('Program Magang Dosen · TSU');
@@ -81,7 +82,7 @@ class ImersiAlert extends Notification
         return [
             'title' => $this->title,
             'message' => $this->message,
-            'url' => $this->url,
+            'url' => NotificationLink::normalize($this->url),
         ];
     }
 }

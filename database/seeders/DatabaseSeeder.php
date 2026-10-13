@@ -309,9 +309,9 @@ class DatabaseSeeder extends Seeder
             'notes' => 'Sudah ada komitmen awal.',
         ]);
 
-        $andi->user->notify(new ImersiAlert('Program ACTIVE', 'Lanjutkan logbook minggu ini.', '/participant/logbooks'));
-        $admin->notify(new ImersiAlert('Matching menunggu review', 'Ada pengajuan baru dari Dr. Maya Kusuma.', '/admin/matching'));
-        $mentorUser->notify(new ImersiAlert('Logbook pending review', 'Ada logbook dari Dr. Andi Pratama.', '/mentor/logbooks'));
+        $andi->user->notify(new ImersiAlert('Program ACTIVE', 'Lanjutkan logbook minggu ini.', route('participant.logbooks')));
+        $admin->notify(new ImersiAlert('Matching menunggu review', 'Ada pengajuan baru dari Dr. Maya Kusuma.', route('admin.matching')));
+        $mentorUser->notify(new ImersiAlert('Logbook pending review', 'Ada logbook dari Dr. Andi Pratama.', route('mentor.logbooks')));
 
         $this->call(NewsSeeder::class);
         $this->call(QuestionnaireBankSeeder::class);
