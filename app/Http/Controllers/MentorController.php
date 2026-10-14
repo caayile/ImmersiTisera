@@ -234,11 +234,12 @@ class MentorController extends Controller
                 'mentor_signature' => $data['mentor_signature'],
             ]);
             app(AgreementLetterService::class)->issue($agreement->fresh());
-            $program = $agreement->program;
+            $program = $agreement->program->loadMissing('application');
+            [$startDate, $endDate] = $this->internshipPeriodFromApplication($program);
             $program->update([
                 'status' => 'active',
-                'start_date' => now()->toDateString(),
-                'end_date' => now()->addDays(60)->toDateString(),
+                'start_date' => $startDate,
+                'end_date' => $endDate,
             ]);
             $program->seedTimeline();
             $program->participant->user->notify(new ImersiAlert('Program aktif', 'Perjanjian disetujui. Masa magang dimulai.', route('participant.dashboard')));
@@ -421,8 +422,8 @@ class MentorController extends Controller
 
         $program->participant->user->notify(new ImersiAlert(
             'Sertifikat tersedia',
-            'Nilai raport '.$evaluation->reportAverage().' ('.$evaluation->predicate().') disahkan. Isi kuesioner lalu buka sertifikat di menu Sertifikat.',
-            route('participant.certificates', [], false)
+            'Nilai raport '.$evaluation->reportAverage().' ('.$evaluation->predicate().') disahkan. Isi kuesioner, lalu nilai dan sertifikat terbuka di Hasil Nilai Magang.',
+            route('participant.evaluation', [], false).'#sertifikat'
         ));
 
         return back()->with('status', 'Raport disahkan dan sertifikat diterbitkan untuk '.$program->participant->user->name.'. Nomor: '.$certificate->number);
@@ -634,5 +635,22 @@ class MentorController extends Controller
     private function authorizeProgram(Request $request, Program $program): void
     {
         abort_unless($program->mentor_id === $request->user()->mentor?->id, 403);
+    }
+
+    /**
+     * Periode magang mengikuti pengajuan dosen (bukan tanggal persetujuan mentor).
+     *
+     * @return array{0: string, 1: string}
+     */
+    private function internshipPeriodFromApplication(Program $program): array
+    {
+        $application = $program->application;
+        $start = $application?->period_start
+            ?? $application?->created_at?->copy()->startOfDay()
+            ?? now()->startOfDay();
+        $end = $application?->period_end
+            ?? Application::periodEndFromStart($start);
+
+        return [$start->toDateString(), $end->toDateString()];
     }
 }

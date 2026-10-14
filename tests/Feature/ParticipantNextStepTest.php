@@ -107,7 +107,7 @@ class ParticipantNextStepTest extends TestCase
             ->assertSee(route('participant.agreement'), false);
     }
 
-    public function test_completed_program_hides_next_step(): void
+    public function test_completed_program_prompts_collaboration_follow_up(): void
     {
         $dosen = $this->dosen([
             'faculty' => 'Fakultas Teknik',
@@ -117,7 +117,28 @@ class ParticipantNextStepTest extends TestCase
 
         $this->actingAs($dosen)
             ->get(route('home'))
-            ->assertDontSee('Langkah berikutnya');
+            ->assertSee('Langkah berikutnya')
+            ->assertSee('Tindak lanjut kolaborasi')
+            ->assertSee(route('participant.collaboration'), false);
+    }
+
+    public function test_dashboard_and_home_share_the_same_next_step_copy(): void
+    {
+        $dosen = $this->dosen([
+            'faculty' => 'Fakultas Teknik',
+            'study_program' => 'Informatika',
+        ]);
+        $this->program($dosen, 'active');
+
+        $this->actingAs($dosen)
+            ->get(route('home'))
+            ->assertSee('Isi logbook minggu ini')
+            ->assertSee(route('participant.logbooks'), false);
+
+        $this->actingAs($dosen)
+            ->get(route('participant.dashboard'))
+            ->assertSee('Program magang dosen sudah aktif')
+            ->assertSee(route('participant.logbooks'), false);
     }
 
     public function test_mentor_home_does_not_show_dosen_next_step(): void

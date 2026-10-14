@@ -18,7 +18,7 @@ class QuestionnaireBankSeeder extends Seeder
     }
 
     /**
-     * Isi bank bawaan bila kosong (idempoten, aman dipanggil berulang).
+     * Sinkronkan bank bawaan (idempoten, aman dipanggil berulang).
      */
     public static function ensure(): void
     {
@@ -35,15 +35,20 @@ class QuestionnaireBankSeeder extends Seeder
                 ['key' => $section['key'], 'title' => $section['title']]
             );
 
+            $keepIds = [];
+
             foreach ($section['questions'] as $index => $question) {
-                EvaluationQuestion::updateOrCreate(
+                $item = EvaluationQuestion::updateOrCreate(
                     [
                         'evaluation_section_id' => $record->id,
-                        'question' => $question,
+                        'position' => $index + 1,
                     ],
-                    ['position' => $index + 1, 'is_active' => true]
+                    ['question' => $question, 'is_active' => true]
                 );
+                $keepIds[] = $item->id;
             }
+
+            $record->questions()->whereNotIn('id', $keepIds)->delete();
         }
     }
 }

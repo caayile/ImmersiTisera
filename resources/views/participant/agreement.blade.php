@@ -68,22 +68,35 @@
                         <span class="material-symbols-outlined text-[18px]">close</span>
                     </button>
                 </div>
-                <form method="POST" action="{{ route('participant.agreement.sign') }}" class="space-y-4 p-5">
+                <form
+                    method="POST"
+                    action="{{ route('participant.agreement') }}"
+                    class="space-y-4 p-5"
+                    @submit.prevent="
+                        const main = document.getElementById('form-perjanjian');
+                        const modalSig = $el.querySelector('[name=participant_signature]');
+                        if (! main) { $el.submit(); return; }
+                        const mainSig = main.querySelector('[name=participant_signature]');
+                        if (mainSig && modalSig) { mainSig.value = modalSig.value; }
+                        main.requestSubmit();
+                    "
+                >
                     @csrf
                     <input type="hidden" name="_sign" value="1">
+                    <p class="rounded-xl bg-bg px-3 py-2 text-xs text-muted">Tanda tangan ini akan dikirim bersama isian form perjanjian di bawah halaman. Pastikan tujuan, aktivitas, dan indikator sudah diisi.</p>
                     <x-signature-pad
                         name="participant_signature"
                         label="Tanda tangan dosen"
-                        hint="Coret di kotak atau unggah gambar. Simpan untuk mengajukan ke mentor."
+                        hint="Coret di kotak atau unggah gambar. Simpan untuk mengajukan ke mentor bersama isian form."
                         :required="true"
                         :value="old('participant_signature', $agreement->participant_signature)"
                     />
-                    @if(old('_sign') && $errors->has('participant_signature'))
+                    @if($errors->has('participant_signature'))
                         <p class="text-sm text-red-600">{{ $errors->first('participant_signature') }}</p>
                     @endif
                     <div class="flex justify-end gap-2">
                         <button type="button" @click="signOpen = false" class="rounded-xl border border-line px-4 py-2.5 text-sm font-semibold text-muted">Batal</button>
-                        <button class="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-dark">Simpan</button>
+                        <button class="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-dark">Simpan & ajukan</button>
                     </div>
                 </form>
             </div>

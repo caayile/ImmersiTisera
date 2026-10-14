@@ -46,8 +46,8 @@
                     <th class="sticky left-10 z-10 border-b border-r border-line bg-[#eef4f1] px-3 py-2.5 font-semibold">Peserta</th>
                     <th class="border-b border-line px-3 py-2.5 font-semibold">NIDN</th>
                     <th class="border-b border-line px-3 py-2.5 font-semibold">Mentor</th>
-                    <th class="border-b border-line px-3 py-2.5 font-semibold">Departemen</th>
                     <th class="border-b border-line px-3 py-2.5 font-semibold">Unit Bisnis</th>
+                    <th class="border-b border-line px-3 py-2.5 font-semibold">Departemen</th>
                     <th class="border-b border-line px-3 py-2.5 font-semibold">Periode</th>
                     <th class="border-b border-line px-3 py-2.5 font-semibold">Status</th>
                     <th class="border-b border-line px-3 py-2.5 font-semibold">Rata-rata</th>

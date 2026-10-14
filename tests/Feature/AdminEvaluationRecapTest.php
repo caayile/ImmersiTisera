@@ -25,7 +25,7 @@ class AdminEvaluationRecapTest extends TestCase
                     ]))
                     ->map(fn ($item) => [
                         'label' => $item['label'],
-                        'score' => $item['section'] === 'unit' ? $unitScore : $otherScore,
+                        'score' => $item['section'] === 'departemen' ? $unitScore : $otherScore,
                     ])
                     ->all(),
             ])
@@ -49,7 +49,7 @@ class AdminEvaluationRecapTest extends TestCase
             ->assertSee('Rekap kuesioner per departemen')
             ->assertSee($departmentName)
             ->assertSee('Aspek terendah')
-            ->assertSee('Unit Bisnis memberikan akses data')
+            ->assertSee('Departemen memberikan akses data')
             ->assertSee($dosen->name);
     }
 

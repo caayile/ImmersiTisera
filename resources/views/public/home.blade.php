@@ -29,13 +29,14 @@
 @endphp
 
 {{-- ===== HERO BERANDA ===== --}}
-<section class="home-hero relative overflow-hidden" data-reveal>
+<section class="home-hero relative overflow-hidden" aria-label="Hero Magang Dosen">
     <div class="home-hero__image absolute inset-0" aria-hidden="true">
         <img
             src="{{ asset('images/hero/hero-clean.png') }}"
             alt="Gedung Tiga Serangkai"
             class="home-hero__photo home-hero__photo--full"
             loading="eager"
+            fetchpriority="high"
         >
     </div>
 
@@ -56,7 +57,7 @@
             @else
                 <span class="home-hero__batch home-hero__batch--closed">Pendaftaran<br>Ditutup</span>
             @endif
-            <a href="{{ route('departments.index') }}" class="home-hero__cta">
+            <a href="{{ route('departments.index') }}" class="home-hero__cta tap-feedback">
                 Jelajahi Unit Bisnis
                 <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
             </a>

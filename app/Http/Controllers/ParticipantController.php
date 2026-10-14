@@ -733,7 +733,7 @@ class ParticipantController extends Controller
             ]
         );
 
-        return redirect(route('participant.evaluation').'#riwayat')->with('status', 'Evaluasi tersimpan.');
+        return redirect(route('participant.evaluation').'#hasil')->with('status', 'Kuesioner tersimpan. Nilai dan sertifikat sudah dapat dibuka.');
     }
 
     public function report(Request $request, ?Program $program = null)
@@ -763,44 +763,52 @@ class ParticipantController extends Controller
         return view('participant.evaluation-report', compact('program', 'mine', 'report', 'ownCriteria', 'scaleMax'));
     }
 
-    public function printReport(Request $request)
+    public function printReport(Request $request, ?Program $program = null)
     {
-        $program = $this->currentProgram($request);
-        abort_unless($program, 404);
-        $program->loadMissing(['participant.user', 'mentor.user', 'department', 'businessUnit', 'evaluations.evaluator']);
-
-        $mine = $program->evaluations->where('evaluator_id', $request->user()->id)->first();
-        $report = $program->evaluations->whereNotIn('evaluator_id', [$request->user()->id])->first(fn ($eval) => $eval->hasReport());
-
-        // Nilai raport hanya bisa dilihat setelah dosen mengisi evaluasinya sendiri.
-        abort_unless($mine && $report, 404);
+        [$target, $report] = $this->resolveReportForPrint($request, $program);
 
         return view('participant.evaluation-report-print', [
-            'program' => $program,
+            'program' => $target,
             'report' => $report,
             'pdf' => false,
         ]);
     }
 
-    public function downloadReportPdf(Request $request)
+    public function downloadReportPdf(Request $request, ?Program $program = null)
     {
-        $program = $this->currentProgram($request);
-        abort_unless($program, 404);
-        $program->loadMissing(['participant.user', 'mentor.user', 'department', 'businessUnit', 'evaluations.evaluator']);
+        [$target, $report] = $this->resolveReportForPrint($request, $program);
 
-        $mine = $program->evaluations->where('evaluator_id', $request->user()->id)->first();
-        $report = $program->evaluations->whereNotIn('evaluator_id', [$request->user()->id])->first(fn ($eval) => $eval->hasReport());
-
-        // Nilai raport hanya bisa diunduh setelah dosen mengisi evaluasinya sendiri.
-        abort_unless($mine && $report, 404);
-
-        $filename = 'Rapor-Magang-'.preg_replace('/[^A-Za-z0-9]+/', '-', (string) $program->participant->user->name).'.pdf';
+        $filename = 'Rapor-Magang-'.preg_replace('/[^A-Za-z0-9]+/', '-', (string) $target->participant->user->name).'.pdf';
 
         return Pdf::loadView('participant.evaluation-report-print', [
-            'program' => $program,
+            'program' => $target,
             'report' => $report,
             'pdf' => true,
         ])->setPaper('a4', 'portrait')->download($filename);
+    }
+
+    /**
+     * @return array{0: Program, 1: Evaluation}
+     */
+    private function resolveReportForPrint(Request $request, ?Program $program = null): array
+    {
+        $current = $this->currentProgram($request);
+        abort_unless($current, 404);
+
+        $target = $program ?? $current;
+        abort_unless((int) $target->participant_id === (int) $request->user()->participant?->id, 404);
+        $target->loadMissing(['participant.user', 'mentor.user', 'department', 'businessUnit', 'evaluations.evaluator']);
+
+        $mine = $target->evaluations->where('evaluator_id', $request->user()->id)->first();
+        $report = $target->evaluations->whereNotIn('evaluator_id', [$request->user()->id])->first(fn ($eval) => $eval->hasReport());
+        abort_unless($report, 404);
+
+        // Kuesioner wajib hanya untuk siklus berjalan; siklus lama bersifat arsip.
+        if ($target->id === $current->id) {
+            abort_unless($mine, 404);
+        }
+
+        return [$target, $report];
     }
 
     public function finalReport(Request $request)
@@ -841,11 +849,8 @@ class ParticipantController extends Controller
 
     public function certificates(Request $request)
     {
-        $program = $this->currentProgram($request);
-        $certificates = $this->participantCertificates($request);
-        $pendingNotice = $this->certificatePendingNotice($request, $program, $certificates);
-
-        return view('participant.certificates', compact('certificates', 'program', 'pendingNotice'));
+        // Sertifikat digabung ke halaman Hasil Nilai Magang (kuesioner → nilai + sertif).
+        return redirect()->to(route('participant.evaluation').'#sertifikat');
     }
 
     /**

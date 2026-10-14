@@ -7,7 +7,7 @@
         <span aria-hidden="true">&larr;</span>
         Kembali
     </a>
-    <a href="{{ route('participant.evaluation.report-preview') }}" class="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-dark">
+    <a href="{{ route('participant.evaluation.report-preview', $program) }}" class="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-dark">
         <span class="material-symbols-outlined text-[18px]">print</span>
         Cetak PDF
     </a>

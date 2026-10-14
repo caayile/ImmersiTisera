@@ -21,7 +21,6 @@ async function run() {
       ['/participant/mentoring', 'Mentoring'],
       ['/participant/final-report', 'Laporan'],
       ['/participant/evaluation', 'Hasil Nilai Magang'],
-      ['/participant/certificates', 'Sertifikat'],
       ['/participant/collaboration', 'Kolaborasi'],
       ['/participant/notifications', 'Notifikasi'],
       ['/participant/settings', 'Pengaturan'],

@@ -69,16 +69,15 @@ class CertificateTest extends TestCase
 
         $this->actingAs($participant)
             ->get(route('participant.certificates'))
-            ->assertOk()
-            ->assertSee('Belum ada sertifikat yang bisa dibuka')
-            ->assertDontSee('Lihat / Cetak');
+            ->assertRedirect(route('participant.evaluation').'#sertifikat');
 
         // Nilai + sertifikat terkunci sampai peserta mengisi kuesioner balik.
         $this->actingAs($participant)
             ->get(route('participant.evaluation'))
             ->assertOk()
             ->assertSee('Nilai raport dan sertifikat terkunci sampai kuesioner diisi')
-            ->assertDontSee($certificate->number);
+            ->assertDontSee($certificate->number)
+            ->assertDontSee('Lihat / Cetak');
 
         $this->actingAs($participant)
             ->post(route('participant.evaluation'), [
@@ -87,12 +86,14 @@ class CertificateTest extends TestCase
                     ->map(fn ($question) => ['label' => $question, 'score' => 5])
                     ->all(),
             ])
-            ->assertRedirect();
+            ->assertRedirect(route('participant.evaluation').'#hasil');
 
         $this->actingAs($participant)
-            ->get(route('participant.certificates'))
+            ->get(route('participant.evaluation'))
             ->assertOk()
-            ->assertSee($certificate->number);
+            ->assertSee($certificate->number)
+            ->assertSee('Sertifikat penyelesaian')
+            ->assertSee('Lihat / Cetak');
 
         $this->actingAs($participant)
             ->get(route('participant.certificates.print', $certificate))

@@ -12,7 +12,7 @@ class NotificationBellLinkTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_certificates_page_is_available_for_participant(): void
+    public function test_certificates_route_redirects_to_evaluation(): void
     {
         $user = User::factory()->create(['role' => 'participant']);
         Participant::create([
@@ -24,11 +24,10 @@ class NotificationBellLinkTest extends TestCase
 
         $this->actingAs($user)
             ->get('/participant/certificates')
-            ->assertOk()
-            ->assertSee('Sertifikat Magang', false);
+            ->assertRedirect(route('participant.evaluation').'#sertifikat');
     }
 
-    public function test_certificate_notification_link_points_to_certificates_page(): void
+    public function test_certificate_notification_link_points_to_evaluation_page(): void
     {
         $dosen = User::factory()->create(['role' => 'participant']);
 
@@ -41,6 +40,6 @@ class NotificationBellLinkTest extends TestCase
         $this->actingAs($dosen)
             ->get(route('home'))
             ->assertOk()
-            ->assertSee('/participant/certificates', false);
+            ->assertSee('/participant/evaluation#sertifikat', false);
     }
 }

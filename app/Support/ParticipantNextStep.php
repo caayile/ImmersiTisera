@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Models\Evaluation;
 use App\Models\User;
 
 class ParticipantNextStep
@@ -13,6 +14,14 @@ class ParticipantNextStep
         public string $cta,
         public string $url,
     ) {}
+
+    /**
+     * @return array{0: string, 1: string}
+     */
+    public function dashboardCue(): array
+    {
+        return [$this->message, $this->url];
+    }
 
     public static function for(User $user): ?self
     {
@@ -33,7 +42,7 @@ class ParticipantNextStep
         }
 
         $application = $participant->applications()->latest('id')->first();
-        $program = $participant->programs()->latest('id')->first();
+        $program = $participant->programs()->with('evaluations')->latest('id')->first();
 
         if ($application?->status === 'revision') {
             return new self(
@@ -55,6 +64,36 @@ class ParticipantNextStep
             );
         }
 
+        if ($application?->status === 'rejected' && ! $program) {
+            return new self(
+                eyebrow: 'Langkah berikutnya',
+                title: 'Pendaftaran ditolak',
+                message: 'Pendaftaran ditolak. Ajukan program lain jika masih relevan.',
+                cta: 'Lihat riwayat',
+                url: route('participant.applications'),
+            );
+        }
+
+        if ($application?->status === 'approved' && ! $program) {
+            return new self(
+                eyebrow: 'Langkah berikutnya',
+                title: 'Lanjutkan perjanjian magang dosen',
+                message: 'Pendaftaran disetujui. Lengkapi perjanjian sebelum program dimulai.',
+                cta: 'Buka perjanjian',
+                url: route('participant.agreement'),
+            );
+        }
+
+        if ($program && self::needsQuestionnaire($program, (int) $user->id)) {
+            return new self(
+                eyebrow: 'Langkah berikutnya',
+                title: 'Isi kuesioner & lihat nilai',
+                message: 'Nilai raport sudah diumumkan. Isi kuesioner singkat untuk membuka hasil nilai dan sertifikat.',
+                cta: 'Buka Hasil Nilai Magang',
+                url: route('participant.evaluation'),
+            );
+        }
+
         if ($program && $program->status === 'active') {
             return new self(
                 eyebrow: 'Langkah berikutnya',
@@ -69,14 +108,22 @@ class ParticipantNextStep
             return new self(
                 eyebrow: 'Langkah berikutnya',
                 title: 'Lanjutkan perjanjian magang dosen',
-                message: 'Pendaftaran disetujui. Lengkapi perjanjian sebelum program dimulai.',
+                message: $program->status === 'revision'
+                    ? 'Perbaiki perjanjian sesuai catatan mentor.'
+                    : 'Pendaftaran disetujui. Lengkapi perjanjian sebelum program dimulai.',
                 cta: 'Buka perjanjian',
                 url: route('participant.agreement'),
             );
         }
 
         if ($program && $program->status === 'completed') {
-            return null;
+            return new self(
+                eyebrow: 'Langkah berikutnya',
+                title: 'Tindak lanjut kolaborasi',
+                message: 'Tentukan tindak lanjut kolaborasi setelah magang.',
+                cta: 'Buka kolaborasi',
+                url: route('participant.collaboration'),
+            );
         }
 
         return new self(
@@ -85,6 +132,20 @@ class ParticipantNextStep
             message: 'Pilih unit yang selaras dengan program studi Anda, lalu kirim form pendaftaran.',
             cta: 'Jelajahi unit bisnis',
             url: route('departments.index'),
+        );
+    }
+
+    private static function needsQuestionnaire($program, int $participantUserId): bool
+    {
+        $mentorReport = $program->evaluations
+            ->first(fn (Evaluation $evaluation) => (int) $evaluation->evaluator_id !== $participantUserId && $evaluation->hasReport());
+
+        if (! $mentorReport) {
+            return false;
+        }
+
+        return ! $program->evaluations->contains(
+            fn (Evaluation $evaluation) => (int) $evaluation->evaluator_id === $participantUserId
         );
     }
 }

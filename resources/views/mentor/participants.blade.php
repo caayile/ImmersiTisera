@@ -23,7 +23,7 @@
                 <td class="px-4 py-3">{{ $program->businessUnit->name }}</td>
                 <td class="px-4 py-3">{{ $program->start_date?->format('d M') ?? '—' }}</td>
                 <td class="px-4 py-3"><x-badge :status="$program->status" /></td>
-                <td class="px-4 py-3">{{ $program->progress }}%</td>
+                <td class="px-4 py-3">{{ $program->status === 'active' ? $program->progress.'%' : '—' }}</td>
                 <td class="px-4 py-3">{{ $program->logbooks->where('status','submitted')->count() }} menunggu</td>
                 <td class="px-4 py-3">{{ $program->outputs->where('status','submitted')->count() }} menunggu</td>
             </tr>

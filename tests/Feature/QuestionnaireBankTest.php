@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Evaluation;
+use App\Models\EvaluationQuestion;
 use App\Models\EvaluationScale;
 use App\Models\EvaluationSection;
 use App\Models\User;
@@ -35,15 +36,15 @@ class QuestionnaireBankTest extends TestCase
             ->assertSee($section->title)
             ->assertSee($first->question);
 
-        // Simpan: ubah kode + judul + pertanyaan + tambah baru.
+        // Simpan: ubah kode + judul + pertanyaan + tambah baris baru.
         $this->actingAs($admin)
             ->post(route('admin.questionnaires.save', $section), [
                 'key' => 'program',
                 'title' => 'Evaluasi Program (diperbarui)',
                 'questions' => [
-                    ['id' => $first->id, 'question' => 'Pertanyaan pertama (diperbarui).', 'is_active' => '1'],
+                    ['id' => $first->id, 'question' => 'Pertanyaan pertama (diperbarui).'],
+                    ['question' => 'Pertanyaan tambahan dari admin.'],
                 ],
-                'new_question' => 'Pertanyaan tambahan dari admin.',
                 'save' => '1',
             ])
             ->assertRedirect();
@@ -55,14 +56,40 @@ class QuestionnaireBankTest extends TestCase
             'question' => 'Pertanyaan tambahan dari admin.',
         ]);
 
-        // Hapus satu pertanyaan dari form yang sama.
-        $added = $section->questions()->where('question', 'Pertanyaan tambahan dari admin.')->firstOrFail();
-
+        // Hapus pertanyaan tambahan dengan menyimpan tanpa baris itu.
         $this->actingAs($admin)
-            ->post(route('admin.questionnaires.save', $section), ['delete_id' => $added->id])
+            ->post(route('admin.questionnaires.save', $section), [
+                'key' => 'program',
+                'title' => 'Evaluasi Program (diperbarui)',
+                'questions' => [
+                    ['id' => $first->id, 'question' => 'Pertanyaan pertama (diperbarui).'],
+                ],
+                'save' => '1',
+            ])
             ->assertRedirect();
 
-        $this->assertDatabaseMissing('evaluation_questions', ['id' => $added->id]);
+        $this->assertDatabaseMissing('evaluation_questions', [
+            'evaluation_section_id' => $section->id,
+            'question' => 'Pertanyaan tambahan dari admin.',
+        ]);
+    }
+
+    public function test_default_bank_has_five_questions_per_section_and_departemen_key(): void
+    {
+        $this->seed();
+
+        $bank = EvaluationQuestion::defaultBank();
+
+        $this->assertCount(3, $bank);
+        $this->assertSame(['program', 'departemen', 'mentor'], array_column($bank, 'key'));
+
+        foreach ($bank as $section) {
+            $this->assertCount(5, $section['questions']);
+        }
+
+        $this->assertDatabaseHas('evaluation_sections', ['key' => 'departemen', 'title' => 'Evaluasi terhadap Departemen']);
+        $this->assertDatabaseCount('evaluation_questions', 15);
+        $this->assertDatabaseMissing('evaluation_sections', ['key' => 'unit']);
     }
 
     public function test_admin_can_manage_likert_scales(): void

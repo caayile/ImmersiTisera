@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Agreement;
+use App\Models\Application;
 use App\Services\AgreementLetterService;
 use App\Support\ApiPresenter;
 use Illuminate\Http\Request;
@@ -102,10 +103,20 @@ class AgreementController extends Controller
         }
 
         if ($agreement->status === 'agreed' && $program) {
+            $program->loadMissing('application');
+            $application = $program->application;
+            $start = $program->start_date
+                ?? $application?->period_start
+                ?? $application?->created_at?->copy()->startOfDay()
+                ?? now()->startOfDay();
+            $end = $program->end_date
+                ?? $application?->period_end
+                ?? Application::periodEndFromStart($start);
+
             $program->update([
                 'status' => 'active',
-                'start_date' => $program->start_date ?: now()->toDateString(),
-                'end_date' => $program->end_date ?: now()->addDays(60)->toDateString(),
+                'start_date' => $start->toDateString(),
+                'end_date' => $end->toDateString(),
             ]);
             $program->seedTimeline();
         }

@@ -55,7 +55,7 @@ class AdminController extends Controller
                 'Peserta' => Participant::count(),
                 'Mentor' => Mentor::count(),
                 'Unit bisnis' => Department::count(),
-                'Unit Bisnis' => BusinessUnit::count(),
+                'Departemen' => BusinessUnit::count(),
                 'Program aktif' => Program::where('status', 'active')->count(),
                 'Program selesai' => Program::where('status', 'completed')->count(),
                 'Menunggu persetujuan' => Application::whereIn('status', ['submitted', 'waiting_admin'])->count() + Agreement::where('status', 'submitted')->count(),
@@ -801,8 +801,8 @@ class AdminController extends Controller
             'Peserta',
             'NIDN',
             'Mentor',
-            'Departemen',
             'Unit Bisnis',
+            'Departemen',
             'Periode',
             'Status Program',
             'Rata-rata Raport',
@@ -864,43 +864,39 @@ class AdminController extends Controller
 
     public function saveQuestionSection(Request $request, EvaluationSection $section)
     {
-        // Hapus satu pertanyaan dari form yang sama.
-        if ($request->filled('delete_id')) {
-            $section->questions()->where('id', $request->integer('delete_id'))->firstOrFail()->delete();
-
-            return back()->with('status', 'Pertanyaan dihapus.');
-        }
-
         $data = $request->validate([
             'key' => ['required', 'string', 'max:50', 'alpha_dash', 'unique:evaluation_sections,key,'.$section->id],
             'title' => ['required', 'string', 'max:255'],
             'questions' => ['nullable', 'array'],
-            'questions.*.id' => ['required', 'integer'],
+            'questions.*.id' => ['nullable', 'integer'],
             'questions.*.question' => ['required', 'string', 'max:1000'],
-            'questions.*.is_active' => ['required', 'in:0,1'],
-            'new_question' => ['nullable', 'string', 'max:1000'],
         ]);
 
         $section->update(['key' => $data['key'], 'title' => $data['title']]);
 
-        foreach ($data['questions'] ?? [] as $row) {
-            $question = $section->questions()->where('id', $row['id'])->first();
-            if ($question) {
-                $question->update([
-                    'question' => $row['question'],
-                    'is_active' => $row['is_active'] === '1',
-                ]);
+        $keptIds = [];
+
+        foreach (array_values($data['questions'] ?? []) as $index => $row) {
+            $payload = [
+                'question' => $row['question'],
+                'position' => $index + 1,
+                'is_active' => true,
+            ];
+
+            if (filled($row['id'] ?? null)) {
+                $question = $section->questions()->where('id', $row['id'])->first();
+                if ($question) {
+                    $question->update($payload);
+                    $keptIds[] = $question->id;
+
+                    continue;
+                }
             }
+
+            $keptIds[] = $section->questions()->create($payload)->id;
         }
 
-        if (filled($data['new_question'] ?? null)) {
-            $position = $section->questions()->max('position') ?? 0;
-            $section->questions()->create([
-                'question' => $data['new_question'],
-                'position' => $position + 1,
-                'is_active' => true,
-            ]);
-        }
+        $section->questions()->whereNotIn('id', $keptIds)->delete();
 
         return back()->with('status', 'Bank kuesioner diperbarui.');
     }
@@ -954,14 +950,14 @@ class AdminController extends Controller
 
         if ($request->get('export') === 'csv') {
             $csv = fopen('php://temp', 'r+');
-            fputcsv($csv, ['Program', 'Peserta', 'Mentor', 'Department', 'Unit', 'Status']);
+            fputcsv($csv, ['Program', 'Peserta', 'Mentor', 'Unit Bisnis', 'Departemen', 'Status']);
             foreach ($programs as $program) {
                 fputcsv($csv, [
                     $program->id,
-                    $program->participant->user->name,
-                    $program->mentor->user->name,
-                    $program->department->name,
-                    $program->businessUnit->name,
+                    $program->participant?->user?->name ?? '—',
+                    $program->mentor?->user?->name ?? '—',
+                    $program->department?->name ?? '—',
+                    $program->businessUnit?->name ?? '—',
                     $program->status,
                 ]);
             }

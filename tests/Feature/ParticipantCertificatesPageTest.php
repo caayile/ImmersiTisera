@@ -11,7 +11,7 @@ class ParticipantCertificatesPageTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_participant_sees_certificate_on_dedicated_page_after_unlock(): void
+    public function test_participant_sees_certificate_on_evaluation_page_after_unlock(): void
     {
         $this->seed();
 
@@ -43,10 +43,14 @@ class ParticipantCertificatesPageTest extends TestCase
                     ->map(fn ($question) => ['label' => $question, 'score' => 5])
                     ->all(),
             ])
-            ->assertRedirect();
+            ->assertRedirect(route('participant.evaluation').'#hasil');
 
         $this->actingAs($participant)
             ->get(route('participant.certificates'))
+            ->assertRedirect(route('participant.evaluation').'#sertifikat');
+
+        $this->actingAs($participant)
+            ->get(route('participant.evaluation'))
             ->assertOk()
             ->assertSee('Sertifikat penyelesaian')
             ->assertSee('Lihat / Cetak');

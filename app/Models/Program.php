@@ -136,9 +136,21 @@ class Program extends Model
 
     public function canComplete(): bool
     {
-        return $this->outputs()->where('is_main_output', true)->where('status', 'approved')->exists()
-            && $this->outputs()->where('is_final_report', true)->where('status', 'approved')->exists()
-            && $this->evaluations()->count() >= 1;
+        if (! $this->outputs()->where('is_main_output', true)->where('status', 'approved')->exists()) {
+            return false;
+        }
+
+        if (! $this->outputs()->where('is_final_report', true)->where('status', 'approved')->exists()) {
+            return false;
+        }
+
+        $this->loadMissing('evaluations.evaluator');
+
+        return $this->evaluations->contains(
+            fn (Evaluation $evaluation) => $evaluation->evaluator?->isMentor()
+                && $evaluation->hasReport()
+                && $evaluation->reportAverage() !== null
+        );
     }
 
     public function seedTimeline(): void

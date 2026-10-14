@@ -2,31 +2,8 @@
 @section('title', 'Program Saya')
 @section('content')
 @php
-    $next = ['Lengkapi profil kompetensi Anda.', route('participant.profile')];
-    if ($participant?->study_program) {
-        $next = ['Ajukan program ke unit bisnis yang relevan.', route('departments.index')];
-    }
-    if ($application && ! $program) {
-        $next = match ($application->status) {
-            'submitted' => ['Pendaftaran menunggu tinjauan admin.', route('participant.applications.show', $application)],
-            'waiting_mentor' => ['Menunggu persetujuan mentor industri.', route('participant.applications.show', $application)],
-            'waiting_admin' => ['Menunggu pengesahan akhir dari admin.', route('participant.applications.show', $application)],
-            'revision' => ['Perbaiki formulir pendaftaran sesuai catatan peninjau.', route('participant.applications.edit', $application)],
-            'rejected' => ['Pendaftaran ditolak. Ajukan program lain jika masih relevan.', route('participant.applications')],
-            'approved' => ['Pendaftaran disetujui. Lanjutkan ke perjanjian magang dosen.', route('participant.agreement')],
-            default => $next,
-        };
-    }
-    if ($program) {
-        $next = match ($program->status) {
-            'draft', 'submitted' => ['Lengkapi dan ajukan Perjanjian Magang Dosen.', route('participant.agreement')],
-            'revision' => ['Perbaiki perjanjian sesuai catatan mentor.', route('participant.agreement')],
-            'agreed' => ['Menunggu program diaktifkan setelah perjanjian disepakati.', route('participant.agreement')],
-            'active' => ['Isi logbook harian dan siapkan mentoring minggu ini.', route('participant.logbooks')],
-            'completed' => ['Tentukan tindak lanjut kolaborasi setelah magang.', route('participant.collaboration')],
-            default => $next,
-        };
-    }
+    $nextStep = \App\Support\ParticipantNextStep::for(auth()->user());
+    $next = $nextStep?->dashboardCue() ?? ['Lengkapi profil kompetensi Anda.', route('participant.profile')];
     $logbookCount = $program?->logbooks?->count() ?? 0;
     $checkpointDone = $program?->timelines?->whereNotIn('status', ['pending', 'draft'])->count() ?? 0;
     $mentoringCount = $program?->mentorSessions?->count() ?? 0;
@@ -185,8 +162,7 @@
             ['forum', 'Mentoring', 'Jadwal & sesi mentor', route('participant.mentoring')],
             ['fact_check', 'Checkpoint', '4 fase magang', route('participant.timeline')],
             ['summarize', 'Laporan Akhir', 'Hasil & laporan', route('participant.final-report')],
-            ['grade', 'Hasil Nilai Magang', 'Nilai raport magang', route('participant.evaluation')],
-            ['workspace_premium', 'Sertifikat', 'Unduh sertifikat resmi', route('participant.certificates')],
+            ['grade', 'Hasil Nilai Magang', 'Kuesioner, nilai, dan sertifikat', route('participant.evaluation')],
         ] as [$icon, $title, $copy, $url])
             <a href="{{ $url }}" class="rounded-2xl border border-line bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary hover:shadow-md">
                 <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary-dark">

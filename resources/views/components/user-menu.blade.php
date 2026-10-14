@@ -14,7 +14,7 @@
     ];
 
     if ($user->isParticipant()) {
-        $items[] = ['Dashboard Program', route('participant.applications'), 'space_dashboard'];
+        $items[] = ['Dashboard Program', route('participant.dashboard'), 'space_dashboard'];
     } elseif ($user->isMentor()) {
         $items[] = ['Dashboard Program', route('mentor.dashboard'), 'space_dashboard'];
     } else {
