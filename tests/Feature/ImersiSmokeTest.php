@@ -430,6 +430,7 @@ class ImersiSmokeTest extends TestCase
         $this->actingAs(User::where('email', 'dosen@imersi.id')->first())
             ->get('/')
             ->assertOk()
+            ->assertSee('images/sertifikat/gedung-tanpa-hijau.png')
             ->assertSee('Beranda')
             ->assertSee('Unit Bisnis')
             ->assertSee('Unit bisnis pilihan gelombang')

@@ -32,7 +32,7 @@
 <section class="home-hero relative overflow-hidden" aria-label="Hero Magang Dosen">
     <div class="home-hero__image absolute inset-0" aria-hidden="true">
         <img
-            src="{{ asset('images/hero/hero-clean.png') }}"
+            src="{{ asset('images/sertifikat/gedung-tanpa-hijau.png') }}"
             alt="Gedung Tiga Serangkai"
             class="home-hero__photo home-hero__photo--full"
             loading="eager"

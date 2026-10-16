@@ -116,32 +116,7 @@
             transform: translateX(-50%);
         }
 
-        .brand-ts {
-            display: grid;
-            justify-items: center;
-            color: #176b69;
-            line-height: 1;
-            white-space: nowrap;
-        }
-
-        .brand-ts-mark {
-            display: grid;
-            width: 3.3cqw;
-            height: 3.3cqw;
-            place-items: center;
-            border: .22cqw solid #176b69;
-            color: #176b69;
-            font: 700 2.1cqw Georgia, serif;
-        }
-
-        .brand-ts-name {
-            margin-top: .25cqw;
-            font: 700 1.02cqw Georgia, serif;
-            letter-spacing: .03em;
-        }
-
-        .brand-ts-since { margin-top: .1cqw; font: 400 .55cqw Georgia, serif; }
-
+        .brand-logo-ts { width: 9.6cqw; height: 6.7cqw; object-fit: contain; }
         .brand-logo-tsu { width: 10.8cqw; height: 5.1cqw; object-fit: contain; }
         .brand-logo-magang { width: 13.2cqw; height: 5.2cqw; object-fit: contain; }
 
@@ -163,7 +138,7 @@
             width: 75%;
             transform: translateX(-50%);
             color: #073c69;
-            font: 700 2.05cqw/1.1 Georgia, 'Times New Roman', serif;
+            font: 700 2.05cqw/1.1 'Times New Roman', Times, serif;
             text-align: center;
         }
 
@@ -237,7 +212,7 @@
         }
 
         .mentor-label { left: 10%; }
-        .signatory-label { right: 7%; }
+        .signatory-label { right: 7%; bottom: 25.2%; }
 
         .mentor-signature, .signatory-signature {
             position: absolute;
@@ -261,6 +236,10 @@
             margin-bottom: .3cqw;
             object-fit: contain;
         }
+
+        .mentor-signature img { max-width: 86%; max-height: 82%; }
+        .signatory-signature img { max-width: 100%; max-height: 100%; }
+        .signatory-signature img.signatory-seal { transform: scale(1.5); transform-origin: center bottom; }
 
         .mentor-name, .signatory-name {
             color: #111820;
@@ -307,16 +286,12 @@
 
 <main class="certificate-wrap">
     <section class="certificate" aria-label="Sertifikat {{ $participantName }}">
-        <img class="building" src="{{ asset('images/sertifikat/gedung-tsu.png') }}" alt="">
+        <img class="building" src="{{ asset('images/sertifikat/image.png') }}" alt="">
         <div class="frame" aria-hidden="true"></div>
 
         <div class="brand-row" aria-label="Tiga Serangkai, TSU, Magang Dosen TSU">
-            <div class="brand-ts">
-                <span class="brand-ts-mark">TS</span>
-                <span class="brand-ts-name">TIGA SERANGKAI</span>
-                <span class="brand-ts-since">since 1959</span>
-            </div>
-            <img class="brand-logo-tsu" src="{{ asset('images/logo-tsu.svg') }}" alt="Tiga Serangkai University">
+            <img class="brand-logo-ts" src="{{ asset('images/sertifikat/Logo-TS-1024x720.png') }}" alt="Tiga Serangkai">
+            <img class="brand-logo-tsu" src="{{ asset('images/sertifikat/LOGO-TSU-Web-Icon-1024x501.png') }}" alt="Tiga Serangkai University">
             <img class="brand-logo-magang" src="{{ asset('images/sertifikat/magang-dosen-tsu.png') }}" alt="Magang Dosen TSU">
         </div>
 
@@ -326,20 +301,22 @@
         <p class="recipient-name">{{ $participantName }}</p>
         <div class="recipient-rule" aria-hidden="true"></div>
         <p class="participation-intro">Atas partisipasinya sebagai</p>
-        <p class="participation-detail">Peserta Magang Dosen Profesional di ({{ $departmentName }}) pada ({{ $businessUnitName }})</p>
+        <p class="participation-detail">Peserta Magang Dosen Profesional di {{ $departmentName }} pada {{ $businessUnitName }}</p>
         <p class="issued-date">Surakarta, {{ $issuedDate->locale('id')->isoFormat('D MMMM Y') }}</p>
 
-        <p class="mentor-label">({{ $departmentName }}) Mentor<br>({{ $businessUnitName }})</p>
+        <p class="mentor-label">{{ $departmentName }} Mentor<br>{{ $businessUnitName }}</p>
         <div class="mentor-signature">
             @if($signatureSource)
                 <img src="{{ $signatureSource }}" alt="Tanda tangan mentor">
             @endif
-            <span class="mentor-name">({{ $mentorName }})</span>
+            <span class="mentor-name">{{ $mentorName }}</span>
         </div>
 
         <p class="signatory-label">{{ $signatory['title'] ?? 'Center of Excellence Manager' }}<br>{{ $signatory['organization'] ?? 'PT Tiga Serangkai Inti Corpora' }}</p>
         <div class="signatory-signature">
-            @if($signatorySignatureSource)
+            @if(($signatory['name'] ?? 'Erfan Zaenuddin') === 'Erfan Zaenuddin')
+                <img class="signatory-seal" src="{{ asset('images/sertifikat/ttd-erfan-cap-transparan.png') }}" alt="Tanda tangan dan cap Erfan Zaenuddin">
+            @elseif($signatorySignatureSource)
                 <img src="{{ $signatorySignatureSource }}" alt="Tanda tangan pejabat penandatangan">
             @endif
             <span class="signatory-name">{{ $signatory['name'] ?? 'Erfan Zaenuddin' }}</span>

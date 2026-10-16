@@ -119,6 +119,17 @@ class CertificateTest extends TestCase
             ->get(route('participant.certificates.print', $certificate))
             ->assertOk()
             ->assertSee('SERTIFIKAT')
+            ->assertSee('images/sertifikat/Logo-TS-1024x720.png')
+            ->assertSee('images/sertifikat/LOGO-TSU-Web-Icon-1024x501.png')
+            ->assertSee('images/sertifikat/magang-dosen-tsu.png')
+            ->assertSee('images/sertifikat/image.png')
+            ->assertSee('Times New Roman')
+            ->assertSee('images/sertifikat/ttd-erfan-cap-transparan.png')
+            ->assertSee('.signatory-signature img.signatory-seal { transform: scale(1.5); transform-origin: center bottom; }')
+            ->assertSee('di '.$program->department->name.' pada '.$program->businessUnit->name)
+            ->assertDontSee('('.$program->department->name.')')
+            ->assertDontSee('('.$program->businessUnit->name.')')
+            ->assertDontSee('('.$program->mentor->user->name.')')
             ->assertSee($participant->name);
 
         $chromePath = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
