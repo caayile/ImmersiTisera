@@ -34,7 +34,7 @@ async function clickJs(driver, css) {
 async function dismissOverlays(driver) {
   // Splash / gambar dekoratif kadang menutupi tombol submit.
   await driver.executeScript(`
-    document.querySelectorAll('#brand-splash, .brand-splash').forEach((el) => el.remove());
+    document.querySelectorAll('#brand-splash, .brand-splash, #loader').forEach((el) => el.remove());
   `);
 }
 

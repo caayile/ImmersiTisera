@@ -12,25 +12,26 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script>
         (() => {
-            const seenSplash = sessionStorage.getItem('splash-seen');
             const isPageTransition = sessionStorage.getItem('is-page-transition');
-            if (seenSplash || isPageTransition) {
+            if (isPageTransition) {
                 document.documentElement.classList.add('skip-splash');
             }
         })();
     </script>
 </head>
 <body class="bg-white text-ink" x-data="{ open: false }">
-<div id="brand-splash" class="brand-splash" aria-label="Memuat Magang Dosen" role="status">
-    <div class="brand-splash__glow"></div>
-    <div id="brand-splash-mark" class="brand-splash__mark">
-        <img src="{{ asset('images/logo-tsu.svg') }}" alt="TSU" class="brand-splash__logo">
+<div id="loader" class="brand-splash" role="status" aria-label="Memuat Magang Dosen TSU">
+    <div class="logo">
+        <div class="part emblem"><i class="pic"></i></div>
+        <div class="part l1"><i class="pic"></i></div>
+        <div class="part l2"><i class="pic"></i></div>
+        <div class="part tag"><i class="pic"></i></div>
+        <div class="shine"></div>
     </div>
-    <div id="brand-splash-wordmark" class="brand-splash__wordmark">
-        <span>Magang Dosen</span>
-        <small>PROGRAM MAGANG DOSEN TSU</small>
+    <div class="bar">
+        <div class="track"><div class="fill" id="fill"></div></div>
+        <div class="pct" id="pct">0%</div>
     </div>
-    <div class="brand-splash__line" aria-hidden="true"><span></span></div>
 </div>
 @php
     $nav = [
@@ -41,11 +42,9 @@
 @endphp
 <header class="sticky top-0 z-50 border-b border-line bg-white">
     <div class="mx-auto flex max-w-[1440px] items-center justify-between gap-4 px-5 py-5 lg:px-12">
-        <a href="{{ route('home') }}" class="flex items-center gap-2 font-semibold">
-            <img id="nav-logo" src="{{ asset('images/logo-tsu.svg') }}" alt="TSU" class="site-logo site-logo--nav h-10 w-10">
-            <span id="nav-brand-text">Magang Dosen
-                <span class="block text-[10px] font-medium uppercase tracking-[0.14em] text-muted">Program Magang Dosen</span>
-            </span>
+        <a href="{{ route('home') }}" class="flex items-center">
+            <img id="nav-logo" src="{{ asset('images/logo-full.png') }}" alt="Magang Dosen TSU" class="h-10 sm:h-11 w-auto object-contain">
+            <span id="nav-brand-text" class="sr-only">Magang Dosen TSU</span>
         </a>
         <nav class="hidden items-center gap-1 text-sm font-medium md:flex">
             @foreach($nav as [$label, $name])
@@ -88,8 +87,10 @@
     <div class="mx-auto grid max-w-6xl gap-10 px-5 py-14 md:grid-cols-[1.35fr_0.8fr_1fr] md:gap-16 md:py-16">
         <div>
             <div class="flex items-center gap-3 text-white">
-                <span class="flex h-11 w-11 items-center justify-center rounded-xl border border-white/25 bg-white/10 text-lg font-semibold">TS</span>
-                <div class="font-semibold leading-tight">Magang<br>Tiga Serangkai</div>
+                <span class="flex h-11 w-11 items-center justify-center rounded-xl border border-white/25 bg-white p-1.5 shadow-sm">
+                    <img src="{{ asset('images/logo-mark.png') }}" alt="Magang Dosen TSU" class="h-full w-full object-contain">
+                </span>
+                <div class="font-semibold leading-tight">Magang Dosen<br><span class="text-xs font-normal text-white/70">Program TSU</span></div>
             </div>
             <p class="mt-5 max-w-sm text-sm leading-6">Program ini dikelola langsung oleh unit pembelajaran dan inovasi untuk mempertemukan dosen dengan pengalaman kerja nyata di dunia industri.</p>
             <p class="mt-5 flex max-w-sm items-start gap-2 text-sm leading-6"><span class="material-symbols-outlined mt-0.5 text-[18px] text-secondary">location_on</span><span>Jl. Prof. DR. Supomo No.23, Sriwedari, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57141</span></p>
@@ -118,28 +119,52 @@
 </footer>
 <script>
     (() => {
-        const splash = document.getElementById('brand-splash');
-        const navLogo = document.getElementById('nav-logo');
-        const navBrandText = document.getElementById('nav-brand-text');
+        const loader = document.getElementById('loader');
+        if (!loader) return;
 
-        if (!splash) return;
+        const fill = document.getElementById('fill');
+        const pct = document.getElementById('pct');
+        const MIN = 3600; // durasi minimum loading (ms)
 
         const finish = () => {
-            if (navLogo) navLogo.style.opacity = '1';
-            if (navBrandText) navBrandText.style.opacity = '1';
-            splash.remove();
-            sessionStorage.setItem('splash-seen', '1');
-            sessionStorage.removeItem('is-page-transition');
+            window.setTimeout(() => {
+                loader.classList.add('exit');
+                window.setTimeout(() => {
+                    document.body.classList.add('ready');
+                    sessionStorage.setItem('splash-seen', '1');
+                    sessionStorage.removeItem('is-page-transition');
+                    window.setTimeout(() => {
+                        if (loader && loader.parentNode) loader.remove();
+                    }, 1000);
+                }, 350);
+            }, 300);
         };
 
         if (document.documentElement.classList.contains('skip-splash')) {
-            finish();
+            loader.remove();
+            document.body.classList.add('ready');
+            sessionStorage.removeItem('is-page-transition');
             return;
         }
 
-        // Satu kali per sesi, singkat (~450ms) agar halaman terasa cepat.
-        splash.classList.add('brand-splash--leaving');
-        window.setTimeout(finish, 450);
+        const t0 = performance.now();
+        let pageLoaded = document.readyState === 'complete';
+        window.addEventListener('load', () => { pageLoaded = true; });
+
+        const tick = (now) => {
+            const p = Math.min((now - t0) / MIN, 1);
+            const e = 1 - Math.pow(1 - p, 3); // ease-out
+            const v = Math.round((pageLoaded ? e : Math.min(e, 0.9)) * 100);
+            if (fill) fill.style.width = v + '%';
+            if (pct) pct.textContent = v + '%';
+            if (p < 1 || !pageLoaded) {
+                requestAnimationFrame(tick);
+            } else {
+                finish();
+            }
+        };
+
+        requestAnimationFrame(tick);
     })();
 </script>
 </body>

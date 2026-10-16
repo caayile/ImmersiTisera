@@ -76,7 +76,7 @@
     <div class="kop">
         <table>
             <tr>
-                <td style="width: 80px;"><img class="logo" src="{{ $logoSrc }}" alt="TS"></td>
+                <td style="width: 80px;"><img class="logo" src="{{ $logoSrc }}" alt="Magang Dosen TSU"></td>
                 <td>
                     <h1>LAPORAN NILAI MAGANG DOSEN</h1>
                     <p>Program Magang Dosen TSU</p>

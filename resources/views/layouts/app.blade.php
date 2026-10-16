@@ -123,8 +123,8 @@
     <div x-show="open" x-cloak class="fixed inset-0 z-30 bg-black/30 lg:hidden" @click="open = false"></div>
     <aside class="fixed inset-y-0 left-0 z-40 flex max-h-screen w-[280px] -translate-x-full flex-col border-r border-[#dcebe3] bg-gradient-to-b from-[#f7fcf9] via-[#f4faf7] to-[#edf7f2] p-3 transition lg:sticky lg:top-0 lg:h-screen lg:translate-x-0" :class="open && 'translate-x-0'">
         <a href="{{ route('home') }}" class="group flex shrink-0 items-center gap-3 rounded-2xl border border-white/80 bg-white/75 px-3 py-2.5 shadow-sm transition hover:bg-white hover:shadow-md">
-            <span class="flex h-11 w-11 items-center justify-center rounded-xl border border-[#dcebe3] bg-white shadow-sm">
-                <img src="{{ asset('images/logo-tsu.svg') }}" alt="TSU" class="site-logo h-11 w-11">
+            <span class="flex h-11 w-11 items-center justify-center rounded-xl border border-[#dcebe3] bg-white p-1 shadow-sm">
+                <img src="{{ asset('images/logo-tsu.svg') }}" alt="TSU" class="site-logo h-full w-full object-contain">
             </span>
             <span class="leading-tight">Magang Dosen
             <span class="mt-1 block text-[10px] font-semibold uppercase tracking-[0.18em] text-primary-dark">Program TSU</span>

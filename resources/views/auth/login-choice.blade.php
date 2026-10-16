@@ -54,24 +54,16 @@
     class="bg-grid-pattern min-h-screen flex flex-col justify-between text-white selection:bg-mint selection:text-forest">
 
     <!-- Header / Navbar -->
-    <header class="w-full bg-white border-b border-gray-200 z-10 shrink-0 shadow-xs">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-1 sm:py-1.5 flex justify-between items-center">
-            <a href="{{ url('/') }}" class="flex items-center space-x-2 group">
-                <div
-                    class="w-6 h-6 sm:w-6.5 sm:h-6.5 overflow-hidden flex items-center justify-center bg-white rounded-none border border-gray-200 shadow-2xs">
-                    <img src="{{ asset('images/logo-tsu.svg') }}" alt="TS Group" class="w-full h-full object-contain rounded-none">
-                </div>
-                <div>
-                    <span class="font-extrabold text-xs sm:text-sm tracking-tight text-forest block leading-none">TS
-                        Group</span>
-                    <span class="text-[7.5px] sm:text-[8px] text-forest/70 font-semibold uppercase tracking-wider block mt-0.5">Portal
-                        Akademik</span>
-                </div>
+    <header class="sticky top-0 z-50 border-b border-line bg-white shrink-0">
+        <div class="mx-auto flex max-w-[1440px] items-center justify-between gap-4 px-5 py-5 lg:px-12">
+            <a href="{{ route('home') }}" class="flex items-center group">
+                <img id="nav-logo" src="{{ asset('images/logo-full.png') }}" alt="Magang Dosen TSU" class="h-10 sm:h-11 w-auto object-contain">
+                <span id="nav-brand-text" class="sr-only">Magang Dosen TSU</span>
             </a>
 
             <div
-                class="flex items-center space-x-1.5 bg-gray-50 border border-gray-200 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-medium text-gray-700 shadow-2xs">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                class="flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-3.5 py-1.5 text-xs font-semibold text-gray-700 shadow-2xs">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                 <span>Gelombang 2026 · Sekarang Dibuka</span>
             </div>
         </div>
