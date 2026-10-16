@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreCertificateSignatureRequest;
 use App\Models\Agreement;
 use App\Models\Application;
 use App\Models\BusinessUnit;
 use App\Models\Certificate;
+use App\Models\CertificateSignatory;
 use App\Models\CollaborationPipeline;
 use App\Models\Department;
 use App\Models\Evaluation;
@@ -23,6 +25,7 @@ use App\Models\User;
 use App\Notifications\ImersiAlert;
 use App\Services\AgreementLetterService;
 use App\Services\ApplicationApprovalService;
+use App\Services\CertificateSignatureStorage;
 use App\Services\MediaStorageService;
 use App\Support\Status;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -348,6 +351,19 @@ class AdminController extends Controller
     public function mentors()
     {
         return view('admin.mentors', ['mentors' => Mentor::with(['user', 'department', 'businessUnit'])->get()]);
+    }
+
+    public function updateMentorCertificateSignature(StoreCertificateSignatureRequest $request, Mentor $mentor, CertificateSignatureStorage $signatureStorage)
+    {
+        $data = $request->validated();
+        $path = $signatureStorage->store(
+            $data['certificate_signature_file'] ?? null,
+            $data['certificate_signature_data'] ?? $data['certificate_signature'] ?? null,
+            $mentor->certificate_signature,
+        );
+        $mentor->update(['certificate_signature' => $path]);
+
+        return back()->with('status', 'Tanda tangan sertifikat mentor diperbarui.');
     }
 
     public function participants()
@@ -973,7 +989,33 @@ class AdminController extends Controller
 
     public function settings()
     {
-        return view('admin.settings');
+        return view('admin.settings', [
+            'certificateSignatory' => CertificateSignatory::query()->where('is_active', true)->latest('id')->first(),
+        ]);
+    }
+
+    public function updateCertificateSignatory(Request $request, CertificateSignatureStorage $signatureStorage)
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:160'],
+            'title' => ['required', 'string', 'max:160'],
+            'organization' => ['required', 'string', 'max:200'],
+            'signature_file' => ['nullable', 'file', 'image', 'mimes:png,jpg,jpeg,webp', 'extensions:png,jpg,jpeg,webp', 'max:1024'],
+        ]);
+
+        $signatory = CertificateSignatory::query()->where('is_active', true)->latest('id')->firstOrFail();
+
+        if ($request->hasFile('signature_file')) {
+            $data['signature_path'] = $signatureStorage->store(
+                $request->file('signature_file'),
+                null,
+                $signatory->signature_path,
+            );
+        }
+
+        $signatory->update(collect($data)->except('signature_file')->all());
+
+        return back()->with('status', 'Pejabat penandatangan sertifikat diperbarui.');
     }
 
     public function departmentHero()

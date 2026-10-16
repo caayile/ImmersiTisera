@@ -70,6 +70,7 @@ Route::middleware(['auth', 'role:participant'])->prefix('participant')->name('pa
     Route::post('/outputs', [ParticipantController::class, 'storeOutput']);
     Route::get('/certificates', [ParticipantController::class, 'certificates'])->name('certificates');
     Route::get('/certificates/{certificate}/print', [ParticipantController::class, 'printCertificate'])->name('certificates.print');
+    Route::get('/certificates/{certificate}/download-pdf', [ParticipantController::class, 'downloadCertificatePdf'])->name('certificates.download');
     Route::get('/final-report', [ParticipantController::class, 'finalReport'])->name('final-report');
     Route::post('/final-report', [ParticipantController::class, 'storeOutput']);
     Route::get('/evaluation', [ParticipantController::class, 'evaluation'])->name('evaluation');
@@ -142,6 +143,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/lowongan/open-all', [AdminController::class, 'openAllLowongan'])->name('lowongan.open-all');
     Route::post('/lowongan/period-all', [AdminController::class, 'updateAllLowonganPeriod'])->name('lowongan.period-all');
     Route::get('/mentors', [AdminController::class, 'mentors'])->name('mentors');
+    Route::post('/mentors/{mentor}/certificate-signature', [AdminController::class, 'updateMentorCertificateSignature'])->name('mentors.certificate-signature');
     Route::get('/participants', [AdminController::class, 'participants'])->name('participants');
     Route::get('/programs', [AdminController::class, 'programs'])->name('programs');
     Route::post('/programs/{program}/complete', [AdminController::class, 'completeProgram'])->name('programs.complete');
@@ -170,4 +172,5 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::put('/department-hero/slides/{heroSlide}', [AdminController::class, 'updateDepartmentHeroSlide'])->name('department-hero.slides.update');
     Route::delete('/department-hero/slides/{heroSlide}', [AdminController::class, 'destroyDepartmentHeroSlide'])->name('department-hero.slides.destroy');
     Route::get('/settings', [AdminController::class, 'settings'])->name('settings');
+    Route::put('/settings/certificate-signatory', [AdminController::class, 'updateCertificateSignatory'])->name('settings.certificate-signatory');
 });

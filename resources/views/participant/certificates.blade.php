@@ -48,10 +48,16 @@
                         </p>
                     @endif
                 </div>
-                <a href="{{ route('participant.certificates.print', $certificate) }}" target="_blank" rel="noopener" class="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-dark">
-                    Lihat / Cetak
-                    <span class="material-symbols-outlined text-[18px]">open_in_new</span>
-                </a>
+                <div class="flex flex-wrap gap-2">
+                    <a href="{{ route('participant.certificates.print', $certificate) }}" target="_blank" rel="noopener" class="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-dark">
+                        Lihat / Cetak
+                        <span class="material-symbols-outlined text-[18px]">open_in_new</span>
+                    </a>
+                    <a href="{{ route('participant.certificates.download', $certificate) }}" class="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-primary px-4 py-2.5 text-sm font-semibold text-primary-dark transition hover:bg-bg">
+                        Unduh PDF
+                        <span class="material-symbols-outlined text-[18px]">download</span>
+                    </a>
+                </div>
             </div>
         </article>
     @empty

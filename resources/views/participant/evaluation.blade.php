@@ -124,10 +124,16 @@
                                     <p class="mt-1 text-lg font-semibold">{{ $topCertificate->number }}</p>
                                     <p class="mt-1 text-xs text-muted">Terbit {{ $topCertificate->issued_at?->format('d M Y') ?? '—' }}</p>
                                 </div>
-                                <a href="{{ route('participant.certificates.print', $topCertificate) }}" target="_blank" rel="noopener" class="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-dark">
-                                    Lihat / Cetak
-                                    <span class="material-symbols-outlined text-[18px]">open_in_new</span>
-                                </a>
+                                <div class="flex flex-wrap gap-2">
+                                    <a href="{{ route('participant.certificates.print', $topCertificate) }}" target="_blank" rel="noopener" class="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-dark">
+                                        Lihat / Cetak
+                                        <span class="material-symbols-outlined text-[18px]">open_in_new</span>
+                                    </a>
+                                    <a href="{{ route('participant.certificates.download', $topCertificate) }}" class="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-primary px-4 py-2.5 text-sm font-semibold text-primary-dark transition hover:bg-bg">
+                                        Unduh PDF
+                                        <span class="material-symbols-outlined text-[18px]">download</span>
+                                    </a>
+                                </div>
                             </div>
                         @else
                             <p class="mt-2 text-sm text-muted">Nilai sudah terbuka. Sertifikat muncul di sini setelah mentor mengesahkan penerbitan.</p>

@@ -5,6 +5,8 @@
     'required' => false,
     'disabled' => false,
     'value' => null,
+    'uploadName' => null,
+    'retryLabel' => null,
 ])
 
 @php
@@ -19,6 +21,7 @@
         dataUrl: @js($value ?: ''),
         required: {{ $required ? 'true' : 'false' }},
         disabled: {{ $disabled ? 'true' : 'false' }},
+        uploadName: @js($uploadName),
         ratio: 1,
         init() {
             if (this.disabled) return;
@@ -66,6 +69,7 @@
         },
         start(event) {
             if (this.disabled) return;
+            if (this.uploadName && this.$refs.fileInput) this.$refs.fileInput.value = '';
             this.ensureSized();
             this.drawing = true;
             try { this.$refs.canvas.setPointerCapture(event.pointerId); } catch (e) {}
@@ -92,6 +96,7 @@
         },
         clear() {
             if (this.disabled) return;
+            if (this.$refs.fileInput) this.$refs.fileInput.value = '';
             this.ensureSized();
             const canvas = this.$refs.canvas;
             const ctx = canvas.getContext('2d');
@@ -109,8 +114,8 @@
                 event.target.value = '';
                 return;
             }
-            if (file.size > 800000) {
-                alert('Ukuran gambar maksimal 800 KB.');
+            if (file.size > 1048576) {
+                alert('Ukuran gambar maksimal 1 MB.');
                 event.target.value = '';
                 return;
             }
@@ -123,7 +128,7 @@
                 this.syncInput();
             };
             reader.readAsDataURL(file);
-            event.target.value = '';
+            if (! this.uploadName) event.target.value = '';
         },
         paintImage(src) {
             if (! this.$refs.canvas || ! src) return;
@@ -161,11 +166,16 @@
             <div class="flex flex-wrap gap-2">
                 <label class="cursor-pointer rounded-lg border border-line bg-white px-3 py-1.5 text-xs font-semibold text-muted transition hover:text-ink">
                     Unggah gambar
-                    <input type="file" accept="image/png,image/jpeg,image/jpg,image/webp" class="hidden" @change="upload($event)">
+                    <input x-ref="fileInput" type="file" accept="image/png,image/jpeg,image/jpg,image/webp" class="hidden" @if($uploadName) name="{{ $uploadName }}" @endif @change="upload($event)">
                 </label>
                 <button type="button" @click="clear()" class="rounded-lg border border-line bg-white px-3 py-1.5 text-xs font-semibold text-muted transition hover:text-ink">
                     Hapus
                 </button>
+                @if($retryLabel)
+                    <button type="button" @click="clear()" class="rounded-lg border border-line bg-white px-3 py-1.5 text-xs font-semibold text-muted transition hover:text-ink">
+                        {{ $retryLabel }}
+                    </button>
+                @endif
             </div>
         @endunless
     </div>

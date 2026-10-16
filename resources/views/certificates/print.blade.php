@@ -243,6 +243,12 @@
     $department = $program->department;
     $businessUnit = $program->businessUnit;
     $issuedDate = $certificate->issued_at ?? now();
+    $snapshot = $certificate->snapshot ?? [];
+    $signatory = $certificate->signatory_snapshot ?? [];
+    $participantName = $snapshot['participant_name'] ?? $participant->user?->name ?? 'Nama Dosen';
+    $departmentName = $snapshot['department_name'] ?? $department?->name ?? 'DEPARTEMEN';
+    $businessUnitName = $snapshot['business_unit_name'] ?? $businessUnit?->name ?? 'UNIT BISNIS';
+    $mentorName = $snapshot['mentor_name'] ?? $mentor?->user?->name ?? 'Nama Mentor';
     
     // Path ke gambar template sertifikat
     // Simpan gambar sertifikat di: public/images/certificates/template.png
@@ -268,12 +274,12 @@
     <div class="certificate-overlay">
         <!-- Nomor Sertifikat -->
         <div class="cert-number">
-            NO. {{ $certificate->number }}
+            {{ $certificate->number }}
         </div>
         
         <!-- Nama Dosen dengan Pinyon Script -->
         <div class="cert-name">
-            {{ $participant->user->name }}
+            {{ $participantName }}
         </div>
         
         <!-- Garis bawah nama -->
@@ -286,7 +292,7 @@
         
         <!-- Teks Partisipasi Detail (Bold) -->
         <div class="cert-participation-detail">
-            Peserta Magang Dosen Profesional di ({{ $department?->name ?? 'DEPARTEMEN' }}) pada ({{ $businessUnit?->name ?? 'UNIT BISNIS' }})
+            Peserta Magang Dosen Profesional di ({{ $departmentName }}) pada ({{ $businessUnitName }})
         </div>
         
         <!-- Tanggal dan Lokasi -->
@@ -296,25 +302,28 @@
         
         <!-- Label Mentor (Kiri) -->
         <div class="cert-mentor-label">
-            ({{ $department?->name ?? 'DEPARTEMEN' }}) Mentor<br>({{ $businessUnit?->name ?? 'UNIT BISNIS' }})
+            ({{ $departmentName }}) Mentor<br>({{ $businessUnitName }})
         </div>
         
         <!-- Tanda Tangan Mentor (Kiri) -->
         <div class="cert-signature-mentor">
-            @if($certificate->mentor_signature)
-                <img src="{{ $certificate->mentor_signature }}" alt="Tanda tangan mentor">
+            @if($signatureSource)
+                <img src="{{ $signatureSource }}" alt="Tanda tangan mentor">
             @endif
-            <div class="name">({{ $mentor?->user?->name ?? 'Nama Mentor' }})</div>
+            <div class="name">({{ $mentorName }})</div>
         </div>
         
         <!-- Label CoE Manager (Kanan) -->
         <div class="cert-coe-label">
-            Center of Excellence Manager<br>PT Tiga Serangkai Inti Corpora
+            {{ $signatory['title'] ?? 'Center of Excellence Manager' }}<br>{{ $signatory['organization'] ?? 'PT Tiga Serangkai Inti Corpora' }}
         </div>
         
         <!-- Nama CoE Manager (Kanan) -->
         <div class="cert-coe-name">
-            <div class="name">Erfan Zaenuddin</div>
+            @if($signatorySignatureSource)
+                <img src="{{ $signatorySignatureSource }}" alt="Tanda tangan pejabat penandatangan" style="max-height: 52px; max-width: 180px; object-fit: contain;">
+            @endif
+            <div class="name">{{ $signatory['name'] ?? 'Erfan Zaenuddin' }}</div>
         </div>
     </div>
 </div>

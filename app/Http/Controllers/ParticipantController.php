@@ -21,12 +21,15 @@ use App\Notifications\ImersiAlert;
 use App\Services\AgreementLetterService;
 use App\Services\ApplicationApprovalService;
 use App\Services\AvatarStorageService;
+use App\Services\CertificatePdfRenderer;
+use App\Services\CertificateSignatureStorage;
 use App\Support\Status;
 use App\Support\StudyPrograms;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -873,22 +876,39 @@ class ParticipantController extends Controller
             ->values();
     }
 
-    public function printCertificate(Request $request, Certificate $certificate)
+    public function printCertificate(Request $request, Certificate $certificate, CertificateSignatureStorage $signatureStorage)
     {
         $certificate->load(['program.businessUnit', 'program.department', 'program.mentor.user', 'program.participant.user', 'program.evaluations']);
 
-        abort_unless(
-            (int) $certificate->program?->participant_id === (int) $request->user()->participant?->id
-            && $certificate->isIssued()
-            && $this->participantCanViewCertificate(
-                $certificate->program,
-                (int) $request->user()->id,
-                $this->currentProgram($request)?->id,
-            ),
-            403
-        );
+        Gate::authorize('view', $certificate);
 
-        return view('certificates.print', compact('certificate'));
+        return view('sertifikat.template', $this->certificateViewData($certificate, $signatureStorage));
+    }
+
+    public function downloadCertificatePdf(
+        Request $request,
+        Certificate $certificate,
+        CertificateSignatureStorage $signatureStorage,
+        CertificatePdfRenderer $pdfRenderer,
+    ) {
+        $certificate->load(['program.businessUnit', 'program.department', 'program.mentor.user', 'program.participant.user', 'program.evaluations']);
+        Gate::authorize('view', $certificate);
+
+        $pdf = $pdfRenderer->render(view('sertifikat.template', $this->certificateViewData($certificate, $signatureStorage))->render());
+
+        return response($pdf, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="sertifikat-'.$certificate->global_sequence.'.pdf"',
+        ]);
+    }
+
+    private function certificateViewData(Certificate $certificate, CertificateSignatureStorage $signatureStorage): array
+    {
+        return [
+            'certificate' => $certificate,
+            'signatureSource' => $signatureStorage->toDataUri($certificate->mentor_signature_path ?? $certificate->mentor_signature),
+            'signatorySignatureSource' => $signatureStorage->toDataUri(data_get($certificate->signatory_snapshot, 'signature_path')),
+        ];
     }
 
     /**

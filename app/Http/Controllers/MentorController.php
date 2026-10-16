@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreCertificateSignatureRequest;
 use App\Models\Agreement;
 use App\Models\Application;
 use App\Models\BusinessUnit;
@@ -20,6 +21,8 @@ use App\Notifications\ImersiAlert;
 use App\Services\AgreementLetterService;
 use App\Services\ApplicationApprovalService;
 use App\Services\AvatarStorageService;
+use App\Services\CertificateIssuer;
+use App\Services\CertificateSignatureStorage;
 use App\Support\Status;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -387,14 +390,16 @@ class MentorController extends Controller
         return back()->with('status', 'Hasil berhasil divalidasi.');
     }
 
-    public function updateCertificateSignature(Request $request)
+    public function updateCertificateSignature(StoreCertificateSignatureRequest $request, CertificateSignatureStorage $signatureStorage)
     {
-        $data = $request->validate([
-            'certificate_signature' => ['required', 'string'],
-        ]);
-
         $mentor = $request->user()->mentor ?? Mentor::create(['user_id' => $request->user()->id]);
-        $mentor->update(['certificate_signature' => $data['certificate_signature']]);
+        $data = $request->validated();
+        $path = $signatureStorage->store(
+            $data['certificate_signature_file'] ?? null,
+            $data['certificate_signature_data'] ?? $data['certificate_signature'] ?? null,
+            $mentor->certificate_signature,
+        );
+        $mentor->update(['certificate_signature' => $path]);
 
         return back()->with('status', 'Tanda tangan sertifikat disimpan.');
     }
@@ -403,7 +408,7 @@ class MentorController extends Controller
      * Pengesahan bersama: nilai raport dianggap final sekaligus
      * menerbitkan sertifikat dalam satu aksi.
      */
-    public function approveReport(Request $request, Program $program)
+    public function approveReport(Request $request, Program $program, CertificateIssuer $certificateIssuer)
     {
         $this->authorizeProgram($request, $program);
 
@@ -418,7 +423,7 @@ class MentorController extends Controller
             return back()->withErrors(['certificate_signature' => 'Simpan tanda tangan sertifikat terlebih dahulu pada bagian tanda tangan di halaman ini.']);
         }
 
-        $certificate = $this->issueCertificateFor($mentor, $program);
+        $certificate = $certificateIssuer->issue($program, $mentor);
 
         $program->participant->user->notify(new ImersiAlert(
             'Sertifikat tersedia',
@@ -429,78 +434,17 @@ class MentorController extends Controller
         return back()->with('status', 'Raport disahkan dan sertifikat diterbitkan untuk '.$program->participant->user->name.'. Nomor: '.$certificate->number);
     }
 
-    /**
-     * Terbitkan (atau kembalikan) sertifikat program. Idempoten:
-     * nomor yang sudah ada dipertahankan.
-     */
-    private function issueCertificateFor(Mentor $mentor, Program $program): Certificate
-    {
-        // Cek apakah sudah ada sertifikat dengan nomor
-        $existing = Certificate::query()->where('program_id', $program->id)->first();
-
-        if ($existing && $existing->number && $existing->global_sequence) {
-            // Sertifikat sudah pernah diterbitkan, update signature saja
-            $existing->update([
-                'status' => 'issued',
-                'mentor_signature' => $mentor->certificate_signature,
-                'issued_at' => $existing->issued_at ?? now(),
-            ]);
-
-            return $existing;
-        }
-
-        // Load relasi yang dibutuhkan
-        $program->load('application');
-
-        // Ambil data untuk nomor sertifikat
-        $batch = $program->application?->batch ?? 1; // Default batch 1 jika tidak ada
-        $issuedAt = now();
-        $month = (int) $issuedAt->format('n');
-        $year = (int) $issuedAt->format('Y');
-
-        // Generate nomor urut global dengan database locking
-        return \DB::transaction(function () use ($program, $mentor, $batch, $month, $year, $issuedAt, $existing) {
-            $globalSequence = Certificate::getNextGlobalSequence();
-            $certificateNumber = Certificate::generateCertificateNumber($globalSequence, $batch, $month, $year);
-
-            if ($existing) {
-                // Update existing record
-                $existing->update([
-                    'status' => 'issued',
-                    'mentor_signature' => $mentor->certificate_signature,
-                    'issued_at' => $issuedAt,
-                    'number' => $certificateNumber,
-                    'global_sequence' => $globalSequence,
-                    'batch' => $batch,
-                    'issued_month' => $month,
-                    'issued_year' => $year,
-                ]);
-
-                return $existing;
-            }
-
-            // Create new certificate
-            return Certificate::create([
-                'program_id' => $program->id,
-                'status' => 'issued',
-                'mentor_signature' => $mentor->certificate_signature,
-                'issued_at' => $issuedAt,
-                'number' => $certificateNumber,
-                'global_sequence' => $globalSequence,
-                'batch' => $batch,
-                'issued_month' => $month,
-                'issued_year' => $year,
-            ]);
-        });
-    }
-
-    public function printCertificate(Request $request, Certificate $certificate)
+    public function printCertificate(Request $request, Certificate $certificate, CertificateSignatureStorage $signatureStorage)
     {
         abort_unless((int) $certificate->program?->mentor_id === (int) $request->user()->mentor?->id, 403);
 
         $certificate->load(['program.businessUnit', 'program.department', 'program.mentor.user', 'program.participant.user']);
 
-        return view('certificates.print', compact('certificate'));
+        return view('sertifikat.template', [
+            'certificate' => $certificate,
+            'signatureSource' => $signatureStorage->toDataUri($certificate->mentor_signature_path ?? $certificate->mentor_signature),
+            'signatorySignatureSource' => $signatureStorage->toDataUri(data_get($certificate->signatory_snapshot, 'signature_path')),
+        ]);
     }
 
     public function evaluations(Request $request)
@@ -554,7 +498,7 @@ class MentorController extends Controller
      * Detail penilaian per peserta: input nilai + tanda tangan,
      * lalu sahkan sekaligus terbitkan sertifikat di bagian bawah.
      */
-    public function showPenilaian(Request $request, Program $program)
+    public function showPenilaian(Request $request, Program $program, CertificateSignatureStorage $signatureStorage)
     {
         $this->authorizeProgram($request, $program);
 
@@ -570,6 +514,7 @@ class MentorController extends Controller
             'average' => $evaluation?->reportAverage(),
             'certificate' => $program->certificate,
             'hasSignature' => filled($mentor?->certificate_signature),
+            'signatureSource' => $signatureStorage->toDataUri($mentor?->certificate_signature),
             'mentor' => $mentor,
             'groups' => $evaluation?->grade_groups ?: Evaluation::defaultGradeGroups(),
             'comments' => $evaluation?->comments ?? '',

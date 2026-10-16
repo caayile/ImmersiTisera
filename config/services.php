@@ -56,4 +56,9 @@ return [
         'redirect' => google_oauth_env('GOOGLE_REDIRECT_URI') ?: google_oauth_env('GOOGLE_REDIRECT_URL') ?: '/auth/google/callback',
     ],
 
+    'browsershot' => [
+        'node_binary' => env('BROWSERSHOT_NODE_BINARY', 'node'),
+        'chrome_path' => env('BROWSERSHOT_CHROME_PATH'),
+    ],
+
 ];

@@ -5,14 +5,18 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 
-#[Fillable(['program_id', 'number', 'global_sequence', 'batch', 'issued_month', 'issued_year', 'status', 'mentor_signature', 'issued_at'])]
+#[Fillable(['program_id', 'number', 'global_sequence', 'batch', 'issued_month', 'issued_year', 'status', 'mentor_signature', 'mentor_signature_path', 'snapshot', 'signatory_snapshot', 'issued_at'])]
 class Certificate extends Model
 {
     protected function casts(): array
     {
         return [
             'issued_at' => 'datetime',
+            'snapshot' => 'array',
+            'signatory_snapshot' => 'array',
         ];
     }
 
@@ -34,17 +38,21 @@ class Certificate extends Model
      * - X: bulan penerbitan dalam angka Romawi (I-XII)
      * - 2026: tahun penerbitan
      */
-    public static function generateCertificateNumber(int $globalSequence, int $batch, int $month, int $year): string
+    public static function generateCertificateNumber(int $globalSequence, string|int $batch, int $month, int $year): string
     {
         $romanMonths = [
             1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV', 5 => 'V', 6 => 'VI',
             7 => 'VII', 8 => 'VIII', 9 => 'IX', 10 => 'X', 11 => 'XI', 12 => 'XII',
         ];
 
-        $sequenceFormatted = str_pad((string) $globalSequence, 3, '0', STR_PAD_LEFT);
-        $romanMonth = $romanMonths[$month] ?? 'I';
+        if (! isset($romanMonths[$month])) {
+            throw new InvalidArgumentException('Bulan penerbitan harus berada di antara 1 dan 12.');
+        }
 
-        return sprintf('%s/MD.TSU/B%d/%s/%d', $sequenceFormatted, $batch, $romanMonth, $year);
+        $sequenceFormatted = str_pad((string) $globalSequence, 3, '0', STR_PAD_LEFT);
+        $romanMonth = $romanMonths[$month];
+
+        return sprintf('NO. %s/MD.TSU/B%s/%s/%d', $sequenceFormatted, $batch, $romanMonth, $year);
     }
 
     /**
@@ -53,13 +61,23 @@ class Certificate extends Model
      */
     public static function getNextGlobalSequence(): int
     {
-        return \DB::transaction(function () {
-            // Lock dan ambil sequence tertinggi yang ada
-            $maxSequence = self::query()
+        return DB::transaction(function (): int {
+            $counter = DB::table('certificate_sequences')
+                ->where('id', 1)
                 ->lockForUpdate()
-                ->max('global_sequence');
+                ->first();
 
-            return ($maxSequence ?? 0) + 1;
+            if (! $counter) {
+                throw new \RuntimeException('Counter nomor sertifikat belum tersedia.');
+            }
+
+            $nextSequence = (int) $counter->last_sequence + 1;
+
+            DB::table('certificate_sequences')
+                ->where('id', 1)
+                ->update(['last_sequence' => $nextSequence, 'updated_at' => now()]);
+
+            return $nextSequence;
         });
     }
 }

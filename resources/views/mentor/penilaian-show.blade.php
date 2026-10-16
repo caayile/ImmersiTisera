@@ -139,23 +139,25 @@
 <article id="tanda-tangan" class="mt-6 rounded-2xl border border-line bg-white p-5">
     <h3 class="text-lg font-bold">Tanda tangan sertifikat</h3>
     <p class="mt-1 text-sm text-muted">Tanda tangan ini dipakai otomatis saat menerbitkan sertifikat {{ $participantUser?->name ?: 'peserta ini' }}.</p>
-    @if(filled($mentor?->certificate_signature))
+    @if($signatureSource)
         <div class="mt-4 rounded-xl border border-line bg-bg/50 p-4">
             <p class="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Tanda tangan tersimpan</p>
-            <img src="{{ $mentor->certificate_signature }}" alt="Tanda tangan mentor" class="mt-3 h-20 object-contain">
+            <img src="{{ $signatureSource }}" alt="Tanda tangan mentor" class="mt-3 h-20 object-contain">
         </div>
     @endif
     <form method="POST" action="{{ route('mentor.certificates.signature') }}" class="mt-4 space-y-3">
         @csrf
         <x-signature-pad
-            name="certificate_signature"
+            name="certificate_signature_data"
+            uploadName="certificate_signature_file"
+            retryLabel="Ulangi"
             label="Gambar ulang tanda tangan"
-            hint="Wajib diisi untuk menyimpan atau memperbarui tanda tangan."
+            hint="Coret atau unggah PNG, JPG, dan WebP maksimal 1 MB."
             :required="true"
-            :value="old('certificate_signature')"
+            :value="old('certificate_signature_data', old('certificate_signature'))"
         />
-        @if ($errors->has('certificate_signature'))
-            <p class="text-sm text-red-600">{{ $errors->first('certificate_signature') }}</p>
+        @if ($errors->has('certificate_signature_file') || $errors->has('certificate_signature_data') || $errors->has('certificate_signature'))
+            <p class="text-sm text-red-600">{{ $errors->first('certificate_signature_file') ?: $errors->first('certificate_signature_data') ?: $errors->first('certificate_signature') }}</p>
         @endif
         <button class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white">{{ filled($mentor?->certificate_signature) ? 'Perbarui tanda tangan' : 'Simpan tanda tangan' }}</button>
     </form>
