@@ -10,7 +10,7 @@
         body { 
             margin: 0; 
             font-family: 'Arial', 'Helvetica', sans-serif; 
-            background: #e8f4f0; 
+            background: #e8f2ef; 
             padding: 2rem 1rem;
         }
         
@@ -18,200 +18,191 @@
             display: flex; 
             justify-content: flex-end; 
             gap: .75rem; 
-            max-width: 1100px; 
+            max-width: 1200px; 
             margin: 0 auto 1.5rem; 
         }
         .toolbar a, .toolbar button { 
             border: none; 
             border-radius: 10px; 
             padding: .85rem 1.5rem; 
-            background: linear-gradient(135deg, #1e7e5f 0%, #2a9d72 100%); 
+            background: #0d5442; 
             color: #fff; 
             text-decoration: none; 
             cursor: pointer; 
             font-weight: 600;
             font-size: 14px;
-            box-shadow: 0 4px 12px rgba(30, 126, 95, 0.3);
+            box-shadow: 0 4px 12px rgba(13, 84, 66, 0.3);
             transition: all 0.3s ease;
         }
         .toolbar a:hover, .toolbar button:hover {
-            background: linear-gradient(135deg, #165a45 0%, #1e7e5f 100%);
-            box-shadow: 0 6px 16px rgba(30, 126, 95, 0.4);
+            background: #0a4033;
+            box-shadow: 0 6px 16px rgba(13, 84, 66, 0.4);
             transform: translateY(-2px);
         }
         
-        .certificate-container {
-            max-width: 1100px;
+        /* Container untuk sertifikat dengan aspek rasio landscape */
+        .certificate-wrapper {
+            max-width: 1200px;
             margin: 0 auto;
-            background: linear-gradient(135deg, #d4ebe3 0%, #e8f4f0 50%, #d4ebe3 100%);
-            border: 15px solid;
-            border-image: linear-gradient(135deg, #2a9d72, #1e7e5f, #2a9d72) 1;
-            box-shadow: 
-                0 0 0 3px #fff,
-                0 0 0 6px #2a9d72,
-                0 20px 60px rgba(0, 0, 0, 0.15);
+            background: white;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
             position: relative;
-            overflow: hidden;
         }
         
-        /* Decorative corners */
-        .certificate-container::before,
-        .certificate-container::after {
-            content: '';
+        /* Background image sertifikat */
+        .certificate-background {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        
+        /* Overlay container untuk teks dinamis */
+        .certificate-overlay {
             position: absolute;
-            width: 200px;
-            height: 200px;
-            background: radial-gradient(circle, rgba(42, 157, 114, 0.15) 0%, transparent 70%);
-        }
-        .certificate-container::before {
-            top: -100px;
-            left: -100px;
-        }
-        .certificate-container::after {
-            bottom: -100px;
-            right: -100px;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
         }
         
-        .certificate-inner {
-            background: linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.98) 100%);
-            padding: 3.5rem 4rem;
-            position: relative;
-        }
-        
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 2rem;
-            margin-bottom: 2.5rem;
-            padding-bottom: 1.5rem;
-            border-bottom: 2px solid #2a9d72;
-        }
-        
-        .header-logos {
-            display: flex;
-            align-items: center;
-            gap: 2rem;
-        }
-        
-        .header-logos img {
-            height: 60px;
-            width: auto;
-            object-fit: contain;
-        }
-        
-        .title-section {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-        
-        .certificate-title {
-            font-size: 64px;
-            font-weight: 700;
-            color: #0d5442;
-            letter-spacing: 4px;
-            margin-bottom: 0.5rem;
-            text-transform: uppercase;
-        }
-        
-        .certificate-number {
-            font-size: 16px;
+        /* Nomor sertifikat - posisi di bawah judul SERTIFIKAT */
+        .cert-number {
+            position: absolute;
+            top: 28.5%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 17px;
             font-weight: 600;
-            color: #2a9d72;
-            letter-spacing: 1px;
-        }
-        
-        .content-section {
+            color: #0d5442;
+            letter-spacing: 0.8px;
             text-align: center;
-            margin: 2.5rem 0;
-            line-height: 1.8;
         }
         
-        .given-to {
-            font-size: 16px;
-            color: #333;
-            margin-bottom: 1rem;
-        }
-        
-        .participant-name {
+        /* Nama dosen dengan Pinyon Script - posisi tengah */
+        .cert-name {
+            position: absolute;
+            top: 42%;
+            left: 50%;
+            transform: translateX(-50%);
             font-family: 'Pinyon Script', cursive;
-            font-size: 56px;
+            font-size: 64px;
             color: #0d5442;
             font-weight: 400;
-            margin: 1.5rem 0;
-            text-decoration: underline;
-            text-decoration-color: #2a9d72;
-            text-decoration-thickness: 2px;
-            text-underline-offset: 8px;
+            text-align: center;
+            white-space: nowrap;
+            line-height: 1;
         }
         
-        .participation-text {
-            font-size: 15px;
-            color: #333;
-            margin: 1.5rem 0;
-            line-height: 1.9;
+        /* Garis bawah nama */
+        .cert-name-underline {
+            position: absolute;
+            top: 51%;
+            left: 26.5%;
+            width: 47%;
+            height: 2px;
+            background: #0d5442;
         }
         
-        .participation-text strong {
-            color: #0d5442;
+        /* Teks "Atas partisipasinya sebagai" */
+        .cert-participation-intro {
+            position: absolute;
+            top: 54.5%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 16px;
+            color: #1a1a1a;
+            text-align: center;
+        }
+        
+        /* Teks partisipasi bold - departemen dan unit bisnis */
+        .cert-participation-detail {
+            position: absolute;
+            top: 58.5%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 16px;
             font-weight: 700;
-        }
-        
-        .date-location {
-            text-align: center;
-            font-size: 15px;
-            font-weight: 600;
             color: #0d5442;
-            margin: 2rem 0 3rem;
+            text-align: center;
+            max-width: 85%;
+            line-height: 1.5;
         }
         
-        .signatures {
-            display: flex;
-            justify-content: space-between;
-            gap: 3rem;
-            margin-top: 3rem;
-            padding-top: 2rem;
-            border-top: 1px solid #d4ebe3;
-        }
-        
-        .signature-block {
-            flex: 1;
+        /* Tanggal dan lokasi */
+        .cert-date {
+            position: absolute;
+            top: 67%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 16px;
+            font-weight: 700;
+            color: #0d5442;
             text-align: center;
         }
         
-        .signature-label {
-            font-size: 14px;
-            color: #555;
-            margin-bottom: 0.75rem;
+        /* Label mentor - kiri bawah */
+        .cert-mentor-label {
+            position: absolute;
+            bottom: 24%;
+            left: 27%;
+            transform: translateX(-50%);
+            text-align: center;
+            font-size: 13px;
+            font-weight: 700;
+            color: #1a1a1a;
+            line-height: 1.4;
         }
         
-        .signature-image {
-            height: 80px;
-            margin: 0.5rem auto 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        /* Tanda tangan mentor - kiri bawah */
+        .cert-signature-mentor {
+            position: absolute;
+            bottom: 12%;
+            left: 27%;
+            transform: translateX(-50%);
+            text-align: center;
+            width: 180px;
         }
         
-        .signature-image img {
-            max-height: 80px;
-            max-width: 200px;
+        .cert-signature-mentor img {
+            max-height: 70px;
+            max-width: 180px;
             object-fit: contain;
+            margin-bottom: 0.5rem;
         }
         
-        .signature-name {
+        .cert-signature-mentor .name {
             font-size: 15px;
             font-weight: 700;
             color: #0d5442;
-            text-decoration: underline;
-            text-decoration-color: #2a9d72;
             margin-bottom: 0.25rem;
         }
         
-        .signature-title {
+        /* Label CoE Manager - kanan bawah */
+        .cert-coe-label {
+            position: absolute;
+            bottom: 24%;
+            right: 19%;
+            transform: translateX(50%);
+            text-align: center;
             font-size: 13px;
-            color: #666;
-            line-height: 1.5;
+            font-weight: 700;
+            color: #1a1a1a;
+            line-height: 1.4;
+        }
+        
+        /* Nama CoE Manager - kanan bawah */
+        .cert-coe-name {
+            position: absolute;
+            bottom: 9.5%;
+            right: 19%;
+            transform: translateX(50%);
+            text-align: center;
+        }
+        
+        .cert-coe-name .name {
+            font-size: 15px;
+            font-weight: 700;
+            color: #0d5442;
         }
         
         @media print {
@@ -222,7 +213,7 @@
             .toolbar { 
                 display: none !important; 
             }
-            .certificate-container { 
+            .certificate-wrapper { 
                 box-shadow: none; 
                 margin: 0; 
                 max-width: none; 
@@ -234,25 +225,12 @@
         }
         
         @media (max-width: 768px) {
-            .certificate-inner {
-                padding: 2rem 1.5rem;
-            }
-            .certificate-title {
+            .cert-name {
                 font-size: 42px;
             }
-            .participant-name {
-                font-size: 38px;
-            }
-            .header-logos {
-                flex-direction: column;
-                gap: 1rem;
-            }
-            .header-logos img {
-                height: 40px;
-            }
-            .signatures {
-                flex-direction: column;
-                gap: 2rem;
+            .cert-participation-detail {
+                font-size: 14px;
+                max-width: 90%;
             }
         }
     </style>
@@ -265,6 +243,10 @@
     $department = $program->department;
     $businessUnit = $program->businessUnit;
     $issuedDate = $certificate->issued_at ?? now();
+    
+    // Path ke gambar template sertifikat
+    // Simpan gambar sertifikat di: public/images/certificates/template.png
+    $templatePath = asset('images/certificates/template.png');
 @endphp
 
 <div class="toolbar">
@@ -272,66 +254,67 @@
     <button type="button" onclick="window.print()">🖨️ Cetak / Simpan PDF</button>
 </div>
 
-<div class="certificate-container">
-    <div class="certificate-inner">
-        <!-- Header dengan Logo -->
-        <div class="header">
-            <div class="header-logos">
-                <img src="{{ asset('images/logo-tsu.png') }}" alt="TSU Logo">
-                <img src="{{ asset('images/logo-full.png') }}" alt="Tiga Serangkai Logo">
-            </div>
-            <div class="header-logos">
-                <img src="{{ asset('images/logo-mark.png') }}" alt="Magang Dosen TSU Logo">
-            </div>
+<div class="certificate-wrapper">
+    <!-- Background image template sertifikat -->
+    <img src="{{ $templatePath }}" alt="Template Sertifikat" class="certificate-background" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+    
+    <!-- Fallback jika gambar belum ada -->
+    <div style="display: none; padding: 4rem; background: linear-gradient(135deg, #d4ebe3 0%, #e8f4f0 50%, #d4ebe3 100%); text-align: center; color: #0d5442;">
+        <h2 style="margin-bottom: 1rem;">⚠️ Template Sertifikat Belum Tersedia</h2>
+        <p>Simpan gambar template sertifikat di: <code style="background: #fff; padding: 0.25rem 0.5rem; border-radius: 4px;">public/images/certificates/template.png</code></p>
+    </div>
+    
+    <!-- Overlay dengan data dinamis -->
+    <div class="certificate-overlay">
+        <!-- Nomor Sertifikat -->
+        <div class="cert-number">
+            NO. {{ $certificate->number }}
         </div>
         
-        <!-- Title -->
-        <div class="title-section">
-            <h1 class="certificate-title">SERTIFIKAT</h1>
-            <p class="certificate-number">NO. {{ $certificate->number }}</p>
+        <!-- Nama Dosen dengan Pinyon Script -->
+        <div class="cert-name">
+            {{ $participant->user->name }}
         </div>
         
-        <!-- Content -->
-        <div class="content-section">
-            <p class="given-to">Diberikan kepada:</p>
-            
-            <h2 class="participant-name">{{ $participant->user->name }}</h2>
-            
-            <p class="participation-text">
-                Atas partisipasinya sebagai<br>
-                <strong>Peserta Magang Dosen Profesional di {{ $department?->name ?? 'Department' }} pada {{ $businessUnit?->name ?? 'Business Unit' }}</strong>
-            </p>
+        <!-- Garis bawah nama -->
+        <div class="cert-name-underline"></div>
+        
+        <!-- Teks "Atas partisipasinya sebagai" -->
+        <div class="cert-participation-intro">
+            Atas partisipasinya sebagai
         </div>
         
-        <!-- Date and Location -->
-        <div class="date-location">
+        <!-- Teks Partisipasi Detail (Bold) -->
+        <div class="cert-participation-detail">
+            Peserta Magang Dosen Profesional di ({{ $department?->name ?? 'DEPARTEMEN' }}) pada ({{ $businessUnit?->name ?? 'UNIT BISNIS' }})
+        </div>
+        
+        <!-- Tanggal dan Lokasi -->
+        <div class="cert-date">
             Surakarta, {{ $issuedDate->locale('id')->isoFormat('D MMMM Y') }}
         </div>
         
-        <!-- Signatures -->
-        <div class="signatures">
-            <!-- Mentor Signature (Left) -->
-            <div class="signature-block">
-                <p class="signature-label">({{ $department?->name ?? 'DEPARTEMEN' }}) Mentor<br>({{ $businessUnit?->name ?? 'UNIT BISNIS' }})</p>
-                <div class="signature-image">
-                    @if($certificate->mentor_signature)
-                        <img src="{{ $certificate->mentor_signature }}" alt="Tanda tangan mentor">
-                    @endif
-                </div>
-                <p class="signature-name">{{ $mentor?->user?->name ?? 'Nama Mentor' }}</p>
-                <p class="signature-title"></p>
-            </div>
-            
-            <!-- CoE Manager Signature (Right) -->
-            <div class="signature-block">
-                <p class="signature-label">Center of Excellence Manager<br>PT Tiga Serangkai Inti Corpora</p>
-                <div class="signature-image">
-                    <!-- Placeholder untuk tanda tangan CoE Manager -->
-                    <!-- Bisa ditambahkan dari database jika diperlukan -->
-                </div>
-                <p class="signature-name">Erfan Zaenuddin</p>
-                <p class="signature-title"></p>
-            </div>
+        <!-- Label Mentor (Kiri) -->
+        <div class="cert-mentor-label">
+            ({{ $department?->name ?? 'DEPARTEMEN' }}) Mentor<br>({{ $businessUnit?->name ?? 'UNIT BISNIS' }})
+        </div>
+        
+        <!-- Tanda Tangan Mentor (Kiri) -->
+        <div class="cert-signature-mentor">
+            @if($certificate->mentor_signature)
+                <img src="{{ $certificate->mentor_signature }}" alt="Tanda tangan mentor">
+            @endif
+            <div class="name">({{ $mentor?->user?->name ?? 'Nama Mentor' }})</div>
+        </div>
+        
+        <!-- Label CoE Manager (Kanan) -->
+        <div class="cert-coe-label">
+            Center of Excellence Manager<br>PT Tiga Serangkai Inti Corpora
+        </div>
+        
+        <!-- Nama CoE Manager (Kanan) -->
+        <div class="cert-coe-name">
+            <div class="name">Erfan Zaenuddin</div>
         </div>
     </div>
 </div>
