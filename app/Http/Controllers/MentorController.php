@@ -435,17 +435,63 @@ class MentorController extends Controller
      */
     private function issueCertificateFor(Mentor $mentor, Program $program): Certificate
     {
-        $existingNumber = Certificate::query()->where('program_id', $program->id)->value('number');
+        // Cek apakah sudah ada sertifikat dengan nomor
+        $existing = Certificate::query()->where('program_id', $program->id)->first();
 
-        return Certificate::query()->updateOrCreate(
-            ['program_id' => $program->id],
-            [
+        if ($existing && $existing->number && $existing->global_sequence) {
+            // Sertifikat sudah pernah diterbitkan, update signature saja
+            $existing->update([
                 'status' => 'issued',
                 'mentor_signature' => $mentor->certificate_signature,
-                'issued_at' => now(),
-                'number' => $existingNumber ?: sprintf('CERT/%s/%03d', now()->format('Y'), $program->id),
-            ]
-        );
+                'issued_at' => $existing->issued_at ?? now(),
+            ]);
+
+            return $existing;
+        }
+
+        // Load relasi yang dibutuhkan
+        $program->load('application');
+
+        // Ambil data untuk nomor sertifikat
+        $batch = $program->application?->batch ?? 1; // Default batch 1 jika tidak ada
+        $issuedAt = now();
+        $month = (int) $issuedAt->format('n');
+        $year = (int) $issuedAt->format('Y');
+
+        // Generate nomor urut global dengan database locking
+        return \DB::transaction(function () use ($program, $mentor, $batch, $month, $year, $issuedAt, $existing) {
+            $globalSequence = Certificate::getNextGlobalSequence();
+            $certificateNumber = Certificate::generateCertificateNumber($globalSequence, $batch, $month, $year);
+
+            if ($existing) {
+                // Update existing record
+                $existing->update([
+                    'status' => 'issued',
+                    'mentor_signature' => $mentor->certificate_signature,
+                    'issued_at' => $issuedAt,
+                    'number' => $certificateNumber,
+                    'global_sequence' => $globalSequence,
+                    'batch' => $batch,
+                    'issued_month' => $month,
+                    'issued_year' => $year,
+                ]);
+
+                return $existing;
+            }
+
+            // Create new certificate
+            return Certificate::create([
+                'program_id' => $program->id,
+                'status' => 'issued',
+                'mentor_signature' => $mentor->certificate_signature,
+                'issued_at' => $issuedAt,
+                'number' => $certificateNumber,
+                'global_sequence' => $globalSequence,
+                'batch' => $batch,
+                'issued_month' => $month,
+                'issued_year' => $year,
+            ]);
+        });
     }
 
     public function printCertificate(Request $request, Certificate $certificate)

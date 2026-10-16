@@ -98,7 +98,7 @@ class CertificateTest extends TestCase
         $this->actingAs($participant)
             ->get(route('participant.certificates.print', $certificate))
             ->assertOk()
-            ->assertSee('Sertifikat Penyelesaian')
+            ->assertSee('SERTIFIKAT')
             ->assertSee($participant->name);
     }
 
