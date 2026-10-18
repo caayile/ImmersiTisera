@@ -115,21 +115,22 @@ class CertificateTest extends TestCase
             ->assertSee('Sertifikat penyelesaian')
             ->assertSee('Lihat / Cetak');
 
+        $this->actingAs($mentor)
+            ->get(route('mentor.certificates.print', $certificate))
+            ->assertOk()
+            ->assertSee('images/certificate/logo-header.png')
+            ->assertSee('images/certificate/ttd-cap-erfan.png');
+
         $this->actingAs($participant)
             ->get(route('participant.certificates.print', $certificate))
             ->assertOk()
             ->assertSee('SERTIFIKAT')
-            ->assertSee('images/sertifikat/Logo-TS-1024x720.png')
-            ->assertSee('images/sertifikat/LOGO-TSU-Web-Icon-1024x501.png')
-            ->assertSee('images/sertifikat/magang-dosen-tsu.png')
-            ->assertSee('images/sertifikat/image.png')
-            ->assertSee('Times New Roman')
-            ->assertSee('images/sertifikat/ttd-erfan-cap-transparan.png')
-            ->assertSee('.signatory-signature img.signatory-seal { transform: scale(1.5); transform-origin: center bottom; }')
-            ->assertSee('di '.$program->department->name.' pada '.$program->businessUnit->name)
-            ->assertDontSee('('.$program->department->name.')')
-            ->assertDontSee('('.$program->businessUnit->name.')')
-            ->assertDontSee('('.$program->mentor->user->name.')')
+            ->assertSee('images/certificate/logo-header.png')
+            ->assertSee('images/certificate/bg-sertifikat.jpg')
+            ->assertSee('images/certificate/ttd-cap-erfan.png')
+            ->assertSee('fonts/pinyon-script.css')
+            ->assertSee('Atas partisipasinya sebagai')
+            ->assertSee('di '.strtoupper($program->department->name).' pada '.strtoupper($program->businessUnit->name))
             ->assertSee($participant->name);
 
         $chromePath = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';

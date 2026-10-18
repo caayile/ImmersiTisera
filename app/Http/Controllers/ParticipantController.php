@@ -882,7 +882,7 @@ class ParticipantController extends Controller
 
         Gate::authorize('view', $certificate);
 
-        return view('sertifikat.template', $this->certificateViewData($certificate, $signatureStorage));
+        return view('certificate.show', $this->certificateViewData($certificate, $signatureStorage));
     }
 
     public function downloadCertificatePdf(
@@ -894,7 +894,7 @@ class ParticipantController extends Controller
         $certificate->load(['program.businessUnit', 'program.department', 'program.mentor.user', 'program.participant.user', 'program.evaluations']);
         Gate::authorize('view', $certificate);
 
-        $pdf = $pdfRenderer->render(view('sertifikat.template', $this->certificateViewData($certificate, $signatureStorage))->render());
+        $pdf = $pdfRenderer->render(view('certificate.show', $this->certificateViewData($certificate, $signatureStorage))->render());
 
         return response($pdf, 200, [
             'Content-Type' => 'application/pdf',

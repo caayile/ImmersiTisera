@@ -440,7 +440,7 @@ class MentorController extends Controller
 
         $certificate->load(['program.businessUnit', 'program.department', 'program.mentor.user', 'program.participant.user']);
 
-        return view('sertifikat.template', [
+        return view('certificate.show', [
             'certificate' => $certificate,
             'signatureSource' => $signatureStorage->toDataUri($certificate->mentor_signature_path ?? $certificate->mentor_signature),
             'signatorySignatureSource' => $signatureStorage->toDataUri(data_get($certificate->signatory_snapshot, 'signature_path')),
