@@ -390,7 +390,7 @@ class MentorController extends Controller
         return back()->with('status', 'Hasil berhasil divalidasi.');
     }
 
-    public function updateCertificateSignature(StoreCertificateSignatureRequest $request, CertificateSignatureStorage $signatureStorage)
+    public function updateCertificateSignature(StoreCertificateSignatureRequest $request, CertificateSignatureStorage $signatureStorage, CertificateIssuer $certificateIssuer)
     {
         $mentor = $request->user()->mentor ?? Mentor::create(['user_id' => $request->user()->id]);
         $data = $request->validated();
@@ -400,6 +400,8 @@ class MentorController extends Controller
             $mentor->certificate_signature,
         );
         $mentor->update(['certificate_signature' => $path]);
+        $signatureStorage->replacePlaceholderSnapshots($mentor->id, $path);
+        $certificateIssuer->issueReadyForMentor($mentor);
 
         return back()->with('status', 'Tanda tangan sertifikat disimpan.');
     }
@@ -442,7 +444,10 @@ class MentorController extends Controller
 
         return view('certificate.show', [
             'certificate' => $certificate,
-            'signatureSource' => $signatureStorage->toDataUri($certificate->mentor_signature_path ?? $certificate->mentor_signature),
+            'signatureSource' => $signatureStorage->forCertificate(
+                $certificate->mentor_signature_path ?: $certificate->mentor_signature,
+                $certificate->program?->mentor?->certificate_signature,
+            ),
             'signatorySignatureSource' => $signatureStorage->toDataUri(data_get($certificate->signatory_snapshot, 'signature_path')),
         ]);
     }
@@ -521,7 +526,7 @@ class MentorController extends Controller
         ]);
     }
 
-    public function storeEvaluation(Request $request, Program $program)
+    public function storeEvaluation(Request $request, Program $program, CertificateIssuer $certificateIssuer)
     {
         $this->authorizeProgram($request, $program);
 
@@ -558,6 +563,8 @@ class MentorController extends Controller
                     'comments' => $data['comments'] ?? null,
                 ]
             );
+
+            $certificateIssuer->issueIfReady($program);
 
             return back()->with('status', 'Nilai raport tersimpan.');
         }

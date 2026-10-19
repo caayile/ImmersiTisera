@@ -37,6 +37,7 @@ class ParticipantSidebarProfileTest extends TestCase
             ->assertSee('Sistem Informasi')
             ->assertSee('Fakultas Teknik')
             ->assertSee('https://example.com/avatar.jpg', false)
+            ->assertSee('Profil Lengkap')
             ->assertSee('Prodi')
             ->assertSee('Fakultas')
             ->assertDontSee('Universitas')

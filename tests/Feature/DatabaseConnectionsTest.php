@@ -40,6 +40,7 @@ class DatabaseConnectionsTest extends TestCase
         $this->assertSame('require', $config['direct']['sslmode']);
         $this->assertSame('imersi', $config['database']);
         $this->assertSame('imersi', $config['username']);
+        $this->assertTrue($config['options'][\PDO::ATTR_EMULATE_PREPARES]);
     }
 
     public function test_json_columns_round_trip_on_the_default_connection(): void

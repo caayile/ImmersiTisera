@@ -47,6 +47,35 @@
         body {
             font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
         }
+
+        .password-field {
+            position: relative;
+        }
+
+        .password-toggle {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: auto;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.25rem;
+            border: 0;
+            background: transparent;
+            color: #9ca3af;
+        }
+
+        .password-toggle:hover {
+            color: #1a1a1a;
+        }
+
+        .password-field input::-ms-reveal,
+        .password-field input::-ms-clear {
+            display: none;
+        }
     </style>
 </head>
 
@@ -182,6 +211,7 @@
                         </svg>
                         <span>Masuk dengan Google</span>
                     </a>
+                    <p class="mb-3 text-center text-[11px] text-gray-500">Google hanya untuk email yang sudah didaftarkan.</p>
 
                     <div class="relative flex py-1 items-center mb-2.5">
                         <div class="flex-grow border-t border-gray-200"></div>
@@ -214,15 +244,15 @@
                                     class="text-[11px] font-bold text-forest hover:text-mint-dark transition">Lupa
                                     sandi?</a>
                             </div>
-                            <div class="relative">
+                            <div class="password-field">
                                 <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
                                     <i class="fa-solid fa-lock text-xs"></i>
                                 </span>
                                 <input type="password" id="login-password" name="password" required
                                     placeholder="••••••••"
-                                    class="w-full pl-8 pr-8 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm font-medium text-charcoal placeholder-gray-400 focus:bg-white focus:outline-none focus:border-forest focus:ring-2 focus:ring-forest/10 transition">
+                                    class="w-full pl-8 pr-10 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm font-medium text-charcoal placeholder-gray-400 focus:bg-white focus:outline-none focus:border-forest focus:ring-2 focus:ring-forest/10 transition">
                                 <button type="button" onclick="togglePassword('login-password', this)"
-                                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-charcoal">
+                                    class="password-toggle" aria-label="Tampilkan kata sandi">
                                     <i class="fa-regular fa-eye text-xs"></i>
                                 </button>
                             </div>
@@ -252,26 +282,7 @@
                         <h2 class="text-lg sm:text-xl font-extrabold text-charcoal tracking-tight" id="reg-title">
                             {{ $defaultRole === 'mentor' ? 'Pendaftaran Mentor Industri' : 'Pendaftaran Dosen TSU' }}
                         </h2>
-                        <p class="text-[11px] text-gray-500 mt-0.5">Isi formulir berikut untuk membuat akun kolaborasi
-                            baru.</p>
-                    </div>
-
-                    <!-- Google Sign-Up Button -->
-                    <a href="{{ route('login.google', ['role' => $defaultRole]) }}"
-                        class="google-oauth-link w-full py-2 px-3 bg-white hover:bg-gray-50 border border-gray-200 hover:border-gray-300 text-charcoal font-semibold rounded-xl text-xs sm:text-sm transition duration-200 flex items-center justify-center space-x-2.5 shadow-sm mb-2 group cursor-pointer">
-                        <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24">
-                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-                        </svg>
-                        <span>Daftar dengan Google</span>
-                    </a>
-
-                    <div class="relative flex py-0.5 items-center mb-1.5">
-                        <div class="flex-grow border-t border-gray-200"></div>
-                        <span class="flex-shrink mx-2 text-[10px] uppercase font-bold text-gray-400 tracking-wider">atau isi formulir</span>
-                        <div class="flex-grow border-t border-gray-200"></div>
+                        <p class="text-[11px] text-gray-500 mt-0.5">Isi formulir berikut. Kode OTP dikirim ke email dan berlaku 10 menit. Google baru bisa dipakai setelah email ini terdaftar.</p>
                     </div>
 
                     <form id="form-register" method="POST"
@@ -340,24 +351,24 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             <div>
                                 <label class="block text-[11px] font-bold text-charcoal mb-1">Kata Sandi</label>
-                                <div class="relative">
+                                <div class="password-field">
                                     <input type="password" id="reg-password" name="password" required
                                         placeholder="Minimal 6 karakter"
-                                        class="w-full pl-2.5 pr-7 py-1.5 sm:py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-charcoal placeholder-gray-400 focus:bg-white focus:outline-none focus:border-forest focus:ring-2 focus:ring-forest/10 transition">
+                                        class="w-full pl-2.5 pr-9 py-1.5 sm:py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-charcoal placeholder-gray-400 focus:bg-white focus:outline-none focus:border-forest focus:ring-2 focus:ring-forest/10 transition">
                                     <button type="button" onclick="togglePassword('reg-password', this)"
-                                        class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-gray-400 hover:text-charcoal">
+                                        class="password-toggle" aria-label="Tampilkan kata sandi">
                                         <i class="fa-regular fa-eye text-[11px]"></i>
                                     </button>
                                 </div>
                             </div>
                             <div>
                                 <label class="block text-[11px] font-bold text-charcoal mb-1">Konfirmasi Sandi</label>
-                                <div class="relative">
+                                <div class="password-field">
                                     <input type="password" id="reg-password-confirm" name="password_confirmation"
                                         required placeholder="Ulangi sandi"
-                                        class="w-full pl-2.5 pr-7 py-1.5 sm:py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-charcoal placeholder-gray-400 focus:bg-white focus:outline-none focus:border-forest focus:ring-2 focus:ring-forest/10 transition">
+                                        class="w-full pl-2.5 pr-9 py-1.5 sm:py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-charcoal placeholder-gray-400 focus:bg-white focus:outline-none focus:border-forest focus:ring-2 focus:ring-forest/10 transition">
                                     <button type="button" onclick="togglePassword('reg-password-confirm', this)"
-                                        class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-gray-400 hover:text-charcoal">
+                                        class="password-toggle" aria-label="Tampilkan konfirmasi kata sandi">
                                         <i class="fa-regular fa-eye text-[11px]"></i>
                                     </button>
                                 </div>

@@ -36,7 +36,7 @@
         .sign-name { top: 91.69%; font-family: Arial, sans-serif; font-size: 1.42cqw; font-weight: 700; }
         .left { left: 19.95%; }
         .right { left: 50.67%; }
-        .mentor-signature { position: absolute; top: 78.72%; left: 25.82%; width: 17.8%; height: 12.59%; object-fit: contain; }
+        .mentor-signature { position: absolute; top: 81.6%; left: 24.5%; width: 20.2%; height: 9.4%; object-fit: contain; object-position: center bottom; }
         .signatory-signature { position: absolute; top: 78.34%; left: 56.99%; width: 20.21%; max-height: 16%; object-fit: contain; }
         .fit { white-space: nowrap; }
         @media (max-width: 640px) {

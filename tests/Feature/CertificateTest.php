@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Certificate;
 use App\Models\CertificateSignatory;
+use App\Models\Evaluation;
 use App\Models\EvaluationQuestion;
 use App\Models\Participant;
 use App\Models\Program;
@@ -384,5 +385,149 @@ class CertificateTest extends TestCase
         $this->actingAs($mentor)
             ->get(route('mentor.certificates'))
             ->assertRedirect(route('mentor.penilaian'));
+    }
+
+    public function test_certificate_print_shows_the_saved_mentor_signature_instead_of_the_placeholder(): void
+    {
+        $this->seed();
+        Storage::fake('local');
+
+        $mentor = User::where('email', 'mentor@imersi.id')->firstOrFail();
+        $participant = User::where('email', 'dosen@imersi.id')->firstOrFail();
+        $program = Program::where('participant_id', $participant->participant->id)->firstOrFail();
+        $placeholder = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+        $image = imagecreatetruecolor(40, 16);
+        $ink = imagecolorallocate($image, 18, 38, 29);
+        imagefilledrectangle($image, 4, 6, 36, 10, $ink);
+        ob_start();
+        imagepng($image);
+        $binary = ob_get_clean();
+        imagedestroy($image);
+        $signature = 'data:image/png;base64,'.base64_encode($binary);
+
+        $mentor->mentor->update(['certificate_signature' => $signature]);
+        $certificate = Certificate::create([
+            'program_id' => $program->id,
+            'number' => 'CERT/2026/001',
+            'status' => 'issued',
+            'mentor_signature' => $placeholder,
+            'issued_at' => now(),
+            'snapshot' => [
+                'participant_name' => $participant->name,
+                'department_name' => $program->department->name,
+                'business_unit_name' => $program->businessUnit->name,
+                'mentor_name' => $mentor->name,
+            ],
+            'signatory_snapshot' => [
+                'name' => 'Erfan Zaenuddin',
+                'title' => 'Center of Excellence Manager',
+                'organization' => 'PT Tiga Serangkai Inti Corpora',
+            ],
+        ]);
+        Evaluation::updateOrCreate(
+            ['program_id' => $program->id, 'evaluator_id' => $mentor->id],
+            ['grade_groups' => [['name' => 'Project', 'weight' => 100, 'aspects' => [['label' => 'Hasil', 'score' => 90]]]]],
+        );
+        Evaluation::updateOrCreate(
+            ['program_id' => $program->id, 'evaluator_id' => $participant->id],
+            ['criteria' => [['label' => 'Program', 'score' => 5]]],
+        );
+
+        $this->actingAs($participant)
+            ->get(route('participant.certificates.print', $certificate))
+            ->assertOk()
+            ->assertSee('alt="Tanda tangan mentor"', false)
+            ->assertDontSee($placeholder, false)
+            ->assertDontSee($signature, false);
+
+        $this->actingAs($mentor)
+            ->post(route('mentor.certificates.signature'), [
+                'certificate_signature' => $signature,
+            ])
+            ->assertRedirect();
+
+        $certificate->refresh();
+        $this->assertNotNull($certificate->mentor_signature_path);
+        Storage::disk('local')->assertExists($certificate->mentor_signature_path);
+
+        $this->actingAs($participant)
+            ->get(route('participant.certificates.print', $certificate))
+            ->assertOk()
+            ->assertSee('alt="Tanda tangan mentor"', false)
+            ->assertDontSee($placeholder, false)
+            ->assertDontSee('data:image/png;base64,'.base64_encode($binary), false);
+    }
+
+    public function test_named_batch_is_numbered_as_batch_one(): void
+    {
+        $this->seed();
+        $this->travelTo('2026-10-19 09:00:00');
+
+        $mentor = User::where('email', 'mentor@imersi.id')->firstOrFail()->mentor;
+        $program = Program::where('mentor_id', $mentor->id)->firstOrFail();
+        $program->application?->update(['batch' => 'Batch Desember 2026']);
+        $mentor->update([
+            'certificate_signature' => 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+        ]);
+
+        $certificate = app(CertificateIssuer::class)->issue($program, $mentor);
+
+        $this->assertSame('NO. 001/MD.TSU/B1/X/2026', $certificate->number);
+    }
+
+    public function test_visible_grades_issue_a_certificate_when_the_mentor_signature_exists(): void
+    {
+        $this->seed();
+
+        $mentor = User::where('email', 'mentor@imersi.id')->firstOrFail();
+        $participant = User::where('email', 'dosen@imersi.id')->firstOrFail();
+        $program = Program::where('participant_id', $participant->participant->id)->firstOrFail();
+        $mentor->mentor->update([
+            'certificate_signature' => 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+        ]);
+        Evaluation::create([
+            'program_id' => $program->id,
+            'evaluator_id' => $mentor->id,
+            'grade_groups' => [['name' => 'Project', 'weight' => 100, 'aspects' => [['label' => 'Hasil', 'score' => 90]]]],
+        ]);
+        Evaluation::create([
+            'program_id' => $program->id,
+            'evaluator_id' => $participant->id,
+            'criteria' => [['label' => 'Program', 'score' => 5]],
+        ]);
+
+        $response = $this->actingAs($participant)->get(route('participant.evaluation'));
+        $certificate = Certificate::query()->where('program_id', $program->id)->where('status', 'issued')->first();
+
+        $this->assertNotNull($certificate);
+        $response->assertOk()
+            ->assertSee('Sertifikat tersedia')
+            ->assertSee($certificate->number);
+    }
+
+    public function test_visible_grades_without_a_mentor_signature_do_not_issue_a_certificate(): void
+    {
+        $this->seed();
+
+        $mentor = User::where('email', 'mentor@imersi.id')->firstOrFail();
+        $participant = User::where('email', 'dosen@imersi.id')->firstOrFail();
+        $program = Program::where('participant_id', $participant->participant->id)->firstOrFail();
+        Evaluation::create([
+            'program_id' => $program->id,
+            'evaluator_id' => $mentor->id,
+            'grade_groups' => [['name' => 'Project', 'weight' => 100, 'aspects' => [['label' => 'Hasil', 'score' => 90]]]],
+        ]);
+        Evaluation::create([
+            'program_id' => $program->id,
+            'evaluator_id' => $participant->id,
+            'criteria' => [['label' => 'Program', 'score' => 5]],
+        ]);
+
+        $this->actingAs($participant)
+            ->get(route('participant.evaluation'))
+            ->assertOk()
+            ->assertSee('Sertifikat muncul di sini setelah mentor mengesahkan penerbitan');
+
+        $this->assertDatabaseMissing('certificates', ['program_id' => $program->id]);
     }
 }

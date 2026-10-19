@@ -4,6 +4,10 @@
 @section('content')
 @php
     $targetEmail = old('email', request('email', session('email', '')));
+    $formAction = $formAction ?? route('password.verify-otp.submit');
+    $resendAction = $resendAction ?? route('password.email');
+    $changeEmailUrl = $changeEmailUrl ?? route('password.request');
+    $otpHeading = $otpHeading ?? 'Masukkan Kode OTP';
 @endphp
 <div>
     <!-- Icon Header -->
@@ -13,7 +17,7 @@
 
     <!-- Title & Description -->
     <div class="text-center mb-5">
-        <h2 class="text-xl font-extrabold text-charcoal tracking-tight">Masukkan Kode OTP</h2>
+        <h2 class="text-xl font-extrabold text-charcoal tracking-tight">{{ $otpHeading }}</h2>
         <p class="text-xs text-gray-500 mt-1.5 leading-relaxed">
             Kode 6 digit telah dikirim ke email:<br>
             <span class="font-bold text-charcoal break-all">{{ $targetEmail ?: 'alamat email Anda' }}</span>
@@ -37,7 +41,7 @@
     @endif
 
     <!-- Form -->
-    <form method="POST" action="{{ route('password.verify-otp.submit') }}" class="space-y-4">
+    <form method="POST" action="{{ $formAction }}" class="space-y-4">
         @csrf
         <!-- Email Input (read-only or hidden if email present, or input if missing) -->
         @if ($targetEmail)
@@ -77,7 +81,7 @@
 
     <!-- Resend Form -->
     @if ($targetEmail)
-        <form method="POST" action="{{ route('password.email') }}" class="mt-3 text-center">
+        <form method="POST" action="{{ $resendAction }}" class="mt-3 text-center">
             @csrf
             <input type="hidden" name="email" value="{{ $targetEmail }}">
             <button type="submit" class="text-xs text-gray-500 hover:text-forest font-semibold transition inline-flex items-center space-x-1.5 py-1 px-2 rounded-lg hover:bg-gray-100">
@@ -89,7 +93,7 @@
 
     <!-- Footer Links -->
     <div class="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between text-xs">
-        <a href="{{ route('password.request') }}" class="font-semibold text-gray-500 hover:text-charcoal transition flex items-center space-x-1">
+        <a href="{{ $changeEmailUrl }}" class="font-semibold text-gray-500 hover:text-charcoal transition flex items-center space-x-1">
             <i class="fa-regular fa-pen-to-square text-[10px]"></i>
             <span>Ganti Email</span>
         </a>

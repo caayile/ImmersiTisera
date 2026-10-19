@@ -12,6 +12,42 @@ use RuntimeException;
 
 class CertificateIssuer
 {
+    public function issueIfReady(Program $program): ?Certificate
+    {
+        $program->unsetRelation('evaluations');
+        $program->unsetRelation('certificate');
+        $program->loadMissing(['mentor', 'certificate', 'evaluations', 'participant']);
+
+        if ($program->certificate?->isIssued() && $program->certificate->global_sequence !== null) {
+            return $program->certificate;
+        }
+
+        $mentor = $program->mentor;
+        $participantUserId = (int) $program->participant?->user_id;
+        $hasReport = $program->evaluations->contains(
+            fn ($evaluation): bool => (int) $evaluation->evaluator_id !== $participantUserId && $evaluation->hasReport()
+        );
+
+        if (! $mentor || ! filled($mentor->certificate_signature) || ! $hasReport) {
+            return null;
+        }
+
+        try {
+            return $this->issue($program, $mentor);
+        } catch (RuntimeException $exception) {
+            report($exception);
+
+            return null;
+        }
+    }
+
+    public function issueReadyForMentor(Mentor $mentor): void
+    {
+        $mentor->programs()->get()->each(function (Program $program): void {
+            $this->issueIfReady($program);
+        });
+    }
+
     public function issue(Program $program, Mentor $mentor): Certificate
     {
         return DB::transaction(function () use ($program, $mentor): Certificate {
@@ -47,13 +83,14 @@ class CertificateIssuer
             }
 
             $issuedAt = now();
-            $batch = (string) ($lockedProgram->application?->batch
+            $batchLabel = (string) ($lockedProgram->application?->batch
                 ?? $lockedProgram->businessUnit?->batch
                 ?? '1');
+            $batchCode = ctype_digit($batchLabel) ? $batchLabel : '1';
             $sequence = Certificate::getNextGlobalSequence();
             $number = Certificate::generateCertificateNumber(
                 $sequence,
-                $batch,
+                $batchCode,
                 (int) $issuedAt->format('n'),
                 (int) $issuedAt->format('Y'),
             );
@@ -64,7 +101,7 @@ class CertificateIssuer
             $attributes = [
                 'number' => $number,
                 'global_sequence' => $sequence,
-                'batch' => ctype_digit($batch) ? (int) $batch : null,
+                'batch' => (int) $batchCode,
                 'issued_month' => (int) $issuedAt->format('n'),
                 'issued_year' => (int) $issuedAt->format('Y'),
                 'status' => 'issued',
@@ -76,7 +113,7 @@ class CertificateIssuer
                     'department_name' => $lockedProgram->department?->name,
                     'business_unit_name' => $lockedProgram->businessUnit?->name,
                     'mentor_name' => $lockedProgram->mentor?->user?->name,
-                    'batch' => $batch,
+                    'batch' => $batchLabel,
                 ],
                 'signatory_snapshot' => [
                     'name' => $signatory->name,

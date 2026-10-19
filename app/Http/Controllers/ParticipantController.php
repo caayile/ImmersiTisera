@@ -21,6 +21,7 @@ use App\Notifications\ImersiAlert;
 use App\Services\AgreementLetterService;
 use App\Services\ApplicationApprovalService;
 use App\Services\AvatarStorageService;
+use App\Services\CertificateIssuer;
 use App\Services\CertificatePdfRenderer;
 use App\Services\CertificateSignatureStorage;
 use App\Support\Status;
@@ -687,9 +688,12 @@ class ParticipantController extends Controller
         }
     }
 
-    public function evaluation(Request $request)
+    public function evaluation(Request $request, CertificateIssuer $certificateIssuer)
     {
         $program = $this->currentProgram($request);
+        if ($program) {
+            $certificateIssuer->issueIfReady($program);
+        }
         $mine = $program?->evaluations()->where('evaluator_id', $request->user()->id)->first();
 
         $sections = EvaluationSection::with(['questions' => fn ($query) => $query->where('is_active', true)->orderBy('position')])
@@ -766,7 +770,7 @@ class ParticipantController extends Controller
         return view('participant.evaluation-report', compact('program', 'mine', 'report', 'ownCriteria', 'scaleMax'));
     }
 
-    public function printReport(Request $request, ?Program $program = null)
+    public function printReport(Request $request, CertificateSignatureStorage $signatureStorage, ?Program $program = null)
     {
         [$target, $report] = $this->resolveReportForPrint($request, $program);
 
@@ -774,10 +778,11 @@ class ParticipantController extends Controller
             'program' => $target,
             'report' => $report,
             'pdf' => false,
+            'mentorSignature' => $signatureStorage->forDisplay($target->mentor?->certificate_signature),
         ]);
     }
 
-    public function downloadReportPdf(Request $request, ?Program $program = null)
+    public function downloadReportPdf(Request $request, CertificateSignatureStorage $signatureStorage, ?Program $program = null)
     {
         [$target, $report] = $this->resolveReportForPrint($request, $program);
 
@@ -787,6 +792,7 @@ class ParticipantController extends Controller
             'program' => $target,
             'report' => $report,
             'pdf' => true,
+            'mentorSignature' => $signatureStorage->forDisplay($target->mentor?->certificate_signature),
         ])->setPaper('a4', 'portrait')->download($filename);
     }
 
@@ -906,7 +912,10 @@ class ParticipantController extends Controller
     {
         return [
             'certificate' => $certificate,
-            'signatureSource' => $signatureStorage->toDataUri($certificate->mentor_signature_path ?? $certificate->mentor_signature),
+            'signatureSource' => $signatureStorage->forCertificate(
+                $certificate->mentor_signature_path ?: $certificate->mentor_signature,
+                $certificate->program?->mentor?->certificate_signature,
+            ),
             'signatorySignatureSource' => $signatureStorage->toDataUri(data_get($certificate->signatory_snapshot, 'signature_path')),
         ];
     }

@@ -76,9 +76,10 @@ if (! function_exists('neon_database_config')) {
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => env('NEON_SSLMODE', 'require'),
-            'options' => filter_var(env('DB_PERSISTENT', false), FILTER_VALIDATE_BOOL)
-                ? [PDO::ATTR_PERSISTENT => true]
-                : [],
+            'options' => array_filter([
+                PDO::ATTR_PERSISTENT => filter_var(env('DB_PERSISTENT', false), FILTER_VALIDATE_BOOL) ? true : null,
+                PDO::ATTR_EMULATE_PREPARES => $pooled === true ? true : null,
+            ]),
             'pooled' => $pooled,
             'direct' => array_filter([
                 'url' => $directUrl,

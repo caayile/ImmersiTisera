@@ -3,15 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Mail\PasswordResetOtpMail;
+use App\Mail\RegistrationOtpMail;
 use App\Models\Department;
 use App\Models\Mentor;
 use App\Models\Participant;
 use App\Models\PasswordResetOtp;
+use App\Models\RegistrationOtp;
 use App\Models\User;
+use App\Notifications\ImersiAlert;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
@@ -121,41 +126,31 @@ class AuthController extends Controller
             return redirect()->route('login')->withErrors(['email' => 'Akun Google Anda tidak menyediakan alamat email yang valid.']);
         }
 
+        $googleEmail = Str::lower(trim((string) $googleUser->getEmail()));
         $user = User::query()
-            ->where('google_id', $googleUser->getId())
-            ->orWhere('email', $googleUser->getEmail())
+            ->where(function ($query) use ($googleUser, $googleEmail): void {
+                $query->where('google_id', $googleUser->getId())
+                    ->orWhereRaw('LOWER(email) = ?', [$googleEmail]);
+            })
             ->first();
 
-        if ($user) {
-            $user->update([
-                'google_id' => $googleUser->getId(),
-                'avatar' => $googleUser->getAvatar() ?? $user->avatar,
-            ]);
-        } else {
+        if (! $user) {
             $role = $this->googleOauthRole(session('oauth_role'));
 
-            $user = User::create([
-                'name' => $googleUser->getName() ?: ($googleUser->getNickname() ?: 'Pengguna Google'),
-                'email' => $googleUser->getEmail(),
-                'google_id' => $googleUser->getId(),
-                'avatar' => $googleUser->getAvatar(),
-                'role' => $role,
-                'status' => 'active',
-                'verification_status' => 'verified',
-            ]);
+            if ($pending = $this->pendingRegistrationRedirect($googleEmail, $role)) {
+                return $pending;
+            }
 
-            $this->ensureGoogleProfile($user, $role);
+            return $this->unregisteredGoogleRedirect($role);
         }
 
-        if (! $user->isActive()) {
-            return redirect()->route('login')->withErrors(['email' => 'Akun dinonaktifkan.']);
-        }
-
-        session()->forget('oauth_role');
-        Auth::login($user, true);
-        $request->session()->regenerate();
-
-        return redirect()->route($user->homeRoute());
+        return $this->loginRegisteredGoogleUser(
+            $request,
+            $user,
+            $this->googleOauthRole(session('oauth_role')),
+            (string) $googleUser->getId(),
+            $googleUser->getAvatar(),
+        );
     }
 
     public function registerUser(Request $request)
@@ -303,6 +298,11 @@ class AuthController extends Controller
         }
 
         $credentials = $validator->validated();
+        $email = Str::lower(trim($credentials['email']));
+
+        if ($pending = $this->pendingRegistrationRedirect($email, $type === 'mentor' ? 'mentor' : 'participant')) {
+            return $pending;
+        }
 
         if (! Auth::attempt($credentials, $request->boolean('remember'))) {
             return back()->withErrors(['email' => 'Email atau kata sandi tidak sesuai.'])->onlyInput('email')->with('auth_side', $side);
@@ -332,9 +332,117 @@ class AuthController extends Controller
         return redirect()->intended(route($user->homeRoute()));
     }
 
+    public function showRegisterOtp()
+    {
+        return view('auth.verify-otp', [
+            'formAction' => route('register.verify-otp.submit'),
+            'resendAction' => route('register.verify-otp.resend'),
+            'changeEmailUrl' => route('register'),
+            'otpHeading' => 'Verifikasi Email Pendaftaran',
+        ]);
+    }
+
+    public function verifyRegisterOtp(Request $request)
+    {
+        $request->validate([
+            'email' => ['required', 'email'],
+            'otp_digits' => ['required', 'array', 'size:6'],
+            'otp_digits.*' => ['required', 'digits:1'],
+        ]);
+
+        $email = Str::lower(trim($request->string('email')->toString()));
+        $otp = implode('', $request->input('otp_digits'));
+        $pending = RegistrationOtp::query()
+            ->where('email', $email)
+            ->where('otp', $otp)
+            ->where('expires_at', '>', now())
+            ->first();
+
+        if (! $pending) {
+            return back()->withErrors(['otp' => 'Kode OTP tidak valid atau sudah kedaluwarsa.'])->withInput();
+        }
+
+        if (User::query()->whereRaw('LOWER(email) = ?', [$email])->exists()) {
+            $pending->delete();
+
+            return redirect()->route('login')->withErrors(['email' => 'Email ini sudah terdaftar. Silakan masuk.']);
+        }
+
+        $user = DB::transaction(function () use ($pending): User {
+            $user = User::create([
+                'name' => $pending->name,
+                'email' => $pending->email,
+                'password' => $pending->password,
+                'role' => $pending->role,
+                'phone' => $pending->phone,
+                'status' => 'active',
+                'verification_status' => 'verified',
+            ]);
+
+            if ($pending->role === 'participant') {
+                $institution = trim((string) $pending->institution);
+
+                Participant::create([
+                    'user_id' => $user->id,
+                    'profile_data' => $institution !== '' ? ['institution' => $institution] : null,
+                ]);
+            } else {
+                Mentor::create([
+                    'user_id' => $user->id,
+                    'nik' => $pending->nik,
+                    'department_id' => $pending->department_id,
+                ]);
+            }
+
+            $pending->delete();
+
+            return $user;
+        });
+
+        $this->notifyAdminsOfRegistration($user);
+
+        Auth::login($user);
+        $request->session()->regenerate();
+
+        return redirect()->route($user->homeRoute())->with('status', 'Pendaftaran berhasil. Akun Anda sudah aktif.');
+    }
+
+    public function resendRegisterOtp(Request $request)
+    {
+        $request->validate(['email' => ['required', 'email']]);
+
+        $email = Str::lower(trim($request->string('email')->toString()));
+        $pending = RegistrationOtp::query()->where('email', $email)->first();
+
+        if (! $pending) {
+            return redirect()->route('register')->withErrors([
+                'email' => 'Pendaftaran tidak ditemukan. Silakan daftar ulang.',
+            ]);
+        }
+
+        $otp = $this->makeOtpCode();
+
+        if (! $this->sendRegistrationOtpMail($pending->email, $otp)) {
+            return back()->withErrors([
+                'email' => 'Gagal mengirim email OTP. Silakan coba lagi dalam beberapa saat atau hubungi admin.',
+            ]);
+        }
+
+        $pending->update([
+            'otp' => $otp,
+            'expires_at' => now()->addMinutes(10),
+        ]);
+
+        return redirect()->route('register.verify-otp', ['email' => $pending->email])
+            ->with('status', 'Kode OTP baru telah dikirim. Kode berlaku 10 menit.');
+    }
+
     private function createAccount(Request $request, string $role)
     {
         $side = $role === 'mentor' ? 'mentor' : 'dosen';
+        $request->merge([
+            'email' => Str::lower(trim((string) $request->input('email'))),
+        ]);
         $rules = [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'unique:users,email'],
@@ -354,34 +462,36 @@ class AuthController extends Controller
 
         $data = $validator->validated();
 
-        $user = User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => $data['password'],
-            'role' => $role,
-            'phone' => $data['phone'] ?? null,
-            'status' => 'active',
-            'verification_status' => 'verified',
-        ]);
-
-        if ($role === 'participant') {
-            $institution = trim((string) ($data['institution'] ?? ''));
-
-            Participant::create([
-                'user_id' => $user->id,
-                'profile_data' => $institution !== '' ? ['institution' => $institution] : null,
-            ]);
-        } else {
-            Mentor::create([
-                'user_id' => $user->id,
-                'nik' => $data['nik'] ?? null,
-                'department_id' => $data['department_id'] ?? null,
-            ]);
+        if (User::query()->whereRaw('LOWER(email) = ?', [$data['email']])->exists()) {
+            return back()->withErrors(['email' => 'Email sudah terdaftar.'])->withInput()->with('auth_side', $side);
         }
 
-        Auth::login($user);
+        $otp = $this->makeOtpCode();
+        $pending = RegistrationOtp::updateOrCreate(
+            ['email' => $data['email']],
+            [
+                'name' => $data['name'],
+                'password' => Hash::make($data['password']),
+                'role' => $role,
+                'phone' => $data['phone'] ?? null,
+                'institution' => $role === 'participant' ? trim((string) ($data['institution'] ?? '')) : null,
+                'nik' => $data['nik'] ?? null,
+                'department_id' => $data['department_id'] ?? null,
+                'otp' => $otp,
+                'expires_at' => now()->addMinutes(10),
+            ]
+        );
 
-        return redirect()->route($user->homeRoute());
+        if (! $this->sendRegistrationOtpMail($pending->email, $otp)) {
+            $pending->delete();
+
+            return back()->withErrors([
+                'email' => 'Gagal mengirim email OTP. Silakan coba lagi dalam beberapa saat atau hubungi admin.',
+            ])->withInput()->with('auth_side', $side);
+        }
+
+        return redirect()->route('register.verify-otp', ['email' => $pending->email])
+            ->with('status', 'Kode OTP 6 digit telah dikirim ke email Anda. Kode berlaku 10 menit.');
     }
 
     private function googleOauthIsConfigured(): bool
@@ -430,27 +540,144 @@ class AuthController extends Controller
     private function loginWithDemoGoogleUser(Request $request, string $role): RedirectResponse
     {
         $demoEmail = $role === 'mentor' ? 'mentor.google@imersi.id' : 'dosen.google@imersi.id';
-        $demoName = $role === 'mentor' ? 'Mentor Industri (Google)' : 'Dr. Dosen Akademik (Google)';
+        $user = User::query()->whereRaw('LOWER(email) = ?', [$demoEmail])->first();
 
-        $user = User::firstOrCreate(
-            ['email' => $demoEmail],
-            [
-                'name' => $demoName,
-                'google_id' => 'google-demo-'.$role,
-                'avatar' => 'https://ui-avatars.com/api/?name='.urlencode($demoName).'&background=0D221D&color=73D9B0',
-                'role' => $role,
-                'status' => 'active',
-                'verification_status' => 'verified',
-            ]
+        if (! $user) {
+            if ($pending = $this->pendingRegistrationRedirect($demoEmail, $role)) {
+                return $pending;
+            }
+
+            return $this->unregisteredGoogleRedirect($role);
+        }
+
+        return $this->loginRegisteredGoogleUser(
+            $request,
+            $user,
+            $role,
+            status: 'Berhasil masuk dengan Akun Google ('.$user->name.').',
         );
+    }
 
-        $this->ensureGoogleProfile($user, $role);
+    private function unregisteredGoogleRedirect(string $role): RedirectResponse
+    {
+        session()->forget('oauth_role');
+
+        return redirect()->route('register')->withErrors([
+            'email' => 'Email Google ini belum terdaftar. Daftarkan email tersebut terlebih dahulu, lalu masuk dengan Google.',
+        ])->with('auth_side', $role === 'mentor' ? 'mentor' : 'dosen');
+    }
+
+    private function loginRegisteredGoogleUser(Request $request, User $user, string $role, ?string $googleId = null, ?string $avatar = null, ?string $status = null): RedirectResponse
+    {
+        $side = $role === 'mentor' ? 'mentor' : 'dosen';
+
+        if (! $user->isActive()) {
+            session()->forget('oauth_role');
+
+            return redirect()->route('login')->withErrors(['email' => 'Akun dinonaktifkan.'])->with('auth_side', $side);
+        }
+
+        if ($role === 'mentor' && ! $user->isMentor()) {
+            session()->forget('oauth_role');
+
+            return redirect()->route('login')->withErrors([
+                'email' => 'Akun ini bukan mentor. Peserta dan admin masuk dari kolom Dosen.',
+            ])->with('auth_side', 'mentor');
+        }
+
+        if ($role !== 'mentor' && $user->isMentor()) {
+            session()->forget('oauth_role');
+
+            return redirect()->route('login')->withErrors([
+                'email' => 'Akun mentor. Silakan masuk dari kolom Mentor.',
+            ])->with('auth_side', 'dosen');
+        }
+
+        $updates = [];
+
+        if (filled($googleId)) {
+            $updates['google_id'] = $googleId;
+        }
+
+        if (filled($avatar)) {
+            $updates['avatar'] = $avatar;
+        }
+
+        if ($updates !== []) {
+            $user->update($updates);
+        }
+
+        $this->ensureGoogleProfile($user, $user->role);
 
         session()->forget('oauth_role');
         Auth::login($user, true);
         $request->session()->regenerate();
 
-        return redirect()->route($user->homeRoute())->with('status', 'Berhasil masuk dengan Akun Google ('.$user->name.').');
+        $redirect = redirect()->route($user->homeRoute());
+
+        if ($status !== null) {
+            return $redirect->with('status', $status);
+        }
+
+        return $redirect;
+    }
+
+    private function pendingRegistrationRedirect(string $email, string $role): ?RedirectResponse
+    {
+        $pending = RegistrationOtp::query()->where('email', Str::lower($email))->first();
+
+        if (! $pending) {
+            return null;
+        }
+
+        session()->forget('oauth_role');
+
+        return redirect()->route('register.verify-otp', ['email' => $pending->email])->withErrors([
+            'otp' => 'Selesaikan verifikasi OTP terlebih dahulu. Kode dikirim ke email pendaftaran.',
+        ])->with('auth_side', $role === 'mentor' ? 'mentor' : 'dosen');
+    }
+
+    private function makeOtpCode(): string
+    {
+        return str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+    }
+
+    private function sendRegistrationOtpMail(string $email, string $otp): bool
+    {
+        try {
+            Mail::to($email)->send(new RegistrationOtpMail($otp, $email));
+        } catch (Throwable $exception) {
+            Log::error('Gagal mengirim OTP pendaftaran: '.$exception->getMessage(), [
+                'email' => $email,
+                'exception' => $exception,
+            ]);
+
+            return false;
+        }
+
+        return true;
+    }
+
+    private function notifyAdminsOfRegistration(User $user): void
+    {
+        $title = $user->isMentor() ? 'Mentor baru mendaftar' : 'Dosen baru mendaftar';
+        $message = $user->name.' ('.$user->email.') baru membuat akun.';
+        $url = route('admin.users');
+
+        User::query()
+            ->where('role', 'admin')
+            ->where('status', 'active')
+            ->get()
+            ->each(function (User $admin) use ($title, $message, $url, $user): void {
+                try {
+                    $admin->notify(new ImersiAlert($title, $message, $url));
+                } catch (Throwable $exception) {
+                    Log::error('Gagal mengirim notifikasi pendaftaran ke admin: '.$exception->getMessage(), [
+                        'admin_id' => $admin->id,
+                        'user_id' => $user->id,
+                    ]);
+                }
+            });
     }
 
     private function googleOauthErrorMessage(Throwable $exception): string

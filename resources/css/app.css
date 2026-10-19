@@ -302,7 +302,7 @@ main {
     --ink: #0b2b2d;
     --page: #ffffff;
     --muted: #4b6a6c;
-    --logo-loader-url: url('/images/logo-loader.png');
+    --logo-loader-url: url('../images/logo-loader.png');
 }
 
 @media (prefers-color-scheme: dark) {
@@ -388,7 +388,7 @@ main {
     position: absolute;
     inset: 0;
     display: block;
-    background: var(--logo-loader-url, url('/images/logo-loader.png')) center/100% 100% no-repeat;
+    background: var(--logo-loader-url, url('../images/logo-loader.png')) center/100% 100% no-repeat;
 }
 
 /* Potong logo jadi 4 bagian dari satu gambar */
@@ -1002,41 +1002,6 @@ body {
        .tap-feedback (position:relative) bila class itu ikut menempel. */
     position: absolute;
     will-change: transform, opacity;
-}
-
-/* Lencana sudut menyatu (inverted corner): pil menempel di sudut kartu
-   dengan coakan melengkung di kanan dan bawahnya. */
-.profile-badge {
-    --badge-bg: #e7f6f0;
-    --badge-card: #ffffff;
-    background: var(--badge-bg);
-    border-top-left-radius: 18px;
-    border-bottom-right-radius: 14px;
-}
-
-.profile-badge::before,
-.profile-badge::after {
-    content: "";
-    position: absolute;
-    width: 14px;
-    height: 14px;
-    pointer-events: none;
-}
-
-.profile-badge::before {
-    top: 0;
-    left: 100%;
-    background: radial-gradient(circle at 0% 100%, var(--badge-bg) 12.5px, var(--badge-card) 14px);
-}
-
-.profile-badge::after {
-    top: 100%;
-    left: 0;
-    background: radial-gradient(circle at 100% 0%, var(--badge-bg) 12.5px, var(--badge-card) 14px);
-}
-
-.profile-badge--warn {
-    --badge-bg: #fffbeb;
 }
 
 .departments-hero {

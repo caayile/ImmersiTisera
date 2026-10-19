@@ -25,6 +25,7 @@ use App\Models\User;
 use App\Notifications\ImersiAlert;
 use App\Services\AgreementLetterService;
 use App\Services\ApplicationApprovalService;
+use App\Services\CertificateIssuer;
 use App\Services\CertificateSignatureStorage;
 use App\Services\MediaStorageService;
 use App\Support\Status;
@@ -353,7 +354,7 @@ class AdminController extends Controller
         return view('admin.mentors', ['mentors' => Mentor::with(['user', 'department', 'businessUnit'])->get()]);
     }
 
-    public function updateMentorCertificateSignature(StoreCertificateSignatureRequest $request, Mentor $mentor, CertificateSignatureStorage $signatureStorage)
+    public function updateMentorCertificateSignature(StoreCertificateSignatureRequest $request, Mentor $mentor, CertificateSignatureStorage $signatureStorage, CertificateIssuer $certificateIssuer)
     {
         $data = $request->validated();
         $path = $signatureStorage->store(
@@ -362,6 +363,8 @@ class AdminController extends Controller
             $mentor->certificate_signature,
         );
         $mentor->update(['certificate_signature' => $path]);
+        $signatureStorage->replacePlaceholderSnapshots($mentor->id, $path);
+        $certificateIssuer->issueReadyForMentor($mentor);
 
         return back()->with('status', 'Tanda tangan sertifikat mentor diperbarui.');
     }

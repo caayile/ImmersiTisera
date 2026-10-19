@@ -50,7 +50,7 @@
             canvas.style.height = height + 'px';
             const ctx = canvas.getContext('2d');
             ctx.setTransform(this.ratio, 0, 0, this.ratio, 0, 0);
-            ctx.lineWidth = 2.4;
+            ctx.lineWidth = 4.8;
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
             ctx.strokeStyle = '#12261d';

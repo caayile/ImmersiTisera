@@ -217,6 +217,52 @@ class ReportGradeTest extends TestCase
             ->assertSee('Cetak', false);
     }
 
+    public function test_report_preview_shows_the_saved_mentor_signature(): void
+    {
+        $this->seed();
+
+        $dosen = User::where('email', 'dosen@imersi.id')->firstOrFail();
+        $mentor = User::where('email', 'mentor@imersi.id')->firstOrFail();
+        $program = $dosen->participant->programs()->latest()->firstOrFail();
+        $canvas = imagecreatetruecolor(180, 80);
+        imagealphablending($canvas, false);
+        imagesavealpha($canvas, true);
+        $clear = imagecolorallocatealpha($canvas, 0, 0, 0, 127);
+        imagefilledrectangle($canvas, 0, 0, 179, 79, $clear);
+        $ink = imagecolorallocatealpha($canvas, 18, 38, 29, 0);
+        imageline($canvas, 20, 40, 160, 40, $ink);
+        ob_start();
+        imagepng($canvas);
+        $binary = ob_get_clean();
+        imagedestroy($canvas);
+        $signature = 'data:image/png;base64,'.base64_encode($binary);
+        $mentor->mentor->update(['certificate_signature' => $signature]);
+
+        Evaluation::create([
+            'program_id' => $program->id,
+            'evaluator_id' => $mentor->id,
+            'grade_groups' => $this->reportGroups(),
+        ]);
+        Evaluation::create([
+            'program_id' => $program->id,
+            'evaluator_id' => $dosen->id,
+            'criteria' => [['label' => 'Umpan Balik', 'score' => 4]],
+        ]);
+
+        $response = $this->actingAs($dosen)
+            ->get(route('participant.evaluation.report-preview', $program));
+
+        $response->assertOk()
+            ->assertSee('alt="Tanda tangan mentor"', false)
+            ->assertDontSee($signature, false);
+        preg_match('/class="ttd-gambar" src="data:image\/png;base64,([^"]+)"/', $response->getContent(), $matches);
+        $rendered = base64_decode($matches[1] ?? '', true);
+        $image = is_string($rendered) ? imagecreatefromstring($rendered) : false;
+        $this->assertNotFalse($image);
+        $this->assertLessThan(80, imagesy($image));
+        imagedestroy($image);
+    }
+
     public function test_history_lists_past_cycles_and_archive_detail_opens(): void
     {
         $this->seed();

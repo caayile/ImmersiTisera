@@ -39,7 +39,8 @@
         .ttd td { width: 50%; text-align: center; vertical-align: top; padding: 0 12px; }
         .ttd td p { text-align: center; margin: 2px 0; }
         .ttd .nama { font-weight: bold; text-decoration: underline; margin: 2px 0; text-align: center; }
-        .ttd .spasi { height: 64px; }
+        .ttd .spasi { height: 128px; }
+        .ttd img.ttd-gambar { display: block; height: 116px; max-width: 320px; margin: 6px auto 0; object-fit: contain; }
         .ttd .nomor { margin: 2px 0; text-align: center; }
         @page { size: A4; margin: 1.5cm 2.5cm 2cm; }
         @media print {
@@ -174,7 +175,11 @@
         <tr>
             <td>
                 <p>Mentor,</p>
-                <div class="spasi"></div>
+                <div class="spasi">
+                    @if(! empty($mentorSignature))
+                        <img class="ttd-gambar" src="{{ $mentorSignature }}" alt="Tanda tangan mentor">
+                    @endif
+                </div>
                 <p class="nama">{{ $mentorUser?->name ?? '—' }}</p>
                 <p class="nomor">NIK: {{ $program->mentor?->nik ?? '—' }}</p>
             </td>

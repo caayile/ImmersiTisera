@@ -2,8 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Models\RegistrationOtp;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\User as SocialiteUser;
 use Tests\TestCase;
@@ -12,21 +14,42 @@ class GoogleAuthTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_google_redirect_auto_logins_when_unconfigured(): void
+    public function test_google_redirect_rejects_unregistered_email_when_unconfigured(): void
     {
         config([
             'services.google.client_id' => null,
             'services.google.client_secret' => null,
         ]);
 
-        $response = $this->get(route('login.google', ['role' => 'dosen']));
+        $this->get(route('login.google', ['role' => 'dosen']))
+            ->assertRedirect(route('register'))
+            ->assertSessionHasErrors([
+                'email' => 'Email Google ini belum terdaftar. Daftarkan email tersebut terlebih dahulu, lalu masuk dengan Google.',
+            ]);
 
-        $this->assertAuthenticated();
-        $this->assertDatabaseHas('users', [
+        $this->assertGuest();
+        $this->assertDatabaseMissing('users', ['email' => 'dosen.google@imersi.id']);
+    }
+
+    public function test_google_redirect_logs_in_registered_email_when_unconfigured(): void
+    {
+        config([
+            'services.google.client_id' => null,
+            'services.google.client_secret' => null,
+        ]);
+
+        $user = User::factory()->create([
+            'name' => 'Dr. Dosen Terdaftar',
             'email' => 'dosen.google@imersi.id',
             'role' => 'participant',
+            'status' => 'active',
         ]);
-        $response->assertRedirect(route('home'));
+
+        $this->get(route('login.google', ['role' => 'dosen']))
+            ->assertRedirect(route('home'))
+            ->assertSessionHas('status', 'Berhasil masuk dengan Akun Google (Dr. Dosen Terdaftar).');
+
+        $this->assertAuthenticatedAs($user);
     }
 
     public function test_google_redirect_rejects_when_unconfigured_in_production(): void
@@ -77,7 +100,32 @@ class GoogleAuthTest extends TestCase
             ->assertRedirect('http://localhost/auth/google?role=dosen');
     }
 
-    public function test_google_callback_creates_new_user_and_logs_in(): void
+    public function test_google_callback_sends_unfinished_registration_to_otp(): void
+    {
+        RegistrationOtp::query()->create([
+            'email' => 'googleuser@example.com',
+            'name' => 'Google User',
+            'password' => Hash::make('password'),
+            'role' => 'participant',
+            'otp' => '123456',
+            'expires_at' => now()->addMinutes(10),
+        ]);
+
+        Socialite::fake('google', SocialiteUser::fake([
+            'id' => 'google-id-12345',
+            'email' => 'googleuser@example.com',
+            'name' => 'Google User',
+        ]));
+
+        $this->get(route('login.google.callback'))
+            ->assertRedirect(route('register.verify-otp', ['email' => 'googleuser@example.com']))
+            ->assertSessionHasErrors('otp');
+
+        $this->assertGuest();
+        $this->assertDatabaseMissing('users', ['email' => 'googleuser@example.com']);
+    }
+
+    public function test_google_callback_rejects_unregistered_email(): void
     {
         Socialite::fake('google', SocialiteUser::fake([
             'id' => 'google-id-12345',
@@ -87,22 +135,25 @@ class GoogleAuthTest extends TestCase
             'avatar' => 'https://lh3.googleusercontent.com/photo.jpg',
         ]));
 
-        $response = $this->get(route('login.google.callback'));
+        $this->get(route('login.google.callback'))
+            ->assertRedirect(route('register'))
+            ->assertSessionHasErrors([
+                'email' => 'Email Google ini belum terdaftar. Daftarkan email tersebut terlebih dahulu, lalu masuk dengan Google.',
+            ]);
 
-        $this->assertAuthenticated();
-        $this->assertDatabaseHas('users', [
-            'email' => 'googleuser@example.com',
-            'google_id' => 'google-id-12345',
-            'name' => 'Google User',
-        ]);
-        $this->assertDatabaseHas('participants', [
-            'user_id' => User::where('email', 'googleuser@example.com')->value('id'),
-        ]);
-        $response->assertRedirect(route('home'));
+        $this->assertGuest();
+        $this->assertDatabaseMissing('users', ['email' => 'googleuser@example.com']);
     }
 
     public function test_google_callback_home_shows_navbar_profile_and_avatar(): void
     {
+        User::factory()->create([
+            'name' => 'Google Navbar',
+            'email' => 'google.navbar@example.com',
+            'role' => 'participant',
+            'status' => 'active',
+        ]);
+
         Socialite::fake('google', SocialiteUser::fake([
             'id' => 'google-id-navbar',
             'email' => 'google.navbar@example.com',
@@ -120,24 +171,55 @@ class GoogleAuthTest extends TestCase
             ->assertDontSee('>Masuk</a>', false);
     }
 
-    public function test_google_callback_creates_mentor_when_role_is_mentor(): void
+    public function test_google_callback_logs_in_registered_mentor(): void
     {
+        $user = User::factory()->create([
+            'name' => 'Mentor Google',
+            'email' => 'mentor.oauth@example.com',
+            'role' => 'mentor',
+            'status' => 'active',
+        ]);
+
         Socialite::fake('google', SocialiteUser::fake([
             'id' => 'google-mentor-1',
             'email' => 'mentor.oauth@example.com',
             'name' => 'Mentor Google',
         ]));
 
-        $response = $this->withSession(['oauth_role' => 'mentor'])
-            ->get(route('login.google.callback'));
+        $this->withSession(['oauth_role' => 'mentor'])
+            ->get(route('login.google.callback'))
+            ->assertRedirect(route('mentor.dashboard'));
 
-        $user = User::where('email', 'mentor.oauth@example.com')->first();
-
-        $this->assertNotNull($user);
-        $this->assertSame('mentor', $user->role);
-        $this->assertDatabaseHas('mentors', ['user_id' => $user->id]);
         $this->assertAuthenticatedAs($user);
-        $response->assertRedirect(route('mentor.dashboard'));
+        $this->assertDatabaseHas('users', [
+            'id' => $user->id,
+            'google_id' => 'google-mentor-1',
+        ]);
+        $this->assertDatabaseHas('mentors', ['user_id' => $user->id]);
+    }
+
+    public function test_google_callback_rejects_mentor_account_on_dosen_side(): void
+    {
+        User::factory()->create([
+            'email' => 'mentor.oauth@example.com',
+            'role' => 'mentor',
+            'status' => 'active',
+        ]);
+
+        Socialite::fake('google', SocialiteUser::fake([
+            'id' => 'google-mentor-2',
+            'email' => 'mentor.oauth@example.com',
+            'name' => 'Mentor Google',
+        ]));
+
+        $this->withSession(['oauth_role' => 'participant'])
+            ->get(route('login.google.callback'))
+            ->assertRedirect(route('login'))
+            ->assertSessionHasErrors([
+                'email' => 'Akun mentor. Silakan masuk dari kolom Mentor.',
+            ]);
+
+        $this->assertGuest();
     }
 
     public function test_google_callback_logs_in_existing_user_by_email(): void
@@ -249,6 +331,7 @@ class GoogleAuthTest extends TestCase
         $this->get(route('login'))
             ->assertOk()
             ->assertSee(route('login.google', ['role' => 'dosen']), false)
-            ->assertSee('Masuk dengan Google');
+            ->assertSee('Masuk dengan Google')
+            ->assertSee('Google hanya untuk email yang sudah didaftarkan.');
     }
 }
