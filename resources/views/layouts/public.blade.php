@@ -86,11 +86,8 @@
 <footer class="bg-[#173d32] text-white/75">
     <div class="mx-auto grid max-w-6xl gap-10 px-5 py-14 md:grid-cols-[1.35fr_0.8fr_1fr] md:gap-16 md:py-16">
         <div>
-            <div class="flex items-center gap-3 text-white">
-                <span class="flex h-11 w-11 items-center justify-center rounded-xl border border-white/25 bg-white p-1.5 shadow-sm">
-                    <img src="{{ asset('images/logo-mark.png') }}" alt="Magang Dosen TSU" class="h-full w-full object-contain">
-                </span>
-                <div class="font-semibold leading-tight">Magang Dosen<br><span class="text-xs font-normal text-white/70">Program TSU</span></div>
+            <div class="flex items-center">
+                <img src="{{ asset('images/logo-footer.png') }}" alt="Magang Dosen TSU" class="h-16 w-auto object-contain">
             </div>
             <p class="mt-5 max-w-sm text-sm leading-6">Program ini dikelola langsung oleh unit pembelajaran dan inovasi untuk mempertemukan dosen dengan pengalaman kerja nyata di dunia industri.</p>
             <p class="mt-5 flex max-w-sm items-start gap-2 text-sm leading-6"><span class="material-symbols-outlined mt-0.5 text-[18px] text-secondary">location_on</span><span>Jl. Prof. DR. Supomo No.23, Sriwedari, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57141</span></p>

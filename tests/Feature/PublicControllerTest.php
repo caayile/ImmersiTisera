@@ -38,6 +38,15 @@ class PublicControllerTest extends TestCase
             ]);
     }
 
+    public function test_public_footer_uses_the_white_footer_logo(): void
+    {
+        $this->seed();
+
+        $response = $this->get('/')->assertOk();
+
+        $this->assertSame(1, substr_count($response->getContent(), 'images/logo-footer.png'));
+    }
+
     public function test_home_hero_shows_admin_batch_name_when_registration_open(): void
     {
         $this->seed();
