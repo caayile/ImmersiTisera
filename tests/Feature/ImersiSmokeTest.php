@@ -270,6 +270,7 @@ class ImersiSmokeTest extends TestCase
             ->assertOk()
             ->assertSee('Umpan balik kuesioner')
             ->assertSee('Umpan Balik Mentor')
+            ->assertSee('5 · Sangat Setuju')
             ->assertSee('Mentor sangat membantu.');
     }
 

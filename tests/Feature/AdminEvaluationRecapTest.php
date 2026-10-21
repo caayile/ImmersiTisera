@@ -32,7 +32,7 @@ class AdminEvaluationRecapTest extends TestCase
             ->assertRedirect();
     }
 
-    public function test_admin_evaluations_shows_department_recap_with_lowest_aspect(): void
+    public function test_admin_evaluations_keeps_grade_spreadsheet_without_questionnaire_recap(): void
     {
         $this->seed();
 
@@ -41,19 +41,16 @@ class AdminEvaluationRecapTest extends TestCase
 
         $this->fillQuestionnaire($dosen);
 
-        $departmentName = $dosen->participant->programs()->latest()->firstOrFail()->department->name;
-
         $this->actingAs($admin)
             ->get(route('admin.evaluations'))
             ->assertOk()
-            ->assertSee('Rekap kuesioner per departemen')
-            ->assertSee($departmentName)
-            ->assertSee('Aspek terendah')
-            ->assertSee('Departemen memberikan akses data')
-            ->assertSee($dosen->name);
+            ->assertSee('Laporan hasil evaluasi (spreadsheet)')
+            ->assertSee('Rekap kuesioner peserta')
+            ->assertDontSee('Rekap kuesioner per departemen')
+            ->assertDontSee('Rincian isian kuesioner');
     }
 
-    public function test_admin_evaluations_recap_filters_by_department(): void
+    public function test_admin_evaluations_spreadsheet_filters_by_department(): void
     {
         $this->seed();
 
@@ -69,7 +66,7 @@ class AdminEvaluationRecapTest extends TestCase
             ->get(route('admin.evaluations', ['department_id' => $other->id]))
             ->assertOk()
             ->assertDontSee($dosen->name)
-            ->assertSee('Belum ada kuesioner peserta yang terisi.');
+            ->assertSee('Laporan hasil evaluasi (spreadsheet)');
     }
 
     public function test_admin_evaluations_spreadsheet_and_csv_export(): void

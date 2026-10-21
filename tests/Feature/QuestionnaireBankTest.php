@@ -28,12 +28,19 @@ class QuestionnaireBankTest extends TestCase
             ->assertSee('Bank Kuesioner Evaluasi')
             ->assertSee($section->title)
             ->assertSee('Skala Penilaian')
-            ->assertSee('Sangat Baik');
+            ->assertSee('Sangat Tidak Setuju')
+            ->assertSee('Tidak Setuju')
+            ->assertSee('Setuju')
+            ->assertSee('Sangat Setuju')
+            ->assertDontSee('Sangat Kurang')
+            ->assertDontSee('Sangat Baik');
 
         $this->actingAs($admin)
             ->get(route('admin.questionnaires.show', $section))
             ->assertOk()
             ->assertSee($section->title)
+            ->assertSee('Pernyataan')
+            ->assertSee('Tambah pernyataan')
             ->assertSee($first->question);
 
         // Simpan: ubah kode + judul + pertanyaan + tambah baris baru.
@@ -144,6 +151,10 @@ class QuestionnaireBankTest extends TestCase
             ->get(route('participant.evaluation'))
             ->assertOk()
             ->assertSee($bankQuestion)
+            ->assertSee('Pernyataan')
+            ->assertSee('Sangat Tidak Setuju')
+            ->assertSee('Sangat Setuju')
+            ->assertDontSee('Sangat Kurang')
             ->assertSee('Selanjutnya')
             ->assertSee('Kritik Dan Saran');
     }

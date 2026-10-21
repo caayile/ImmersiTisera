@@ -157,13 +157,13 @@
                         <section data-quiz-step="{{ $sectionIndex + 1 }}" x-show="quizStep === {{ $sectionIndex + 1 }}" class="overflow-hidden rounded-2xl border border-line bg-white shadow-sm">
                             <p class="border-b border-line px-5 py-3 text-sm font-semibold">{{ $section['title'] }}</p>
                             <div class="overflow-x-auto">
-                                <table class="w-full min-w-[720px] text-sm">
+                                <table class="w-full min-w-[960px] text-sm">
                                     <thead>
                                         <tr class="border-b border-line text-muted">
                                             <th class="w-10 px-4 py-3 text-left font-medium">No</th>
-                                            <th class="px-4 py-3 text-left font-medium">Pertanyaan</th>
+                                            <th class="px-4 py-3 text-left font-medium">Pernyataan</th>
                                             @foreach($scaleList as $scale)
-                                                <th class="w-24 px-2 py-3 text-center font-medium">{{ $scale['label'] }}</th>
+                                                <th class="min-w-28 px-2 py-3 text-center text-xs font-medium leading-snug">{{ $scale['label'] }}</th>
                                             @endforeach
                                         </tr>
                                     </thead>

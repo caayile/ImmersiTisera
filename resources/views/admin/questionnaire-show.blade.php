@@ -10,7 +10,7 @@
 @endphp
 
 <a href="{{ route('admin.questionnaires') }}" class="text-sm font-medium text-primary-dark">&larr; Kembali ke bank kuesioner</a>
-<p class="mt-1 text-sm text-muted">Tambah, ubah, atau hapus pertanyaan, lalu simpan.</p>
+<p class="mt-1 text-sm text-muted">Tambah, ubah, atau hapus pernyataan, lalu simpan.</p>
 
 <script>
     window.questionnaireEditor = function (initialRows) {
@@ -41,10 +41,10 @@
     </div>
 
     <div class="mt-5 flex items-center justify-between gap-3">
-        <p class="text-sm font-semibold">Pertanyaan</p>
+        <p class="text-sm font-semibold">Pernyataan</p>
         <button type="button" @click="addRow()" class="inline-flex items-center gap-1.5 rounded-xl border border-primary/40 px-3.5 py-2 text-sm font-semibold text-primary-dark transition hover:bg-primary/5">
             <span class="material-symbols-outlined text-[18px]">add</span>
-            Tambah pertanyaan
+            Tambah pernyataan
         </button>
     </div>
 
@@ -53,11 +53,11 @@
             <div class="flex items-start gap-2 rounded-xl border border-line p-3">
                 <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-bg text-sm font-semibold text-muted" x-text="index + 1"></span>
                 <input type="hidden" :name="'questions[' + index + '][id]'" :value="row.id || ''">
-                <textarea :name="'questions[' + index + '][question]'" x-model="row.question" rows="2" maxlength="1000" class="min-w-0 flex-1 rounded-lg border border-line px-3 py-2 text-sm" required placeholder="Tulis pertanyaan..."></textarea>
+                <textarea :name="'questions[' + index + '][question]'" x-model="row.question" rows="2" maxlength="1000" class="min-w-0 flex-1 rounded-lg border border-line px-3 py-2 text-sm" required placeholder="Tulis pernyataan..."></textarea>
                 <button type="button" @click="removeRow(index)" class="shrink-0 rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-50">Hapus</button>
             </div>
         </template>
-        <p x-show="rows.length === 0" class="rounded-xl border border-dashed border-line px-4 py-6 text-center text-sm text-muted">Belum ada pertanyaan. Klik “Tambah pertanyaan”.</p>
+        <p x-show="rows.length === 0" class="rounded-xl border border-dashed border-line px-4 py-6 text-center text-sm text-muted">Belum ada pernyataan. Klik “Tambah pernyataan”.</p>
     </div>
 
     <div class="mt-4 flex justify-end">

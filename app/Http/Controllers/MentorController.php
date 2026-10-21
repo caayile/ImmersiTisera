@@ -10,6 +10,7 @@ use App\Models\Certificate;
 use App\Models\CollaborationPipeline;
 use App\Models\Evaluation;
 use App\Models\EvaluationQuestion;
+use App\Models\EvaluationScale;
 use App\Models\EvaluationSection;
 use App\Models\Logbook;
 use App\Models\Mentor;
@@ -477,7 +478,15 @@ class MentorController extends Controller
             ])->all()
             : EvaluationQuestion::defaultBank();
 
-        return view('mentor.evaluations', compact('programs', 'given', 'received', 'certificates', 'hasSignature', 'bank'));
+        return view('mentor.evaluations', [
+            'programs' => $programs,
+            'given' => $given,
+            'received' => $received,
+            'certificates' => $certificates,
+            'hasSignature' => $hasSignature,
+            'bank' => $bank,
+            'scaleLabels' => EvaluationScale::labelsByValue(),
+        ]);
     }
 
     /**

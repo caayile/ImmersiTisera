@@ -1,7 +1,7 @@
 @extends('layouts.app')
 @section('title', 'Bank Kuesioner Evaluasi')
 @section('content')
-<p class="text-sm text-muted">Kelola bagian kuesioner, pertanyaan, dan skala penilaian dosen di menu Hasil Studi.</p>
+<p class="text-sm text-muted">Kelola bagian kuesioner, pernyataan, dan skala penilaian dosen di menu Hasil Studi.</p>
 
 <div class="mt-6 overflow-hidden rounded-2xl border border-line bg-white shadow-sm">
     <p class="border-b border-line px-5 py-3 text-sm font-semibold">Bagian Kuesioner</p>
@@ -12,7 +12,7 @@
                     <th class="w-12 px-5 py-3 text-left font-medium">No</th>
                     <th class="px-5 py-3 text-left font-medium">Tentang</th>
                     <th class="px-5 py-3 text-left font-medium">Judul Bagian</th>
-                    <th class="px-5 py-3 text-left font-medium">Pertanyaan</th>
+                    <th class="px-5 py-3 text-left font-medium">Pernyataan</th>
                     <th class="w-36 px-5 py-3 text-left font-medium">Aksi</th>
                 </tr>
             </thead>
@@ -22,7 +22,7 @@
                         <td class="px-5 py-3 text-muted">{{ $loop->iteration }}</td>
                         <td class="px-5 py-3 font-semibold uppercase">{{ $section->key }}</td>
                         <td class="px-5 py-3">{{ $section->title }}</td>
-                        <td class="px-5 py-3">{{ $section->questions_count }} pertanyaan</td>
+                        <td class="px-5 py-3">{{ $section->questions_count }} pernyataan</td>
                         <td class="px-5 py-3">
                             <a href="{{ route('admin.questionnaires.show', $section) }}" class="inline-flex items-center gap-1.5 rounded-xl bg-[#22b07d] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#1a9a6d]">
                                 Kelola
@@ -86,7 +86,7 @@
     </div>
     <form method="POST" action="{{ route('admin.scales.store') }}" class="flex flex-col gap-2 border-t border-line p-4 sm:flex-row">
         @csrf
-        <input name="label" maxlength="50" placeholder="Nama skala baru... (cth. Sangat Baik)" class="flex-1 rounded-lg border border-line px-3 py-2 text-sm" required>
+        <input name="label" maxlength="50" placeholder="Nama skala baru... (cth. Sangat Setuju)" class="flex-1 rounded-lg border border-line px-3 py-2 text-sm" required>
         <input name="value" type="number" min="1" max="10" placeholder="Nilai" class="w-28 rounded-lg border border-line px-3 py-2 text-sm" required>
         <button class="shrink-0 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white">Tambah</button>
     </form>

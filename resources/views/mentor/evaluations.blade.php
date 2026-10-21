@@ -27,7 +27,7 @@
                         <h3 class="font-semibold">{{ $eval->evaluator->name }}</h3>
                         <p class="mt-0.5 text-sm text-muted">{{ $eval->program?->businessUnit?->name ?? '—' }} · {{ $eval->program?->department?->name ?? '—' }}</p>
                     </div>
-                    <p class="shrink-0 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold text-primary-dark">Rata-rata {{ $eval->average() }} / 5</p>
+                    <p class="shrink-0 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold text-primary-dark">Rata-rata {{ $eval->average() }} · {{ $scaleLabels[(int) round($eval->average())] ?? '—' }}</p>
                 </div>
                 @foreach($grouped as $sectionTitle => $items)
                     <p class="mt-4 text-xs font-bold uppercase tracking-[0.12em] text-muted">{{ $sectionTitle }}</p>
@@ -35,7 +35,7 @@
                         @foreach($items as $criterion)
                             <li class="flex items-baseline justify-between gap-3 rounded-lg bg-bg/60 px-3 py-2">
                                 <span>{{ $criterion['label'] }}</span>
-                                <b class="shrink-0">{{ $criterion['score'] }} / 5</b>
+                                <b class="shrink-0">{{ $criterion['score'] }} · {{ $scaleLabels[(int) $criterion['score']] ?? '—' }}</b>
                             </li>
                         @endforeach
                     </ul>

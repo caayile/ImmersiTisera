@@ -11,7 +11,6 @@ use App\Models\CertificateSignatory;
 use App\Models\CollaborationPipeline;
 use App\Models\Department;
 use App\Models\Evaluation;
-use App\Models\EvaluationQuestion;
 use App\Models\EvaluationScale;
 use App\Models\EvaluationSection;
 use App\Models\HeroSetting;
@@ -28,6 +27,7 @@ use App\Services\ApplicationApprovalService;
 use App\Services\CertificateIssuer;
 use App\Services\CertificateSignatureStorage;
 use App\Services\MediaStorageService;
+use App\Services\QuestionnaireReport;
 use App\Support\Status;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Database\Seeders\QuestionnaireBankSeeder;
@@ -637,65 +637,6 @@ class AdminController extends Controller
 
     public function evaluations(Request $request)
     {
-        $evaluations = Evaluation::with(['program.participant.user', 'program.department', 'program.businessUnit', 'evaluator'])
-            ->latest()
-            ->get();
-
-        // Kuesioner peserta = evaluasi criteria yang diisi akun peserta
-        // (bukan nilai raport mentor). Ini bahan menilai departemen.
-        $questionnaires = $evaluations->filter(fn (Evaluation $evaluation): bool => is_array($evaluation->criteria)
-            && $evaluation->criteria !== []
-            && $evaluation->evaluator?->isParticipant());
-
-        $sections = EvaluationSection::with(['questions' => fn ($query) => $query->where('is_active', true)->orderBy('position')])
-            ->orderBy('position')
-            ->get();
-        $bank = $sections->isNotEmpty()
-            ? $sections->map(fn (EvaluationSection $section) => [
-                'key' => $section->key,
-                'title' => $section->title,
-                'questions' => $section->questions->pluck('question')->all(),
-            ])->all()
-            : EvaluationQuestion::defaultBank();
-
-        $sectionOf = [];
-        foreach ($bank as $section) {
-            foreach ($section['questions'] as $question) {
-                $sectionOf[$question] = $section['title'];
-            }
-        }
-
-        if ($request->filled('department_id')) {
-            $questionnaires = $questionnaires
-                ->filter(fn (Evaluation $evaluation): bool => (int) $evaluation->program?->department_id === (int) $request->input('department_id'))
-                ->values();
-            $evaluations = $evaluations
-                ->filter(fn (Evaluation $evaluation): bool => (int) $evaluation->program?->department_id === (int) $request->input('department_id'))
-                ->values();
-        }
-
-        $recap = $questionnaires
-            ->filter(fn (Evaluation $evaluation): bool => $evaluation->program?->department !== null)
-            ->groupBy(fn (Evaluation $evaluation) => $evaluation->program->department->id)
-            ->map(function ($group) use ($sectionOf) {
-                $items = $group->flatMap(fn (Evaluation $evaluation) => $evaluation->criteriaForDisplay());
-                $byQuestion = $items->groupBy('label')
-                    ->map(fn ($rows) => round($rows->avg('score'), 1))
-                    ->sort();
-
-                return [
-                    'department' => $group->first()->program->department,
-                    'respondents' => $group->count(),
-                    'overall' => round($items->avg('score'), 1),
-                    'bySection' => $items->groupBy(fn ($criterion) => $sectionOf[$criterion['label']] ?? 'Lainnya')
-                        ->map(fn ($rows) => round($rows->avg('score'), 1)),
-                    'lowestQuestion' => $byQuestion->keys()->first(),
-                    'lowestScore' => $byQuestion->first(),
-                ];
-            })
-            ->sortBy('department.name')
-            ->values();
-
         $spreadsheet = $this->evaluationSpreadsheetRows($request);
 
         if ($request->get('export') === 'csv') {
@@ -703,10 +644,6 @@ class AdminController extends Controller
         }
 
         return view('admin.evaluations', [
-            'evaluations' => $evaluations,
-            'questionnaires' => $questionnaires->values(),
-            'recap' => $recap,
-            'bank' => $bank,
             'spreadsheet' => $spreadsheet,
             'departments' => Department::orderBy('name')->get(),
         ]);
@@ -963,7 +900,7 @@ class AdminController extends Controller
         ]);
     }
 
-    public function reports(Request $request)
+    public function reports(Request $request, QuestionnaireReport $questionnaireReport)
     {
         $programs = Program::with(['participant.user', 'mentor.user', 'department', 'businessUnit'])->latest()->get();
 
@@ -987,7 +924,105 @@ class AdminController extends Controller
             }, 'magang-dosen-programs.csv');
         }
 
-        return view('admin.reports', compact('programs'));
+        $programId = $request->filled('program_id') ? $request->integer('program_id') : 0;
+        $businessUnitId = $request->filled('business_unit_id') ? $request->integer('business_unit_id') : 0;
+        $mentorId = $request->filled('mentor_id') ? $request->integer('mentor_id') : 0;
+        $questionnaire = $questionnaireReport->summarize(
+            $programId > 0 ? $programId : null,
+            $businessUnitId > 0 ? $businessUnitId : null,
+            $mentorId > 0 ? $mentorId : null,
+        );
+
+        if ($request->get('export') === 'kuesioner') {
+            return $this->downloadQuestionnaireCsv($questionnaire);
+        }
+
+        return view('admin.reports', [
+            'programs' => $programs,
+            'businessUnits' => BusinessUnit::query()->with('department')->orderBy('name')->get(),
+            'mentors' => Mentor::query()->with('user')->get()->sortBy(fn (Mentor $mentor): string => $mentor->user?->name ?? '')->values(),
+            'questionnaire' => $questionnaire,
+        ]);
+    }
+
+    /**
+     * @param  array{
+     *     scales: list<array{label: string, value: int}>,
+     *     rows: list<array{participant: string, unit_bisnis: string, departemen: string, mentor: string, scores: array{program: ?float, departemen: ?float, mentor: ?float}, average: float, comments: ?string}>,
+     *     questions: list<array{section: string, label: string, average: float, respondents: int}>
+     * }  $questionnaire
+     */
+    private function downloadQuestionnaireCsv(array $questionnaire)
+    {
+        $scaleLabel = function (?float $score) use ($questionnaire): string {
+            if ($score === null) {
+                return '';
+            }
+
+            $rounded = (int) round($score);
+
+            foreach ($questionnaire['scales'] as $scale) {
+                if ((int) $scale['value'] === $rounded) {
+                    return $scale['label'];
+                }
+            }
+
+            return '';
+        };
+
+        $csv = fopen('php://temp', 'r+');
+        fputcsv($csv, [
+            'Peserta',
+            'Unit Bisnis',
+            'Departemen',
+            'Mentor',
+            'Skor Program',
+            'Skala Program',
+            'Skor Departemen',
+            'Skala Departemen',
+            'Skor Mentor',
+            'Skala Mentor',
+            'Rata-rata',
+            'Skala Rata-rata',
+            'Kritik dan Saran',
+        ]);
+
+        foreach ($questionnaire['rows'] as $row) {
+            fputcsv($csv, [
+                $row['participant'],
+                $row['unit_bisnis'],
+                $row['departemen'],
+                $row['mentor'],
+                $row['scores']['program'],
+                $scaleLabel($row['scores']['program']),
+                $row['scores']['departemen'],
+                $scaleLabel($row['scores']['departemen']),
+                $row['scores']['mentor'],
+                $scaleLabel($row['scores']['mentor']),
+                $row['average'],
+                $scaleLabel($row['average']),
+                $row['comments'] ?? '',
+            ]);
+        }
+
+        fputcsv($csv, []);
+        fputcsv($csv, ['Bagian', 'Pernyataan', 'Responden', 'Rata-rata', 'Skala']);
+
+        foreach ($questionnaire['questions'] as $question) {
+            fputcsv($csv, [
+                $question['section'],
+                $question['label'],
+                $question['respondents'],
+                $question['average'],
+                $scaleLabel($question['average']),
+            ]);
+        }
+
+        rewind($csv);
+
+        return Response::streamDownload(function () use ($csv) {
+            echo stream_get_contents($csv);
+        }, 'laporan-kuesioner.csv');
     }
 
     public function settings()
