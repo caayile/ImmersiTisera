@@ -134,23 +134,52 @@ class Program extends Model
         return $next === null || $current < $next;
     }
 
-    public function canComplete(): bool
+    /**
+     * Syarat yang masih kurang sebelum program boleh ditandai selesai.
+     *
+     * @return list<string>
+     */
+    public function completionBlockers(): array
     {
-        if (! $this->outputs()->where('is_main_output', true)->where('status', 'approved')->exists()) {
-            return false;
+        $blockers = [];
+
+        if (! $this->hasApprovedOutput('is_main_output')) {
+            $blockers[] = 'Hasil utama belum disetujui.';
         }
 
-        if (! $this->outputs()->where('is_final_report', true)->where('status', 'approved')->exists()) {
-            return false;
+        if (! $this->hasApprovedOutput('is_final_report')) {
+            $blockers[] = 'Laporan akhir belum disetujui.';
         }
 
         $this->loadMissing('evaluations.evaluator');
 
-        return $this->evaluations->contains(
-            fn (Evaluation $evaluation) => $evaluation->evaluator?->isMentor()
+        $mentorReportReady = $this->evaluations->contains(
+            fn (Evaluation $evaluation): bool => $evaluation->evaluator?->isMentor()
                 && $evaluation->hasReport()
                 && $evaluation->reportAverage() !== null
         );
+
+        if (! $mentorReportReady) {
+            $blockers[] = 'Evaluasi mentor belum selesai.';
+        }
+
+        return $blockers;
+    }
+
+    public function canComplete(): bool
+    {
+        return $this->completionBlockers() === [];
+    }
+
+    private function hasApprovedOutput(string $flag): bool
+    {
+        if ($this->relationLoaded('outputs')) {
+            return $this->outputs->contains(
+                fn (ProgramOutput $output): bool => (bool) $output->{$flag} && $output->status === 'approved'
+            );
+        }
+
+        return $this->outputs()->where($flag, true)->where('status', 'approved')->exists();
     }
 
     public function seedTimeline(): void

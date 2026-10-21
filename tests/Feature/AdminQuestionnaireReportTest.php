@@ -70,6 +70,8 @@ class AdminQuestionnaireReportTest extends TestCase
             ->assertSee('Kritik dan saran')
             ->assertSee('Fasilitas perlu diperjelas.')
             ->assertSee('Ekspor kuesioner')
+            ->assertDontSee('Daftar program')
+            ->assertDontSee('Ekspor daftar program')
             ->assertSee('Andi <script>alert(1)</script>')
             ->assertSee('Dr. Bima Nugraha')
             ->assertSee('Pemahaman Industri')

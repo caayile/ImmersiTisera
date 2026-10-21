@@ -123,6 +123,78 @@ class FlowConsistencyFixesTest extends TestCase
         $this->assertTrue($program->fresh()->canComplete());
     }
 
+    public function test_admin_sees_why_a_program_cannot_be_completed(): void
+    {
+        $this->seed();
+
+        $admin = User::where('email', 'admin@imersi.id')->firstOrFail();
+        $program = Program::query()->where('status', 'active')->firstOrFail();
+
+        $this->actingAs($admin)
+            ->from(route('admin.programs'))
+            ->post(route('admin.programs.complete', $program))
+            ->assertRedirect(route('admin.programs'))
+            ->assertSessionHas('error');
+
+        $this->assertSame('active', $program->fresh()->status);
+
+        $this->actingAs($admin)
+            ->get(route('admin.programs'))
+            ->assertOk()
+            ->assertSee('Tandai selesai')
+            ->assertSee('Ya')
+            ->assertSee('Tidak')
+            ->assertSee('Hasil utama belum disetujui.')
+            ->assertSee('Laporan akhir belum disetujui.')
+            ->assertSee('Evaluasi mentor belum selesai.');
+    }
+
+    public function test_admin_marks_program_completed_when_requirements_are_met(): void
+    {
+        $this->seed();
+
+        $admin = User::where('email', 'admin@imersi.id')->firstOrFail();
+        $dosen = User::where('email', 'dosen@imersi.id')->firstOrFail();
+        $program = $dosen->participant->programs()->where('status', 'active')->firstOrFail();
+
+        ProgramOutput::create([
+            'program_id' => $program->id,
+            'participant_id' => $dosen->participant->id,
+            'department_id' => $program->department_id,
+            'business_unit_id' => $program->business_unit_id,
+            'title' => 'Hasil utama',
+            'type' => 'Dokumen',
+            'status' => 'approved',
+            'is_main_output' => true,
+        ]);
+        ProgramOutput::create([
+            'program_id' => $program->id,
+            'participant_id' => $dosen->participant->id,
+            'department_id' => $program->department_id,
+            'business_unit_id' => $program->business_unit_id,
+            'title' => 'Laporan akhir',
+            'type' => 'Dokumen',
+            'status' => 'approved',
+            'is_final_report' => true,
+        ]);
+        Evaluation::create([
+            'program_id' => $program->id,
+            'evaluator_id' => User::where('email', 'mentor@imersi.id')->value('id'),
+            'grade_groups' => [[
+                'name' => 'Project',
+                'weight' => 100,
+                'aspects' => [['label' => 'Kualitas', 'score' => 88]],
+            ]],
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.programs.complete', $program))
+            ->assertRedirect()
+            ->assertSessionHas('status', 'Program ditandai selesai.');
+
+        $this->assertSame('completed', $program->fresh()->status);
+    }
+
     public function test_evaluation_spreadsheet_headers_put_unit_bisnis_before_departemen(): void
     {
         $this->seed();

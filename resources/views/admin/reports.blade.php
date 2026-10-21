@@ -292,29 +292,6 @@
         </div>
     @endif
 </section>
-
-<section class="mt-10">
-    <div class="flex flex-wrap items-center justify-between gap-3">
-        <h2 class="font-semibold">Daftar program</h2>
-        <a href="{{ route('admin.reports', ['export' => 'csv']) }}" class="rounded-lg border border-line bg-white px-4 py-2 text-sm font-semibold text-ink">Ekspor daftar program</a>
-    </div>
-    <div class="mt-4 overflow-x-auto rounded-2xl border border-line bg-white">
-        <table class="min-w-full text-left text-sm">
-            <thead class="bg-bg text-xs uppercase text-muted"><tr><th class="px-4 py-3">Peserta</th><th class="px-4 py-3">Mentor</th><th class="px-4 py-3">Unit Bisnis</th><th class="px-4 py-3">Departemen</th><th class="px-4 py-3">Status</th></tr></thead>
-            <tbody>
-            @foreach($programs as $program)
-                <tr class="border-t border-line">
-                    <td class="px-4 py-3">{{ $program->participant->user->name }}</td>
-                    <td class="px-4 py-3">{{ $program->mentor->user->name }}</td>
-                    <td class="px-4 py-3">{{ $program->department->name }}</td>
-                    <td class="px-4 py-3">{{ $program->businessUnit->name }}</td>
-                    <td class="px-4 py-3"><x-badge :status="$program->status" /></td>
-                </tr>
-            @endforeach
-            </tbody>
-        </table>
-    </div>
-</section>
 @endsection
 
 @if($questionnaire['respondents'] > 0)

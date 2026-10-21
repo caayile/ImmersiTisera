@@ -376,7 +376,7 @@ class AdminController extends Controller
 
     public function programs(Request $request)
     {
-        $query = Program::with(['participant.user', 'mentor.user', 'department', 'businessUnit', 'agreement']);
+        $query = Program::with(['participant.user', 'mentor.user', 'department', 'businessUnit', 'agreement', 'outputs', 'evaluations.evaluator']);
         foreach (['status', 'department_id', 'business_unit_id'] as $filter) {
             if ($request->filled($filter)) {
                 $query->where($filter, $request->input($filter));
@@ -1256,7 +1256,12 @@ class AdminController extends Controller
 
     public function completeProgram(Program $program)
     {
-        abort_unless($program->canComplete(), 422, 'Hasil utama, laporan akhir, dan evaluasi harus selesai.');
+        $blockers = $program->completionBlockers();
+
+        if ($blockers !== []) {
+            return back()->with('error', 'Program belum bisa ditandai selesai. '.implode(' ', $blockers));
+        }
+
         $program->update(['status' => 'completed', 'progress' => 100]);
         $program->participant->user->notify(new ImersiAlert('Program selesai', 'Tentukan tindak lanjut kolaborasi setelah magang.', route('participant.collaboration')));
 
