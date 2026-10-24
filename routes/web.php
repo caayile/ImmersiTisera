@@ -144,6 +144,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/lowongan/{businessUnit}/period', [AdminController::class, 'updateLowonganPeriod'])->name('lowongan.period');
     Route::post('/lowongan/toggle-all', [AdminController::class, 'toggleAllLowongan'])->name('lowongan.toggle-all');
     Route::post('/lowongan/open-all', [AdminController::class, 'openAllLowongan'])->name('lowongan.open-all');
+    Route::post('/lowongan/open-department/{department}', [AdminController::class, 'openDepartmentLowongan'])->name('lowongan.open-department');
     Route::post('/lowongan/period-all', [AdminController::class, 'updateAllLowonganPeriod'])->name('lowongan.period-all');
     Route::get('/mentors', [AdminController::class, 'mentors'])->name('mentors');
     Route::post('/mentors/{mentor}/certificate-signature', [AdminController::class, 'updateMentorCertificateSignature'])->name('mentors.certificate-signature');
@@ -158,6 +159,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/monitoring/{program}', [AdminController::class, 'showMonitoringLogbooks'])->name('monitoring.show');
     Route::get('/evaluations', [AdminController::class, 'evaluations'])->name('evaluations');
     Route::get('/questionnaires', [AdminController::class, 'questionnaires'])->name('questionnaires');
+    Route::post('/questionnaires/sections', [AdminController::class, 'storeQuestionSection'])->name('questionnaires.store');
+    Route::delete('/questionnaires/sections/{section}', [AdminController::class, 'destroyQuestionSection'])->name('questionnaires.destroy');
     Route::get('/questionnaires/sections/{section}', [AdminController::class, 'showQuestionSection'])->name('questionnaires.show');
     Route::post('/questionnaires/sections/{section}', [AdminController::class, 'saveQuestionSection'])->name('questionnaires.save');
     Route::post('/questionnaires/scales', [AdminController::class, 'storeScale'])->name('scales.store');

@@ -446,9 +446,7 @@ class ParticipantController extends Controller
 
     private function historyMonth(Request $request, $programs): Carbon
     {
-        $fallback = $programs->firstWhere(fn (Program $program) => $program->start_date)
-            ?->start_date->copy()->startOfMonth()
-            ?? today()->startOfMonth();
+        $fallback = today()->startOfMonth();
 
         try {
             $parsed = trim((string) $request->string('month'));

@@ -43,12 +43,13 @@
                     $dayLogs = $cellKey ? $byDate->get($cellKey, collect()) : collect();
                     $mark = $dayLogs->last();
                     $isToday = $cellKey === $todayKey;
-                    $numberClass = $isToday ? 'font-bold text-primary-dark underline underline-offset-4' : 'font-medium';
+                    $numberClass = $isToday ? 'font-bold text-amber-700 underline underline-offset-4' : 'font-medium';
+                    $bgClass = $isToday ? 'bg-amber-50 border-amber-200' : ($cellKey === $formDate ? 'border-primary bg-primary/10 ring-1 ring-primary' : 'border-line bg-white');
                 @endphp
                 @if(! $inMonth)
                     <div class="rounded-lg bg-bg/50 px-1 py-1.5"></div>
                 @else
-                    <button type="button" data-date="{{ $cellKey }}" class="day-pick rounded-lg border px-1 py-1.5 transition hover:border-primary {{ $cellKey === $formDate ? 'border-primary bg-primary/10 ring-1 ring-primary' : 'border-line bg-white' }}">
+                    <button type="button" data-date="{{ $cellKey }}" class="day-pick rounded-lg border px-1 py-1.5 transition hover:border-primary {{ $bgClass }}">
                         <p class="text-sm {{ $numberClass }}">{{ $dayNumber }}</p>
                         <p class="mt-0.5 flex justify-center"><x-logbook-marker :status="$mark?->status" :attendance="$mark?->attendance" /></p>
                     </button>
@@ -230,6 +231,23 @@
             showModal(historyModal);
         }
 
+         // Auto-select today's date on page load
+        var todayDate = '{{ $todayKey }}';
+        var todayBtn = null;
+        buttons.forEach(function (btn) {
+            if (btn.dataset.date === todayDate) {
+                todayBtn = btn;
+                btn.classList.add('border-primary', 'bg-primary/10', 'ring-1', 'ring-primary');
+                btn.classList.remove('border-line', 'bg-white');
+                currentDate = todayDate;
+            }
+        });
+
+        // Auto-open form for today if not already filled and canFill
+        if (todayBtn && {{ $canFill ? 'true' : 'false' }} && !document.getElementById('loghist-' + todayDate)) {
+            setTimeout(() => openForm(todayDate), 500);
+        }
+
         buttons.forEach(function (button) {
             button.addEventListener('click', function () {
                 var date = button.dataset.date;
@@ -250,6 +268,7 @@
                 }
             });
         });
+
 
         function wireClose(id, target) {
             var button = document.getElementById(id);

@@ -112,132 +112,148 @@
     });
 })();</script>
 
-<div class="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-    @forelse($units as $unit)
-        @php
-            $manualOpen = $unit->status === 'open';
-            // Status efektif yang dilihat peserta: status manual + jendela tanggal.
-            $open = $unit->isOpen();
-            $scheduled = $unit->registration_start !== null && $unit->registration_deadline !== null;
-            $expired = $manualOpen && $scheduled && $unit->registration_deadline && now()->gt($unit->registration_deadline);
-            $notStarted = $manualOpen && $scheduled && $unit->registration_start && now()->lt($unit->registration_start);
-            $quota = \App\Models\BusinessUnit::MAX_APPLICANTS;
-            $filled = (int) ($unit->active_applications_count ?? $unit->applications_count ?? 0);
-            $isFull = $filled >= $quota;
-        @endphp
-        <article class="flex flex-col rounded-2xl border border-line bg-white p-5 shadow-sm transition hover:shadow-md">
-            {{-- 1. Header Card --}}
-            <div class="flex items-start justify-between gap-2">
-                <span class="inline-flex flex-wrap items-center gap-1.5">
-                    <span class="rounded-full bg-secondary/30 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-ink">{{ $unit->department->name }}</span>
-                    @if($unit->department->area)
-                        <span class="rounded-full bg-bg px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted">{{ $unit->department->area }}</span>
-                    @endif
-                </span>
-                @if($isFull)
-                    <span class="rounded-full bg-red-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-red-700">Penuh {{ $filled }}/{{ $quota }}</span>
-                @elseif($open)
-                    <span class="rounded-full bg-sky-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-sky-700">Buka · {{ $filled }}/{{ $quota }}</span>
-                @else
-                    <span class="rounded-full bg-red-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-red-700">Ditutup · {{ $filled }}/{{ $quota }}</span>
-                @endif
-            </div>
-
-            <h3 class="mt-3 text-lg font-bold leading-tight text-ink">{{ $unit->name }}</h3>
-            <p class="mt-1 text-xs text-muted">
-                @if($unit->registration_start && $unit->registration_deadline)
-                    Dibuka {{ $unit->registration_start->format('d M Y') }} · ditutup {{ $unit->registration_deadline->format('d M Y') }} (23.59)
-                @elseif($unit->registration_deadline)
-                    Pendaftaran s/d {{ $unit->registration_deadline->format('d M Y') }} (23.59)
-                @else
-                    Belum dijadwalkan pendaftaran
-                @endif
-            </p>
-
-            {{-- 2. Tombol aksi & navigasi cepat --}}
-            <div class="mt-4 flex items-center gap-2">
-                <a href="{{ route('units.show', $unit) }}" title="Detail" class="inline-flex items-center gap-1.5 rounded-lg bg-primary/12 px-3 py-2 text-sm font-semibold text-primary-dark transition hover:bg-primary hover:text-white">
-                    <span class="material-symbols-outlined text-[18px]">info</span>
-                    Detail
-                </a>
-                <a href="{{ route('admin.matching', ['unit' => $unit->id]) }}" title="Lihat pendaftar" class="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-2 text-sm font-semibold text-ink transition hover:border-primary hover:text-primary-dark">
-                    <span class="material-symbols-outlined text-[18px]">group</span>
-                    Pendaftar
-                    <span class="rounded-full bg-bg px-1.5 text-[11px] font-bold text-muted">{{ $unit->applications_count }}</span>
-                </a>
-                <div class="ml-auto flex shrink-0 items-center gap-1.5">
-                    <a href="{{ route('admin.units.edit', $unit) }}" title="Ubah" class="flex h-9 w-9 items-center justify-center rounded-lg border border-line text-muted transition hover:border-primary hover:text-primary-dark">
-                        <span class="material-symbols-outlined text-[18px]">edit</span>
-                    </a>
-                    <button type="button" title="Hapus" onclick="if (confirm('Hapus lowongan ini?')) document.getElementById('delete-lowongan-{{ $unit->id }}').submit()" class="flex h-9 w-9 items-center justify-center rounded-lg border border-line text-muted transition hover:border-red-300 hover:text-red-600">
-                        <span class="material-symbols-outlined text-[18px]">delete</span>
-                    </button>
-                </div>
-            </div>
-
-            {{-- 3. Periode pendaftaran --}}
-            <form method="POST" action="{{ route('admin.lowongan.period', $unit) }}" class="mt-4 rounded-xl border border-line bg-bg/60 p-3">
-                @csrf
-                <div class="flex items-center justify-between gap-2">
-                    <p class="text-sm font-semibold text-ink">Periode pendaftaran</p>
-                    <div class="flex items-center gap-2">
-                        @if($unit->batch)
-                            <span class="rounded-full bg-primary/12 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-primary-dark">{{ $unit->batch }}</span>
-                        @endif
-                        <button class="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-primary-dark">
-                            <span class="material-symbols-outlined text-[16px]">save</span>
-                            Simpan
-                        </button>
-                    </div>
-                </div>
-                <div class="mt-2">
-                    <label class="text-[11px] font-medium text-muted">Batch (ganti nama untuk mereset kuota 2 pendaftar)</label>
-                    <input type="text" name="batch" value="{{ old('batch', $unit->batch) }}" placeholder="cth. Batch Oktober 2026" class="mt-1 w-full rounded-lg border border-line px-2 py-1.5 text-xs">
-                </div>
-                <div class="mt-2 grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="text-[11px] font-medium text-muted">Dibuka pada</label>
-                        <input type="date" name="registration_start" value="{{ $unit->registration_start?->format('Y-m-d') }}" class="mt-1 w-full rounded-lg border border-line px-2 py-1.5 text-xs">
-                    </div>
-                    <div>
-                        <label class="text-[11px] font-medium text-muted">Ditutup pada</label>
-                        <input type="date" name="registration_deadline" value="{{ $unit->registration_deadline?->format('Y-m-d') }}" class="mt-1 w-full rounded-lg border border-line px-2 py-1.5 text-xs">
-                    </div>
-                </div>
-                <p class="mt-2 text-[11px] leading-snug text-muted">Tanggal mulai berlaku pukul 00.00, tanggal tutup sampai pukul 23.59.</p>
-            </form>
-
-            {{-- 4. Toggle status lowongan --}}
-            <div class="mt-4 flex items-center justify-between gap-3 rounded-xl border border-line bg-bg/60 p-3">
+<div class="mt-6 space-y-8">
+    @php
+        $unitsByDept = $units->groupBy('department.id')->map(fn ($units) => $units->first()?->department ? [
+            'department' => $units->first()->department,
+            'units' => $units,
+        ] : null)->filter();
+    @endphp
+    
+    @forelse($unitsByDept as $group)
+        <section class="rounded-2xl border border-line bg-white p-5 shadow-sm">
+            {{-- Department header + open all button --}}
+            <div class="flex items-center justify-between gap-3 border-b border-line pb-4">
                 <div>
-                    <p class="text-sm font-semibold text-ink">Status lowongan</p>
-                    <p class="mt-0.5 text-[11px] leading-snug text-muted">
-                        @if(! $scheduled)
-                            Atur periode pendaftaran terlebih dahulu untuk mengoperasikan toggle.
-                        @elseif($open)
-                            Lowongan sedang terbuka.
-                        @elseif($expired)
-                            Masa pendaftaran telah berakhir pada {{ $unit->registration_deadline->format('d M Y') }} (23.59). Perpanjang tanggal atau tutup lowongan.
-                        @elseif($notStarted)
-                            Terjadwal, dibuka pada {{ $unit->registration_start->format('d M Y') }} (00.00).
-                        @else
-                            Lowongan sedang ditutup.
-                        @endif
-                    </p>
+                    <h2 class="text-lg font-bold text-ink">{{ $group['department']->name }}</h2>
+                    @if($group['department']->area)
+                        <p class="mt-0.5 text-xs text-muted">{{ $group['department']->area }}</p>
+                    @endif
                 </div>
-                <form method="POST" action="{{ route('admin.lowongan.toggle', $unit) }}" class="shrink-0 {{ $scheduled ? '' : 'pointer-events-none opacity-40' }}">
-                    @csrf
-                    <input type="hidden" name="status" value="{{ $manualOpen ? 'closed' : 'open' }}">
-                    <label class="relative inline-flex cursor-pointer items-center" title="{{ $scheduled ? ($manualOpen ? 'Lowongan diaktifkan (efektif: ' . ($open ? 'terbuka' : 'ditutup') . ')' : 'Lowongan ditutup') : 'Periode pendaftaran belum diatur' }}">
-                        <input type="checkbox" class="peer sr-only" @checked($manualOpen) @disabled(! $scheduled) onchange="this.form.submit()">
-                        <span class="relative inline-block h-6 w-11 rounded-full transition {{ $manualOpen ? 'bg-primary' : 'bg-slate-300' }} peer-checked:bg-primary"></span>
-                        <span class="pointer-events-none absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition peer-checked:translate-x-5"></span>
-                    </label>
-                </form>
+                <button type="button" class="inline-flex items-center gap-1.5 rounded-lg bg-[#22b07d] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1a9a6d]" onclick="document.getElementById('open-dept-modal-{{ $group['department']->id }}').classList.remove('hidden')">
+                    <span class="material-symbols-outlined text-[18px]">lock_open</span>
+                    Buka semua
+                </button>
             </div>
-        </article>
+
+            {{-- Units grid --}}
+            <div class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                @foreach($group['units'] as $unit)
+                    @php
+                        $manualOpen = $unit->status === 'open';
+                        $open = $unit->isOpen();
+                        $scheduled = $unit->registration_start !== null && $unit->registration_deadline !== null;
+                        $expired = $manualOpen && $scheduled && $unit->registration_deadline && now()->gt($unit->registration_deadline);
+                        $notStarted = $manualOpen && $scheduled && $unit->registration_start && now()->lt($unit->registration_start);
+                        $quota = \App\Models\BusinessUnit::MAX_APPLICANTS;
+                        $filled = (int) ($unit->active_applications_count ?? $unit->applications_count ?? 0);
+                        $isFull = $filled >= $quota;
+                    @endphp
+                    <article class="flex flex-col rounded-xl border border-line bg-bg/40 p-4">
+                        {{-- Header --}}
+                        <div class="flex items-start justify-between gap-2">
+                            <div>
+                                <h3 class="font-bold text-ink">{{ $unit->name }}</h3>
+                                <p class="mt-0.5 text-xs text-muted">
+                                    @if($unit->registration_start && $unit->registration_deadline)
+                                        {{ $unit->registration_start->format('d M') }} – {{ $unit->registration_deadline->format('d M Y') }}
+                                    @else
+                                        Belum dijadwalkan
+                                    @endif
+                                </p>
+                            </div>
+                            @if($isFull)
+                                <span class="shrink-0 rounded-full bg-red-50 px-2 py-1 text-[10px] font-semibold text-red-700">{{ $filled }}/{{ $quota }}</span>
+                            @elseif($open)
+                                <span class="shrink-0 rounded-full bg-sky-50 px-2 py-1 text-[10px] font-semibold text-sky-700">Buka</span>
+                            @else
+                                <span class="shrink-0 rounded-full bg-red-50 px-2 py-1 text-[10px] font-semibold text-red-700">Tutup</span>
+                            @endif
+                        </div>
+
+                        {{-- Actions --}}
+                        <div class="mt-3 flex items-center gap-1.5">
+                            <a href="{{ route('admin.units.edit', $unit) }}" class="flex h-8 w-8 items-center justify-center rounded-lg border border-line text-muted transition hover:border-primary hover:text-primary-dark">
+                                <span class="material-symbols-outlined text-[16px]">edit</span>
+                            </a>
+                            <a href="{{ route('admin.matching', ['unit' => $unit->id]) }}" class="flex-1 rounded-lg border border-line px-3 py-1.5 text-xs font-semibold text-ink transition hover:border-primary hover:text-primary-dark">
+                                Pendaftar ({{ $unit->applications_count }})
+                            </a>
+                            <button type="button" onclick="if (confirm('Hapus lowongan ini?')) document.getElementById('delete-lowongan-{{ $unit->id }}').submit()" class="flex h-8 w-8 items-center justify-center rounded-lg border border-line text-muted transition hover:border-red-300 hover:text-red-600">
+                                <span class="material-symbols-outlined text-[16px]">delete</span>
+                            </button>
+                        </div>
+
+                        {{-- Period form --}}
+                        <form method="POST" action="{{ route('admin.lowongan.period', $unit) }}" class="mt-3 space-y-2 rounded-lg border border-line bg-white p-3">
+                            @csrf
+                            <div>
+                                <label class="text-[10px] font-medium text-muted">Batch</label>
+                                <input type="text" name="batch" value="{{ old('batch', $unit->batch) }}" placeholder="Batch Oktober 2026" class="mt-0.5 w-full rounded-lg border border-line px-2 py-1 text-xs">
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="text-[10px] font-medium text-muted">Dibuka</label>
+                                    <input type="date" name="registration_start" value="{{ $unit->registration_start?->format('Y-m-d') }}" class="mt-0.5 w-full rounded-lg border border-line px-2 py-1 text-xs">
+                                </div>
+                                <div>
+                                    <label class="text-[10px] font-medium text-muted">Ditutup</label>
+                                    <input type="date" name="registration_deadline" value="{{ $unit->registration_deadline?->format('Y-m-d') }}" class="mt-0.5 w-full rounded-lg border border-line px-2 py-1 text-xs">
+                                </div>
+                            </div>
+                            <button class="w-full rounded-lg bg-primary px-2 py-1.5 text-xs font-semibold text-white transition hover:bg-primary-dark">Simpan</button>
+                        </form>
+
+                        {{-- Toggle status --}}
+                        <form method="POST" action="{{ route('admin.lowongan.toggle', $unit) }}" class="mt-3 flex items-center gap-2 rounded-lg border border-line bg-white p-3 {{ $scheduled ? '' : 'opacity-50' }}">
+                            @csrf
+                            <input type="hidden" name="status" value="{{ $manualOpen ? 'closed' : 'open' }}">
+                            <label class="relative inline-flex cursor-pointer items-center flex-1">
+                                <input type="checkbox" class="peer sr-only" @checked($manualOpen) @disabled(! $scheduled) onchange="this.form.submit()">
+                                <span class="relative inline-block h-5 w-9 rounded-full transition {{ $manualOpen ? 'bg-primary' : 'bg-slate-300' }} peer-checked:bg-primary"></span>
+                                <span class="pointer-events-none absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow transition peer-checked:translate-x-4"></span>
+                            </label>
+                            <span class="text-xs text-muted">{{ $manualOpen ? 'Buka' : 'Tutup' }}</span>
+                        </form>
+                    </article>
+                @endforeach
+            </div>
+
+            {{-- Modal: buka semua unit di department ini --}}
+            <div id="open-dept-modal-{{ $group['department']->id }}" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+                <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+                    <h3 class="text-lg font-bold text-ink">Buka semua lowongan di {{ $group['department']->name }}</h3>
+                    <p class="mt-1 text-xs text-muted">Tentukan batch pembukaan beserta periode pendaftarannya untuk semua unit bisnis di departemen ini.</p>
+                    <form method="POST" action="{{ route('admin.lowongan.open-department', $group['department']) }}" class="mt-5 space-y-4">
+                        @csrf
+                        <div>
+                            <label class="text-xs font-medium text-muted">Batch pembukaan</label>
+                            <input name="batch" value="{{ old('batch', \App\Http\Controllers\AdminController::batchDefault()) }}" placeholder="Nama batch" class="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-xs font-medium text-muted">Dibuka pada</label>
+                                <input type="date" name="registration_start" required class="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm">
+                            </div>
+                            <div>
+                                <label class="text-xs font-medium text-muted">Ditutup pada</label>
+                                <input type="date" name="registration_deadline" required class="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm">
+                            </div>
+                        </div>
+                        <p class="text-xs leading-snug text-muted">Tanggal mulai berlaku pukul 00.00, tanggal tutup sampai pukul 23.59.</p>
+                        <div class="flex justify-end gap-3 pt-1">
+                            <button type="button" onclick="document.getElementById('open-dept-modal-{{ $group['department']->id }}').classList.add('hidden')" class="rounded-lg border border-line px-4 py-2 text-sm font-semibold text-muted">Batal</button>
+                            <button class="inline-flex items-center gap-1.5 rounded-lg bg-[#22b07d] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1a9a6d]">
+                                <span class="material-symbols-outlined text-[18px]">lock_open</span>
+                                Buka semua
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
     @empty
-        <div class="sm:col-span-2 xl:col-span-3">
+        <div>
             <x-empty title="Belum ada lowongan" />
         </div>
     @endforelse

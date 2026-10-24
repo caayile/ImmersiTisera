@@ -429,6 +429,28 @@ class AdminController extends Controller
         return back()->with('status', 'Batch pembukaan diterapkan dan semua lowongan dibuka.');
     }
 
+    public function openDepartmentLowongan(Request $request, Department $department)
+    {
+        $data = $request->validate([
+            'batch' => ['nullable', 'string', 'max:120'],
+            'registration_start' => ['required', 'date'],
+            'registration_deadline' => ['required', 'date', 'after_or_equal:registration_start'],
+        ]);
+
+        $period = self::normalizePeriod($data);
+
+        BusinessUnit::where('department_id', $department->id)->update([
+            'batch' => $data['batch'] ?: self::batchDefault(),
+            'registration_start' => $period['registration_start'],
+            'registration_deadline' => $period['registration_deadline'],
+            'status' => 'open',
+        ]);
+
+        $this->forgetPublicHomeCache();
+
+        return back()->with('status', 'Semua lowongan di '.$department->name.' dibuka.');
+    }
+
     public static function batchDefault(): string
     {
         return 'Batch '.now()->translatedFormat('F Y');
@@ -809,6 +831,28 @@ class AdminController extends Controller
         $scales = EvaluationScale::orderBy('position')->get();
 
         return view('admin.questionnaires', compact('sections', 'scales'));
+    }
+
+    public function storeQuestionSection(Request $request)
+    {
+        $data = $request->validate([
+            'key' => ['required', 'string', 'max:50', 'alpha_dash', 'unique:evaluation_sections,key'],
+            'title' => ['required', 'string', 'max:255'],
+        ]);
+
+        $data['position'] = EvaluationSection::max('position') + 1;
+
+        EvaluationSection::create($data);
+
+        return back()->with('success', 'Bagian kuesioner berhasil ditambahkan.');
+    }
+
+    public function destroyQuestionSection(EvaluationSection $section)
+    {
+        $section->questions()->delete();
+        $section->delete();
+
+        return back()->with('success', 'Bagian kuesioner berhasil dihapus.');
     }
 
     public function showQuestionSection(EvaluationSection $section)

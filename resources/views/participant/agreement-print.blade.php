@@ -94,7 +94,17 @@
     $fakultasProdi = trim(($dosen->faculty ?? 'Fakultas Teknik').', Prodi '.($dosen->study_program ?? '—'));
     $mentorJabatan = filled($mentor?->position) ? $mentor->position : 'Supervisor '.$program->department?->name;
     $tsuAddress = 'Jl. Samanhudi No. 84-86, Purwosari, Surakarta';
-    $ptAddress = 'Jl. Dr. Supomo No. 23, Sriwedari, Surakarta';
+    
+    $buName = $program->businessUnit?->name ?? '';
+    $ptAddress = match (true) {
+        str_contains($buName, 'TSPM'), str_contains($buName, 'TSIC') => 'Jl. Prof. Dr. Supomo No. 23, Sriwedari, Surakarta',
+        str_contains($buName, 'WJL') => 'Jl. Raya Pajang-Kartasura KM. 8, Pabelan, Kartasura, Sukoharjo',
+        str_contains($buName, 'K33'), str_contains($buName, 'AH') => 'Jl. Ahmad Yani No. 308, Pabelan, Kartasura, Sukoharjo',
+        str_contains($buName, 'Puspa') => 'Jl. Teratai 1 No. 2, Mangkubumen, Surakarta',
+        str_contains($buName, 'Al-Firdaus') => 'Jl. Yosodipuro No. 107, Mangkubumen, Surakarta',
+        default => 'Jl. Prof. Dr. Supomo No. 23, Sriwedari, Surakarta',
+    };
+
     $tujuanItems = array_values(array_filter([
         filled($agreement->objective) ? 'Mengobservasi '.$agreement->objective.' di '.$deptName : null,
         filled($agreement->main_output) ? 'Membuat rekomendasi '.$agreement->main_output.' di '.$deptName : null,

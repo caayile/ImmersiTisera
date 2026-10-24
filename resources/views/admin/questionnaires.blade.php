@@ -24,10 +24,17 @@
                         <td class="px-5 py-3">{{ $section->title }}</td>
                         <td class="px-5 py-3">{{ $section->questions_count }} pernyataan</td>
                         <td class="px-5 py-3">
-                            <a href="{{ route('admin.questionnaires.show', $section) }}" class="inline-flex items-center gap-1.5 rounded-xl bg-[#22b07d] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#1a9a6d]">
-                                Kelola
-                                <span class="material-symbols-outlined text-[15px]">arrow_forward</span>
-                            </a>
+                            <div class="flex gap-2">
+                                <a href="{{ route('admin.questionnaires.show', $section) }}" class="inline-flex items-center gap-1.5 rounded-xl bg-[#22b07d] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#1a9a6d]">
+                                    Kelola
+                                    <span class="material-symbols-outlined text-[15px]">arrow_forward</span>
+                                </a>
+                                <form method="POST" action="{{ route('admin.questionnaires.destroy', $section) }}" onsubmit="return confirm('Hapus bagian kuesioner ini?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button class="rounded-xl border border-red-200 px-4 py-2 text-xs font-semibold text-red-700">Hapus</button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                 @empty
@@ -38,6 +45,12 @@
             </tbody>
         </table>
     </div>
+    <form method="POST" action="{{ route('admin.questionnaires.store') }}" class="flex flex-col gap-2 border-t border-line p-4 sm:flex-row">
+        @csrf
+        <input name="key" maxlength="50" placeholder="Key... (cth. PROGRAM)" class="w-44 rounded-lg border border-line px-3 py-2 text-sm" required>
+        <input name="title" maxlength="255" placeholder="Judul Bagian... (cth. Evaluasi terhadap Program)" class="flex-1 rounded-lg border border-line px-3 py-2 text-sm" required>
+        <button class="shrink-0 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white">Tambah</button>
+    </form>
 </div>
 
 <div class="mt-6 overflow-hidden rounded-2xl border border-line bg-white shadow-sm">
