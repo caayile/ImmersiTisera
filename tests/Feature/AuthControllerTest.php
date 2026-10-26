@@ -25,11 +25,15 @@ class AuthControllerTest extends TestCase
             ->assertSee('right: 0;', false);
     }
 
-    public function test_register_form_includes_institution_field(): void
+    public function test_register_form_leaves_phone_and_institution_for_the_profile(): void
     {
         $this->get(route('register'))
             ->assertOk()
-            ->assertSee('name="institution"', false);
+            ->assertDontSee('Nomor WhatsApp', false)
+            ->assertDontSee('Perguruan Tinggi', false)
+            ->assertDontSee('name="phone"', false)
+            ->assertDontSee('name="institution"', false)
+            ->assertSee('name="nik"', false);
     }
 
     public function test_register_form_includes_mentor_nik_field(): void
@@ -62,10 +66,11 @@ class AuthControllerTest extends TestCase
 
         $this->assertAuthenticatedAs($user);
         $this->assertSame('mentor', $user->role);
+        $this->assertNull($user->phone);
         $this->assertSame('TS-2026-001', $user->mentor?->nik);
     }
 
-    public function test_dosen_registration_stores_institution_after_otp(): void
+    public function test_dosen_registration_leaves_phone_and_institution_empty(): void
     {
         Mail::fake();
 
@@ -89,7 +94,8 @@ class AuthControllerTest extends TestCase
 
         $this->assertAuthenticatedAs($user);
         $this->assertSame('participant', $user->role);
-        $this->assertSame('Telkom University', $user->participant?->profile_data['institution'] ?? null);
+        $this->assertNull($user->phone);
+        $this->assertNull($user->participant?->profile_data);
     }
 
     public function test_wrong_registration_otp_does_not_create_account(): void

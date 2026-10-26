@@ -96,6 +96,42 @@ section[data-reveal].hidden-by-reveal {
     transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), filter 0.22s ease, box-shadow 0.22s ease;
 }
 
+/* Mata sandi harus tetap di dalam kolom. .tap-feedback memaksa position:relative
+   dan mengalahkan utility Tailwind, jadi aturan ini lebih spesifik. */
+.password-field {
+    position: relative;
+}
+
+.password-toggle {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: auto;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    border: 0;
+    background: transparent;
+    color: #9ca3af;
+}
+
+.password-toggle:hover {
+    color: #1a1a1a;
+}
+
+.password-toggle.tap-feedback,
+.password-toggle.tap-feedback:active,
+.password-toggle.tap-feedback.is-tapped {
+    position: absolute;
+    transform: none;
+    filter: none;
+    box-shadow: none;
+    overflow: visible;
+}
+
 .tap-feedback:active,
 .tap-feedback.is-tapped {
     transform: scale(0.94);
@@ -573,7 +609,7 @@ body {
     /* Isi sisa layar di bawah header — tanpa celah putih di bawah hero */
     min-height: calc(100svh - var(--home-header-offset));
     height: calc(100svh - var(--home-header-offset));
-    background-color: #e6f7f1;
+    background-color: #1a1c2e;
     overflow: hidden;
 }
 
@@ -590,13 +626,31 @@ body {
     /* gambar sudah grayscale dari file, jangan di-filter lagi agar tidak double */
 }
 
-/* pakai cover agar proporsi gedung tidak gepeng, framing disesuaikan ke foto referensi */
+/* Isi seluruh hero. Tanpa scale supaya foto tidak ikut di-zoom. */
 .home-hero__photo--full {
     object-fit: cover;
-    object-position: 62% 32%;
-    transform: scale(1.04);
-    animation: home-hero-photo-in 1.35s cubic-bezier(0.22, 1, 0.36, 1) both,
-        home-hero-photo-drift 16s ease-in-out 1.1s infinite alternate;
+    object-position: center center;
+    transform: none;
+}
+
+.home-hero__photo--swap {
+    animation: home-hero-crossfade 14s ease-in-out infinite;
+}
+
+@keyframes home-hero-crossfade {
+    0%,
+    40% {
+        opacity: 0;
+    }
+
+    50%,
+    90% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+    }
 }
 
 .home-hero__panel {
@@ -618,30 +672,6 @@ body {
     background: #3aa981;
     box-shadow: none;
     animation: home-hero-panel-in 0.95s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both;
-}
-
-@keyframes home-hero-photo-in {
-    from {
-        opacity: 0.2;
-        transform: scale(1.14);
-        filter: brightness(0.85);
-    }
-
-    to {
-        opacity: 1;
-        transform: scale(1.04);
-        filter: brightness(1);
-    }
-}
-
-@keyframes home-hero-photo-drift {
-    from {
-        transform: scale(1.04) translate3d(0, 0, 0);
-    }
-
-    to {
-        transform: scale(1.08) translate3d(-1%, 0.5%, 0);
-    }
 }
 
 @keyframes home-hero-panel-in {
@@ -680,6 +710,10 @@ body {
         opacity: 1;
         transform: none;
         filter: none;
+    }
+
+    .home-hero__photo--swap {
+        opacity: 0 !important;
     }
 }
 
@@ -815,10 +849,6 @@ body {
         height: calc(100svh - var(--home-header-offset));
         padding: 16px 14px;
         align-items: center;
-    }
-
-    .home-hero__photo--full {
-        object-position: 68% 28%;
     }
 
     .home-hero__panel {
@@ -1323,32 +1353,69 @@ body {
     right: 48px;
 }
 
+.dept-right-eyebrow,
+.dept-right-title,
+.dept-right-subtitle {
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45), 0 12px 28px rgba(255, 255, 255, 0.28);
+    animation: dept-right-rise 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 .dept-right-eyebrow {
-    font-size: clamp(1.2rem, 1.8vw, 1.6rem);
-    font-weight: 900;
-    font-style: italic;
-    color: #111827;
-    letter-spacing: 0.02em;
-    line-height: 1.2;
+    font-family: 'Poppins', 'Inter', ui-sans-serif, sans-serif;
+    font-size: clamp(0.72rem, 1vw, 0.95rem);
+    font-weight: 600;
+    font-style: normal;
+    color: #16352c;
+    letter-spacing: 0.22em;
+    line-height: 1.4;
     text-transform: uppercase;
+    animation-delay: 0.12s;
 }
 
 .dept-right-title {
-    font-size: clamp(2rem, 3.2vw, 2.8rem);
-    font-weight: 900;
-    color: #0f172a;
-    line-height: 1.15;
-    margin-top: 10px;
-    letter-spacing: -0.01em;
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: clamp(3.4rem, 5.4vw, 5.2rem);
+    font-weight: 700;
+    font-style: normal;
+    color: #0f2a24;
+    line-height: 0.95;
+    margin-top: 8px;
+    letter-spacing: -0.04em;
+    animation-delay: 0.28s;
 }
 
 .dept-right-subtitle {
-    font-size: clamp(1.3rem, 2vw, 1.75rem);
-    font-weight: 800;
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: clamp(1.15rem, 1.7vw, 1.55rem);
+    font-weight: 500;
     font-style: italic;
-    color: #1e293b;
-    margin-top: 8px;
-    line-height: 1.3;
+    color: #1e463a;
+    margin-top: 12px;
+    line-height: 1.35;
+    letter-spacing: -0.015em;
+    animation-delay: 0.44s;
+}
+
+@keyframes dept-right-rise {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 22px, 0);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .dept-right-eyebrow,
+    .dept-right-title,
+    .dept-right-subtitle {
+        animation: none;
+        opacity: 1;
+        transform: none;
+    }
 }
 
 /* ── RESPONSIVE TAMPILAN ───────────────────────────────────── */

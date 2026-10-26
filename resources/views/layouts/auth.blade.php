@@ -28,6 +28,40 @@
         body.auth-shell {
             font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
         }
+
+        .password-field {
+            position: relative;
+        }
+
+        .password-toggle {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: auto;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.25rem;
+            border: 0;
+            background: transparent;
+            color: #9ca3af;
+        }
+
+        .password-toggle:hover {
+            color: #1a1a1a;
+        }
+
+        .password-toggle.tap-feedback,
+        .password-toggle.tap-feedback:active,
+        .password-toggle.tap-feedback.is-tapped {
+            position: absolute;
+            transform: none;
+            filter: none;
+            box-shadow: none;
+            overflow: visible;
+        }
     </style>
 </head>
 <body class="auth-shell bg-grid-pattern min-h-screen flex flex-col justify-between text-white selection:bg-mint selection:text-forest">

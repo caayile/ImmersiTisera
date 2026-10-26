@@ -81,6 +81,7 @@ class ParticipantController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:30'],
+            'institution' => ['nullable', 'string', 'max:180'],
             'avatar' => ['sometimes', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'nidn' => ['nullable', 'string', 'max:40'],
             'faculty' => ['required', 'string', Rule::in(StudyPrograms::faculties())],
@@ -104,6 +105,15 @@ class ParticipantController extends Controller
             'phone' => $data['phone'] ?? null,
             'avatar' => $request->hasFile('avatar') ? $avatars->store($request->file('avatar'), $request->user()->avatar) : $request->user()->avatar,
         ]);
+
+        $profileData = $request->user()->participant?->profile_data ?? [];
+        $institution = trim((string) ($data['institution'] ?? ''));
+        if ($institution === '') {
+            unset($profileData['institution']);
+        } else {
+            $profileData['institution'] = $institution;
+        }
+
         $request->user()->participant()->updateOrCreate(['user_id' => $request->user()->id], [
             'nidn' => $data['nidn'] ?? null,
             'faculty' => $data['faculty'],
@@ -112,6 +122,7 @@ class ParticipantController extends Controller
             'competency' => $this->csv($data['competency']),
             'experience' => $data['experience'] ?? null,
             'motivation' => $data['motivation'] ?? null,
+            'profile_data' => $profileData === [] ? null : $profileData,
         ]);
 
         return back()->with('status', 'Profil disimpan.');

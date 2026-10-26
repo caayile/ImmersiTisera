@@ -22,6 +22,17 @@ class HeroSetting extends Model
         );
     }
 
+    public static function forHome(): self
+    {
+        return static::query()->firstOrCreate(
+            ['page' => 'home'],
+            [
+                'title' => 'Beranda',
+                'background_path' => 'images/hero/beranda.jpg',
+            ],
+        );
+    }
+
     public function backgroundUrl(): ?string
     {
         return $this->resolveMediaUrl($this->background_path);

@@ -13,6 +13,29 @@ class PasswordResetOtpTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_reset_password_page_places_the_visibility_toggle_inside_the_field(): void
+    {
+        $response = $this->get(route('password.reset', [
+            'token' => 'token-reset',
+            'email' => 'test@example.com',
+        ]));
+
+        $response->assertOk();
+
+        $html = $response->getContent();
+
+        $this->assertSame(2, substr_count($html, 'class="password-field"'));
+        $this->assertSame(2, substr_count($html, 'class="password-toggle"'));
+        $this->assertMatchesRegularExpression(
+            '/<div class="password-field">[\s\S]*id="reset-password"[\s\S]*class="password-toggle"[\s\S]*<\/div>/',
+            $html,
+        );
+        $this->assertMatchesRegularExpression(
+            '/<div class="password-field">[\s\S]*id="reset-password-confirm"[\s\S]*class="password-toggle"[\s\S]*<\/div>/',
+            $html,
+        );
+    }
+
     public function test_forgot_password_page_renders(): void
     {
         $this->get(route('password.request'))

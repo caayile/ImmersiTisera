@@ -307,36 +307,21 @@
                             </div>
                         </div>
 
-                        <!-- Row 2: WhatsApp & Unit Bisnis (for Mentor) / Info (for Dosen) -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            <div>
-                                <label class="block text-[11px] font-bold text-charcoal mb-1">Nomor WhatsApp</label>
-                                <input type="tel" name="phone" value="{{ old('phone') }}"
-                                    placeholder="081234567890"
-                                    class="w-full px-2.5 py-1.5 sm:py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-charcoal placeholder-gray-400 focus:bg-white focus:outline-none focus:border-forest focus:ring-2 focus:ring-forest/10 transition">
-                            </div>
-                            <div id="container-mentor-dept"
-                                class="{{ $defaultRole === 'mentor' ? 'block' : 'hidden' }}">
-                                <label class="block text-[11px] font-bold text-charcoal mb-1">Unit Bisnis TS
-                                    Group</label>
-                                <select name="department_id"
-                                    class="w-full px-2.5 py-1.5 sm:py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-charcoal focus:bg-white focus:outline-none focus:border-forest focus:ring-2 focus:ring-forest/10 transition">
-                                    <option value="">Pilih Unit Bisnis</option>
-                                    @if (isset($departments))
-                                        @foreach ($departments as $dept)
-                                            <option value="{{ $dept->id }}"
-                                                {{ old('department_id') == $dept->id ? 'selected' : '' }}>
-                                                {{ $dept->name }}</option>
-                                        @endforeach
-                                    @endif
-                                </select>
-                            </div>
-                            <div id="container-dosen-instansi"
-                                class="{{ $defaultRole === 'dosen' ? 'block' : 'hidden' }}">
-                                <label class="block text-[11px] font-bold text-charcoal mb-1">Perguruan Tinggi</label>
-                                <input type="text" name="institution" value="{{ old('institution') }}" placeholder="Telkom University / Mitra"
-                                    class="w-full px-2.5 py-1.5 sm:py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-charcoal placeholder-gray-400 focus:bg-white focus:outline-none focus:border-forest focus:ring-2 focus:ring-forest/10 transition">
-                            </div>
+                        <div id="container-mentor-dept"
+                            class="{{ $defaultRole === 'mentor' ? 'block' : 'hidden' }}">
+                            <label class="block text-[11px] font-bold text-charcoal mb-1">Unit Bisnis TS
+                                Group</label>
+                            <select name="department_id"
+                                class="w-full px-2.5 py-1.5 sm:py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-charcoal focus:bg-white focus:outline-none focus:border-forest focus:ring-2 focus:ring-forest/10 transition">
+                                <option value="">Pilih Unit Bisnis</option>
+                                @if (isset($departments))
+                                    @foreach ($departments as $dept)
+                                        <option value="{{ $dept->id }}"
+                                            {{ old('department_id') == $dept->id ? 'selected' : '' }}>
+                                            {{ $dept->name }}</option>
+                                    @endforeach
+                                @endif
+                            </select>
                         </div>
 
                         <!-- Row 2b: NIK (khusus Mentor) -->
@@ -498,7 +483,6 @@
             const btnRegText = document.getElementById('btn-reg-text');
             const containerMentorDept = document.getElementById('container-mentor-dept');
             const containerMentorNik = document.getElementById('container-mentor-nik');
-            const containerDosenInstansi = document.getElementById('container-dosen-instansi');
 
             // Add smooth transition
             const animatedElements = [loginTitle, regTitle, btnRegText];
@@ -520,8 +504,6 @@
                     containerMentorDept.classList.remove('block');
                     containerMentorNik.classList.add('hidden');
                     containerMentorNik.classList.remove('block');
-                    containerDosenInstansi.classList.add('block');
-                    containerDosenInstansi.classList.remove('hidden');
                 } else {
                     loginTitle.innerText = 'Masuk Portal Mentor';
                     regTitle.innerText = 'Pendaftaran Mentor Industri';
@@ -533,8 +515,6 @@
                     containerMentorDept.classList.remove('hidden');
                     containerMentorNik.classList.add('block');
                     containerMentorNik.classList.remove('hidden');
-                    containerDosenInstansi.classList.add('hidden');
-                    containerDosenInstansi.classList.remove('block');
                 }
 
                 animatedElements.forEach(el => {

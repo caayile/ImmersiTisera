@@ -179,4 +179,5 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::delete('/department-hero/slides/{heroSlide}', [AdminController::class, 'destroyDepartmentHeroSlide'])->name('department-hero.slides.destroy');
     Route::get('/settings', [AdminController::class, 'settings'])->name('settings');
     Route::put('/settings/certificate-signatory', [AdminController::class, 'updateCertificateSignatory'])->name('settings.certificate-signatory');
+    Route::post('/settings/home-hero', [AdminController::class, 'updateHomeHero'])->name('settings.home-hero');
 });

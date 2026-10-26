@@ -1073,7 +1073,26 @@ class AdminController extends Controller
     {
         return view('admin.settings', [
             'certificateSignatory' => CertificateSignatory::query()->where('is_active', true)->latest('id')->first(),
+            'homeHero' => HeroSetting::forHome(),
         ]);
+    }
+
+    public function updateHomeHero(Request $request)
+    {
+        $request->validate([
+            'background' => ['required', 'image', 'max:20480'],
+        ], [], [
+            'background' => 'gambar latar',
+        ]);
+
+        $setting = HeroSetting::forHome();
+        $setting->update([
+            'background_path' => $this->storeHeroUpload($request->file('background'), $setting->background_path),
+        ]);
+
+        $this->forgetPublicHomeCache();
+
+        return back()->with('status', 'Gambar latar beranda diperbarui.');
     }
 
     public function updateCertificateSignatory(Request $request, CertificateSignatureStorage $signatureStorage)

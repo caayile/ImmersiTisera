@@ -53,6 +53,8 @@ class StudyProgramCatalogTest extends TestCase
             ->assertSee('Sekolah Vokasi')
             ->assertSee('Desain Produksi Tekstil')
             ->assertSee('Fakultas dan program studi')
+            ->assertSee('Perguruan Tinggi')
+            ->assertSee('name="institution"', false)
             ->assertDontSee('Kembali ke beranda')
             ->assertDontSee('Kembali ke profil')
             ->assertDontSee('name="study_program" value=', false);
@@ -87,6 +89,36 @@ class StudyProgramCatalogTest extends TestCase
             'faculty' => 'Sekolah Vokasi',
             'study_program' => 'Desain Produksi Tekstil',
         ]);
+    }
+
+    public function test_participant_can_save_institution_on_profile(): void
+    {
+        $this->seed();
+
+        $dosen = User::where('email', 'dosen@imersi.id')->firstOrFail();
+        $dosen->participant->update([
+            'profile_data' => ['purpose' => 'pembelajaran'],
+        ]);
+
+        $this->actingAs($dosen)
+            ->post('/participant/profile', [
+                'name' => $dosen->name,
+                'phone' => '081200011122',
+                'institution' => 'Telkom University',
+                'nidn' => '00112233',
+                'faculty' => 'Sekolah Vokasi',
+                'study_program' => 'Desain Produksi Tekstil',
+                'competency' => 'Desain Seragam',
+                'expertise' => 'Tekstil',
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $dosen->refresh();
+
+        $this->assertSame('081200011122', $dosen->phone);
+        $this->assertSame('Telkom University', $dosen->participant->profile_data['institution']);
+        $this->assertSame('pembelajaran', $dosen->participant->profile_data['purpose']);
     }
 
     public function test_desain_units_no_longer_exist_at_k33_and_wjl(): void

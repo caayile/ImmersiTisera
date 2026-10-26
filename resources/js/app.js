@@ -69,7 +69,7 @@ Alpine.start();
     // absolute via inset-y-0/left-1/2). Class .tap-feedback memaksa
     // position:relative (unlayered, mengalahkan utility Tailwind) sehingga
     // kartu kolaps (tinggi 0) dan tak terlihat sama sekali.
-    document.querySelectorAll('a:not(.partner-card), button').forEach((element) => element.classList.add('tap-feedback'));
+    document.querySelectorAll('a:not(.partner-card), button:not(.password-toggle)').forEach((element) => element.classList.add('tap-feedback'));
 
     document.addEventListener('pointerdown', (event) => {
         const target = event.target.closest('a, button');

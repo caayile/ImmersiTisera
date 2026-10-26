@@ -447,8 +447,6 @@ class AuthController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'unique:users,email'],
             'password' => ['required', 'min:6', 'confirmed'],
-            'phone' => ['nullable', 'string', 'max:30'],
-            'institution' => ['nullable', 'string', 'max:180'],
         ];
         if ($role === 'mentor') {
             $rules['department_id'] = ['nullable', 'exists:departments,id'];
@@ -473,8 +471,8 @@ class AuthController extends Controller
                 'name' => $data['name'],
                 'password' => Hash::make($data['password']),
                 'role' => $role,
-                'phone' => $data['phone'] ?? null,
-                'institution' => $role === 'participant' ? trim((string) ($data['institution'] ?? '')) : null,
+                'phone' => null,
+                'institution' => null,
                 'nik' => $data['nik'] ?? null,
                 'department_id' => $data['department_id'] ?? null,
                 'otp' => $otp,

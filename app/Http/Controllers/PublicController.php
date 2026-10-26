@@ -27,6 +27,8 @@ class PublicController extends Controller
                     'featuredUnits' => $featuredUnits,
                     'latestNews' => $latestNews,
                     'heroRegistration' => $heroRegistration,
+                    'homeHeroImage' => $this->homeHeroImageUrl(),
+                    'homeHeroAlternateImage' => $this->homeHeroAlternateImageUrl(),
                     'nextStep' => null,
                 ])->render();
             });
@@ -35,13 +37,25 @@ class PublicController extends Controller
         }
 
         [$departments, $featuredUnits, $latestNews, $heroRegistration] = $this->homeData();
+        $homeHeroImage = $this->homeHeroImageUrl();
+        $homeHeroAlternateImage = $this->homeHeroAlternateImageUrl();
 
         $user = auth()->user();
         $nextStep = $user?->isParticipant()
             ? ParticipantNextStep::for($user)
             : null;
 
-        return view('public.home', compact('departments', 'featuredUnits', 'latestNews', 'heroRegistration', 'nextStep'));
+        return view('public.home', compact('departments', 'featuredUnits', 'latestNews', 'heroRegistration', 'homeHeroImage', 'homeHeroAlternateImage', 'nextStep'));
+    }
+
+    private function homeHeroImageUrl(): string
+    {
+        return HeroSetting::forHome()->backgroundUrl() ?: asset('images/hero/beranda.jpg');
+    }
+
+    private function homeHeroAlternateImageUrl(): string
+    {
+        return asset('images/hero/beranda-tiga-serangkai.jpg').'?v=2';
     }
 
     /**

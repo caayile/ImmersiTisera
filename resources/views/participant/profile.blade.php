@@ -89,6 +89,10 @@
                         <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">NIP / NIDN</span>
                         <input name="nidn" value="{{ old('nidn', $participant->nidn) }}" class="mt-2 w-full rounded-2xl border border-line bg-bg px-4 py-3 text-sm outline-none transition focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/15">
                     </label>
+                    <label class="md:col-span-2">
+                        <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Perguruan Tinggi</span>
+                        <input name="institution" value="{{ old('institution', data_get($participant->profile_data, 'institution')) }}" placeholder="Telkom University" class="mt-2 w-full rounded-2xl border border-line bg-bg px-4 py-3 text-sm outline-none transition focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/15">
+                    </label>
                 </div>
             </section>
 

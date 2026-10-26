@@ -6,6 +6,25 @@
     <p class="mt-3 text-muted">Program dimulai setelah perjanjian disepakati. Program selesai jika hasil utama, laporan akhir, dan evaluasi sudah lengkap.</p>
 </article>
 <article class="mt-5 rounded-2xl border border-line bg-white p-6">
+    <h2 class="text-lg font-semibold">Gambar latar beranda</h2>
+    <p class="mt-1 text-sm text-muted">Foto mengisi seluruh latar beranda, tanpa efek zoom.</p>
+    <form method="POST" action="{{ route('admin.settings.home-hero') }}" enctype="multipart/form-data" class="mt-4 grid gap-4">
+        @csrf
+        @if($homeHero->backgroundUrl())
+            <img src="{{ $homeHero->backgroundUrl() }}" alt="Latar beranda saat ini" class="max-h-72 w-full rounded-xl object-cover object-center">
+        @endif
+        <label class="grid gap-1 text-sm font-medium">Ganti foto (JPG, PNG, atau WebP, maksimal 20 MB)
+            <input type="file" name="background" accept="image/png,image/jpeg,image/webp" required class="text-sm font-normal">
+        </label>
+        @error('background')
+            <p class="text-sm text-red-600">{{ $message }}</p>
+        @enderror
+        <div>
+            <button class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white">Simpan gambar beranda</button>
+        </div>
+    </form>
+</article>
+<article class="mt-5 rounded-2xl border border-line bg-white p-6">
     <h2 class="text-lg font-semibold">Pejabat penandatangan sertifikat</h2>
     <form method="POST" action="{{ route('admin.settings.certificate-signatory') }}" enctype="multipart/form-data" class="mt-4 grid gap-4 sm:grid-cols-2">
         @csrf
