@@ -40,34 +40,34 @@
         <input type="hidden" name="email" value="{{ $email }}">
 
         <!-- Password Baru -->
-        <div>
+        <div class="mb-4">
             <label class="block text-xs font-bold text-charcoal mb-1">Kata Sandi Baru</label>
-            <div class="relative">
-                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400">
+            <div class="relative group">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
                     <i class="fa-solid fa-key text-xs"></i>
-                </span>
+                </div>
                 <input type="password" id="reset-password" name="password" required autofocus
                     placeholder="Minimal 6 karakter"
                     class="w-full pl-9 pr-9 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm font-medium text-charcoal placeholder-gray-400 focus:bg-white focus:outline-none focus:border-forest focus:ring-2 focus:ring-forest/10 transition">
                 <button type="button" onclick="togglePassword('reset-password', this)"
-                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-charcoal">
+                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-charcoal transition-colors">
                     <i class="fa-regular fa-eye text-xs"></i>
                 </button>
             </div>
         </div>
 
         <!-- Konfirmasi Password Baru -->
-        <div>
+        <div class="mb-4">
             <label class="block text-xs font-bold text-charcoal mb-1">Konfirmasi Kata Sandi Baru</label>
-            <div class="relative">
-                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400">
+            <div class="relative group">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
                     <i class="fa-solid fa-shield-halved text-xs"></i>
-                </span>
+                </div>
                 <input type="password" id="reset-password-confirm" name="password_confirmation" required
                     placeholder="Ulangi kata sandi baru"
                     class="w-full pl-9 pr-9 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm font-medium text-charcoal placeholder-gray-400 focus:bg-white focus:outline-none focus:border-forest focus:ring-2 focus:ring-forest/10 transition">
                 <button type="button" onclick="togglePassword('reset-password-confirm', this)"
-                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-charcoal">
+                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-charcoal transition-colors">
                     <i class="fa-regular fa-eye text-xs"></i>
                 </button>
             </div>
