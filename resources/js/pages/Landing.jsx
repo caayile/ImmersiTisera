@@ -4,7 +4,7 @@ import { pageVariants, staggerContainer, cardVariants, fadeIn } from '../lib/mot
 
 const stages = [
   ['Identify', 'Mempertemukan dosen, prodi, dan unit bisnis TSPM / TSIC.'],
-  ['Match & Commit', 'Rekomendasi, pilih aktivitas, lalu Industry Immersion Agreement.'],
+  ['Match & Commit', 'Rekomendasi, pilih aktivitas, lalu Perjanjian Immersi Industri.'],
   ['Immersion', '60 hari: Discover, Understand, Contribute, Deliver.'],
   ['Impact', 'Output nyata, evaluasi, dan manfaat ke kampus serta industri.'],
   ['Integration', 'Close, follow-up, collaborate, develop, atau scale.'],
@@ -27,7 +27,7 @@ export default function Landing() {
       >
         <div>
           <p className="text-xl font-semibold">IMMERSI</p>
-          <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-moss/70">TSU Industry Immersion</p>
+          <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-moss/70">Immersi Industri</p>
         </div>
         <div className="flex gap-3">
           <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>

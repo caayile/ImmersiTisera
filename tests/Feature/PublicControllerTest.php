@@ -45,6 +45,48 @@ class PublicControllerTest extends TestCase
         $response = $this->get('/')->assertOk();
 
         $this->assertSame(1, substr_count($response->getContent(), 'images/logo-footer.png'));
+        $response->assertSee('href="https://share.google/SI0q9wACAtHSnEJmR"', false)
+            ->assertSee('rel="noopener noreferrer"', false)
+            ->assertSee('Jl. Prof. DR. Supomo No.23, Sriwedari, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57141');
+    }
+
+    public function test_homepage_displays_building_background_and_public_navigation(): void
+    {
+        $this->seed();
+
+        $response = $this->get('/');
+
+        $response->assertSee('Dosen belajar langsung dari industri.')
+            ->assertSee('kerja nyata di Tiga Serangkai Group')
+            ->assertSee('Immersi Industri')
+            ->assertSee('Jelajahi departemen')
+            ->assertSee('Tentang program')
+            ->assertSee('Beranda')
+            ->assertSee('Unit Bisnis')
+            ->assertSee('Berita')
+            ->assertSee('Masuk')
+            ->assertSee('sticky top-0', false);
+    }
+
+    public function test_public_pages_share_the_reference_header_layout(): void
+    {
+        $this->seed();
+
+        $pages = [
+            ['/', route('home'), 'Beranda'],
+            [route('departments.index'), route('departments.index'), 'Unit Bisnis'],
+            [route('news.index'), route('news.index'), 'Berita'],
+        ];
+
+        foreach ($pages as [$url, $activeHref, $activeLabel]) {
+            $this->get($url)
+                ->assertOk()
+                ->assertSee('class="home-header sticky top-0 z-50"', false)
+                ->assertSee('class="mx-auto flex max-w-[1240px] items-center justify-between gap-4 px-5 py-4 lg:px-0"', false)
+                ->assertSee('class="h-10 w-auto object-contain sm:h-11"', false)
+                ->assertSee('<a href="'.$activeHref.'" class="home-header__link home-header__link--active">'.$activeLabel.'</a>', false)
+                ->assertSee('class="home-header__login"', false);
+        }
     }
 
     public function test_home_hero_shows_admin_batch_name_when_registration_open(): void

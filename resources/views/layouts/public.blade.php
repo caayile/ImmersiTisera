@@ -19,7 +19,7 @@
         })();
     </script>
 </head>
-<body class="bg-white text-ink" x-data="{ open: false }">
+<body class="{{ request()->routeIs('home') ? 'home-page' : 'bg-white text-ink' }}" x-data="{ open: false }">
 <div id="loader" class="brand-splash" role="status" aria-label="Memuat Magang Dosen TSU">
     <div class="logo">
         <div class="part emblem"><i class="pic"></i></div>
@@ -34,21 +34,22 @@
     </div>
 </div>
 @php
+    $isHomePage = request()->routeIs('home');
     $nav = [
-        ['Beranda', 'home'],
-        ['Unit Bisnis', 'departments.index'],
-        ['Berita', 'news.index'],
+        ['Beranda', route('home'), 'home'],
+        ['Unit Bisnis', route('departments.index'), 'departments.*'],
+        ['Berita', route('news.index'), 'news.*'],
     ];
 @endphp
-<header class="sticky top-0 z-50 border-b border-line bg-white">
-    <div class="mx-auto flex max-w-[1440px] items-center justify-between gap-4 px-5 py-5 lg:px-12">
+<header class="home-header sticky top-0 z-50">
+    <div class="mx-auto flex max-w-[1240px] items-center justify-between gap-4 px-5 py-4 lg:px-0">
         <a href="{{ route('home') }}" class="flex items-center">
-            <img id="nav-logo" src="{{ asset('images/logo-full.png') }}" alt="Magang Dosen TSU" class="h-10 sm:h-11 w-auto object-contain">
+            <img id="nav-logo" src="{{ asset('images/logo-full.png') }}" alt="Magang Dosen TSU" class="h-10 w-auto object-contain sm:h-11">
             <span id="nav-brand-text" class="sr-only">Magang Dosen TSU</span>
         </a>
-        <nav class="hidden items-center gap-1 text-sm font-medium md:flex">
-            @foreach($nav as [$label, $name])
-                <a href="{{ route($name) }}" class="tap-feedback rounded-full px-4 py-2 {{ request()->routeIs($name) ? 'bg-primary/15 text-primary-dark' : 'text-ink hover:bg-bg' }}">{{ $label }}</a>
+        <nav class="hidden items-center gap-7 text-sm font-medium md:flex">
+            @foreach($nav as [$label, $href, $activeRoute])
+                <a href="{{ $href }}" class="home-header__link {{ request()->routeIs($activeRoute) ? 'home-header__link--active' : '' }}">{{ $label }}</a>
             @endforeach
         </nav>
         <div class="flex items-center gap-2 text-sm">
@@ -58,14 +59,14 @@
                 @endif
                 <x-user-menu />
             @else
-                <a href="{{ route('login') }}" class="rounded-full bg-primary px-4 py-2 font-semibold text-white">Masuk</a>
+                <a href="{{ route('login') }}" class="home-header__login">Masuk</a>
             @endauth
-            <button class="rounded-lg border border-line px-3 py-1 md:hidden" @click="open = !open">Menu</button>
+            <button class="home-header__menu md:hidden" @click="open = !open">Menu</button>
         </div>
     </div>
-    <div x-show="open" x-cloak class="border-t border-line bg-white px-5 py-3 text-sm md:hidden">
-        @foreach($nav as [$label, $name])
-            <a href="{{ route($name) }}" class="tap-feedback block py-2">{{ $label }}</a>
+    <div x-show="open" x-cloak class="home-header__mobile-menu">
+        @foreach($nav as [$label, $href, $activeRoute])
+            <a href="{{ $href }}" class="home-header__mobile-link">{{ $label }}</a>
         @endforeach
         @auth
             <p class="border-t border-line pt-2 text-xs text-muted">{{ auth()->user()->name }}</p>
@@ -83,14 +84,17 @@
     <div class="bg-primary/15 px-5 py-3 text-center text-sm text-primary-dark">{{ session('status') }}</div>
 @endif
 <main>@yield('content')</main>
-<footer class="bg-[#173d32] text-white/75">
+<footer @if($isHomePage) id="kontak" @endif class="bg-[#173d32] text-white/75">
     <div class="mx-auto grid max-w-6xl gap-10 px-5 py-14 md:grid-cols-[1.35fr_0.8fr_1fr] md:gap-16 md:py-16">
         <div>
             <div class="flex items-center">
                 <img src="{{ asset('images/logo-footer.png') }}" alt="Magang Dosen TSU" class="h-16 w-auto object-contain">
             </div>
             <p class="mt-5 max-w-sm text-sm leading-6">Program ini dikelola langsung oleh unit pembelajaran dan inovasi untuk mempertemukan dosen dengan pengalaman kerja nyata di dunia industri.</p>
-            <p class="mt-5 flex max-w-sm items-start gap-2 text-sm leading-6"><span class="material-symbols-outlined mt-0.5 text-[18px] text-secondary">location_on</span><span>Jl. Prof. DR. Supomo No.23, Sriwedari, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57141</span></p>
+            <a href="https://share.google/SI0q9wACAtHSnEJmR" target="_blank" rel="noopener noreferrer" class="mt-5 flex max-w-sm items-start gap-2 text-sm leading-6 transition hover:text-secondary">
+                <span class="material-symbols-outlined mt-0.5 text-[18px] text-secondary">location_on</span>
+                <span>Jl. Prof. DR. Supomo No.23, Sriwedari, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57141</span>
+            </a>
         </div>
         <div>
             <h2 class="font-semibold text-white">Navigasi</h2>

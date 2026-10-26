@@ -29,8 +29,8 @@
 @endphp
 
 {{-- ===== HERO BERANDA ===== --}}
-<section class="home-hero relative overflow-hidden" aria-label="Hero Magang Dosen">
-    <div class="home-hero__image absolute inset-0" aria-hidden="true">
+<section class="home-hero" aria-label="Hero Magang Dosen">
+    <div class="home-hero__background" aria-hidden="true">
         <img
             src="{{ $homeHeroImage }}"
             alt="Latar beranda"
@@ -44,29 +44,36 @@
             class="home-hero__photo home-hero__photo--full home-hero__photo--swap"
             loading="eager"
         >
+        <div class="home-hero__wash"></div>
     </div>
-
-    <div class="home-hero__panel relative z-10">
+    <div class="home-hero__inner">
         <div class="home-hero__copy">
-            <h1 class="font-bold text-white">
-                Mulai kolaborasi dari<br class="hidden md:block"> unit bisnis yang tepat<br class="hidden md:block"> di sini.
-            </h1>
-            <p class="font-semibold text-white">
-                Program ini menghubungkan Dosen TSU dengan Unit Bisnis TS Group.
+            <p class="home-hero__eyebrow">Kolaborasi Inovasi Kontribusi</p>
+            <h1>Dosen belajar langsung dari industri.</h1>
+            <p class="home-hero__description">Magang Dosen TSU mempertemukan dosen dengan praktik kerja nyata di Tiga Serangkai Group, agar ilmu di kelas selalu sejalan dengan kebutuhan dunia kerja.</p>
+            <div class="home-hero__actions">
+                <a href="{{ route('departments.index') }}" class="home-hero__cta">Jelajahi departemen</a>
+                <a href="{{ route('program.info') }}" class="home-hero__secondary-cta">Tentang program</a>
+            </div>
+            <p class="home-hero__registration">
+                @if(($heroRegistration['mode'] ?? 'closed') === 'full')
+                    <span class="home-hero__registration-dot"></span>
+                    <span>{{ $heroRegistration['batch'] ?? 'Pendaftaran' }} · Dibuka</span>
+                @elseif(($heroRegistration['mode'] ?? 'closed') === 'partial')
+                    <span class="home-hero__registration-dot"></span>
+                    <span>Ada Lowongan<br>Terbuka</span>
+                @else
+                    <span class="home-hero__registration-dot home-hero__registration-dot--closed"></span>
+                    <span>Pendaftaran<br>Ditutup</span>
+                @endif
             </p>
         </div>
-        <div class="home-hero__actions">
-            @if(($heroRegistration['mode'] ?? 'closed') === 'full')
-                <span class="home-hero__batch">{{ $heroRegistration['batch'] ?? 'Pendaftaran' }}<br>Dibuka</span>
-            @elseif(($heroRegistration['mode'] ?? 'closed') === 'partial')
-                <span class="home-hero__batch home-hero__batch--closed">Ada Lowongan<br>Terbuka</span>
-            @else
-                <span class="home-hero__batch home-hero__batch--closed">Pendaftaran<br>Ditutup</span>
-            @endif
-            <a href="{{ route('departments.index') }}" class="home-hero__cta tap-feedback">
-                Jelajahi Unit Bisnis
-                <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
-            </a>
+        <div class="home-hero__photo-caption">
+            <span class="material-symbols-outlined" aria-hidden="true">lightbulb</span>
+            <div>
+                <h2>Immersi Industri</h2>
+                <p>Dari ruang kuliah ke ruang kerja</p>
+            </div>
         </div>
     </div>
 </section>
