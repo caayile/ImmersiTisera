@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\Api\ProgramResource;
 use App\Models\CollaborationPipeline;
 use App\Models\Evaluation;
 use App\Models\Logbook;
@@ -9,13 +10,10 @@ use App\Models\MentorSession;
 use App\Models\Program;
 use App\Models\ProgramOutput;
 use App\Models\Timeline;
-use App\Support\ApiPresenter;
 use Illuminate\Http\Request;
 
 class ProgramController extends Controller
 {
-    public function __construct(private ApiPresenter $presenter) {}
-
     public function index(Request $request)
     {
         $query = Program::query()
@@ -24,14 +22,14 @@ class ProgramController extends Controller
 
         $this->scopePrograms($request, $query);
 
-        return response()->json($query->get()->map(fn (Program $program) => $this->presenter->program($program)));
+        return ProgramResource::collection($query->get());
     }
 
     public function show(Request $request, Program $program)
     {
-        $this->authorizeAccess($request, $program);
+        $this->authorize('view', $program);
 
-        return response()->json($this->presenter->program($program, true));
+        return new ProgramResource($program->load(['logbooks', 'mentorSessions', 'outputs', 'evaluations.evaluator', 'timelines']));
     }
 
     public function history(Request $request)
@@ -109,7 +107,9 @@ class ProgramController extends Controller
             'status' => 'submitted',
         ]);
 
-        return response()->json($this->presenter->logbook($entry), 201);
+        return (new LogbookResource($entry))
+            ->response()
+            ->setStatusCode(201);
     }
 
     public function verifyLogbook(Request $request, Program $program, Logbook $logbook)
@@ -269,7 +269,9 @@ class ProgramController extends Controller
             'status' => 'submitted',
         ]);
 
-        return response()->json($output, 201);
+        return (new ProgramOutputResource($output))
+            ->response()
+            ->setStatusCode(201);
     }
 
     public function connect(Request $request, Program $program)

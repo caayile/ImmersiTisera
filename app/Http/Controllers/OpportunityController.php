@@ -2,15 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Application;
+use App\Http\Resources\Api\OpportunityResource;
 use App\Models\BusinessUnit;
 use App\Services\MatchingService;
-use App\Support\ApiPresenter;
 use Illuminate\Http\Request;
 
 class OpportunityController extends Controller
 {
-    public function __construct(private ApiPresenter $presenter, private MatchingService $matching) {}
+    public function __construct(private MatchingService $matching) {}
 
     public function index(Request $request)
     {
@@ -28,17 +27,7 @@ class OpportunityController extends Controller
             });
         }
 
-        $units = $query->get()->unique('id')->values();
-        $participant = $user->participant;
-        $appliedIds = $participant
-            ? Application::query()->where('participant_id', $participant->id)->pluck('business_unit_id')->all()
-            : [];
-
-        return response()->json($units->map(function (BusinessUnit $unit) use ($participant, $appliedIds) {
-            $match = $participant ? $this->matching->score($participant, $unit) : ['score' => 0];
-
-            return $this->presenter->opportunity($unit, $match, in_array($unit->id, $appliedIds, true));
-        }));
+        return OpportunityResource::collection($query->get());
     }
 
     public function store(Request $request)
@@ -77,23 +66,13 @@ class OpportunityController extends Controller
             $mentor->update(['business_unit_id' => $unit->id]);
         }
 
-        return response()->json($this->presenter->opportunity($unit->fresh(['department', 'mentors.user'])), 201);
+        return (new OpportunityResource($unit->fresh(['department', 'mentors.user'])))
+            ->response()
+            ->setStatusCode(201);
     }
 
     public function show(Request $request, BusinessUnit $opportunity)
     {
-        $user = $request->user();
-        $participant = $user->participant;
-        $match = $participant ? $this->matching->score($participant, $opportunity) : ['score' => 0];
-        $application = $participant
-            ? Application::where('participant_id', $participant->id)->where('business_unit_id', $opportunity->id)->latest('id')->first()
-            : null;
-
-        return response()->json($this->presenter->opportunity(
-            $opportunity,
-            $match,
-            (bool) $application,
-            $application,
-        ));
+        return new OpportunityResource($opportunity);
     }
 }

@@ -2,26 +2,31 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\Api\AgreementResource;
 use App\Models\Agreement;
 use App\Models\Application;
 use App\Services\AgreementLetterService;
-use App\Support\ApiPresenter;
+use App\Jobs\IssueAgreementLetterJob;
+use App\Jobs\SendAgreementApprovedJob;
+use App\Policies\AgreementPolicy;
 use Illuminate\Http\Request;
 
 class AgreementController extends Controller
 {
-    public function __construct(private ApiPresenter $presenter) {}
+    public function __construct()
+    {
+    }
 
     public function show(Request $request, Agreement $agreement)
     {
-        $this->authorizeAccess($request, $agreement);
+        $this->authorize('view', $agreement);
 
-        return response()->json($this->presenter->agreement($agreement));
+        return new AgreementResource($agreement);
     }
 
     public function update(Request $request, Agreement $agreement)
     {
-        $this->authorizeAccess($request, $agreement);
+        $this->authorize('update', $agreement);
 
         if (! in_array($agreement->status, ['draft', 'submitted', 'revision'], true)) {
             return response()->json(['message' => 'Perjanjian yang sudah disepakati tidak bisa diubah.'], 422);
@@ -64,12 +69,12 @@ class AgreementController extends Controller
             'mentor_signature' => null,
         ]);
 
-        return response()->json($this->presenter->agreement($agreement->fresh()));
+        return new AgreementResource($agreement->fresh());
     }
 
     public function approve(Request $request, Agreement $agreement)
     {
-        $this->authorizeAccess($request, $agreement);
+        $this->authorize('approve', $agreement);
         $user = $request->user();
         $program = $agreement->program;
 
@@ -99,29 +104,11 @@ class AgreementController extends Controller
 
         if ($agreement->status === 'agreed') {
             app(AgreementLetterService::class)->issue($agreement);
-            $agreement->refresh();
+            IssueAgreementLetterJob::dispatch($agreement);
+            SendAgreementApprovedJob::dispatch($agreement);
         }
 
-        if ($agreement->status === 'agreed' && $program) {
-            $program->loadMissing('application');
-            $application = $program->application;
-            $start = $program->start_date
-                ?? $application?->period_start
-                ?? $application?->created_at?->copy()->startOfDay()
-                ?? now()->startOfDay();
-            $end = $program->end_date
-                ?? $application?->period_end
-                ?? Application::periodEndFromStart($start);
-
-            $program->update([
-                'status' => 'active',
-                'start_date' => $start->toDateString(),
-                'end_date' => $end->toDateString(),
-            ]);
-            $program->seedTimeline();
-        }
-
-        return response()->json($this->presenter->agreement($agreement->fresh(['program'])));
+        return new AgreementResource($agreement->fresh(['program']));
     }
 
     private function authorizeAccess(Request $request, Agreement $agreement): void

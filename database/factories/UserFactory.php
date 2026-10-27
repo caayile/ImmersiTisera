@@ -44,4 +44,37 @@ class UserFactory extends Factory
             'email_verified_at' => null,
         ]);
     }
+
+    /**
+     * Indicate that the user should be an admin.
+     */
+    public function admin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'admin',
+            'verification_status' => 'verified',
+        ]);
+    }
+
+    /**
+     * Indicate that the user should be a mentor.
+     */
+    public function mentor(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'mentor',
+            'verification_status' => 'verified',
+        ]);
+    }
+
+    /**
+     * Indicate that the user should be a participant.
+     */
+    public function participant(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'user',
+            'verification_status' => 'verified',
+        ]);
+    }
 }

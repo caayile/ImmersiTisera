@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Mail\SmtpCaMailManager;
 use App\Support\NeonMigrationConnection;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -23,6 +24,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        JsonResource::withoutWrapping();
+
         if (config('database.default') !== 'neon' || ! $this->app->runningInConsole()) {
             return;
         }

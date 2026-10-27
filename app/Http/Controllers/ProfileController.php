@@ -2,18 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\Api\UserResource;
 use App\Models\BusinessUnit;
 use App\Models\Department;
 use App\Models\Mentor;
 use App\Models\Participant;
 use App\Services\AvatarStorageService;
-use App\Support\ApiPresenter;
 use Illuminate\Http\Request;
 
 class ProfileController extends Controller
 {
-    public function __construct(private ApiPresenter $presenter) {}
-
     public function update(Request $request, AvatarStorageService $avatars)
     {
         $user = $request->user();
@@ -106,6 +104,6 @@ class ProfileController extends Controller
             }
         }
 
-        return response()->json($this->presenter->user($user->fresh(['participant', 'mentor.department', 'mentor.businessUnit'])));
+        return new UserResource($user->fresh(['participant', 'mentor.department', 'mentor.businessUnit']));
     }
 }

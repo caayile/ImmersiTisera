@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\Api\ApplicationResource;
 use App\Models\Application;
 use App\Models\BusinessUnit;
 use App\Services\ApplicationApprovalService;
-use App\Support\ApiPresenter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
@@ -13,7 +13,7 @@ use Illuminate\Validation\ValidationException;
 
 class ApplicationController extends Controller
 {
-    public function __construct(private ApiPresenter $presenter, private ApplicationApprovalService $approvals) {}
+    public function __construct(private ApplicationApprovalService $approvals) {}
 
     public function index(Request $request)
     {
@@ -28,7 +28,7 @@ class ApplicationController extends Controller
             $query->where('mentor_id', $user->mentor?->id);
         }
 
-        return response()->json($query->get()->map(fn (Application $application) => $this->presenter->application($application)));
+        return ApplicationResource::collection($query->get());
     }
 
     public function store(Request $request)
@@ -81,11 +81,14 @@ class ApplicationController extends Controller
             return response()->json(['message' => collect($exception->errors())->flatten()->first()], 422);
         }
 
-        return response()->json($this->presenter->application($application), 201);
+        return (new ApplicationResource($application))
+            ->response()
+            ->setStatusCode(201);
     }
 
     public function review(Request $request, Application $application)
     {
+        $this->authorize('review', $application);
         abort_unless($request->user()->isMentor(), 403);
 
         $data = $request->validate([
@@ -108,6 +111,6 @@ class ApplicationController extends Controller
             return response()->json(['message' => collect($exception->errors())->flatten()->first()], 422);
         }
 
-        return response()->json($this->presenter->application($application));
+        return new ApplicationResource($application);
     }
 }

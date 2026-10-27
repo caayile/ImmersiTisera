@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\Api\UserResource;
 use App\Models\Mentor;
 use App\Models\Participant;
 use App\Models\User;
-use App\Support\ApiPresenter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -37,7 +37,7 @@ class ApiAuthController extends Controller
 
         return response()->json([
             'token' => $user->createToken('imersi')->plainTextToken,
-            'user' => app(ApiPresenter::class)->user($user),
+            'user' => new UserResource($user),
         ]);
     }
 
@@ -71,13 +71,13 @@ class ApiAuthController extends Controller
 
         return response()->json([
             'token' => $user->createToken('imersi')->plainTextToken,
-            'user' => app(ApiPresenter::class)->user($user),
+            'user' => new UserResource($user),
         ], 201);
     }
 
-    public function me(Request $request, ApiPresenter $presenter)
+    public function me(Request $request)
     {
-        return response()->json($presenter->user($request->user()));
+        return new UserResource($request->user());
     }
 
     public function logout(Request $request)

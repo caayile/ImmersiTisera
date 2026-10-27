@@ -3,19 +3,19 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Api\DepartmentNeedResource;
+use App\Http\Resources\Api\ProgramResource;
+use App\Http\Resources\Api\UserResource;
 use App\Models\BusinessUnit;
 use App\Models\DepartmentNeed;
 use App\Models\Mentor;
 use App\Models\Participant;
 use App\Models\Program;
 use App\Models\User;
-use App\Support\ApiPresenter;
 use Illuminate\Http\Request;
 
 class AdminApiController extends Controller
 {
-    public function __construct(private ApiPresenter $presenter) {}
-
     public function overview(Request $request)
     {
         abort_unless($request->user()->isAdmin(), 403);
@@ -41,7 +41,7 @@ class AdminApiController extends Controller
             $query->where('verification_status', $status);
         }
 
-        return response()->json($query->get()->map(fn (User $user) => $this->presenter->user($user)));
+        return UserResource::collection($query->get());
     }
 
     public function verify(Request $request, User $user)
@@ -50,7 +50,7 @@ class AdminApiController extends Controller
 
         $user->update(['verification_status' => 'verified', 'rejection_reason' => null]);
 
-        return response()->json($this->presenter->user($user->fresh(['participant', 'mentor.department', 'mentor.businessUnit'])));
+        return new UserResource($user->fresh(['participant', 'mentor.department', 'mentor.businessUnit']));
     }
 
     public function reject(Request $request, User $user)
@@ -60,7 +60,7 @@ class AdminApiController extends Controller
         $data = $request->validate(['reason' => ['required', 'string']]);
         $user->update(['verification_status' => 'rejected', 'rejection_reason' => $data['reason']]);
 
-        return response()->json($this->presenter->user($user->fresh(['participant', 'mentor.department', 'mentor.businessUnit'])));
+        return new UserResource($user->fresh(['participant', 'mentor.department', 'mentor.businessUnit']));
     }
 
     public function programs(Request $request)
@@ -72,14 +72,14 @@ class AdminApiController extends Controller
             ->latest('id')
             ->get();
 
-        return response()->json($programs->map(fn (Program $program) => $this->presenter->program($program)));
+        return ProgramResource::collection($programs);
     }
 
     public function needs(Request $request)
     {
         abort_unless($request->user()->isAdmin(), 403);
 
-        return response()->json(DepartmentNeed::query()->latest('id')->get());
+        return DepartmentNeedResource::collection(DepartmentNeed::query()->latest('id')->get());
     }
 
     public function storeNeed(Request $request)
@@ -100,6 +100,8 @@ class AdminApiController extends Controller
             'created_by' => $request->user()->id,
         ]);
 
-        return response()->json($need, 201);
+        return (new DepartmentNeedResource($need))
+            ->response()
+            ->setStatusCode(201);
     }
 }

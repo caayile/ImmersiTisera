@@ -47,7 +47,7 @@ Route::middleware('guest')->group(function () {
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
-Route::middleware(['auth', 'role:participant'])->prefix('participant')->name('participant.')->group(function () {
+Route::middleware(['auth', 'role:participant', 'throttle:30,1'])->prefix('participant')->name('participant.')->group(function () {
     Route::get('/dashboard', [ParticipantController::class, 'dashboard'])->name('dashboard');
     Route::get('/profile', [ParticipantController::class, 'profile'])->name('profile');
     Route::post('/profile', [ParticipantController::class, 'updateProfile']);
@@ -87,7 +87,7 @@ Route::middleware(['auth', 'role:participant'])->prefix('participant')->name('pa
     Route::post('/settings', [ParticipantController::class, 'updateSettings']);
 });
 
-Route::middleware(['auth', 'role:mentor'])->prefix('mentor')->name('mentor.')->group(function () {
+Route::middleware(['auth', 'role:mentor', 'throttle:30,1'])->prefix('mentor')->name('mentor.')->group(function () {
     Route::get('/dashboard', [MentorController::class, 'dashboard'])->name('dashboard');
     Route::get('/profile', [MentorController::class, 'profile'])->name('profile');
     Route::post('/profile', [MentorController::class, 'updateProfile'])->name('profile.update');
@@ -123,7 +123,7 @@ Route::middleware(['auth', 'role:mentor'])->prefix('mentor')->name('mentor.')->g
     Route::get('/notifications', [MentorController::class, 'notifications'])->name('notifications');
 });
 
-Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'role:admin', 'throttle:30,1'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
     Route::get('/users', [AdminController::class, 'users'])->name('users');
     Route::post('/users', [AdminController::class, 'storeUser']);

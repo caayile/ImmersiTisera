@@ -13,10 +13,10 @@ use Illuminate\Support\Facades\Route;
 Route::get('/health-api', fn () => ['ok' => true]);
 Route::get('/search', [PublicController::class, 'searchApi'])->name('api.search');
 
-Route::post('/login', [ApiAuthController::class, 'login']);
-Route::post('/register', [ApiAuthController::class, 'register']);
+Route::post('/login', [ApiAuthController::class, 'login'])->middleware('throttle:5,1');
+Route::post('/register', [ApiAuthController::class, 'register'])->middleware('throttle:5,1');
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::get('/me', [ApiAuthController::class, 'me']);
     Route::post('/logout', [ApiAuthController::class, 'logout']);
     Route::put('/profile', [ProfileController::class, 'update']);
