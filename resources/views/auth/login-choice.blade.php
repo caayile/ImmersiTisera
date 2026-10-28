@@ -79,57 +79,58 @@
     </style>
 </head>
 
-<body
-    class="bg-grid-pattern min-h-screen flex flex-col justify-between text-white selection:bg-mint selection:text-forest">
+<body class="min-h-screen bg-forest text-charcoal selection:bg-mint selection:text-forest">
+    <main class="min-h-screen lg:grid lg:grid-cols-2">
+        <section class="bg-grid-pattern relative flex min-h-[380px] flex-col overflow-hidden px-6 py-6 text-white sm:px-10 sm:py-8 lg:min-h-screen lg:px-14 lg:py-10">
+            <header class="relative z-10">
+                <a href="{{ route('home') }}" class="inline-flex items-center gap-3">
+                    <img src="{{ asset('images/logo-mark.png') }}" alt="" class="h-9 w-9 object-contain brightness-0 invert">
+                    <span class="text-base font-extrabold sm:text-lg">Magang Dosen TSU</span>
+                </a>
+            </header>
 
-    <!-- Header / Navbar -->
-    <header class="sticky top-0 z-50 border-b border-line bg-white shrink-0">
-        <div class="mx-auto flex max-w-[1440px] items-center justify-between gap-4 px-5 py-5 lg:px-12">
-            <a href="{{ route('home') }}" class="flex items-center group">
-                <img id="nav-logo" src="{{ asset('images/logo-full.png') }}" alt="Magang Dosen TSU" class="h-10 sm:h-11 w-auto object-contain">
-                <span id="nav-brand-text" class="sr-only">Magang Dosen TSU</span>
-            </a>
-
-            <div
-                class="flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-3.5 py-1.5 text-xs font-semibold text-gray-700 shadow-2xs">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span>Gelombang 2026 · Sekarang Dibuka</span>
-            </div>
-        </div>
-    </header>
-
-    <!-- Main Content Container -->
-    <main
-        class="w-full max-w-7xl mx-auto px-4 sm:px-6 py-2 lg:py-4 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center min-h-0 overflow-hidden">
-
-        <!-- Left Side: Branding & Tagline -->
-        <div class="lg:col-span-7 flex flex-col justify-center space-y-4 sm:space-y-6 lg:pr-6">
-            <!-- Badge -->
-            <div
-                class="inline-flex items-center space-x-2 glass-badge px-3.5 py-1.5 rounded-full text-xs font-medium text-mint w-fit">
-                <span class="w-1.5 h-1.5 rounded-full bg-mint animate-pulse"></span>
-                <span>Program Magang Dosen TS Group</span>
-            </div>
-
-            <!-- Title & Subtitle -->
-            <div class="space-y-3 sm:space-y-4">
-                <h1 class="text-3xl sm:text-5xl lg:text-[46px] font-extrabold text-white leading-[1.18] tracking-tight">
-                    Mulai kolaborasi dari <br class="hidden sm:block" />
-                    <span class="text-mint">unit bisnis yang tepat</span><br class="hidden sm:block" />
-                    di sini.
+            <div class="relative z-10 my-auto max-w-xl py-6 sm:py-12 lg:py-0">
+                <div class="mb-4 inline-flex w-fit items-center gap-2 rounded-full border border-white/10 bg-black/20 px-3.5 py-1.5 text-xs font-medium text-mint backdrop-blur-sm sm:mb-5">
+                    <span class="h-1.5 w-1.5 rounded-full bg-mint"></span>
+                    <span>Program Magang Dosen TS Group</span>
+                </div>
+                <h1 class="text-3xl font-extrabold leading-tight sm:text-5xl lg:text-[46px]">
+                    Satu ruang untuk <span class="text-mint">kolaborasi</span> yang berdampak.
                 </h1>
-                <p class="text-gray-300 text-sm sm:text-base lg:text-lg max-w-xl font-normal leading-relaxed">
-                    Program khusus untuk menghubungkan <strong class="text-white font-semibold">Dosen TSU</strong> dan
-                    <strong class="text-white font-semibold">Mentor Profesional</strong> dengan ekosistem Unit Bisnis TS
-                    Group.
+                <p class="mt-3 max-w-lg text-sm leading-relaxed text-gray-300 sm:mt-5 sm:text-base">
+                    Menghubungkan Dosen TSU dan Mentor Profesional dengan ekosistem Unit Bisnis TS Group.
                 </p>
-            </div>
-        </div>
 
-        <!-- Right Side: White Login / Register Form Card -->
-        <div class="lg:col-span-5 w-full flex items-center justify-center">
-            <div
-                class="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-2xl text-charcoal border border-gray-100 w-full max-w-md">
+                <div class="mt-8 hidden max-w-lg grid-cols-3 gap-3 border-t border-white/10 pt-5 sm:mt-10 sm:grid sm:gap-6">
+                    <div>
+                        <p class="text-sm font-bold text-white sm:text-base">Dosen TSU</p>
+                        <p class="mt-1 text-[10px] uppercase text-gray-400 sm:text-xs">Akademisi</p>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-white sm:text-base">Mentor</p>
+                        <p class="mt-1 text-[10px] uppercase text-gray-400 sm:text-xs">Profesional</p>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-white sm:text-base">Unit Bisnis</p>
+                        <p class="mt-1 text-[10px] uppercase text-gray-400 sm:text-xs">TS Group</p>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="relative z-10 hidden text-[11px] text-gray-400 sm:block sm:text-xs">
+                &copy; 2026 Program Kolaborasi TS Group & TSU.
+            </footer>
+            <i class="fa-solid fa-arrow-up-right-dots pointer-events-none absolute -bottom-8 -right-4 text-[180px] text-white/[0.04] sm:text-[260px] lg:-right-8 lg:text-[320px]" aria-hidden="true"></i>
+        </section>
+
+        <section class="flex min-h-screen items-center justify-center bg-white px-5 py-10 sm:px-8 lg:px-12">
+            <div class="w-full max-w-[31rem]">
+                <div class="mb-8">
+                    <h2 class="text-3xl font-extrabold tracking-tight text-charcoal sm:text-4xl">Selamat datang kembali</h2>
+                    <p class="mt-2 text-sm text-gray-500 sm:text-base">Masuk atau buat akun untuk melanjutkan.</p>
+                </div>
+
+        <div class="w-full text-charcoal">
 
                 <!-- Main Tab Switcher (Masuk vs Daftar) -->
                 <div class="flex bg-gray-100 p-1 rounded-xl mb-3.5">
@@ -397,16 +398,8 @@
 
             </div>
         </div>
-
+        </section>
     </main>
-
-    <!-- Footer Simple -->
-    <footer
-        class="w-full max-w-7xl mx-auto px-4 sm:px-6 py-2 sm:py-2.5 flex justify-center items-center text-[11px] sm:text-xs text-gray-400 shrink-0 text-center">
-        <div>
-            &copy; 2026 Program Kolaborasi TS Group & TSU. Hak cipta dilindungi.
-        </div>
-    </footer>
 
     <!-- Interactive JavaScript -->
     <script>
