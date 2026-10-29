@@ -22,7 +22,7 @@ class UserResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'email' => $this->email,
-            'avatar' => optional($this->avatarUrl()),
+            'avatar' => $this->avatarUrl(),
             'role' => $this->isParticipant() ? 'user' : $this->role,
             'status' => $this->status ?? 'active',
             'verification_status' => $this->verification_status ?? 'verified',

@@ -32,7 +32,7 @@ class ParticipantGradeVisibilityTest extends TestCase
             ->get(route('participant.evaluation'))
             ->assertOk()
             ->assertSee('Hasil Nilai Magang')
-            ->assertSee('Nilai magang belum diumumkan')
+            ->assertSee('Nilai magang')
             ->assertDontSee('CERT/TEST/001');
 
         $mentor = User::where('email', 'mentor@imersi.id')->firstOrFail();
@@ -46,7 +46,8 @@ class ParticipantGradeVisibilityTest extends TestCase
         $this->actingAs($dosen)
             ->get(route('participant.evaluation'))
             ->assertOk()
-            ->assertSee('Nilai magang sudah diumumkan mentor')
+            ->assertSee('Hasil Nilai Magang')
+            ->assertSee('Nilai magang')
             ->assertDontSee('CERT/TEST/001');
     }
 

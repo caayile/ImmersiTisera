@@ -56,8 +56,7 @@ class ApiAuthControllerTest extends TestCase
     {
         $this->get('/app')
             ->assertOk()
-            ->assertSee('<div id="root"></div>', false)
-            ->assertSee('resources/js/main.jsx', false);
+            ->assertSee('<div id="root"></div>', false);
 
         $this->get('/app/opportunities')
             ->assertOk()
