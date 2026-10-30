@@ -100,7 +100,7 @@
 
         <div class="mt-10 grid gap-4 text-left sm:grid-cols-2 lg:grid-cols-5">
             @foreach($capabilities as [$icon, $title, $copy, $tag])
-                <article class="flex min-h-[220px] flex-col rounded-2xl border border-line bg-white p-5 shadow-sm tap-feedback" data-reveal data-reveal-delay="{{ $loop->index % 4 }}">
+                <article class="flex min-h-55 flex-col rounded-2xl border border-line bg-white p-5 shadow-sm tap-feedback" data-reveal data-reveal-delay="{{ $loop->index % 4 }}">
                     <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary-dark">
                         <span class="material-symbols-outlined text-[22px]">{{ $icon }}</span>
                     </span>
@@ -141,9 +141,9 @@
                     $detailLabel = $direct ? 'Detail unit bisnis' : 'Detail departemen';
                 @endphp
                 <article class="overflow-hidden rounded-2xl border border-line bg-white shadow-sm tap-feedback" data-reveal data-reveal-delay="{{ $loop->index % 4 }}">
-                    <div class="relative h-44 bg-gradient-to-br {{ $meta['image'] }} p-4">
+                    <div class="relative h-44 bg-linear-to-br {{ $meta['image'] }} p-4">
                         <img src="{{ $meta['photo'] }}" alt="{{ $unit->name }}" class="absolute inset-0 h-full w-full object-cover" loading="lazy">
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/10"></div>
+                        <div class="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-black/10"></div>
                         <span class="absolute left-4 top-4 rounded-md bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide {{ $isFull || ! $unit->isOpen() ? 'text-red-600' : 'text-ink' }}">{{ $isFull ? 'Kuota penuh' : ($unit->isOpen() ? 'Gelombang terbuka' : 'Lowongan ditutup') }}</span>
                         <p class="absolute bottom-4 left-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/90">{{ $meta['area'] }}</p>
                     </div>
@@ -156,7 +156,7 @@
             @endforeach
         </div>
 
-        <div class="mt-10 overflow-hidden rounded-3xl bg-gradient-to-r from-[#dff5ea] via-[#eef8f3] to-[#d4efe6] p-6 md:p-8">
+        <div class="mt-10 overflow-hidden rounded-3xl bg-linear-to-r from-[#dff5ea] via-[#eef8f3] to-[#d4efe6] p-6 md:p-8">
             <div class="grid gap-6 lg:grid-cols-[1.4fr_1fr] lg:items-center">
                 <div>
                     <p class="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-white">
@@ -215,7 +215,7 @@
                     @endphp
                     <div class="relative flex h-32 items-end overflow-hidden bg-[#16352c] p-4">
                         <img src="{{ $coverImage }}" alt="" class="absolute inset-0 h-full w-full object-cover" loading="lazy">
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/65 to-transparent"></div>
+                        <div class="absolute inset-0 bg-linear-to-t from-black/65 to-transparent"></div>
                         <span class="relative z-10 rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">{{ $item->category }}</span>
                     </div>
                     <div class="flex flex-1 flex-col p-5">

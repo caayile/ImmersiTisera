@@ -42,24 +42,15 @@
         <!-- Password Baru -->
         <div class="mb-4">
             <label class="block text-xs font-bold text-charcoal mb-1">Kata Sandi Baru</label>
-<<<<<<< HEAD
-            <div class="password-field">
-                <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
-=======
             <div class="relative group">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
->>>>>>> ca29bff75cb8acccba9e37f46a4e75117b02a183
                     <i class="fa-solid fa-key text-xs"></i>
                 </div>
                 <input type="password" id="reset-password" name="password" required autofocus
                     placeholder="Minimal 6 karakter"
                     class="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-9 pr-10 text-xs font-medium text-charcoal placeholder-gray-400 transition focus:border-forest focus:bg-white focus:outline-none focus:ring-2 focus:ring-forest/10 sm:text-sm">
                 <button type="button" onclick="togglePassword('reset-password', this)"
-<<<<<<< HEAD
-                    class="password-toggle" aria-label="Tampilkan kata sandi">
-=======
                     class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-charcoal transition-colors">
->>>>>>> ca29bff75cb8acccba9e37f46a4e75117b02a183
                     <i class="fa-regular fa-eye text-xs"></i>
                 </button>
             </div>
@@ -68,24 +59,15 @@
         <!-- Konfirmasi Password Baru -->
         <div class="mb-4">
             <label class="block text-xs font-bold text-charcoal mb-1">Konfirmasi Kata Sandi Baru</label>
-<<<<<<< HEAD
-            <div class="password-field">
-                <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
-=======
             <div class="relative group">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
->>>>>>> ca29bff75cb8acccba9e37f46a4e75117b02a183
                     <i class="fa-solid fa-shield-halved text-xs"></i>
                 </div>
                 <input type="password" id="reset-password-confirm" name="password_confirmation" required
                     placeholder="Ulangi kata sandi baru"
                     class="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-9 pr-10 text-xs font-medium text-charcoal placeholder-gray-400 transition focus:border-forest focus:bg-white focus:outline-none focus:ring-2 focus:ring-forest/10 sm:text-sm">
                 <button type="button" onclick="togglePassword('reset-password-confirm', this)"
-<<<<<<< HEAD
-                    class="password-toggle" aria-label="Tampilkan konfirmasi kata sandi">
-=======
                     class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-charcoal transition-colors">
->>>>>>> ca29bff75cb8acccba9e37f46a4e75117b02a183
                     <i class="fa-regular fa-eye text-xs"></i>
                 </button>
             </div>
