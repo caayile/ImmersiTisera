@@ -25,6 +25,14 @@ class AuthControllerTest extends TestCase
             ->assertSee('right: 0;', false);
     }
 
+    public function test_login_shows_the_faded_campus_background(): void
+    {
+        $this->get(route('login'))
+            ->assertSee('images/hero/beranda.jpg', false)
+            ->assertSee('images/hero/beranda-tiga-serangkai.jpg', false)
+            ->assertSee('auth-hero__wash', false);
+    }
+
     public function test_register_form_leaves_phone_and_institution_for_the_profile(): void
     {
         $this->get(route('register'))

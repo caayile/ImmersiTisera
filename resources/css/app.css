@@ -747,8 +747,48 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .home-hero__photo--swap {
+    .home-hero__photo--swap,
+    .auth-hero__photo--swap {
         opacity: 0 !important;
+    }
+}
+
+.auth-hero__background,
+.auth-hero__photo,
+.auth-hero__wash,
+.auth-hero__grid {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.auth-hero__photo {
+    object-fit: cover;
+    object-position: 62% center;
+}
+
+.auth-hero__photo--swap {
+    animation: home-hero-crossfade 14s ease-in-out infinite;
+}
+
+.auth-hero__wash {
+    background:
+        linear-gradient(90deg, rgb(13 34 29 / 78%) 0%, rgb(13 34 29 / 58%) 46%, rgb(13 34 29 / 34%) 100%),
+        linear-gradient(180deg, rgb(13 34 29 / 18%), rgb(13 34 29 / 42%));
+}
+
+.auth-hero__grid {
+    background-image:
+        linear-gradient(to right, rgb(255 255 255 / 4%) 1px, transparent 1px),
+        linear-gradient(to bottom, rgb(255 255 255 / 4%) 1px, transparent 1px);
+    background-size: 28px 28px;
+}
+
+@media (max-width: 1023px) {
+    .auth-hero__wash {
+        background:
+            linear-gradient(180deg, rgb(13 34 29 / 42%) 0%, rgb(13 34 29 / 62%) 48%, rgb(13 34 29 / 78%) 100%);
     }
 }
 
