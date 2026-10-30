@@ -91,7 +91,9 @@ class ParticipantSidebarProfileTest extends TestCase
             'competency' => [],
         ]);
 
-        $this->actingAs($dosen)
+        $token = $dosen->createToken('test')->plainTextToken;
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
             ->getJson('/api/me')
             ->assertOk()
             ->assertJsonPath('avatar', 'https://example.com/avatar.jpg')

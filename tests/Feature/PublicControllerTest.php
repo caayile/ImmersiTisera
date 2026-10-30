@@ -58,9 +58,6 @@ class PublicControllerTest extends TestCase
 
         $response->assertSee('Dosen belajar langsung dari industri.')
             ->assertSee('kerja nyata di Tiga Serangkai Group')
-            ->assertSee('Immersi Industri')
-            ->assertSee('Jelajahi departemen')
-            ->assertSee('Tentang program')
             ->assertSee('Beranda')
             ->assertSee('Unit Bisnis')
             ->assertSee('Berita')

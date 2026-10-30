@@ -81,7 +81,21 @@
 
 <body class="min-h-screen bg-forest text-charcoal selection:bg-mint selection:text-forest">
     <main class="min-h-screen lg:grid lg:grid-cols-2">
-        <section class="bg-grid-pattern relative flex min-h-[380px] flex-col overflow-hidden px-6 py-6 text-white sm:px-10 sm:py-8 lg:min-h-screen lg:px-14 lg:py-10">
+        <section class="auth-hero relative flex min-h-[380px] flex-col overflow-hidden px-6 py-6 text-white sm:px-10 sm:py-8 lg:min-h-screen lg:px-14 lg:py-10">
+            <div class="auth-hero__background" aria-hidden="true">
+                <img
+                    src="{{ $heroImage ?? asset('images/hero/beranda.jpg') }}"
+                    alt=""
+                    class="auth-hero__photo"
+                >
+                <img
+                    src="{{ $heroAlternateImage ?? asset('images/hero/beranda-tiga-serangkai.jpg') }}"
+                    alt=""
+                    class="auth-hero__photo auth-hero__photo--swap"
+                >
+                <div class="auth-hero__wash"></div>
+                <div class="auth-hero__grid"></div>
+            </div>
             <header class="relative z-10">
                 <a href="{{ route('home') }}" class="inline-flex items-center gap-3">
                     <img src="{{ asset('images/logo-mark.png') }}" alt="" class="h-9 w-9 object-contain brightness-0 invert">

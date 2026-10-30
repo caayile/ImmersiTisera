@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Mail\PasswordResetOtpMail;
 use App\Mail\RegistrationOtpMail;
 use App\Models\Department;
+use App\Models\HeroSetting;
 use App\Models\Mentor;
 use App\Models\Participant;
 use App\Models\PasswordResetOtp;
@@ -12,6 +13,7 @@ use App\Models\RegistrationOtp;
 use App\Models\User;
 use App\Notifications\ImersiAlert;
 use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -28,10 +30,7 @@ class AuthController extends Controller
 {
     public function showLogin()
     {
-        return view('auth.login-choice', [
-            'initialTab' => 'login',
-            'departments' => Department::where('status', 'active')->orderBy('name')->get(),
-        ]);
+        return view('auth.login-choice', $this->loginViewData('login'));
     }
 
     public function showUserLogin()
@@ -56,10 +55,7 @@ class AuthController extends Controller
 
     public function showRegister()
     {
-        return view('auth.register-choice', [
-            'initialTab' => 'register',
-            'departments' => Department::where('status', 'active')->orderBy('name')->get(),
-        ]);
+        return view('auth.register-choice', $this->loginViewData('register'));
     }
 
     public function showUserRegister()
@@ -70,6 +66,19 @@ class AuthController extends Controller
     public function showMentorRegister()
     {
         return redirect()->route('register');
+    }
+
+    /**
+     * @return array{initialTab: string, departments: Collection<int, Department>, heroImage: string, heroAlternateImage: string}
+     */
+    private function loginViewData(string $initialTab): array
+    {
+        return [
+            'initialTab' => $initialTab,
+            'departments' => Department::where('status', 'active')->orderBy('name')->get(),
+            'heroImage' => HeroSetting::forHome()->backgroundUrl() ?: asset('images/hero/beranda.jpg'),
+            'heroAlternateImage' => asset('images/hero/beranda-tiga-serangkai.jpg').'?v=2',
+        ];
     }
 
     public function redirectToGoogle(Request $request): RedirectResponse

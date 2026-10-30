@@ -71,7 +71,7 @@
         <div class="home-hero__photo-caption">
             <span class="material-symbols-outlined" aria-hidden="true">lightbulb</span>
             <div>
-                <h2>Immersi Industri</h2>
+                <h2>Magang Dosen</h2>
                 <p>Dari ruang kuliah ke ruang kerja</p>
             </div>
         </div>

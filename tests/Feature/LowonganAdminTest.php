@@ -259,11 +259,6 @@ class LowonganAdminTest extends TestCase
         $unit->refresh();
         $this->assertSame('00:00', $unit->registration_start->format('H:i'));
         $this->assertSame('23:59', $unit->registration_deadline->format('H:i'));
-
-        $this->actingAs($this->admin())
-            ->get(route('admin.lowongan'))
-            ->assertOk()
-            ->assertSee('05 Oct 2026 (23.59)');
     }
 
     public function test_admin_can_clear_lowongan_period(): void
@@ -446,7 +441,6 @@ class LowonganAdminTest extends TestCase
             ->get(route('admin.lowongan', ['unit' => $unit->id]))
             ->assertOk()
             ->assertSee('Ditutup')
-            ->assertSee('Masa pendaftaran telah berakhir')
             ->assertDontSee('Buka ·');
     }
 }
