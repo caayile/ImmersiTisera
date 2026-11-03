@@ -38,12 +38,6 @@
                 </div>
             </div>
             <div>
-                <label class="text-xs font-medium text-muted">Fungsi unit</label>
-                <div class="mt-1">
-                    <x-wysiwyg name="function" :value="$businessUnit->function" placeholder="Jelaskan fungsi unit ini..." />
-                </div>
-            </div>
-            <div>
                 <label class="text-xs font-medium text-muted">Yang dikerjakan</label>
                 <div class="mt-1">
                     <x-wysiwyg name="work_done" :value="$businessUnit->work_done" placeholder="Apa saja yang dikerjakan..." />

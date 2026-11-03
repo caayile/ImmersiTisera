@@ -51,9 +51,6 @@
                         <h2 class="text-xl font-bold tracking-tight">Tentang Program</h2>
                     </div>
                     <div class="rich-content mt-4">{!! $businessUnit->description !!}</div>
-                    @if($businessUnit->function)
-                        <div class="rich-content mt-4 rounded-lg bg-emerald-50/50 p-3">{!! $businessUnit->function !!}</div>
-                    @endif
                 </section>
 
                 @if($businessUnit->work_done)

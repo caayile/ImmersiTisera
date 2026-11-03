@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 #[Fillable([
-    'department_id', 'name', 'description', 'function', 'image_path', 'work_done', 'example_activities',
+    'department_id', 'name', 'description', 'image_path', 'work_done', 'example_activities',
     'requirements', 'relevant_programs', 'period', 'batch', 'registration_deadline', 'registration_start', 'status',
 ])]
 class BusinessUnit extends Model

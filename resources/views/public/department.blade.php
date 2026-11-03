@@ -115,7 +115,6 @@
     {{-- SISI KANAN — Halaman tetap transparan dengan teks info departemen di atas foto gedung --}}
     <div class="dept-split__right" id="dept-right-panel" aria-hidden="true">
         <div class="dept-split__right-content" id="dept-right-content">
-            <p class="dept-right-eyebrow">{{ $department->area ?: 'PUBLISHING & CORPORATE' }}</p>
             <h2 class="dept-right-title">{{ $department->name }}</h2>
             <p class="dept-right-subtitle">{{ $department->subtitle ?: 'Tiga Serangkai Pustaka Mandiri' }}</p>
         </div>

@@ -57,7 +57,6 @@
                         <p class="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Informasi Program</p>
                         <textarea name="description" placeholder="Deskripsi" class="w-full rounded-lg border border-line px-3 py-2 text-sm"></textarea>
                         <div class="grid gap-3 sm:grid-cols-2">
-                            <textarea name="function" placeholder="Fungsi unit" class="w-full rounded-lg border border-line px-3 py-2 text-sm"></textarea>
                             <textarea name="work_done" placeholder="Yang dikerjakan" class="w-full rounded-lg border border-line px-3 py-2 text-sm"></textarea>
                             <textarea name="example_activities" placeholder="Contoh aktivitas" class="w-full rounded-lg border border-line px-3 py-2 text-sm"></textarea>
                             <textarea name="requirements" placeholder="Persyaratan" class="w-full rounded-lg border border-line px-3 py-2 text-sm"></textarea>

@@ -104,12 +104,8 @@
             </header>
 
             <div class="relative z-10 my-auto max-w-xl py-6 sm:py-12 lg:py-0">
-                <div class="mb-4 inline-flex w-fit items-center gap-2 rounded-full border border-white/10 bg-black/20 px-3.5 py-1.5 text-xs font-medium text-mint backdrop-blur-sm sm:mb-5">
-                    <span class="h-1.5 w-1.5 rounded-full bg-mint"></span>
-                    <span>Program Magang Dosen TS Group</span>
-                </div>
                 <h1 class="text-3xl font-extrabold leading-tight sm:text-5xl lg:text-[46px]">
-                    Satu ruang untuk <span class="text-mint">kolaborasi</span> yang berdampak.
+                    Satu ruang untuk <span class="text-mint">kolaborasi</span> yang berdampak
                 </h1>
                 <p class="mt-3 max-w-lg text-sm leading-relaxed text-gray-300 sm:mt-5 sm:text-base">
                     Menghubungkan Dosen TSU dan Mentor Profesional dengan ekosistem Unit Bisnis TS Group.
