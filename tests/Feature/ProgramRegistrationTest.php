@@ -293,6 +293,7 @@ class ProgramRegistrationTest extends TestCase
 
     public function test_opening_new_batch_frees_unit_quota(): void
     {
+        $this->travelTo('2026-09-01 09:00:00');
         $this->seed();
         $unit = BusinessUnit::where('name', 'Digital Business')->firstOrFail();
 
@@ -310,8 +311,8 @@ class ProgramRegistrationTest extends TestCase
         $this->actingAs(User::where('email', 'admin@imersi.id')->firstOrFail())
             ->post(route('admin.lowongan.period', $unit), [
                 'batch' => 'Batch Baru 2026',
-                'registration_start' => '2026-10-01',
-                'registration_deadline' => '2026-10-31',
+                'registration_start' => now()->toDateString(),
+                'registration_deadline' => now()->addDays(30)->toDateString(),
             ])
             ->assertRedirect();
 
