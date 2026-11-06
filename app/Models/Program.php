@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 
 #[Fillable([
     'application_id', 'participant_id', 'mentor_id', 'department_id', 'business_unit_id',
-    'start_date', 'end_date', 'progress', 'current_week', 'status',
+    'start_date', 'end_date', 'progress', 'current_week', 'status', 'archived_at',
 ])]
 class Program extends Model
 {
@@ -17,6 +17,7 @@ class Program extends Model
         return [
             'start_date' => 'date',
             'end_date' => 'date',
+            'archived_at' => 'datetime',
         ];
     }
 

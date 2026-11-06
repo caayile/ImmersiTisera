@@ -3,14 +3,22 @@
 @section('content')
 @php
     $scaleLabels = collect($questionnaire['scales'])->mapWithKeys(fn (array $scale): array => [(int) $scale['value'] => $scale['label']])->all();
-    $formatScore = function (?float $value) use ($scaleLabels): string {
-        if ($value === null) {
-            return '—';
-        }
-
+    $formatScore = function (?float $value): string {
+        if ($value === null) return '—';
+        $number = number_format($value, 1);
+        $label = match(true) {
+            $value >= 4.5 => 'sangat baik',
+            $value >= 3.5 => 'baik',
+            $value >= 2.5 => 'cukup',
+            $value >= 1.5 => 'kurang',
+            default => 'buruk',
+        };
+        return $number.' · '.$label;
+    };
+    $formatLiteral = function (?float $value) use ($scaleLabels): string {
+        if ($value === null) return '—';
         $number = number_format($value, 1);
         $label = $scaleLabels[(int) round($value)] ?? null;
-
         return $label === null ? $number : $number.' · '.$label;
     };
     $sectionColor = [
@@ -88,40 +96,29 @@
     </ul>
 
     <form method="GET" class="mt-4 grid gap-3 rounded-2xl border border-line bg-white p-4 md:grid-cols-3">
-        <label class="grid gap-1 text-xs font-semibold text-muted">
-            Program
-            <select name="program_id" onchange="this.form.submit()" aria-label="Program" class="rounded-lg border border-line bg-white px-3 py-2 text-sm font-normal text-ink">
+        <div class="grid gap-1">
+            <span class="text-xs font-semibold text-muted">Program</span>
+            <select name="program_id" onchange="this.form.submit()" class="rounded-lg border border-line bg-white px-3 py-2 text-sm font-normal text-ink">
                 <option value="">Semua program</option>
                 @foreach($programs as $program)
-                    <option value="{{ $program->id }}" @selected((string) request('program_id') === (string) $program->id)>
-                        {{ $program->participant?->user?->name ?? 'Program #'.$program->id }} — {{ $program->businessUnit?->name ?? '—' }}
-                    </option>
+                    <option value="{{ $program->id }}" @selected((string) request('program_id') === (string) $program->id)>{{ $program->participant?->user?->name ?? 'Program #'.$program->id }}</option>
                 @endforeach
             </select>
-        </label>
-        <label class="grid gap-1 text-xs font-semibold text-muted">
-            Departemen
-            <select name="business_unit_id" onchange="this.form.submit()" aria-label="Departemen" class="rounded-lg border border-line bg-white px-3 py-2 text-sm font-normal text-ink">
+        </div>
+        <div class="grid gap-1">
+            <span class="text-xs font-semibold text-muted">Departemen</span>
+            <select name="business_unit_id" onchange="this.form.submit()" class="rounded-lg border border-line bg-white px-3 py-2 text-sm font-normal text-ink">
                 <option value="">Semua departemen</option>
-                @foreach($businessUnits as $unit)
-                    <option value="{{ $unit->id }}" @selected((string) request('business_unit_id') === (string) $unit->id)>
-                        {{ $unit->name }}@if($unit->department) · {{ $unit->department->name }}@endif
-                    </option>
-                @endforeach
+                @foreach($businessUnits as $unit)<option value="{{ $unit->id }}" @selected((string) request('business_unit_id') === (string) $unit->id)>{{ $unit->name }}</option>@endforeach
             </select>
-        </label>
-        <label class="grid gap-1 text-xs font-semibold text-muted">
-            Mentor
-            <select name="mentor_id" onchange="this.form.submit()" aria-label="Mentor" class="rounded-lg border border-line bg-white px-3 py-2 text-sm font-normal text-ink">
+        </div>
+        <div class="grid gap-1">
+            <span class="text-xs font-semibold text-muted">Mentor</span>
+            <select name="mentor_id" onchange="this.form.submit()" class="rounded-lg border border-line bg-white px-3 py-2 text-sm font-normal text-ink">
                 <option value="">Semua mentor</option>
-                @foreach($mentors as $mentor)
-                    <option value="{{ $mentor->id }}" @selected((string) request('mentor_id') === (string) $mentor->id)>{{ $mentor->user?->name ?? 'Mentor #'.$mentor->id }}</option>
-                @endforeach
+                @foreach($mentors as $mentor)<option value="{{ $mentor->id }}" @selected((string) request('mentor_id') === (string) $mentor->id)>{{ $mentor->user?->name ?? 'Mentor #'.$mentor->id }}</option>@endforeach
             </select>
-        </label>
-        @if($filtersActive)
-            <a href="{{ route('admin.reports') }}" class="text-sm font-semibold text-primary-dark hover:underline md:col-span-3">Reset filter</a>
-        @endif
+        </div>
     </form>
 
     <div class="mt-6 grid gap-4 sm:grid-cols-3">
@@ -172,26 +169,29 @@
                         </dl>
                     @endif
                     <p class="mt-4 text-sm"><span class="font-semibold">Kritik dan saran.</span> {{ filled($row['comments']) ? $row['comments'] : 'Tidak ada.' }}</p>
-                    <div class="mt-4 grid gap-4">
-                        @foreach(collect($row['answers'])->groupBy('section') as $section => $answers)
-                            <div>
-                                <p class="text-xs font-semibold uppercase tracking-wide text-muted">{{ $section }}</p>
-                                <ul class="mt-2 grid gap-2">
-                                    @foreach($answers as $answer)
-                                        <li class="rounded-xl border border-line px-3 py-2">
-                                            <div class="flex items-start justify-between gap-3">
-                                                <p class="text-sm">{{ $answer['label'] }}</p>
-                                                <span class="shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold {{ $scoreTone($answer['score']) }}">{{ $formatScore($answer['score']) }}</span>
-                                            </div>
-                                            <div class="mt-2 h-1.5 rounded-full bg-bg">
-                                                <div class="h-1.5 rounded-full bg-primary" style="width: {{ $barWidth($answer['score']) }}%"></div>
-                                            </div>
-                                        </li>
-                                    @endforeach
-                                </ul>
-                            </div>
-                        @endforeach
-                    </div>
+                    <details class="mt-4 group">
+                        <summary class="cursor-pointer font-semibold text-sm text-primary-dark hover:text-primary">Lihat detail jawaban ({{ count($row['answers']) }})</summary>
+                        <div class="mt-4 grid gap-4">
+                            @foreach(collect($row['answers'])->groupBy('section') as $section => $answers)
+                                <div>
+                                    <p class="text-xs font-semibold uppercase tracking-wide text-muted">{{ $section }}</p>
+                                    <ul class="mt-2 grid gap-2">
+                                        @foreach($answers as $answer)
+                                            <li class="rounded-xl border border-line px-3 py-2">
+                                                <div class="flex items-start justify-between gap-3">
+                                                    <p class="text-sm">{{ $answer['label'] }}</p>
+                                                    <span class="shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold {{ $scoreTone($answer['score']) }}">{{ $formatLiteral($answer['score']) }}</span>
+                                                </div>
+                                                <div class="mt-2 h-1.5 rounded-full bg-bg">
+                                                    <div class="h-1.5 rounded-full bg-primary" style="width: {{ $barWidth($answer['score']) }}%"></div>
+                                                </div>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endforeach
+                        </div>
+                    </details>
                 </article>
             @endforeach
         </div>
@@ -276,13 +276,23 @@
                             <td class="px-4 py-3">
                                 <div class="flex items-center gap-3">
                                     <div class="hidden h-1.5 w-24 rounded-full bg-bg sm:block">
-                                        <div class="h-1.5 rounded-full {{ $questionnaire['lowest'] && $question['label'] === $questionnaire['lowest']['label'] ? 'bg-red-500' : 'bg-primary' }}" style="width: {{ $barWidth($question['average']) }}%"></div>
+                                        @php
+                                            $barColor = match(true) {
+                                                $question['average'] <= 2.5 => 'bg-red-500',
+                                                $question['average'] <= 3.5 => 'bg-amber-500',
+                                                default => 'bg-primary'
+                                            };
+                                        @endphp
+                                        <div class="h-1.5 rounded-full {{ $barColor }}" style="width: {{ $barWidth($question['average']) }}%"></div>
                                     </div>
-                                    @if($questionnaire['lowest'] && $question['label'] === $questionnaire['lowest']['label'])
-                                        <span class="inline-flex rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-bold text-red-700">{{ $formatScore($question['average']) }}</span>
-                                    @else
-                                        {{ $formatScore($question['average']) }}
-                                    @endif
+                                    @php
+                                        $labelStyle = match(true) {
+                                            $question['average'] <= 2.5 => 'bg-red-50 px-2.5 py-0.5 text-red-700',
+                                            $question['average'] <= 3.5 => 'bg-amber-50 px-2.5 py-0.5 text-amber-700',
+                                            default => 'bg-emerald-50 px-2.5 py-0.5 text-emerald-700'
+                                        };
+                                    @endphp
+                                    <span class="inline-flex rounded-full text-xs font-bold {{ $labelStyle }}">{{ $formatScore($question['average']) }}</span>
                                 </div>
                             </td>
                         </tr>

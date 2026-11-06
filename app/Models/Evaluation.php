@@ -177,12 +177,24 @@ class Evaluation extends Model
 
     public function criteriaForDisplay(): array
     {
-        return $this->criteria ?: [
-            ['label' => 'Pemahaman Industri', 'score' => $this->industry_understanding],
-            ['label' => 'Relasi', 'score' => $this->relationship],
-            ['label' => 'Hasil', 'score' => $this->output],
-            ['label' => 'Manfaat Bersama', 'score' => $this->mutual_benefit],
-            ['label' => 'Potensi Kolaborasi', 'score' => $this->collaboration_potential],
-        ];
+        if (!$this->criteria) {
+            return [];
+        }
+
+        return collect($this->criteria)->map(function (array $item) {
+            $score = $item['score'] ?? null;
+            $label = match(true) {
+                $score >= 4.5 => 'sangat baik',
+                $score >= 3.5 => 'baik',
+                $score >= 2.5 => 'cukup',
+                $score >= 1.5 => 'kurang',
+                default => 'buruk',
+            };
+            return [
+                'label' => $item['label'] ?? '',
+                'score' => $score,
+                'display' => ($score ? number_format($score, 1) : '—').' · '.$label,
+            ];
+        })->toArray();
     }
 }

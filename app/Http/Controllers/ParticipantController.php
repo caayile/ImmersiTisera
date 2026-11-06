@@ -723,12 +723,11 @@ class ParticipantController extends Controller
             : EvaluationScale::defaultScales();
         $scaleMax = collect($scaleList)->max('value') ?? 5;
         $certificates = $this->participantCertificates($request);
-        // Kartu atas = siklus terbaru (aktif atau selesai) agar nilai & sertifikat tetap terlihat.
         $topCycle = $program;
-        // Riwayat memuat semua siklus kecuali yang tampil di kartu atas, dari terbaru.
-        $history = $program
-            ? $this->allPrograms($request)->reject(fn ($cycle) => $topCycle && $cycle->id === $topCycle->id)->values()
-            : collect();
+        $allCycles = $this->allPrograms($request);
+        $history = $topCycle
+            ? $allCycles->reject(fn ($cycle) => $cycle->id === $topCycle->id)->values()
+            : $allCycles;
 
         return view('participant.evaluation', compact('program', 'mine', 'bank', 'scaleList', 'scaleMax', 'certificates', 'history', 'topCycle'));
     }
@@ -1092,20 +1091,13 @@ class ParticipantController extends Controller
 
     private function currentProgram(Request $request, bool $required = false): ?Program
     {
-        $program = $this->programsQuery($request)->latest()->first();
+        $program = $this->programsQuery($request)->whereNull('archived_at')->latest()->first();
 
         abort_if($required && ! $program, 404, 'Belum ada program aktif.');
 
         return $program;
     }
 
-    /**
-     * All internship cycles of the participant, newest first, for
-     * cross-cycle history (outputs, final reports). Uploads still target
-     * the current program only.
-     *
-     * @return Collection<int, Program>
-     */
     private function allPrograms(Request $request)
     {
         return $this->programsQuery($request)->latest()->get();
@@ -1117,6 +1109,20 @@ class ParticipantController extends Controller
             'department', 'businessUnit', 'mentor.user', 'participant.user', 'agreement',
             'timelines', 'logbooks', 'mentorSessions', 'outputs', 'evaluations.evaluator', 'collaboration',
         ])->where('participant_id', $request->user()->participant?->id);
+    }
+
+    public function archiveProgram(Request $request, Program $program)
+    {
+        if ($program->participant_id !== $request->user()->participant?->id) {
+            abort(403);
+        }
+
+        $program->update([
+            'status' => 'completed',
+            'archived_at' => now(),
+        ]);
+
+        return redirect()->route('participant.evaluation')->with('status', 'Magang berhasil diarsipkan ke riwayat.');
     }
 
     private function csv(string $value): array

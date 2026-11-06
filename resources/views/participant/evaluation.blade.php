@@ -65,7 +65,7 @@
     };
 </script>
 <div x-data="evaluationQuiz(@js($startOnQuiz))">
-    @if($topCycle)
+    @if($topCycle && !$topCycle->archived_at)
         {{-- Kartu nilai siklus terbaru --}}
         <div x-show="flow === 'table'" class="mt-4 rounded-2xl border border-line bg-white p-5 shadow-sm sm:p-6">
             <div class="flex items-start justify-between gap-3">
@@ -129,10 +129,6 @@
                                         Lihat / Cetak
                                         <span class="material-symbols-outlined text-[18px]">open_in_new</span>
                                     </a>
-                                    <a href="{{ route('participant.certificates.download', $topCertificate) }}" class="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-primary px-4 py-2.5 text-sm font-semibold text-primary-dark transition hover:bg-bg">
-                                        Unduh PDF
-                                        <span class="material-symbols-outlined text-[18px]">download</span>
-                                    </a>
                                 </div>
                             </div>
                         @else
@@ -140,6 +136,17 @@
                         @endif
                     </div>
                 </div>
+                @if(is_null($topCycle->archived_at) && $ownFilled)
+                    <div class="mt-4 border-t border-line pt-4">
+                        <form method="POST" action="{{ route('participant.programs.archive', $topCycle) }}">
+                            @csrf
+                            <button type="submit" class="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-700 transition hover:bg-amber-100">
+                                <span class="material-symbols-outlined text-[18px]">archive</span>
+                                Arsipkan
+                            </button>
+                        </form>
+                    </div>
+                @endif
             @endif
         </div>
 

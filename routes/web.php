@@ -79,6 +79,7 @@ Route::middleware(['auth', 'role:participant', 'throttle:30,1'])->prefix('partic
     Route::get('/evaluation', [ParticipantController::class, 'evaluation'])->name('evaluation');
     Route::post('/evaluation', [ParticipantController::class, 'storeEvaluation']);
     Route::get('/evaluation/report/{program?}', [ParticipantController::class, 'report'])->whereNumber('program')->name('evaluation.report');
+    Route::post('/programs/{program}/archive', [ParticipantController::class, 'archiveProgram'])->name('programs.archive');
     Route::get('/evaluation/report-preview/{program?}', [ParticipantController::class, 'printReport'])->whereNumber('program')->name('evaluation.report-preview');
     Route::get('/evaluation/report-pdf/{program?}', [ParticipantController::class, 'downloadReportPdf'])->whereNumber('program')->name('evaluation.report-pdf');
     Route::get('/collaboration', [ParticipantController::class, 'collaboration'])->name('collaboration');
