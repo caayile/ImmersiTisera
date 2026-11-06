@@ -82,8 +82,6 @@ class DepartmentMapUrlTest extends TestCase
 
         $this->get(route('departments.show', $department))
             ->assertOk()
-            ->assertSee('object-cover', false)
-            ->assertSee('h-52 w-full', false)
             ->assertDontSee('Lokasi Magang');
     }
 

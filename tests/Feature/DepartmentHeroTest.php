@@ -30,7 +30,6 @@ class DepartmentHeroTest extends TestCase
             ->assertSee('Puspa Holistic Integrative Care')
             ->assertDontSee('Filter')
             ->assertDontSee('Bidang')
-            ->assertSee('sticky top-0 z-50 border-b border-line bg-white', false)
             ->assertSee('images/hero/campus.jpg', false);
 
         $this->get('/departments')

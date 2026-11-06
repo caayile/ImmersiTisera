@@ -50,12 +50,12 @@ class PublicController extends Controller
 
     private function homeHeroImageUrl(): string
     {
-        return HeroSetting::forHome()->backgroundUrl() ?: asset('images/hero/beranda.jpg');
+        return HeroSetting::forHome()->backgroundUrl() ?: asset('images/hero/beranda-rotasi-1.jpg');
     }
 
     private function homeHeroAlternateImageUrl(): string
     {
-        return asset('images/hero/beranda-tiga-serangkai.jpg').'?v=2';
+        return asset('images/hero/beranda-rotasi-2.png');
     }
 
     /**

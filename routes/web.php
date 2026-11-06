@@ -27,9 +27,9 @@ Route::get('/login/mentor', [AuthController::class, 'showMentorLogin'])->name('l
 Route::post('/login/mentor', [AuthController::class, 'loginMentor']);
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
 Route::get('/register/user', [AuthController::class, 'showUserRegister'])->name('register.user');
-Route::post('/register/user', [AuthController::class, 'registerUser']);
+Route::post('/register/user', [AuthController::class, 'registerUser'])->middleware('throttle:5,1');
 Route::get('/register/mentor', [AuthController::class, 'showMentorRegister'])->name('register.mentor');
-Route::post('/register/mentor', [AuthController::class, 'registerMentor']);
+Route::post('/register/mentor', [AuthController::class, 'registerMentor'])->middleware('throttle:5,1');
 Route::get('/register/verify-otp', [AuthController::class, 'showRegisterOtp'])->name('register.verify-otp');
 Route::post('/register/verify-otp', [AuthController::class, 'verifyRegisterOtp'])->middleware('throttle:5,1')->name('register.verify-otp.submit');
 Route::post('/register/verify-otp/resend', [AuthController::class, 'resendRegisterOtp'])->middleware('throttle:5,1')->name('register.verify-otp.resend');

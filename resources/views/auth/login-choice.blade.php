@@ -1,4 +1,4 @@
-@php
+    @php
     $defaultRole = session('auth_side') === 'mentor' ? 'mentor' : 'dosen';
     $defaultTab =
         $initialTab ?? (request()->routeIs('register*') || request('tab') === 'register' ? 'register' : 'login');

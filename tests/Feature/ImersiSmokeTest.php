@@ -292,9 +292,8 @@ class ImersiSmokeTest extends TestCase
         $this->actingAs($dosen)
             ->get(route('participant.evaluation'))
             ->assertOk()
-            ->assertSee('Hasil Magang')
-            ->assertSee('Nilai raport dari mentor terkunci')
-            ->assertSee('Pengumuman nilai periode ini ditutup');
+            ->assertSee('Hasil Nilai Magang')
+            ->assertSee('Nilai magang belum diumumkan');
 
         $this->actingAs($dosen)
             ->post(route('participant.evaluation'), [
@@ -316,8 +315,7 @@ class ImersiSmokeTest extends TestCase
         $this->actingAs($dosen)
             ->get(route('participant.evaluation'))
             ->assertOk()
-            ->assertSee('Nilai raport dari mentor terkunci')
-            ->assertSee('Pengumuman nilai periode ini ditutup');
+            ->assertSee('Nilai belum diberikan oleh mentor');
     }
 
     public function test_mentor_can_input_weighted_report_grades(): void

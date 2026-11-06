@@ -3,19 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\Api\AgreementResource;
-use App\Models\Agreement;
-use App\Models\Application;
-use App\Services\AgreementLetterService;
 use App\Jobs\IssueAgreementLetterJob;
 use App\Jobs\SendAgreementApprovedJob;
-use App\Policies\AgreementPolicy;
+use App\Models\Agreement;
+use App\Services\AgreementLetterService;
 use Illuminate\Http\Request;
 
 class AgreementController extends Controller
 {
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     public function show(Request $request, Agreement $agreement)
     {

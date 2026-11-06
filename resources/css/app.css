@@ -708,7 +708,7 @@ body {
 }
 
 .home-hero__photo--swap {
-    animation: home-hero-crossfade 14s ease-in-out infinite;
+    animation: home-hero-crossfade 7s ease-in-out infinite;
 }
 
 @keyframes home-hero-crossfade {

@@ -14,6 +14,8 @@ use Illuminate\Http\Request;
 
 class ProgramController extends Controller
 {
+    public function __construct() {}
+
     public function index(Request $request)
     {
         $query = Program::query()
@@ -56,7 +58,17 @@ class ProgramController extends Controller
             'mentor' => $program->mentor?->user?->name,
             'logbooks' => $program->logbooks
                 ->sortByDesc('date')
-                ->map(fn (Logbook $item) => $this->presenter->logbook($item))
+                ->map(fn (Logbook $item) => [
+                    'id' => $item->id,
+                    'date' => $item->date?->toDateString(),
+                    'activity' => $item->activity,
+                    'what_i_did' => $item->what_i_did,
+                    'what_i_learned' => $item->what_i_learned,
+                    'what_i_found' => $item->what_i_found,
+                    'value' => $item->value,
+                    'next_action' => $item->next_action,
+                    'status' => $item->status,
+                ])
                 ->values(),
         ]));
     }
@@ -79,7 +91,7 @@ class ProgramController extends Controller
             ]
         );
 
-        return response()->json($this->presenter->program($program->fresh(['agreement', 'participant.user', 'mentor.user', 'businessUnit'])));
+        return response()->json(new ProgramResource($program->fresh(['agreement', 'participant.user', 'mentor.user', 'businessUnit'])));
     }
 
     public function storeLogbook(Request $request, Program $program)
@@ -119,7 +131,17 @@ class ProgramController extends Controller
 
         $logbook->update(['status' => 'approved']);
 
-        return response()->json($this->presenter->logbook($logbook->fresh()));
+        return response()->json([
+            'id' => $logbook->id,
+            'date' => $logbook->date?->toDateString(),
+            'activity' => $logbook->activity,
+            'what_i_did' => $logbook->what_i_did,
+            'what_i_learned' => $logbook->what_i_learned,
+            'what_i_found' => $logbook->what_i_found,
+            'value' => $logbook->value,
+            'next_action' => $logbook->next_action,
+            'status' => $logbook->status,
+        ]);
     }
 
     public function storeMentoring(Request $request, Program $program)
