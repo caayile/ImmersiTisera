@@ -10,11 +10,12 @@ use App\Models\MentorSession;
 use App\Models\Program;
 use App\Models\ProgramOutput;
 use App\Models\Timeline;
+use App\Support\ApiPresenter;
 use Illuminate\Http\Request;
 
 class ProgramController extends Controller
 {
-    public function __construct() {}
+    public function __construct(private ApiPresenter $presenter) {}
 
     public function index(Request $request)
     {
@@ -154,20 +155,25 @@ class ProgramController extends Controller
             'found' => ['nullable', 'string'],
             'working_on' => ['nullable', 'string'],
             'next_action' => ['nullable', 'string'],
-            'mentor_feedback' => ['nullable', 'string'],
+            'mentor_feedback' => $request->user()->isParticipant() ? ['prohibited'] : ['nullable', 'string'],
         ]);
+
+        $sessionData = [
+            'mentor_id' => $program->mentor_id,
+            'participant_id' => $program->participant_id,
+            'session_date' => $data['session_date'] ?? now()->toDateString(),
+            'findings' => $data['found'] ?? null,
+            'current_work' => $data['working_on'] ?? null,
+            'next_action' => $data['next_action'] ?? null,
+        ];
+
+        if (! $request->user()->isParticipant()) {
+            $sessionData['feedback'] = $data['mentor_feedback'] ?? null;
+        }
 
         $session = MentorSession::updateOrCreate(
             ['program_id' => $program->id, 'week' => $data['week']],
-            [
-                'mentor_id' => $program->mentor_id,
-                'participant_id' => $program->participant_id,
-                'session_date' => $data['session_date'] ?? now()->toDateString(),
-                'findings' => $data['found'] ?? null,
-                'current_work' => $data['working_on'] ?? null,
-                'next_action' => $data['next_action'] ?? null,
-                'feedback' => $data['mentor_feedback'] ?? null,
-            ]
+            $sessionData,
         );
 
         return response()->json($session);
@@ -180,8 +186,8 @@ class ProgramController extends Controller
         $data = $request->validate([
             'week' => ['required', 'integer', 'min:1', 'max:8'],
             'dosen_progress' => ['nullable', 'string'],
-            'mentor_status' => ['nullable', 'in:agree,need_improvement'],
-            'mentor_notes' => ['nullable', 'string'],
+            'mentor_status' => $request->user()->isParticipant() ? ['prohibited'] : ['nullable', 'in:agree,need_improvement'],
+            'mentor_notes' => $request->user()->isParticipant() ? ['prohibited'] : ['nullable', 'string'],
         ]);
 
         if ($request->user()->isParticipant()) {
@@ -189,15 +195,21 @@ class ProgramController extends Controller
             abort_unless($program->fresh()->isCheckpointOpen((int) $data['week']), 403);
         }
 
+        $checkpointData = [
+            'phase' => $this->presenter->phase($data['week']),
+            'title' => 'Minggu '.$data['week'],
+        ];
+
+        if ($request->user()->isParticipant()) {
+            $checkpointData['description'] = $data['dosen_progress'] ?? null;
+        } else {
+            $checkpointData['expected_output'] = $data['mentor_notes'] ?? null;
+            $checkpointData['status'] = ($data['mentor_status'] ?? null) === 'agree' ? 'done' : 'pending';
+        }
+
         $checkpoint = Timeline::updateOrCreate(
             ['program_id' => $program->id, 'week' => $data['week']],
-            [
-                'phase' => $this->presenter->phase($data['week']),
-                'title' => 'Minggu '.$data['week'],
-                'description' => $data['dosen_progress'] ?? null,
-                'expected_output' => $data['mentor_notes'] ?? null,
-                'status' => ($data['mentor_status'] ?? null) === 'agree' ? 'done' : 'pending',
-            ]
+            $checkpointData,
         );
 
         return response()->json($checkpoint);

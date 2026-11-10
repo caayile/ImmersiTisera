@@ -20,7 +20,7 @@ class ProfileController extends Controller
             $data = $request->validate([
                 'name' => ['sometimes', 'string', 'max:255'],
                 'phone' => ['nullable', 'string', 'max:30'],
-                'avatar' => ['sometimes', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+                'avatar' => ['sometimes', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'extensions:jpg,jpeg,png,webp', 'max:5120'],
                 'nidn' => ['nullable', 'string', 'max:40'],
                 'prodi' => ['required', 'string', 'max:120'],
                 'department' => ['nullable', 'string', 'max:120'],
@@ -60,7 +60,7 @@ class ProfileController extends Controller
             $data = $request->validate([
                 'name' => ['sometimes', 'string', 'max:255'],
                 'phone' => ['nullable', 'string', 'max:30'],
-                'avatar' => ['sometimes', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+                'avatar' => ['sometimes', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'extensions:jpg,jpeg,png,webp', 'max:5120'],
                 'company_name' => ['nullable', 'string', 'max:180'],
                 'industry_field' => ['nullable', 'string', 'max:120'],
                 'business_unit' => ['required', 'string', 'max:120'],

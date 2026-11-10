@@ -21,6 +21,7 @@ class MentorSessionResource extends JsonResource
             'working_on' => $this->current_work,
             'next_action' => $this->next_action,
             'mentor_feedback' => $this->feedback,
+            'attachment_url' => $this->attachment_path ? route('api.private-files.mentoring', $this) : null,
         ];
     }
 }

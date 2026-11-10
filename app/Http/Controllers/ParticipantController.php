@@ -82,7 +82,7 @@ class ParticipantController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:30'],
             'institution' => ['nullable', 'string', 'max:180'],
-            'avatar' => ['sometimes', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'avatar' => ['sometimes', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'extensions:jpg,jpeg,png,webp', 'max:5120'],
             'nidn' => ['nullable', 'string', 'max:40'],
             'faculty' => ['required', 'string', Rule::in(StudyPrograms::faculties())],
             'study_program' => [
@@ -393,11 +393,11 @@ class ParticipantController extends Controller
             'description' => ['nullable', 'string'],
             'expected_output' => ['nullable', 'string'],
             'evidence_link' => ['nullable', 'string', 'max:2048'],
-            'attachment' => ['nullable', 'file', 'max:10240', 'mimes:pdf,doc,docx,jpg,jpeg,png,webp'],
+            'attachment' => ['nullable', 'file', 'max:10240', 'mimes:pdf,doc,docx,jpg,jpeg,png,webp', 'extensions:pdf,doc,docx,jpg,jpeg,png,webp'],
         ]);
 
         $previousAttachmentPath = $timeline->attachment_path;
-        $attachmentPath = $request->file('attachment')?->store('timeline-reports', 'public');
+        $attachmentPath = $request->file('attachment')?->store('timeline-reports', 'local');
 
         $payload = [
             'title' => $data['title'],
@@ -415,7 +415,7 @@ class ParticipantController extends Controller
         $timeline->update($payload);
 
         if ($attachmentPath && $previousAttachmentPath) {
-            Storage::disk('public')->delete($previousAttachmentPath);
+            Storage::disk('local')->delete($previousAttachmentPath);
         }
 
         $timeline->program->mentor?->user?->notify(new ImersiAlert(
@@ -546,7 +546,7 @@ class ParticipantController extends Controller
             'current_work' => ['nullable', 'string'],
             'next_action' => ['nullable', 'string'],
             'evidence_link' => ['nullable', 'string', 'max:2048'],
-            'attachment' => ['nullable', 'file', 'max:10240', 'mimes:pdf,doc,docx,jpg,jpeg,png,webp'],
+            'attachment' => ['nullable', 'file', 'max:10240', 'mimes:pdf,doc,docx,jpg,jpeg,png,webp', 'extensions:pdf,doc,docx,jpg,jpeg,png,webp'],
         ]);
 
         $sessionDate = Carbon::parse($data['session_date'])->startOfDay();
@@ -565,7 +565,7 @@ class ParticipantController extends Controller
             'current_work' => $data['current_work'] ?? null,
             'next_action' => $data['next_action'] ?? null,
             'evidence_link' => $data['evidence_link'] ?? null,
-            'attachment_path' => $request->file('attachment')?->store('mentoring-docs', 'public'),
+            'attachment_path' => $request->file('attachment')?->store('mentoring-docs', 'local'),
         ]);
 
         $program->mentor?->user?->notify(new ImersiAlert(
@@ -599,7 +599,7 @@ class ParticipantController extends Controller
             'program_id' => ['nullable', 'integer', 'exists:programs,id'],
             'description' => ['nullable', 'string'],
             'link' => ['nullable', 'string', 'max:2048'],
-            'hasil_file' => ['nullable', 'file', 'max:10240', 'mimes:pdf,jpg,jpeg,png,doc,docx,ppt,pptx,zip'],
+            'hasil_file' => ['nullable', 'file', 'max:10240', 'mimes:pdf,jpg,jpeg,png,doc,docx,ppt,pptx,zip', 'extensions:pdf,jpg,jpeg,png,doc,docx,ppt,pptx,zip'],
             'laporan_link' => ['nullable', 'string', 'max:2048'],
             'department_id' => ['nullable', 'exists:departments,id'],
             'business_unit_id' => ['nullable', 'exists:business_units,id'],
@@ -607,7 +607,7 @@ class ParticipantController extends Controller
             'level' => ['nullable', 'integer', 'min:0', 'max:4'],
             'is_main_output' => ['sometimes', 'boolean'],
             'is_final_report' => ['sometimes', 'boolean'],
-            'file' => ['nullable', 'file', 'max:10240', 'mimes:pdf,jpg,jpeg,png,doc,docx,ppt,pptx,zip'],
+            'file' => ['nullable', 'file', 'max:10240', 'mimes:pdf,jpg,jpeg,png,doc,docx,ppt,pptx,zip', 'extensions:pdf,jpg,jpeg,png,doc,docx,ppt,pptx,zip'],
         ]);
 
         // One source per artifact: link xor file.
@@ -647,14 +647,14 @@ class ParticipantController extends Controller
         }
 
         if ($request->file('file')) {
-            $payload['file_path'] = $request->file('file')->store('outputs', 'public');
+            $payload['file_path'] = $request->file('file')->store('outputs', 'local');
             $payload['laporan_link'] = null;
         } elseif (array_key_exists('laporan_link', $data)) {
             $payload['laporan_link'] = $data['laporan_link'];
         }
 
         if ($request->file('hasil_file')) {
-            $payload['hasil_file_path'] = $request->file('hasil_file')->store('outputs', 'public');
+            $payload['hasil_file_path'] = $request->file('hasil_file')->store('outputs', 'local');
             $payload['link'] = null;
         }
 
@@ -692,7 +692,7 @@ class ParticipantController extends Controller
     {
         foreach (['file_path', 'hasil_file_path'] as $column) {
             if (array_key_exists($column, $payload) && $output->{$column} && $output->{$column} !== $payload[$column]) {
-                Storage::disk('public')->delete($output->{$column});
+                Storage::disk('local')->delete($output->{$column});
             }
         }
     }

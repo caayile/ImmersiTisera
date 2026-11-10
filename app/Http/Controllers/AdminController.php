@@ -133,7 +133,7 @@ class AdminController extends Controller
             'description' => ['nullable', 'string'],
             'area' => ['nullable', 'string'],
             'map_url' => ['nullable', 'string', 'max:8192'],
-            'image' => ['nullable', 'image', 'max:20480'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'extensions:jpg,jpeg,png,webp', 'max:20480'],
         ]);
         Department::create([
             ...collect($data)->except('image')->toArray(),
@@ -155,7 +155,7 @@ class AdminController extends Controller
             'area' => ['nullable', 'string'],
             'map_url' => ['nullable', 'string', 'max:8192'],
             'status' => ['required', Rule::in(['active', 'disabled'])],
-            'image' => ['nullable', 'image', 'max:20480'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'extensions:jpg,jpeg,png,webp', 'max:20480'],
         ]);
 
         $previousImagePath = $department->image_path;
@@ -255,7 +255,7 @@ class AdminController extends Controller
             'registration_deadline' => ['nullable', 'date'],
             'registration_start' => ['nullable', 'date'],
             'mentor_id' => ['nullable', 'exists:mentors,id'],
-            'image' => ['nullable', 'image', 'max:5120'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'extensions:jpg,jpeg,png,webp', 'max:5120'],
         ]);
         $unit = BusinessUnit::create([
             ...collect($this->normalizePeriod($data))->except('mentor_id', 'relevant_programs', 'image')->toArray(),
@@ -291,7 +291,7 @@ class AdminController extends Controller
             'registration_start' => ['nullable', 'date'],
             'status' => ['required', Rule::in(['open', 'closed'])],
             'mentor_id' => ['nullable', 'exists:mentors,id'],
-            'image' => ['nullable', 'image', 'max:5120'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'extensions:jpg,jpeg,png,webp', 'max:5120'],
         ]);
 
         $previousImagePath = $businessUnit->image_path;
@@ -1080,7 +1080,7 @@ class AdminController extends Controller
     public function updateHomeHero(Request $request)
     {
         $request->validate([
-            'background' => ['required', 'image', 'max:20480'],
+            'background' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'extensions:jpg,jpeg,png,webp', 'max:20480'],
         ], [], [
             'background' => 'gambar latar',
         ]);
@@ -1132,7 +1132,7 @@ class AdminController extends Controller
         $data = $request->validate([
             'title' => ['required', 'string', 'max:120'],
             'subtitle' => ['nullable', 'string', 'max:255'],
-            'background' => ['nullable', 'image', 'max:20480'],
+            'background' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'extensions:jpg,jpeg,png,webp', 'max:20480'],
         ]);
 
         $setting = HeroSetting::forPage('departments');
@@ -1157,7 +1157,7 @@ class AdminController extends Controller
             'subtitle' => ['nullable', 'string', 'max:255'],
             'link_url' => ['nullable', 'string', 'max:255'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:999'],
-            'image' => ['required', 'image', 'max:5120'],
+            'image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'extensions:jpg,jpeg,png,webp', 'max:5120'],
         ]);
 
         HeroSlide::create([
@@ -1183,7 +1183,7 @@ class AdminController extends Controller
             'link_url' => ['nullable', 'string', 'max:255'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:999'],
             'is_active' => ['nullable', 'boolean'],
-            'image' => ['nullable', 'image', 'max:5120'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'extensions:jpg,jpeg,png,webp', 'max:5120'],
         ]);
 
         $payload = [
@@ -1252,7 +1252,7 @@ class AdminController extends Controller
             'category' => ['nullable', 'string', 'max:80'],
             'status' => ['required', Rule::in(['draft', 'published'])],
             'published_at' => ['nullable', 'date'],
-            'cover_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'cover_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'extensions:jpg,jpeg,png,webp', 'max:5120'],
         ]);
 
         News::create([
@@ -1279,7 +1279,7 @@ class AdminController extends Controller
             'category' => ['nullable', 'string', 'max:80'],
             'status' => ['required', Rule::in(['draft', 'published'])],
             'published_at' => ['nullable', 'date'],
-            'cover_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'cover_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'extensions:jpg,jpeg,png,webp', 'max:5120'],
         ]);
 
         $previousCoverImage = $news->cover_image;

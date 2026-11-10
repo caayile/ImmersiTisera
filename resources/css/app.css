@@ -676,6 +676,12 @@ body {
     font-size: 0.875rem;
 }
 
+@media (min-width: 48rem) {
+    .home-header__mobile-menu {
+        display: none !important;
+    }
+}
+
 .home-header__mobile-link {
     padding: 8px 0;
     color: #40534d;

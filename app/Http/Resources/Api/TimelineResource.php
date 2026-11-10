@@ -22,6 +22,7 @@ class TimelineResource extends JsonResource
             'expected_output' => $this->expected_output,
             'evidence_link' => $this->evidence_link,
             'attachment_path' => $this->attachment_path,
+            'attachment_url' => $this->attachment_path ? route('api.private-files.timeline', $this) : null,
             'mentor_note' => $this->mentor_note,
             'status' => $this->status,
         ];

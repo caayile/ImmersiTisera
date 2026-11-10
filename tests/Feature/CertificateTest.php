@@ -134,17 +134,11 @@ class CertificateTest extends TestCase
             ->assertSee('di '.strtoupper($program->department->name).' pada '.strtoupper($program->businessUnit->name))
             ->assertSee($participant->name);
 
-        $chromePath = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
-
-        if (is_file($chromePath)) {
-            config(['services.browsershot.chrome_path' => null]);
-        } else {
-            $this->mock(CertificatePdfRenderer::class)
-                ->shouldReceive('render')
-                ->once()
-                ->withArgs(fn (string $html): bool => str_contains($html, $certificate->number))
-                ->andReturn('%PDF-1.7 certificate');
-        }
+        $this->mock(CertificatePdfRenderer::class)
+            ->shouldReceive('render')
+            ->once()
+            ->withArgs(fn (string $html): bool => str_contains($html, $certificate->number))
+            ->andReturn('%PDF-1.7 certificate');
 
         $pdfResponse = $this->actingAs($participant)
             ->get(route('participant.certificates.download', $certificate))

@@ -64,7 +64,7 @@
             <button class="home-header__menu md:hidden" @click="open = !open">Menu</button>
         </div>
     </div>
-    <div x-show="open" x-cloak class="home-header__mobile-menu">
+    <div x-show="open" x-cloak class="home-header__mobile-menu md:hidden">
         @foreach($nav as [$label, $href, $activeRoute])
             <a href="{{ $href }}" class="home-header__mobile-link">{{ $label }}</a>
         @endforeach

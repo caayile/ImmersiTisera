@@ -6,6 +6,7 @@ use App\Models\Program;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -15,7 +16,7 @@ class OutputUploadTest extends TestCase
 
     public function test_participant_can_upload_documentation_and_mentor_can_access_it(): void
     {
-        Storage::fake('public');
+        Storage::fake('local');
         $this->seed();
 
         $participant = User::where('email', 'dosen@imersi.id')->firstOrFail();
@@ -36,7 +37,7 @@ class OutputUploadTest extends TestCase
             ->assertRedirect();
 
         $output = $program->outputs()->latest()->firstOrFail();
-        Storage::disk('public')->assertExists($output->file_path);
+        Storage::disk('local')->assertExists($output->file_path);
 
         $this->actingAs($mentor)
             ->get(route('mentor.participants.show', $program))
@@ -53,7 +54,56 @@ class OutputUploadTest extends TestCase
                 'mentor_feedback' => 'Baik.',
             ])
             ->assertRedirect();
-
         $this->assertSame('approved', $output->fresh()->status);
+    }
+
+    public function test_private_output_file_download_is_limited_to_program_members(): void
+    {
+        Storage::fake('local');
+        $this->seed();
+
+        $participant = User::where('email', 'dosen@imersi.id')->firstOrFail();
+        $otherParticipant = User::where('email', 'dosen2@imersi.id')->firstOrFail();
+        $program = Program::where('participant_id', $participant->participant->id)->firstOrFail();
+        $path = UploadedFile::fake()->create('report.pdf', 100, 'application/pdf')->store('outputs', 'local');
+        $output = $program->outputs()->create([
+            'participant_id' => $participant->participant->id,
+            'title' => 'Laporan privat',
+            'type' => 'Research Report',
+            'file_path' => $path,
+            'status' => 'submitted',
+        ]);
+        $downloadUrl = '/private-files/outputs/'.$output->id.'/report';
+
+        $this->actingAs($otherParticipant)->get($downloadUrl)->assertForbidden();
+        $this->actingAs($participant)->get($downloadUrl)->assertOk();
+    }
+
+    public function test_legacy_public_output_files_are_dry_run_then_migrated(): void
+    {
+        Storage::fake('public');
+        Storage::fake('local');
+        $this->seed();
+
+        $participant = User::where('email', 'dosen@imersi.id')->firstOrFail();
+        $program = Program::where('participant_id', $participant->participant->id)->firstOrFail();
+        $path = 'outputs/legacy-report.pdf';
+        Storage::disk('public')->put($path, 'legacy private report');
+        $program->outputs()->create([
+            'participant_id' => $participant->participant->id,
+            'title' => 'Legacy report',
+            'type' => 'Research Report',
+            'file_path' => $path,
+            'status' => 'submitted',
+        ]);
+
+        Artisan::call('files:secure-uploads');
+        Storage::disk('public')->assertExists($path);
+        Storage::disk('local')->assertMissing($path);
+
+        Artisan::call('files:secure-uploads', ['--apply' => true]);
+        Storage::disk('public')->assertMissing($path);
+        Storage::disk('local')->assertExists($path);
+        $this->assertSame('legacy private report', Storage::disk('local')->get($path));
     }
 }

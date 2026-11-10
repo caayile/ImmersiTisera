@@ -68,7 +68,7 @@ class MentorController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:30'],
-            'avatar' => ['sometimes', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'avatar' => ['sometimes', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'extensions:jpg,jpeg,png,webp', 'max:5120'],
             'nik' => ['nullable', 'string', 'max:40'],
             'position' => ['nullable', 'string', 'max:180'],
             'expertise' => ['nullable', 'string'],
