@@ -17,7 +17,7 @@ class TimelineCheckpointTest extends TestCase
 
     public function test_participant_sees_checkpoint_weeks_and_uploads_a_report(): void
     {
-        Storage::fake('public');
+        Storage::fake('local');
         $this->seed();
 
         $dosen = User::where('email', 'dosen@imersi.id')->firstOrFail();
@@ -65,7 +65,7 @@ class TimelineCheckpointTest extends TestCase
 
         $item->refresh();
         $this->assertNotNull($item->attachment_path);
-        Storage::disk('public')->assertExists($item->attachment_path);
+        Storage::disk('local')->assertExists($item->attachment_path);
         $this->assertDatabaseHas('timelines', [
             'id' => $item->id,
             'title' => 'Rencana revisi minggu '.$item->week,
@@ -76,6 +76,14 @@ class TimelineCheckpointTest extends TestCase
             ->get(route('mentor.timeline.show', $program))
             ->assertOk()
             ->assertSee('Unduh laporan terlampir');
+
+        $this->actingAs(User::where('email', 'dosen2@imersi.id')->firstOrFail())
+            ->get(route('private-files.timeline', $item))
+            ->assertForbidden();
+
+        $this->actingAs(User::where('email', 'mentor@imersi.id')->firstOrFail())
+            ->get(route('private-files.timeline', $item))
+            ->assertOk();
     }
 
     public function test_future_checkpoint_stays_locked_and_past_checkpoint_cannot_be_edited(): void
@@ -132,7 +140,7 @@ class TimelineCheckpointTest extends TestCase
 
     public function test_checkpoint_accepts_word_documents_and_images(): void
     {
-        Storage::fake('public');
+        Storage::fake('local');
         $this->seed();
 
         $dosen = User::where('email', 'dosen@imersi.id')->firstOrFail();
@@ -161,7 +169,7 @@ class TimelineCheckpointTest extends TestCase
 
             $item->refresh();
             $this->assertNotNull($item->attachment_path);
-            Storage::disk('public')->assertExists($item->attachment_path);
+            Storage::disk('local')->assertExists($item->attachment_path);
         }
     }
 
@@ -178,6 +186,34 @@ class TimelineCheckpointTest extends TestCase
             ->post(route('participant.timeline.update', $item), [
                 'title' => 'Checkpoint minggu 2',
                 'attachment' => UploadedFile::fake()->create('script.exe', 100, 'application/x-msdownload'),
+            ])
+            ->assertRedirect(route('participant.timeline'))
+            ->assertSessionHasErrors('attachment');
+    }
+
+    public function test_checkpoint_rejects_an_allowed_image_mime_with_a_php_extension(): void
+    {
+        Storage::fake('local');
+        $this->seed();
+
+        $participant = User::where('email', 'dosen@imersi.id')->firstOrFail();
+        $checkpoint = $participant->participant->programs()->latest()->firstOrFail()
+            ->timelines()->where('week', 2)->firstOrFail();
+
+        $this->actingAs($participant)
+            ->from(route('participant.timeline'))
+            ->post(route('participant.timeline.update', $checkpoint), [
+                'title' => 'Checkpoint minggu 2',
+                'attachment' => UploadedFile::fake()->image('evidence.png'),
+            ])
+            ->assertRedirect(route('participant.timeline'))
+            ->assertSessionHasNoErrors();
+
+        $this->actingAs($participant)
+            ->from(route('participant.timeline'))
+            ->post(route('participant.timeline.update', $checkpoint), [
+                'title' => 'Checkpoint minggu 2',
+                'attachment' => UploadedFile::fake()->image('evidence.php'),
             ])
             ->assertRedirect(route('participant.timeline'))
             ->assertSessionHasErrors('attachment');

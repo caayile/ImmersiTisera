@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AdminApiController;
 use App\Http\Controllers\ApiAuthController;
 use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\OpportunityController;
+use App\Http\Controllers\PrivateFileController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\PublicController;
@@ -45,6 +46,14 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::post('/programs/{program}/report/generate', [ProgramController::class, 'generateReport']);
     Route::post('/programs/{program}/outputs', [ProgramController::class, 'storeOutput']);
     Route::post('/programs/{program}/connect', [ProgramController::class, 'connect']);
+
+    Route::get('/private-files/outputs/{output}/{artifact}', [PrivateFileController::class, 'output'])
+        ->whereIn('artifact', ['report', 'result'])
+        ->name('api.private-files.output');
+    Route::get('/private-files/timelines/{timeline}', [PrivateFileController::class, 'timeline'])
+        ->name('api.private-files.timeline');
+    Route::get('/private-files/mentoring/{session}', [PrivateFileController::class, 'mentoring'])
+        ->name('api.private-files.mentoring');
 
     Route::get('/admin/overview', [AdminApiController::class, 'overview']);
     Route::get('/admin/users', [AdminApiController::class, 'users']);

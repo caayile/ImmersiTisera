@@ -192,7 +192,7 @@
                                 </a>
                             @endif
                             @if($output->file_path)
-                                <a href="{{ asset('storage/'.$output->file_path) }}" class="inline-flex items-center gap-1 hover:underline">
+                                <a href="{{ $output->laporanFileUrl() }}" class="inline-flex items-center gap-1 hover:underline">
                                     <span class="material-symbols-outlined text-[16px]">download</span> Unduh berkas
                                 </a>
                             @endif
@@ -278,7 +278,7 @@
                                             <a href="{{ $output->linkUrl() }}" target="_blank" rel="noopener" class="mt-2 inline-block font-semibold text-primary-dark">Buka tautan</a>
                                         @endif
                                         @if($output->file_path)
-                                            <a href="{{ asset('storage/'.$output->file_path) }}" class="mt-2 inline-block font-semibold text-primary-dark">Unduh berkas</a>
+                                            <a href="{{ $output->laporanFileUrl() }}" class="mt-2 inline-block font-semibold text-primary-dark">Unduh berkas</a>
                                         @endif
                                     </details>
                                 </li>

@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\MentorController;
 use App\Http\Controllers\ParticipantController;
+use App\Http\Controllers\PrivateFileController;
 use App\Http\Controllers\PublicController;
 use Illuminate\Support\Facades\Route;
 
@@ -22,9 +23,9 @@ Route::view('/app/{any?}', 'spa')->where('any', '.*')->name('spa');
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::get('/login/user', [AuthController::class, 'showUserLogin'])->name('login.user');
-Route::post('/login/user', [AuthController::class, 'loginUser']);
+Route::post('/login/user', [AuthController::class, 'loginUser'])->middleware('throttle:5,1');
 Route::get('/login/mentor', [AuthController::class, 'showMentorLogin'])->name('login.mentor');
-Route::post('/login/mentor', [AuthController::class, 'loginMentor']);
+Route::post('/login/mentor', [AuthController::class, 'loginMentor'])->middleware('throttle:5,1');
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
 Route::get('/register/user', [AuthController::class, 'showUserRegister'])->name('register.user');
 Route::post('/register/user', [AuthController::class, 'registerUser'])->middleware('throttle:5,1');
@@ -38,14 +39,22 @@ Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallbac
 
 Route::middleware('guest')->group(function () {
     Route::get('/forgot-password', [AuthController::class, 'showForgot'])->name('password.request');
-    Route::post('/forgot-password', [AuthController::class, 'sendReset'])->name('password.email');
+    Route::post('/forgot-password', [AuthController::class, 'sendReset'])->middleware('throttle:5,1')->name('password.email');
     Route::get('/verify-otp', [AuthController::class, 'showVerifyOtp'])->name('password.verify-otp');
-    Route::post('/verify-otp', [AuthController::class, 'verifyOtp'])->name('password.verify-otp.submit');
+    Route::post('/verify-otp', [AuthController::class, 'verifyOtp'])->middleware('throttle:5,1')->name('password.verify-otp.submit');
     Route::get('/reset-password/{token}', [AuthController::class, 'showReset'])->name('password.reset');
-    Route::post('/reset-password', [AuthController::class, 'reset'])->name('password.update');
+    Route::post('/reset-password', [AuthController::class, 'reset'])->middleware('throttle:5,1')->name('password.update');
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
+
+Route::middleware('auth')->prefix('private-files')->name('private-files.')->group(function () {
+    Route::get('/outputs/{output}/{artifact}', [PrivateFileController::class, 'output'])
+        ->whereIn('artifact', ['report', 'result'])
+        ->name('output');
+    Route::get('/timelines/{timeline}', [PrivateFileController::class, 'timeline'])->name('timeline');
+    Route::get('/mentoring/{session}', [PrivateFileController::class, 'mentoring'])->name('mentoring');
+});
 
 Route::middleware(['auth', 'role:participant', 'throttle:30,1'])->prefix('participant')->name('participant.')->group(function () {
     Route::get('/dashboard', [ParticipantController::class, 'dashboard'])->name('dashboard');

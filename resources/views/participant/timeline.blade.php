@@ -80,7 +80,7 @@
                     <a href="{{ $item->evidence_link }}" target="_blank" rel="noopener" class="mt-1 block truncate text-sm font-medium text-primary-dark">{{ $item->evidence_link }}</a>
                 @endif
                 @if($item->attachment_path)
-                    <a href="{{ asset('storage/'.$item->attachment_path) }}" target="_blank" rel="noopener" class="mt-1 inline-block text-sm font-semibold text-primary-dark">Unduh bukti terlampir</a>
+                    <a href="{{ route('private-files.timeline', $item) }}" target="_blank" rel="noopener" class="mt-1 inline-block text-sm font-semibold text-primary-dark">Unduh bukti terlampir</a>
                 @endif
                 @if($item->mentor_note)
                     <p class="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800"><b>Catatan mentor:</b> {{ $item->mentor_note }}</p>
@@ -129,7 +129,7 @@
                                         <a href="{{ $item->evidence_link }}" target="_blank" rel="noopener" class="block truncate font-medium text-primary-dark">{{ $item->evidence_link }}</a>
                                     @endif
                                     @if($item->attachment_path)
-                                        <a href="{{ asset('storage/'.$item->attachment_path) }}" target="_blank" rel="noopener" class="inline-block font-semibold text-primary-dark">Unduh bukti terlampir</a>
+                                        <a href="{{ route('private-files.timeline', $item) }}" target="_blank" rel="noopener" class="inline-block font-semibold text-primary-dark">Unduh bukti terlampir</a>
                                     @endif
                                     @unless($item->evidence_link || $item->attachment_path)
                                         <span class="text-muted">—</span>

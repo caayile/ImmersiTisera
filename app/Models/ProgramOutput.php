@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Storage;
 
 #[Fillable([
     'program_id', 'participant_id', 'title', 'type', 'description', 'file_path', 'link',
@@ -55,12 +54,12 @@ class ProgramOutput extends Model
 
     public function hasilFileUrl(): ?string
     {
-        return $this->hasil_file_path ? Storage::disk('public')->url($this->hasil_file_path) : null;
+        return $this->hasil_file_path ? route('private-files.output', [$this, 'result']) : null;
     }
 
     public function laporanFileUrl(): ?string
     {
-        return $this->file_path ? Storage::disk('public')->url($this->file_path) : null;
+        return $this->file_path ? route('private-files.output', [$this, 'report']) : null;
     }
 
     private static function normalizeUrl(mixed $value): ?string

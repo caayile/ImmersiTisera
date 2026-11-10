@@ -114,7 +114,7 @@ class ImersiSmokeTest extends TestCase
 
     public function test_final_report_form_saves_explicit_metadata_and_level(): void
     {
-        Storage::fake('public');
+        Storage::fake('local');
         $this->seed();
 
         $dosen = User::where('email', 'dosen@imersi.id')->firstOrFail();
@@ -164,7 +164,7 @@ class ImersiSmokeTest extends TestCase
 
     public function test_final_report_rejects_link_and_file_together(): void
     {
-        Storage::fake('public');
+        Storage::fake('local');
         $this->seed();
 
         $dosen = User::where('email', 'dosen@imersi.id')->firstOrFail();
@@ -196,7 +196,7 @@ class ImersiSmokeTest extends TestCase
 
     public function test_final_report_file_replaces_link_and_removes_old_file(): void
     {
-        Storage::fake('public');
+        Storage::fake('local');
         $this->seed();
 
         $dosen = User::where('email', 'dosen@imersi.id')->firstOrFail();
@@ -213,7 +213,7 @@ class ImersiSmokeTest extends TestCase
 
         $firstPath = ProgramOutput::where('program_id', $program->id)->where('is_final_report', true)->firstOrFail()->file_path;
         $this->assertNotNull($firstPath);
-        Storage::disk('public')->assertExists($firstPath);
+        Storage::disk('local')->assertExists($firstPath);
 
         $this->actingAs($dosen)
             ->post(route('participant.final-report'), [
@@ -225,7 +225,7 @@ class ImersiSmokeTest extends TestCase
             ->assertRedirect();
 
         $this->assertSame(1, ProgramOutput::where('program_id', $program->id)->where('is_final_report', true)->count());
-        Storage::disk('public')->assertMissing($firstPath);
+        Storage::disk('local')->assertMissing($firstPath);
     }
 
     public function test_final_report_resubmit_updates_same_record(): void

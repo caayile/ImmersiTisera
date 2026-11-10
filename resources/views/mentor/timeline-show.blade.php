@@ -69,7 +69,7 @@
                                             <a href="{{ $timeline->evidence_link }}" target="_blank" rel="noopener" class="block truncate font-medium text-primary-dark">{{ $timeline->evidence_link }}</a>
                                         @endif
                                         @if($timeline->attachment_path)
-                                            <a href="{{ asset('storage/'.$timeline->attachment_path) }}" target="_blank" rel="noopener" class="inline-block font-semibold text-primary-dark">Unduh laporan terlampir</a>
+                                            <a href="{{ route('private-files.timeline', $timeline) }}" target="_blank" rel="noopener" class="inline-block font-semibold text-primary-dark">Unduh laporan terlampir</a>
                                         @endif
                                         @unless($timeline->evidence_link || $timeline->attachment_path)
                                             <span class="text-muted">—</span>

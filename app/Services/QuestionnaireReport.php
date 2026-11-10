@@ -347,6 +347,24 @@ class QuestionnaireReport
             return $stored;
         }
 
+        $legacy = [
+            'Pemahaman Industri' => $evaluation->industry_understanding,
+            'Relasi' => $evaluation->relationship,
+            'Hasil' => $evaluation->output,
+            'Manfaat Bersama' => $evaluation->mutual_benefit,
+            'Potensi Kolaborasi' => $evaluation->collaboration_potential,
+        ];
+
+        $legacyItems = collect($legacy)
+            ->filter(fn (mixed $score): bool => $score !== null && $score !== '')
+            ->map(fn (mixed $score, string $label): array => ['label' => $label, 'score' => $score])
+            ->values()
+            ->all();
+
+        if ($legacyItems !== []) {
+            return $legacyItems;
+        }
+
         return array_values(array_filter(
             $evaluation->criteriaForDisplay(),
             fn (mixed $criterion): bool => is_array($criterion)

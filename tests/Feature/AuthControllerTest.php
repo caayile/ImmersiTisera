@@ -28,9 +28,39 @@ class AuthControllerTest extends TestCase
     public function test_login_shows_the_faded_campus_background(): void
     {
         $this->get(route('login'))
-            ->assertSee('images/hero/beranda.jpg', false)
+            ->assertSee('images/hero/beranda-rotasi-1.jpg', false)
             ->assertSee('images/hero/beranda-tiga-serangkai.jpg', false)
             ->assertSee('auth-hero__wash', false);
+    }
+
+    public function test_web_login_is_rate_limited(): void
+    {
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $this->post(route('login.user'), [
+                'email' => 'unknown@example.com',
+                'password' => 'wrong-password',
+            ])->assertRedirect();
+        }
+
+        $this->post(route('login.user'), [
+            'email' => 'unknown@example.com',
+            'password' => 'wrong-password',
+        ])->assertTooManyRequests();
+    }
+
+    public function test_security_headers_are_added_to_web_responses(): void
+    {
+        $response = $this->get(route('login'))
+            ->assertOk()
+            ->assertHeader('X-Content-Type-Options', 'nosniff')
+            ->assertHeader('X-Frame-Options', 'DENY')
+            ->assertHeader('Referrer-Policy', 'strict-origin-when-cross-origin')
+            ->assertHeader('Content-Security-Policy');
+
+        $this->assertStringContainsString("'unsafe-eval'", (string) $response->headers->get('Content-Security-Policy'));
+
+        $this->get('https://localhost/login')
+            ->assertHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
     }
 
     public function test_register_form_leaves_phone_and_institution_for_the_profile(): void

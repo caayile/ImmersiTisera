@@ -128,7 +128,7 @@
                                                         <a href="{{ $session->evidence_link }}" target="_blank" rel="noopener" class="block truncate font-medium text-primary-dark">{{ $session->evidence_link }}</a>
                                                     @endif
                                                     @if($session->attachment_path)
-                                                        <a href="{{ asset('storage/'.$session->attachment_path) }}" target="_blank" rel="noopener" class="inline-block font-semibold text-primary-dark">Unduh bukti terlampir</a>
+                                                        <a href="{{ route('private-files.mentoring', $session) }}" target="_blank" rel="noopener" class="inline-block font-semibold text-primary-dark">Unduh bukti terlampir</a>
                                                     @endif
                                                     @unless($session->evidence_link || $session->attachment_path)
                                                         <span class="text-muted">—</span>
