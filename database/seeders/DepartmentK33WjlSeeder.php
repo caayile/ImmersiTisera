@@ -26,10 +26,10 @@ class DepartmentK33WjlSeeder extends Seeder
             ['slug' => 'wjl'],
             [
                 'name' => 'WJL',
-                'description' => 'Departemen produksi, pemasaran, dan administrasi di lokasi WJL untuk program Industry Immersion.',
+                'description' => 'Departemen produksi, pemasaran, dan administrasi di lokasi Wangsa Jatra Lestari untuk program Industry Immersion.',
                 'function' => 'Production, marketing, finance, and people services',
                 'area' => 'WJL',
-                'subtitle' => 'Wangsa Jastra Lestari',
+                'subtitle' => 'Wangsa Jatra Lestari',
                 'image_path' => 'images/hero/k33.jpg',
                 'status' => 'active',
             ],

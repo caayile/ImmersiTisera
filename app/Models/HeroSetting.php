@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\Services\MediaStorageService;
+use App\Support\OrganizationName;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -11,6 +13,20 @@ use Illuminate\Support\Str;
 #[Fillable(['page', 'title', 'subtitle', 'background_path'])]
 class HeroSetting extends Model
 {
+    protected function title(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $value): ?string => OrganizationName::format($value),
+        );
+    }
+
+    protected function subtitle(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $value): ?string => OrganizationName::format($value),
+        );
+    }
+
     public static function forPage(string $page): self
     {
         return static::query()->firstOrCreate(

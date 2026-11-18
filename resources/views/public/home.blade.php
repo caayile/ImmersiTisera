@@ -17,8 +17,8 @@
 
     $unitMeta = [
         'Operation (Sales)' => ['area' => 'K33 · Operasi & Sales', 'image' => 'from-[#16352c] to-[#3eaa84]', 'photo' => asset('images/hero/k33.jpg')],
-        'Production' => ['area' => 'WJL · Produksi', 'image' => 'from-[#1e3a5f] to-[#5ec69d]', 'photo' => asset('images/hero/k33.jpg')],
-        'Marketing' => ['area' => 'WJL · Pemasaran', 'image' => 'from-[#2f4a3c] to-[#7dd8b5]', 'photo' => asset('images/hero/assalaam.jpg')],
+        'Production' => ['area' => 'Wangsa Jatra Lestari · Produksi', 'image' => 'from-[#1e3a5f] to-[#5ec69d]', 'photo' => asset('images/hero/k33.jpg')],
+        'Marketing' => ['area' => 'Wangsa Jatra Lestari · Pemasaran', 'image' => 'from-[#2f4a3c] to-[#7dd8b5]', 'photo' => asset('images/hero/assalaam.jpg')],
         'Finance Accounting' => ['area' => 'K33 · Keuangan & IT', 'image' => 'from-[#16352c] to-[#5ec69d]', 'photo' => asset('images/hero/campus.jpg')],
         'Human Resources Development' => ['area' => 'K33 · SDM', 'image' => 'from-[#1e3a5f] to-[#3eaa84]', 'photo' => asset('images/hero/campus.jpg')],
         'Digital Business' => ['area' => 'Teknologi & Analitik', 'image' => 'from-[#16352c] to-[#3eaa84]', 'photo' => asset('images/hero/campus.jpg')],

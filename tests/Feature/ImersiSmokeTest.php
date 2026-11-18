@@ -380,7 +380,12 @@ class ImersiSmokeTest extends TestCase
         $this->seed();
 
         $this->get('/')->assertOk()->assertSee('Magang Dosen');
-        $this->get('/departments')->assertOk()->assertSee('TSPM')->assertSee('K33')->assertSee('WJL')->assertSee('Unit Bisnis Mitra');
+        $this->get('/departments')
+            ->assertOk()
+            ->assertSee('Tiga Serangkai Pustaka Mandiri')
+            ->assertSee('K33')
+            ->assertSee('Wangsa Jatra Lestari')
+            ->assertSee('Unit Bisnis Mitra');
         $this->get('/departments/tspm')->assertOk()->assertSee('Digital Business');
         $this->get('/berita')
             ->assertOk()

@@ -63,6 +63,26 @@ class AuthControllerTest extends TestCase
             ->assertHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
     }
 
+    public function test_local_security_policy_allows_vite_assets_on_localhost_and_ipv4_loopback(): void
+    {
+        $originalEnvironment = $this->app->environment();
+        $this->app->detectEnvironment(fn (): string => 'local');
+
+        try {
+            $policy = (string) $this->get(route('login'))
+                ->assertOk()
+                ->headers->get('Content-Security-Policy');
+
+            $this->assertStringContainsString('img-src \'self\' data: blob: https: http://localhost:5173 http://127.0.0.1:5173', $policy);
+            $this->assertStringContainsString('font-src \'self\' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com http://localhost:5173 http://127.0.0.1:5173', $policy);
+            $this->assertStringContainsString('script-src \'self\' \'unsafe-inline\' \'unsafe-eval\' https://cdn.jsdelivr.net http://localhost:5173 http://127.0.0.1:5173', $policy);
+            $this->assertStringContainsString('style-src \'self\' \'unsafe-inline\' https://fonts.googleapis.com https://cdnjs.cloudflare.com http://localhost:5173 http://127.0.0.1:5173', $policy);
+            $this->assertStringContainsString('ws://127.0.0.1:5173', $policy);
+        } finally {
+            $this->app->detectEnvironment(fn (): string => $originalEnvironment);
+        }
+    }
+
     public function test_register_form_leaves_phone_and_institution_for_the_profile(): void
     {
         $this->get(route('register'))

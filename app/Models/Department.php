@@ -2,12 +2,42 @@
 
 namespace App\Models;
 
+use App\Support\OrganizationName;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 
 #[Fillable(['name', 'slug', 'subtitle', 'description', 'function', 'area', 'map_url', 'image_path', 'status'])]
 class Department extends Model
 {
+    protected function name(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $value): ?string => OrganizationName::format($value),
+        );
+    }
+
+    protected function subtitle(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $value): ?string => OrganizationName::format($value),
+        );
+    }
+
+    protected function description(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $value): ?string => OrganizationName::format($value),
+        );
+    }
+
+    protected function area(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $value): ?string => OrganizationName::format($value),
+        );
+    }
+
     public function imageUrl(): ?string
     {
         return HeroSetting::resolveMediaUrl($this->image_path);
@@ -34,7 +64,8 @@ class Department extends Model
             ? $this->businessUnits
             : $this->businessUnits()->get();
 
-        return $units->count() === 1 && $units->first()->name === $this->name;
+        return $units->count() === 1
+            && $units->first()->name === ($this->getAttributes()['name'] ?? null);
     }
 
     public function primaryUnit(): ?BusinessUnit

@@ -57,7 +57,7 @@ export default function Login() {
             Masuk untuk melanjutkan program immersion.
           </h1>
           <p className="mt-4 max-w-md text-sm leading-6 text-white/70">
-            Identify, match, dan berkolaborasi dengan unit bisnis TSPM dan TSIC selama 60 hari.
+            Identify, match, dan berkolaborasi dengan unit bisnis Tiga Serangkai Pustaka Mandiri dan Tiga Serangkai Inti Corpora selama 60 hari.
           </p>
         </motion.div>
         <p className="text-xs text-white/50">Tiga Serangkai · Industry Immersion</p>

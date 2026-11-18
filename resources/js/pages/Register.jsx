@@ -52,7 +52,7 @@ export default function Register() {
         >
           <h1 className="max-w-md text-4xl font-semibold leading-tight">Daftar sesuai peran Anda.</h1>
           <p className="mt-4 max-w-md text-sm leading-6 text-white/70">
-            Dosen masuk ke unit bisnis TSPM atau TSIC. Mentor membuka opportunity dari departemennya.
+            Dosen masuk ke unit bisnis Tiga Serangkai Pustaka Mandiri atau Tiga Serangkai Inti Corpora. Mentor membuka opportunity dari departemennya.
           </p>
         </motion.div>
         <p className="text-xs text-white/50">Tiga Serangkai · Industry Immersion</p>

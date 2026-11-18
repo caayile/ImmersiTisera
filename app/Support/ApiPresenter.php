@@ -56,7 +56,7 @@ class ApiPresenter
     {
         return [
             'company_name' => $mentor->department?->name ?? 'TS Group',
-            'industry_field' => $mentor->department?->name,
+            'industry_field' => $mentor->department?->getRawOriginal('name'),
             'business_unit' => $mentor->businessUnit?->name,
             'department_function' => $mentor->businessUnit?->function,
             'job_title' => $mentor->position,

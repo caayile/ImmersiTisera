@@ -22,7 +22,7 @@ class LogbookReviewTest extends TestCase
             ->assertOk()
             ->assertSee('Dr. Andi Pratama')
             ->assertSee('Digital Business')
-            ->assertSee('TSPM')
+            ->assertSee('Tiga Serangkai Pustaka Mandiri')
             ->assertSee('Lihat rincian')
             ->assertSee('Semua status logbook')
             ->assertDontSee('Cari nama peserta');

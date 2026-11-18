@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Department;
 use App\Models\HeroSetting;
 use App\Models\HeroSlide;
 use App\Models\User;
@@ -17,14 +18,20 @@ class DepartmentHeroTest extends TestCase
     public function test_departments_page_shows_campus_hero_and_slides(): void
     {
         $this->seed();
+        Department::where('slug', 'tspm')->update(['name' => 'Tiga Serangkai Pustama Mandiri']);
+        HeroSlide::where('link_url', '/departments/wjl')->update(['title' => 'Wangsa Jastra Lestari']);
+        HeroSetting::where('page', 'departments')->update([
+            'subtitle' => 'Mitra TSPM, TSIC, dan WJL.',
+        ]);
 
         $this->get('/departments')
             ->assertOk()
             ->assertSee('Unit Bisnis Mitra Magang Dosen')
-            ->assertSee('Tiga Serangkai Pustama Mandiri')
+            ->assertSee('Mitra Tiga Serangkai Pustaka Mandiri, Tiga Serangkai Inti Corpora, dan Wangsa Jatra Lestari.')
+            ->assertSee('Tiga Serangkai Pustaka Mandiri')
             ->assertSee('Tiga Serangkai Inti Corpora')
             ->assertSee('K33')
-            ->assertSee('Wangsa Jastra Lestari')
+            ->assertSee('Wangsa Jatra Lestari')
             ->assertSee('Assalaam Hypermarket')
             ->assertSee('Al - Firdaus')
             ->assertSee('Puspa Holistic Integrative Care')
@@ -46,11 +53,33 @@ class DepartmentHeroTest extends TestCase
 
         $html = $this->get('/departments')->assertOk()->getContent();
 
-        foreach (['TSPM', 'TSIC', 'K33', 'WJL', 'Assalam Hypermarket', 'SD Al-Firdaus', 'Puspa Holistic Integrative Care'] as $name) {
+        foreach (['Tiga Serangkai Pustaka Mandiri', 'Tiga Serangkai Inti Corpora', 'K33', 'Wangsa Jatra Lestari', 'Assalam Hypermarket', 'SD Al-Firdaus', 'Puspa Holistic Integrative Care'] as $name) {
             $this->assertStringContainsString($name, $html);
         }
 
-        $this->assertSame(7, substr_count($html, 'Lihat Departemen'));
+        foreach (['TSPM', 'TSIC', 'WJL'] as $abbreviation) {
+            $this->assertStringNotContainsString($abbreviation, $html);
+        }
+
+        $this->assertStringContainsString('Lowongan dibuka', $html);
+        $this->assertStringContainsString('15 unit bisnis', $html);
+        $this->assertSame(7, substr_count($html, 'Lihat Detail'));
+    }
+
+    public function test_admin_department_form_keeps_the_stored_code_while_displaying_the_full_name(): void
+    {
+        $this->seed();
+
+        $department = Department::where('slug', 'tsic')->firstOrFail();
+        $admin = User::where('email', 'admin@imersi.id')->firstOrFail();
+
+        $this->assertSame('Tiga Serangkai Inti Corpora', $department->name);
+        $this->assertSame('TSIC', $department->getRawOriginal('name'));
+
+        $this->actingAs($admin)
+            ->get(route('admin.departments.show', $department))
+            ->assertOk()
+            ->assertSee('name="name" value="TSIC"', false);
     }
 
     public function test_missing_uploaded_media_does_not_generate_a_broken_url(): void
@@ -113,7 +142,7 @@ class DepartmentHeroTest extends TestCase
 
         $this->actingAs($admin)
             ->put('/admin/department-hero/slides/'.$slide->id, [
-                'title' => 'Wangsa Jastra Lestari Updated',
+                'title' => 'Wangsa Jatra Lestari Updated',
                 'subtitle' => 'Deskripsi unit bisnis yang diperbarui.',
                 'link_url' => '/departments/wjl',
                 'sort_order' => 4,
@@ -124,7 +153,7 @@ class DepartmentHeroTest extends TestCase
 
         $this->assertDatabaseHas('hero_slides', [
             'id' => $slide->id,
-            'title' => 'Wangsa Jastra Lestari Updated',
+            'title' => 'Wangsa Jatra Lestari Updated',
             'subtitle' => 'Deskripsi unit bisnis yang diperbarui.',
         ]);
         $updated = HeroSlide::findOrFail($slide->id);
@@ -132,6 +161,6 @@ class DepartmentHeroTest extends TestCase
         $this->assertNotSame($previousPath, $updated->image_path);
         $this->assertNotNull($updated->imageUrl());
 
-        $this->get('/departments')->assertOk()->assertSee('WJL');
+        $this->get('/departments')->assertOk()->assertSee('Wangsa Jatra Lestari Updated');
     }
 }

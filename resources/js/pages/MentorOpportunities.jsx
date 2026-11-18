@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import api from '../api/client'
-import { PURPOSE, ORGANIZATIONS, unitsFor } from '../lib/constants'
+import { PURPOSE, ORGANIZATIONS, organizationLabel, unitsFor } from '../lib/constants'
 import { Button, Card, Field, PageHeader, inputClass } from '../components/ui'
 import { pageVariants, staggerContainer, cardVariants, slideLeft, slideRight } from '../lib/motion'
 
@@ -50,7 +50,7 @@ export default function MentorOpportunities() {
               <Field label="Judul"><input className={inputClass} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required /></Field>
               <Field label="Departemen">
                 <select className={inputClass} value={form.field} onChange={(e) => setForm({ ...form, field: e.target.value, business_unit: '' })}>
-                  {ORGANIZATIONS.map((item) => <option key={item} value={item}>{item}</option>)}
+                  {ORGANIZATIONS.map((item) => <option key={item} value={item}>{organizationLabel(item)}</option>)}
                 </select>
               </Field>
               <Field label="Unit bisnis">

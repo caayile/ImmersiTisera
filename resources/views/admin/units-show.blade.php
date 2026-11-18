@@ -24,9 +24,9 @@
     <p class="mt-1 text-xs text-muted">Isi lokasi yang ditampilkan di peta halaman peserta. Perubahan langsung otomatis tampil di publik.</p>
     <form method="POST" action="{{ route('admin.departments.update', $department) }}" enctype="multipart/form-data" class="mt-4 grid gap-3 md:grid-cols-2">
         @csrf @method('PUT')
-        <input type="hidden" name="name" value="{{ $department->name }}">
+        <input type="hidden" name="name" value="{{ $department->getRawOriginal('name') }}">
         <input type="hidden" name="status" value="{{ $department->status }}">
-        <input name="area" value="{{ $department->area }}" placeholder="Area / Lokasi (mis. Surakarta)" class="rounded-lg border border-line px-3 py-2 text-sm">
+        <input name="area" value="{{ $department->getRawOriginal('area') }}" placeholder="Area / Lokasi (mis. Surakarta)" class="rounded-lg border border-line px-3 py-2 text-sm">
         <input name="map_url" value="{{ $department->map_url }}" placeholder="Link Google Maps / peta (opsional)" class="rounded-lg border border-line px-3 py-2 text-sm">
         <p class="col-span-full text-xs text-muted">Link peta diambil dari Google Maps (tombol <b>Bagikan</b> → Salin link). Kosongkan untuk memakai pencarian area otomatis.</p>
         <button class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white md:col-span-2">Simpan pengaturan lokasi</button>

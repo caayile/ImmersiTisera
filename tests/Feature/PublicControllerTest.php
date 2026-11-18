@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\BusinessUnit;
+use App\Models\News;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -34,8 +35,28 @@ class PublicControllerTest extends TestCase
             ->assertOk()
             ->assertJsonFragment([
                 'type' => 'Departemen',
-                'name' => 'TSPM',
+                'name' => 'Tiga Serangkai Pustaka Mandiri',
             ]);
+    }
+
+    public function test_legacy_news_content_displays_full_organization_names(): void
+    {
+        $this->seed();
+
+        $news = News::where('title', 'Gelombang Magang Dosen 2026 dibuka')->firstOrFail();
+        News::whereKey($news->id)->update([
+            'title' => 'TSPM dan TSIC berkolaborasi',
+            'excerpt' => 'Kolaborasi bersama WJL.',
+            'body' => 'TSPM, TSIC, dan WJL berkolaborasi.',
+        ]);
+
+        $this->get(route('news.index'))
+            ->assertSee('Tiga Serangkai Pustaka Mandiri dan Tiga Serangkai Inti Corpora')
+            ->assertSee('Kolaborasi bersama Wangsa Jatra Lestari.');
+
+        $this->get(route('news.show', $news->slug))
+            ->assertSee('Tiga Serangkai Pustaka Mandiri dan Tiga Serangkai Inti Corpora berkolaborasi')
+            ->assertSee('Tiga Serangkai Pustaka Mandiri, Tiga Serangkai Inti Corpora, dan Wangsa Jatra Lestari berkolaborasi.');
     }
 
     public function test_public_footer_uses_the_white_footer_logo(): void

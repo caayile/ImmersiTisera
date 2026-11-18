@@ -16,7 +16,7 @@ class NewsSeeder extends Seeder
         $items = [
             [
                 'title' => 'Gelombang Magang Dosen 2026 dibuka',
-                'excerpt' => 'Pendaftaran dosen untuk program 8 minggu / ±60 hari sudah dibuka di TSPM dan TSIC.',
+                'excerpt' => 'Pendaftaran dosen untuk program 8 minggu / ±60 hari sudah dibuka di Tiga Serangkai Pustaka Mandiri dan Tiga Serangkai Inti Corpora.',
                 'body' => "Pendaftaran dosen untuk program Industry Immersion gelombang 2026 telah dibuka.\n\nDosen dapat memilih departemen dan unit bisnis yang relevan, lalu menempuh perjalanan 8 minggu dengan buku catatan harian, pendampingan mingguan, serta satu hasil utama yang nyata.\n\nSegera lengkapi profil dan ajukan penempatan agar pencocokan dapat diproses.",
                 'category' => 'Pengumuman',
                 'days' => 1,
@@ -44,8 +44,8 @@ class NewsSeeder extends Seeder
             ],
             [
                 'title' => 'Center of Excellence membuka peluang kurikulum industri',
-                'excerpt' => 'TSIC membuka ruang kolaborasi dosen untuk merancang pembelajaran berbasis industri.',
-                'body' => "Center of Excellence di TSIC membuka peluang bagi dosen yang ingin membawa pengalaman industri ke ruang kelas.\n\nKolaborasi dapat berupa penyusunan modul, proyek mahasiswa, atau sesi kuliah tamu bersama praktisi.",
+                'excerpt' => 'Tiga Serangkai Inti Corpora membuka ruang kolaborasi dosen untuk merancang pembelajaran berbasis industri.',
+                'body' => "Center of Excellence di Tiga Serangkai Inti Corpora membuka peluang bagi dosen yang ingin membawa pengalaman industri ke ruang kelas.\n\nKolaborasi dapat berupa penyusunan modul, proyek mahasiswa, atau sesi kuliah tamu bersama praktisi.",
                 'category' => 'Departemen',
                 'days' => 14,
             ],

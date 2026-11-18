@@ -21,7 +21,38 @@
             color: #000;
             font-family: 'Tinos', 'Times New Roman', serif;
         }
+        .certificate::before {
+            position: absolute;
+            z-index: 1;
+            right: 0;
+            bottom: 0;
+            width: 38%;
+            height: 43%;
+            background: linear-gradient(320deg, rgb(39 149 144 / 66%) 0 35%, rgb(104 190 179 / 37%) 35% 48%, transparent 48%);
+            content: "";
+            clip-path: polygon(100% 0, 100% 100%, 0 100%);
+        }
+        .building {
+            position: absolute;
+            z-index: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            max-height: 24%;
+            object-fit: contain;
+            object-position: center bottom;
+        }
+        .frame {
+            position: absolute;
+            z-index: 3;
+            inset: 2.7% 2.25%;
+            border: 1px solid rgb(26 112 108 / 82%);
+            clip-path: polygon(0 0, 96.5% 0, 100% 5%, 100% 95%, 96.8% 100%, 0 100%);
+            pointer-events: none;
+        }
         .absolute { position: absolute; left: 0; right: 0; text-align: center; white-space: nowrap; }
+        .absolute, .logos, .mentor-signature, .signatory-signature { z-index: 2; }
         .logos { position: absolute; top: 4.28%; left: 30.01%; width: 40%; }
         .title { top: 17.88%; color: #146a6c; font-size: 7.48cqw; font-weight: 700; line-height: 1; }
         .number { top: 28.21%; color: #17436b; font-size: 2.58cqw; font-weight: 700; }
@@ -62,7 +93,7 @@
     $snapshot = $certificate->snapshot ?? [];
     $signatory = $certificate->signatory_snapshot ?? [];
     $participantName = $snapshot['participant_name'] ?? $participant->user?->name ?? 'Nama Dosen';
-    $departmentName = $snapshot['department_name'] ?? $program->department?->name ?? 'DEPARTEMEN';
+    $departmentName = \App\Support\OrganizationName::format($snapshot['department_name'] ?? $program->department?->name ?? 'DEPARTEMEN');
     $businessUnitName = $snapshot['business_unit_name'] ?? $program->businessUnit?->name ?? 'UNIT BISNIS';
     $mentorName = $snapshot['mentor_name'] ?? $mentor?->user?->name ?? 'Nama Mentor';
     $signatoryName = $signatory['name'] ?? 'Erfan Zaenuddin';
@@ -72,17 +103,19 @@
 
 <main class="certificate-wrap">
     <section class="certificate" aria-label="Sertifikat {{ $participantName }}">
+        <img class="building" src="{{ asset('images/sertifikat/image.png') }}" alt="">
+        <div class="frame" aria-hidden="true"></div>
         <img class="logos" src="{{ asset('images/certificate/logo-header.png') }}" alt="Tiga Serangkai, TSU, Magang Dosen TSU">
         <h1 class="absolute title">SERTIFIKAT</h1>
         <p class="absolute number">{{ $certificate->number }}</p>
         <p class="absolute given">Diberikan kepada:</p>
         <p class="absolute name fit" data-max="6.5">{{ $participantName }}</p>
         <div class="line" aria-hidden="true"></div>
-        <p class="absolute as">Atas partisipasinya sebagai</p>
-        <p class="absolute role fit" data-max="2.05">Peserta Magang Dosen Profesional di {{ strtoupper($departmentName) }} pada {{ strtoupper($businessUnitName) }}</p>
+        <p class="absolute as">Atas partisipasinya sebagai:</p>
+        <p class="absolute role fit" data-max="2.05">Peserta Magang Dosen Profesional di {{ $departmentName }} pada {{ $businessUnitName }}</p>
         <p class="absolute date">Surakarta, {{ $issuedDate->locale('id')->translatedFormat('j F Y') }}</p>
 
-        <p class="sign-label left">{{ strtoupper($departmentName) }} Mentor<br>{{ strtoupper($businessUnitName) }}</p>
+        <p class="sign-label left">{{ $departmentName }} Mentor<br>{{ $businessUnitName }}</p>
         @if($signatureSource)
             <img class="mentor-signature" src="{{ $signatureSource }}" alt="Tanda tangan mentor">
         @endif

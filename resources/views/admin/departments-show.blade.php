@@ -35,10 +35,10 @@
     </h2>
     <form method="POST" action="{{ route('admin.departments.update', $department) }}" enctype="multipart/form-data" class="mt-4 grid gap-3 md:grid-cols-2">
         @csrf @method('PUT')
-        <input name="name" value="{{ $department->name }}" placeholder="Nama unit bisnis" class="rounded-lg border border-line px-3 py-2 text-sm" required>
-        <input name="subtitle" value="{{ $department->subtitle }}" placeholder="Subjudul (nama lengkap, mis. Tiga Serangkai Pustaka Mandiri)" class="rounded-lg border border-line px-3 py-2 text-sm">
-        <input name="area" value="{{ $department->area }}" placeholder="Area / Lokasi (mis. Surakarta)" class="rounded-lg border border-line px-3 py-2 text-sm">
-        <textarea name="description" placeholder="Deskripsi" class="rounded-lg border border-line px-3 py-2 text-sm md:col-span-2">{{ $department->description }}</textarea>
+        <input name="name" value="{{ $department->getRawOriginal('name') }}" placeholder="Nama unit bisnis" class="rounded-lg border border-line px-3 py-2 text-sm" required>
+        <input name="subtitle" value="{{ $department->getRawOriginal('subtitle') }}" placeholder="Subjudul (nama lengkap, mis. Tiga Serangkai Pustaka Mandiri)" class="rounded-lg border border-line px-3 py-2 text-sm">
+        <input name="area" value="{{ $department->getRawOriginal('area') }}" placeholder="Area / Lokasi (mis. Surakarta)" class="rounded-lg border border-line px-3 py-2 text-sm">
+        <textarea name="description" placeholder="Deskripsi" class="rounded-lg border border-line px-3 py-2 text-sm md:col-span-2">{{ $department->getRawOriginal('description') }}</textarea>
         <div class="flex items-center gap-3">
             <input type="file" name="image" accept="image/*" class="flex-1 rounded-lg border border-line px-3 py-2 text-sm">
             <select name="status" class="rounded-lg border border-line px-3 py-2 text-sm">

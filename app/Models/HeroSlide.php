@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Support\OrganizationName;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 
 #[Fillable([
@@ -11,6 +13,20 @@ use Illuminate\Database\Eloquent\Model;
 ])]
 class HeroSlide extends Model
 {
+    protected function title(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $value): ?string => OrganizationName::format($value),
+        );
+    }
+
+    protected function subtitle(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $value): ?string => OrganizationName::format($value),
+        );
+    }
+
     protected function casts(): array
     {
         return [

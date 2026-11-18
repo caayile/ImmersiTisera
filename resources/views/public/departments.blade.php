@@ -199,21 +199,35 @@
         @forelse($departments as $department)
             @php
                 $image = $department->imageUrl() ?? $background;
+                $businessUnitCount = $department->businessUnits->count();
+                $openUnitCount = $department->businessUnits->filter->isOpen()->count();
             @endphp
-            <article class="flex flex-col overflow-hidden rounded-2xl border border-line bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-primary hover:shadow-md">
-                <a href="{{ route('departments.show', $department) }}">
-                    <x-fill-image :src="$image" :alt="$department->name" class="h-52 w-full">
-                        <span class="absolute bottom-3 left-4 z-20 rounded-md bg-black/55 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-white">{{ $department->area ?: 'Unit Bisnis' }}</span>
-                    </x-fill-image>
+            <article class="overflow-hidden rounded-2xl border border-line bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-primary hover:shadow-md">
+                <a href="{{ route('departments.show', $department) }}" class="group relative block h-44 overflow-hidden bg-[#16352c]">
+                    <img src="{{ $image }}" alt="{{ $department->name }}" class="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-105" loading="lazy">
+                    <div class="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-black/10"></div>
+                    <span class="absolute left-4 top-4 rounded-md bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide {{ $openUnitCount > 0 ? 'text-ink' : 'text-red-600' }}">
+                        {{ $openUnitCount > 0 ? 'Lowongan dibuka' : 'Lowongan ditutup' }}
+                    </span>
+                    <p class="absolute bottom-4 left-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/90">
+                        {{ $department->area ?: 'Unit Bisnis' }}
+                    </p>
                 </a>
-                <div class="flex flex-1 flex-col p-5">
-                    <h3 class="text-lg font-semibold">{{ $department->name }}</h3>
-                    <p class="mt-2 flex-1 text-sm leading-6 text-muted">{{ \Illuminate\Support\Str::limit($department->description, 110) }}</p>
-                    <a href="{{ route('departments.show', $department) }}" class="mt-4 inline-flex items-center justify-center rounded-xl bg-[#eef4f1] px-4 py-2.5 text-sm font-semibold text-ink hover:bg-primary hover:text-white">Lihat Departemen</a>
+                <div class="p-5">
+                    <h3 class="text-xl font-semibold">{{ $department->name }}</h3>
+                    <p class="mt-2 min-h-12 text-sm leading-6 text-muted">{{ \Illuminate\Support\Str::limit($department->description ?: $department->subtitle ?: 'Jelajahi unit bisnis mitra magang dosen.', 110) }}</p>
+                    <div class="mt-4 flex items-center justify-between gap-3 border-t border-line pt-4 text-xs font-medium text-muted">
+                        <span class="inline-flex items-center gap-1.5">
+                            <span class="material-symbols-outlined text-base" aria-hidden="true">storefront</span>
+                            {{ $businessUnitCount }} unit bisnis
+                        </span>
+                        <span>{{ $openUnitCount }} lowongan dibuka</span>
+                    </div>
+                    <a href="{{ route('departments.show', $department) }}" class="mt-5 block rounded-xl bg-[#eef4f1] px-4 py-3 text-center text-sm font-semibold text-ink transition hover:bg-primary hover:text-white">Lihat Detail</a>
                 </div>
             </article>
         @empty
-            <p class="text-muted sm:col-span-2 xl:col-span-3">Belum ada unit bisnis.</p>
+            <p class="text-muted sm:col-span-2 xl:col-span-3">Belum ada departemen mitra.</p>
         @endforelse
     </div>
 </div>

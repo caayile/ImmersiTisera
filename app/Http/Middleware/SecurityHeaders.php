@@ -16,13 +16,23 @@ class SecurityHeaders
     public function handle(Request $request, Closure $next): Response
     {
         $response = $next($request);
+        $imageSources = ["'self'", 'data:', 'blob:', 'https:'];
+        $fontSources = ["'self'", 'data:', 'https://fonts.gstatic.com', 'https://cdnjs.cloudflare.com'];
         $scriptSources = ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https://cdn.jsdelivr.net'];
+        $styleSources = ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://cdnjs.cloudflare.com'];
         $connectSources = ["'self'"];
 
         if (app()->environment('local')) {
-            $scriptSources[] = 'http://localhost:5173';
-            $connectSources[] = 'http://localhost:5173';
-            $connectSources[] = 'ws://localhost:5173';
+            $viteOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173'];
+
+            foreach ($viteOrigins as $viteOrigin) {
+                $imageSources[] = $viteOrigin;
+                $fontSources[] = $viteOrigin;
+                $scriptSources[] = $viteOrigin;
+                $styleSources[] = $viteOrigin;
+                $connectSources[] = $viteOrigin;
+                $connectSources[] = str_replace('http://', 'ws://', $viteOrigin);
+            }
         }
 
         $response->headers->set('X-Content-Type-Options', 'nosniff');
@@ -35,9 +45,9 @@ class SecurityHeaders
             "object-src 'none'",
             "frame-ancestors 'none'",
             "form-action 'self'",
-            "img-src 'self' data: blob: https:",
-            "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com",
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com",
+            'img-src '.implode(' ', $imageSources),
+            'font-src '.implode(' ', $fontSources),
+            'style-src '.implode(' ', $styleSources),
             'script-src '.implode(' ', $scriptSources),
             'connect-src '.implode(' ', $connectSources),
             "frame-src 'self' https://www.google.com https://maps.google.com",

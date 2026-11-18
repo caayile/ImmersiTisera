@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import api from '../api/client'
 import { useAuth } from '../context/AuthContext'
-import { PURPOSE, ORGANIZATIONS, unitsFor } from '../lib/constants'
+import { PURPOSE, ORGANIZATIONS, organizationLabel, unitsFor } from '../lib/constants'
 import { Button, Card, Field, PageHeader, inputClass } from '../components/ui'
 import { pageVariants, staggerContainer, cardVariants, fadeIn } from '../lib/motion'
 
@@ -189,7 +189,7 @@ export default function ProfileSetup() {
                 <Field label="Perusahaan / institusi"><input className={inputClass} value={form.company_name} onChange={(e) => set('company_name', e.target.value)} required /></Field>
                 <Field label="Departemen">
                   <select className={inputClass} value={ORGANIZATIONS.includes(form.industry_field) ? form.industry_field : 'TSPM'} onChange={(e) => setForm((current) => ({ ...current, industry_field: e.target.value, business_unit: '' }))}>
-                    {ORGANIZATIONS.map((item) => <option key={item} value={item}>{item}</option>)}
+                    {ORGANIZATIONS.map((item) => <option key={item} value={item}>{organizationLabel(item)}</option>)}
                   </select>
                 </Field>
                 <Field label="Unit bisnis">

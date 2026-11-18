@@ -120,6 +120,7 @@ class CertificateTest extends TestCase
             ->get(route('mentor.certificates.print', $certificate))
             ->assertOk()
             ->assertSee('images/certificate/logo-header.png')
+            ->assertSee('images/sertifikat/image.png')
             ->assertSee('images/certificate/ttd-cap-erfan.png');
 
         $this->actingAs($participant)
@@ -128,10 +129,11 @@ class CertificateTest extends TestCase
             ->assertSee('SERTIFIKAT')
             ->assertSee('images/certificate/logo-header.png')
             ->assertSee('images/certificate/bg-sertifikat.jpg')
+            ->assertSee('images/sertifikat/image.png')
             ->assertSee('images/certificate/ttd-cap-erfan.png')
             ->assertSee('fonts/pinyon-script.css')
-            ->assertSee('Atas partisipasinya sebagai')
-            ->assertSee('di '.strtoupper($program->department->name).' pada '.strtoupper($program->businessUnit->name))
+            ->assertSee('Atas partisipasinya sebagai:')
+            ->assertSee('di '.$program->department->name.' pada '.$program->businessUnit->name)
             ->assertSee($participant->name);
 
         $this->mock(CertificatePdfRenderer::class)
@@ -408,7 +410,7 @@ class CertificateTest extends TestCase
             'issued_at' => now(),
             'snapshot' => [
                 'participant_name' => $participant->name,
-                'department_name' => $program->department->name,
+                'department_name' => $program->department->getRawOriginal('name'),
                 'business_unit_name' => $program->businessUnit->name,
                 'mentor_name' => $mentor->name,
             ],
@@ -430,6 +432,7 @@ class CertificateTest extends TestCase
         $this->actingAs($participant)
             ->get(route('participant.certificates.print', $certificate))
             ->assertOk()
+            ->assertSee('Tiga Serangkai Pustaka Mandiri')
             ->assertSee('alt="Tanda tangan mentor"', false)
             ->assertDontSee($placeholder, false)
             ->assertDontSee($signature, false);

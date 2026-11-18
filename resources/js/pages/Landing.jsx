@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { pageVariants, staggerContainer, cardVariants, fadeIn } from '../lib/motion'
 
 const stages = [
-  ['Identify', 'Mempertemukan dosen, prodi, dan unit bisnis TSPM / TSIC.'],
+  ['Identify', 'Mempertemukan dosen, prodi, dan unit bisnis Tiga Serangkai Pustaka Mandiri / Tiga Serangkai Inti Corpora.'],
   ['Match & Commit', 'Rekomendasi, pilih aktivitas, lalu Perjanjian Immersi Industri.'],
   ['Immersion', '60 hari: Discover, Understand, Contribute, Deliver.'],
   ['Impact', 'Output nyata, evaluasi, dan manfaat ke kampus serta industri.'],
@@ -54,7 +54,7 @@ export default function Landing() {
             Masuk industri, belajar, berkontribusi, lalu berkolaborasi.
           </motion.h1>
           <motion.p variants={cardVariants} className="mt-5 max-w-xl text-base leading-7 text-moss/80">
-            IMMERSI menuntun dosen ke unit bisnis TSPM dan TSIC — dari identifikasi kebutuhan sampai kemitraan berkelanjutan.
+            IMMERSI menuntun dosen ke unit bisnis Tiga Serangkai Pustaka Mandiri dan Tiga Serangkai Inti Corpora — dari identifikasi kebutuhan sampai kemitraan berkelanjutan.
           </motion.p>
           <motion.div variants={cardVariants} className="mt-8 flex flex-wrap gap-3">
             <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>

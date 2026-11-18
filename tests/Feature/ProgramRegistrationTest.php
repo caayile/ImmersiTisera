@@ -60,7 +60,7 @@ class ProgramRegistrationTest extends TestCase
             ->assertDontSee('Tinjauan admin')
             ->assertDontSee('Pengesahan admin')
             ->assertDontSee('Hasil ke dosen')
-            ->assertSee('TSPM')
+            ->assertSee('Tiga Serangkai Pustaka Mandiri')
             ->assertSee($unit->name)
             ->assertSee($dosen->name)
             ->assertSee('Tanggal mulai')

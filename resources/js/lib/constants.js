@@ -43,6 +43,16 @@ export const OUTPUT_CATEGORIES = [
 
 export const ORGANIZATIONS = ['TSPM', 'TSIC']
 
+export const ORGANIZATION_LABELS = {
+  TSPM: 'Tiga Serangkai Pustaka Mandiri',
+  TSIC: 'Tiga Serangkai Inti Corpora',
+  WJL: 'Wangsa Jatra Lestari',
+}
+
+export function organizationLabel(value) {
+  return ORGANIZATION_LABELS[value] || value
+}
+
 export const BUSINESS_UNITS = {
   TSPM: [
     'School Book Publishing',

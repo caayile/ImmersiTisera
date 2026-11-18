@@ -35,8 +35,8 @@ class DatabaseSeeder extends Seeder
         $tsic = Department::create([
             'name' => 'TSIC',
             'slug' => 'tsic',
-            'subtitle' => 'Tiga Serangkai Innovation Center',
-            'description' => 'Tiga Serangkai Innovation Center — pengembangan orang, pusat unggulan, dan ekosistem pembelajaran.',
+            'subtitle' => 'Tiga Serangkai Inti Corpora',
+            'description' => 'Tiga Serangkai Inti Corpora — pengembangan orang, pusat unggulan, dan ekosistem pembelajaran.',
             'function' => 'Learning, talent, and innovation',
             'area' => 'Innovation & Learning',
             'image_path' => 'images/hero/campus.jpg',

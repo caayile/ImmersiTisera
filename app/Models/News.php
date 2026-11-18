@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Support\OrganizationName;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
@@ -11,6 +13,27 @@ use Illuminate\Support\Str;
 ])]
 class News extends Model
 {
+    protected function title(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $value): ?string => OrganizationName::format($value),
+        );
+    }
+
+    protected function excerpt(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $value): ?string => OrganizationName::format($value),
+        );
+    }
+
+    protected function body(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $value): ?string => OrganizationName::format($value),
+        );
+    }
+
     protected function casts(): array
     {
         return [

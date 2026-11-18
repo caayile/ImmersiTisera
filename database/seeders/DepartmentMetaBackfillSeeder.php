@@ -12,8 +12,8 @@ class DepartmentMetaBackfillSeeder extends Seeder
     {
         $subtitles = [
             'tspm' => 'Tiga Serangkai Pustaka Mandiri',
-            'tsic' => 'Tiga Serangkai Innovation Center',
-            'wjl' => 'Wangsa Jastra Lestari',
+            'tsic' => 'Tiga Serangkai Inti Corpora',
+            'wjl' => 'Wangsa Jatra Lestari',
         ];
 
         foreach ($subtitles as $slug => $subtitle) {

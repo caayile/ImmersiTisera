@@ -246,7 +246,7 @@
     $snapshot = $certificate->snapshot ?? [];
     $signatory = $certificate->signatory_snapshot ?? [];
     $participantName = $snapshot['participant_name'] ?? $participant->user?->name ?? 'Nama Dosen';
-    $departmentName = $snapshot['department_name'] ?? $department?->name ?? 'DEPARTEMEN';
+    $departmentName = \App\Support\OrganizationName::format($snapshot['department_name'] ?? $department?->name ?? 'DEPARTEMEN');
     $businessUnitName = $snapshot['business_unit_name'] ?? $businessUnit?->name ?? 'UNIT BISNIS';
     $mentorName = $snapshot['mentor_name'] ?? $mentor?->user?->name ?? 'Nama Mentor';
     

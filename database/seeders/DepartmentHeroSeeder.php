@@ -23,7 +23,7 @@ class DepartmentHeroSeeder extends Seeder
 
         $slides = [
             [
-                'title' => 'Tiga Serangkai Pustama Mandiri',
+                'title' => 'Tiga Serangkai Pustaka Mandiri',
                 'subtitle' => 'Penerbitan, produksi, penjualan, dan layanan bisnis buku sekolah.',
                 'image_path' => 'images/hero/campus.jpg',
                 'link_url' => '/departments/tspm',
@@ -44,7 +44,7 @@ class DepartmentHeroSeeder extends Seeder
                 'sort_order' => 3,
             ],
             [
-                'title' => 'Wangsa Jastra Lestari',
+                'title' => 'Wangsa Jatra Lestari',
                 'subtitle' => 'Produksi, marketing, finance, dan pengelolaan SDM.',
                 'image_path' => 'images/hero/k33.jpg',
                 'link_url' => '/departments/wjl',
@@ -77,7 +77,7 @@ class DepartmentHeroSeeder extends Seeder
             HeroSlide::firstOrCreate(
                 [
                     'page' => 'departments',
-                    'title' => $slide['title'],
+                    'link_url' => $slide['link_url'],
                 ],
                 [
                     ...$slide,
