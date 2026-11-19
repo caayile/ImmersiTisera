@@ -7,6 +7,8 @@ use App\Http\Controllers\MentorController;
 use App\Http\Controllers\ParticipantController;
 use App\Http\Controllers\PrivateFileController;
 use App\Http\Controllers\PublicController;
+use App\Http\Controllers\TwoFactorController;
+use App\Http\Middleware\EnsureTwoFactorSetup;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [PublicController::class, 'home'])->name('home');
@@ -36,6 +38,7 @@ Route::post('/register/verify-otp', [AuthController::class, 'verifyRegisterOtp']
 Route::post('/register/verify-otp/resend', [AuthController::class, 'resendRegisterOtp'])->middleware('throttle:5,1')->name('register.verify-otp.resend');
 Route::get('/auth/google', [AuthController::class, 'redirectToGoogle'])->name('login.google');
 Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback'])->name('login.google.callback');
+Route::get('/auth/captcha-refresh', [AuthController::class, 'refreshCaptcha'])->name('auth.captcha.refresh');
 
 Route::middleware('guest')->group(function () {
     Route::get('/forgot-password', [AuthController::class, 'showForgot'])->name('password.request');
@@ -47,6 +50,15 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
+
+Route::middleware('auth')->group(function () {
+    Route::get('/two-factor/setup', [TwoFactorController::class, 'showSetup'])->name('two-factor.setup');
+    Route::post('/two-factor/enable', [TwoFactorController::class, 'enable'])->middleware('throttle:5,1,two-factor')->name('two-factor.enable');
+    Route::post('/two-factor/disable', [TwoFactorController::class, 'disable'])->middleware('throttle:5,1,two-factor')->name('two-factor.disable');
+});
+
+Route::get('/two-factor/challenge', [TwoFactorController::class, 'showChallenge'])->name('two-factor.challenge');
+Route::post('/two-factor/challenge', [TwoFactorController::class, 'challenge'])->middleware('throttle:5,1,two-factor')->name('two-factor.challenge.submit');
 
 Route::middleware('auth')->prefix('private-files')->name('private-files.')->group(function () {
     Route::get('/outputs/{output}/{artifact}', [PrivateFileController::class, 'output'])
@@ -69,7 +81,7 @@ Route::middleware(['auth', 'role:participant', 'throttle:30,1'])->prefix('partic
     Route::get('/program', [ParticipantController::class, 'program'])->name('program');
     Route::get('/agreement', [ParticipantController::class, 'agreement'])->name('agreement');
     Route::get('/agreement/print', [ParticipantController::class, 'printAgreement'])->name('agreement.print');
-    Route::get('/agreement/download-pdf', [ParticipantController::class, 'downloadAgreementPdf'])->name('agreement.download');
+    Route::get('/agreement/download-pdf', [ParticipantController::class, 'downloadAgreementPdf'])->middleware('throttle:10,1,pdf')->name('agreement.download');
     Route::post('/agreement', [ParticipantController::class, 'updateAgreement']);
     Route::post('/agreement/sign', [ParticipantController::class, 'signAgreement'])->name('agreement.sign');
     Route::get('/timeline', [ParticipantController::class, 'timeline'])->name('timeline');
@@ -82,7 +94,7 @@ Route::middleware(['auth', 'role:participant', 'throttle:30,1'])->prefix('partic
     Route::post('/outputs', [ParticipantController::class, 'storeOutput']);
     Route::get('/certificates', [ParticipantController::class, 'certificates'])->name('certificates');
     Route::get('/certificates/{certificate}/print', [ParticipantController::class, 'printCertificate'])->name('certificates.print');
-    Route::get('/certificates/{certificate}/download-pdf', [ParticipantController::class, 'downloadCertificatePdf'])->name('certificates.download');
+    Route::get('/certificates/{certificate}/download-pdf', [ParticipantController::class, 'downloadCertificatePdf'])->middleware('throttle:10,1,pdf')->name('certificates.download');
     Route::get('/final-report', [ParticipantController::class, 'finalReport'])->name('final-report');
     Route::post('/final-report', [ParticipantController::class, 'storeOutput']);
     Route::get('/evaluation', [ParticipantController::class, 'evaluation'])->name('evaluation');
@@ -90,7 +102,7 @@ Route::middleware(['auth', 'role:participant', 'throttle:30,1'])->prefix('partic
     Route::get('/evaluation/report/{program?}', [ParticipantController::class, 'report'])->whereNumber('program')->name('evaluation.report');
     Route::post('/programs/{program}/archive', [ParticipantController::class, 'archiveProgram'])->name('programs.archive');
     Route::get('/evaluation/report-preview/{program?}', [ParticipantController::class, 'printReport'])->whereNumber('program')->name('evaluation.report-preview');
-    Route::get('/evaluation/report-pdf/{program?}', [ParticipantController::class, 'downloadReportPdf'])->whereNumber('program')->name('evaluation.report-pdf');
+    Route::get('/evaluation/report-pdf/{program?}', [ParticipantController::class, 'downloadReportPdf'])->whereNumber('program')->middleware('throttle:10,1,pdf')->name('evaluation.report-pdf');
     Route::get('/collaboration', [ParticipantController::class, 'collaboration'])->name('collaboration');
     Route::get('/notifications', [ParticipantController::class, 'notifications'])->name('notifications');
     Route::get('/settings', [ParticipantController::class, 'settings'])->name('settings');
@@ -109,7 +121,7 @@ Route::middleware(['auth', 'role:mentor', 'throttle:30,1'])->prefix('mentor')->n
     Route::get('/programs', [MentorController::class, 'programs'])->name('programs');
     Route::get('/agreements', [MentorController::class, 'agreements'])->name('agreements');
     Route::get('/agreements/{agreement}/print', [MentorController::class, 'printAgreement'])->name('agreements.print');
-    Route::get('/agreements/{agreement}/download-pdf', [MentorController::class, 'downloadAgreementPdf'])->name('agreements.download');
+    Route::get('/agreements/{agreement}/download-pdf', [MentorController::class, 'downloadAgreementPdf'])->middleware('throttle:10,1,pdf')->name('agreements.download');
     Route::post('/agreements/{agreement}', [MentorController::class, 'reviewAgreement'])->name('agreements.review');
     Route::get('/timeline', [MentorController::class, 'timeline'])->name('timeline');
     Route::get('/timeline/{program}', [MentorController::class, 'showTimeline'])->name('timeline.show');
@@ -133,7 +145,7 @@ Route::middleware(['auth', 'role:mentor', 'throttle:30,1'])->prefix('mentor')->n
     Route::get('/notifications', [MentorController::class, 'notifications'])->name('notifications');
 });
 
-Route::middleware(['auth', 'role:admin', 'throttle:30,1'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', EnsureTwoFactorSetup::class, 'role:admin', 'throttle:30,1'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
     Route::get('/users', [AdminController::class, 'users'])->name('users');
     Route::post('/users', [AdminController::class, 'storeUser']);
@@ -164,7 +176,7 @@ Route::middleware(['auth', 'role:admin', 'throttle:30,1'])->prefix('admin')->nam
     Route::get('/matching', [AdminController::class, 'matching'])->name('matching');
     Route::post('/matching/{application}', [AdminController::class, 'updateMatching'])->name('matching.update');
     Route::get('/agreements', [AdminController::class, 'agreements'])->name('agreements');
-    Route::get('/agreements/{agreement}/download-pdf', [AdminController::class, 'downloadAgreementPdf'])->name('agreements.download');
+    Route::get('/agreements/{agreement}/download-pdf', [AdminController::class, 'downloadAgreementPdf'])->middleware('throttle:10,1,pdf')->name('agreements.download');
     Route::get('/monitoring', [AdminController::class, 'monitoring'])->name('monitoring');
     Route::get('/monitoring/{program}', [AdminController::class, 'showMonitoringLogbooks'])->name('monitoring.show');
     Route::get('/evaluations', [AdminController::class, 'evaluations'])->name('evaluations');

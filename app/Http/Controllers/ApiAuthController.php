@@ -3,14 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\Api\UserResource;
-use App\Models\Mentor;
+use App\Mail\RegistrationOtpMail;
 use App\Models\Participant;
+use App\Models\RegistrationOtp;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Laravel\Sanctum\PersonalAccessToken;
+use Throwable;
 
 class ApiAuthController extends Controller
 {
@@ -46,28 +50,87 @@ class ApiAuthController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'unique:users,email'],
-            'password' => ['required', 'min:6'],
-            'role' => ['required', Rule::in(['user', 'participant', 'mentor'])],
+            'password' => ['required', 'min:8', 'confirmed'],
             'phone' => ['nullable', 'string', 'max:30'],
         ]);
 
-        $role = $data['role'] === 'user' ? 'participant' : $data['role'];
+        $email = Str::lower(trim($data['email']));
 
-        $user = User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => $data['password'],
-            'role' => $role,
-            'phone' => $data['phone'] ?? null,
-            'status' => 'active',
-            'verification_status' => 'verified',
+        if (User::query()->whereRaw('LOWER(email) = ?', [$email])->exists()) {
+            throw ValidationException::withMessages(['email' => 'Email sudah terdaftar.']);
+        }
+
+        $otp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+
+        RegistrationOtp::updateOrCreate(
+            ['email' => $email],
+            [
+                'name' => $data['name'],
+                'password' => Hash::make($data['password']),
+                'role' => 'participant',
+                'phone' => $data['phone'] ?? null,
+                'otp' => null,
+                'otp_hash' => Hash::make($otp),
+                'attempts' => 0,
+                'expires_at' => now()->addMinutes(10),
+            ]
+        );
+
+        try {
+            Mail::to($email)->send(new RegistrationOtpMail($otp, $email));
+        } catch (Throwable) {
+            RegistrationOtp::query()->where('email', $email)->delete();
+
+            throw ValidationException::withMessages(['email' => 'Gagal mengirim email OTP. Silakan coba lagi.']);
+        }
+
+        return response()->json([
+            'message' => 'Kode OTP 6 digit telah dikirim ke email Anda.',
+            'email' => $email,
+        ], 202);
+    }
+
+    public function verifyRegistration(Request $request)
+    {
+        $data = $request->validate([
+            'email' => ['required', 'email'],
+            'otp' => ['required', 'digits:6'],
         ]);
 
-        if ($user->isParticipant()) {
-            Participant::create(['user_id' => $user->id]);
-        } else {
-            Mentor::create(['user_id' => $user->id]);
+        $email = Str::lower(trim($data['email']));
+        $pending = RegistrationOtp::query()
+            ->where('email', $email)
+            ->where('expires_at', '>', now())
+            ->first();
+
+        if (! $pending || $pending->hasExceededAttempts() || ! $pending->matchesOtp($data['otp'])) {
+            $pending?->registerFailedAttempt();
+
+            throw ValidationException::withMessages(['otp' => 'Kode OTP tidak valid atau sudah kedaluwarsa.']);
         }
+
+        if (User::query()->whereRaw('LOWER(email) = ?', [$email])->exists()) {
+            $pending->delete();
+
+            throw ValidationException::withMessages(['email' => 'Email sudah terdaftar.']);
+        }
+
+        $user = DB::transaction(function () use ($pending): User {
+            $user = User::create([
+                'name' => $pending->name,
+                'email' => $pending->email,
+                'password' => $pending->password,
+                'role' => 'participant',
+                'phone' => $pending->phone,
+                'status' => 'active',
+                'verification_status' => 'verified',
+            ]);
+
+            Participant::create(['user_id' => $user->id]);
+            $pending->delete();
+
+            return $user;
+        });
 
         return response()->json([
             'token' => $user->createToken('imersi')->plainTextToken,

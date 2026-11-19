@@ -7,6 +7,7 @@ use App\Models\RegistrationOtp;
 use App\Models\User;
 use App\Notifications\ImersiAlert;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Testing\TestResponse;
@@ -57,10 +58,27 @@ class AuthControllerTest extends TestCase
             ->assertHeader('Referrer-Policy', 'strict-origin-when-cross-origin')
             ->assertHeader('Content-Security-Policy');
 
-        $this->assertStringContainsString("'unsafe-eval'", (string) $response->headers->get('Content-Security-Policy'));
+        $policy = (string) $response->headers->get('Content-Security-Policy');
+        $nonce = $this->cspNonce();
+
+        $this->assertStringContainsString("'nonce-{$nonce}'", $policy);
+        $this->assertStringContainsString("script-src-attr 'unsafe-inline'", $policy);
+        $this->assertStringNotContainsString("'unsafe-eval'", $policy);
+        $this->assertStringNotContainsString("script-src 'self' 'unsafe-inline'", $policy);
 
         $this->get('https://localhost/login')
             ->assertHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    }
+
+    public function test_inline_scripts_receive_the_content_security_policy_nonce(): void
+    {
+        $html = $this->get(route('login'))
+            ->assertOk()
+            ->getContent();
+
+        $this->assertIsString($html);
+        $this->assertStringContainsString('<script nonce="'.$this->cspNonce().'"', $html);
+        $this->assertStringNotContainsString('<script>', $html);
     }
 
     public function test_local_security_policy_allows_vite_assets_on_localhost_and_ipv4_loopback(): void
@@ -75,7 +93,7 @@ class AuthControllerTest extends TestCase
 
             $this->assertStringContainsString('img-src \'self\' data: blob: https: http://localhost:5173 http://127.0.0.1:5173', $policy);
             $this->assertStringContainsString('font-src \'self\' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com http://localhost:5173 http://127.0.0.1:5173', $policy);
-            $this->assertStringContainsString('script-src \'self\' \'unsafe-inline\' \'unsafe-eval\' https://cdn.jsdelivr.net http://localhost:5173 http://127.0.0.1:5173', $policy);
+            $this->assertStringContainsString('script-src \'self\' \'nonce-'.$this->cspNonce().'\' https://cdn.jsdelivr.net http://localhost:5173 http://127.0.0.1:5173', $policy);
             $this->assertStringContainsString('style-src \'self\' \'unsafe-inline\' https://fonts.googleapis.com https://cdnjs.cloudflare.com http://localhost:5173 http://127.0.0.1:5173', $policy);
             $this->assertStringContainsString('ws://127.0.0.1:5173', $policy);
         } finally {
@@ -167,7 +185,7 @@ class AuthControllerTest extends TestCase
             'password_confirmation' => 'password',
         ]);
 
-        RegistrationOtp::query()->where('email', 'sari.kampus@imersi.id')->update(['otp' => '123456']);
+        RegistrationOtp::query()->where('email', 'sari.kampus@imersi.id')->update(['otp_hash' => Hash::make('123456')]);
 
         $this->post(route('register.verify-otp.submit'), [
             'email' => 'sari.kampus@imersi.id',
@@ -191,7 +209,7 @@ class AuthControllerTest extends TestCase
 
         $this->travel(11)->minutes();
 
-        $otp = RegistrationOtp::query()->where('email', 'sari.kampus@imersi.id')->firstOrFail()->otp;
+        $otp = $this->sentRegistrationOtp('sari.kampus@imersi.id');
 
         $this->post(route('register.verify-otp.submit'), [
             'email' => 'sari.kampus@imersi.id',
@@ -303,9 +321,24 @@ class AuthControllerTest extends TestCase
         });
     }
 
+    private function cspNonce(): string
+    {
+        return base64_encode(hash_hmac('sha256', 'csp-nonce', (string) config('app.key'), true));
+    }
+
+    private function sentRegistrationOtp(string $email): string
+    {
+        $mail = collect(Mail::sent(RegistrationOtpMail::class))
+            ->first(fn (RegistrationOtpMail $sent): bool => $sent->hasTo($email));
+
+        $this->assertNotNull($mail);
+
+        return $mail->otp;
+    }
+
     private function completeRegistrationOtp(string $email): TestResponse
     {
-        $otp = RegistrationOtp::query()->where('email', $email)->firstOrFail()->otp;
+        $otp = $this->sentRegistrationOtp($email);
 
         return $this->post(route('register.verify-otp.submit'), [
             'email' => $email,

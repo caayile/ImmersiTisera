@@ -16,6 +16,7 @@ Route::get('/search', [PublicController::class, 'searchApi'])->name('api.search'
 
 Route::post('/login', [ApiAuthController::class, 'login'])->middleware('throttle:5,1');
 Route::post('/register', [ApiAuthController::class, 'register'])->middleware('throttle:5,1');
+Route::post('/register/verify-otp', [ApiAuthController::class, 'verifyRegistration'])->middleware('throttle:10,1');
 
 Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::get('/me', [ApiAuthController::class, 'me']);

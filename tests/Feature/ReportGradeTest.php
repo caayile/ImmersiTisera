@@ -306,4 +306,21 @@ class ReportGradeTest extends TestCase
             ->assertSee('Nilai raport dari')
             ->assertSee('Arsip dua tahun lalu.');
     }
+
+    public function test_report_pdf_download_is_rate_limited(): void
+    {
+        $this->seed();
+
+        $dosen = User::where('email', 'dosen@imersi.id')->firstOrFail();
+
+        for ($attempt = 0; $attempt < 10; $attempt++) {
+            $this->actingAs($dosen)
+                ->get(route('participant.evaluation.report-pdf'))
+                ->assertNotFound();
+        }
+
+        $this->actingAs($dosen)
+            ->get(route('participant.evaluation.report-pdf'))
+            ->assertTooManyRequests();
+    }
 }

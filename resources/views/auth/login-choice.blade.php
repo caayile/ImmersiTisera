@@ -269,6 +269,34 @@
                             </div>
                         </div>
 
+                        <!-- Honeypot invisible bot trap -->
+                        <div class="hidden" aria-hidden="true" style="display:none !important;">
+                            <input type="text" name="bot_check_field" tabindex="-1" autocomplete="off">
+                        </div>
+
+                        <!-- Verifikasi Bukan Robot (Anti-Bot Challenge) -->
+                        <div class="p-2.5 rounded-xl border border-gray-200 bg-gray-50/70">
+                            <div class="flex items-center justify-between mb-1.5">
+                                <label class="flex items-center space-x-1.5 text-[11px] font-bold text-charcoal">
+                                    <i class="fa-solid fa-shield-halved text-forest text-xs"></i>
+                                    <span>Verifikasi Bukan Robot</span>
+                                </label>
+                                <button type="button" onclick="refreshCaptcha()" class="text-[10px] text-gray-500 hover:text-forest flex items-center space-x-1 transition" title="Ganti Pertanyaan">
+                                    <i class="fa-solid fa-rotate text-[10px]"></i>
+                                    <span>Ganti Soal</span>
+                                </button>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="captcha-question-display px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-extrabold text-forest tracking-wider select-none shrink-0 shadow-2xs">
+                                    {{ $captcha['question'] ?? '7 + 5 = ?' }}
+                                </span>
+                                <input type="hidden" name="captcha_key" class="captcha-key-input" value="{{ $captcha['key'] ?? '' }}">
+                                <input type="number" name="captcha_answer" required
+                                    placeholder="Jawab hasil..."
+                                    class="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-semibold text-charcoal placeholder-gray-400 focus:outline-none focus:border-forest focus:ring-1 focus:ring-forest/20 transition">
+                            </div>
+                        </div>
+
                         <!-- Remember Me Checkbox -->
                         <div class="flex items-center pt-0.5">
                             <input type="checkbox" name="remember" id="remember"
@@ -368,6 +396,34 @@
                                         <i class="fa-regular fa-eye text-[11px]"></i>
                                     </button>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Honeypot invisible bot trap -->
+                        <div class="hidden" aria-hidden="true" style="display:none !important;">
+                            <input type="text" name="bot_check_field" tabindex="-1" autocomplete="off">
+                        </div>
+
+                        <!-- Verifikasi Bukan Robot (Anti-Bot Challenge) -->
+                        <div class="p-2.5 rounded-xl border border-gray-200 bg-gray-50/70">
+                            <div class="flex items-center justify-between mb-1.5">
+                                <label class="flex items-center space-x-1.5 text-[11px] font-bold text-charcoal">
+                                    <i class="fa-solid fa-shield-halved text-forest text-xs"></i>
+                                    <span>Verifikasi Bukan Robot</span>
+                                </label>
+                                <button type="button" onclick="refreshCaptcha()" class="text-[10px] text-gray-500 hover:text-forest flex items-center space-x-1 transition" title="Ganti Pertanyaan">
+                                    <i class="fa-solid fa-rotate text-[10px]"></i>
+                                    <span>Ganti Soal</span>
+                                </button>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="captcha-question-display px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-extrabold text-forest tracking-wider select-none shrink-0 shadow-2xs">
+                                    {{ $captcha['question'] ?? '7 + 5 = ?' }}
+                                </span>
+                                <input type="hidden" name="captcha_key" class="captcha-key-input" value="{{ $captcha['key'] ?? '' }}">
+                                <input type="number" name="captcha_answer" required
+                                    placeholder="Jawab hasil..."
+                                    class="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-semibold text-charcoal placeholder-gray-400 focus:outline-none focus:border-forest focus:ring-1 focus:ring-forest/20 transition">
                             </div>
                         </div>
 
@@ -536,6 +592,21 @@
             } else {
                 input.type = 'password';
                 icon.className = 'fa-regular fa-eye text-xs';
+            }
+        }
+
+        async function refreshCaptcha() {
+            try {
+                const res = await fetch('{{ route('auth.captcha.refresh') }}');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && data.key && data.question) {
+                        document.querySelectorAll('.captcha-question-display').forEach(el => el.innerText = data.question);
+                        document.querySelectorAll('.captcha-key-input').forEach(el => el.value = data.key);
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to refresh captcha', e);
             }
         }
     </script>

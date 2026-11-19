@@ -91,7 +91,7 @@ class PublicControllerTest extends TestCase
         $this->seed();
 
         $pages = [
-            ['/', route('home'), 'Beranda'],
+            ['/', '/', 'Beranda'],
             [route('departments.index'), route('departments.index'), 'Unit Bisnis'],
             [route('news.index'), route('news.index'), 'Berita'],
         ];

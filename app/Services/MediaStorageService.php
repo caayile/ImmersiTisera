@@ -19,6 +19,8 @@ class MediaStorageService
 
     public function store(UploadedFile $file): string
     {
+        ImageSecurityService::validateImage($file);
+
         $content = file_get_contents($file->getRealPath());
 
         if (! is_string($content)) {

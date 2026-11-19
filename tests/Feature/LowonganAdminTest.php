@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\PublicController;
 use App\Models\BusinessUnit;
 use App\Models\Participant;
 use App\Models\User;
@@ -411,7 +412,7 @@ class LowonganAdminTest extends TestCase
     {
         $this->seed();
 
-        Cache::put('public.home.html', '<html>stale</html>', now()->addMinutes(10));
+        Cache::put(PublicController::HOME_CACHE_KEY, '<html>stale</html>', now()->addMinutes(10));
 
         $this->actingAs($this->admin())
             ->post(route('admin.lowongan.open-all'), [
@@ -421,7 +422,7 @@ class LowonganAdminTest extends TestCase
             ])
             ->assertRedirect();
 
-        $this->assertFalse(Cache::has('public.home.html'));
+        $this->assertFalse(Cache::has(PublicController::HOME_CACHE_KEY));
     }
 
     public function test_admin_lowongan_shows_ditutup_when_deadline_passed_but_status_still_open(): void

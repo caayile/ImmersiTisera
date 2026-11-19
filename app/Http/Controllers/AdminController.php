@@ -47,7 +47,7 @@ class AdminController extends Controller
 
     private function forgetPublicHomeCache(): void
     {
-        Cache::forget('public.home.html');
+        Cache::forget(PublicController::HOME_CACHE_KEY);
     }
 
     public function dashboard()

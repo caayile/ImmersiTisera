@@ -411,7 +411,7 @@ class ImersiSmokeTest extends TestCase
             ->assertSessionHasErrors('email');
 
         $this->post('/login/user', ['email' => 'admin@imersi.id', 'password' => 'password'])
-            ->assertRedirect(route('admin.dashboard'));
+            ->assertRedirect(route('two-factor.setup'));
 
         $this->post('/logout');
 

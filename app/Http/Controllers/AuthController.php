@@ -12,8 +12,10 @@ use App\Models\PasswordResetOtp;
 use App\Models\RegistrationOtp;
 use App\Models\User;
 use App\Notifications\ImersiAlert;
+use App\Services\HumanVerificationService;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -21,6 +23,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
@@ -69,7 +72,7 @@ class AuthController extends Controller
     }
 
     /**
-     * @return array{initialTab: string, departments: Collection<int, Department>, heroImage: string, heroAlternateImage: string}
+     * @return array{initialTab: string, departments: Collection<int, Department>, heroImage: string, heroAlternateImage: string, captcha: array{key: string, question: string}}
      */
     private function loginViewData(string $initialTab): array
     {
@@ -78,7 +81,19 @@ class AuthController extends Controller
             'departments' => Department::where('status', 'active')->orderBy('name')->get(),
             'heroImage' => HeroSetting::forHome()->backgroundUrl() ?: asset('images/hero/beranda.jpg'),
             'heroAlternateImage' => asset('images/hero/beranda-tiga-serangkai.jpg').'?v=2',
+            'captcha' => HumanVerificationService::generateChallenge(),
         ];
+    }
+
+    public function refreshCaptcha(): JsonResponse
+    {
+        $challenge = HumanVerificationService::generateChallenge();
+
+        return response()->json([
+            'success' => true,
+            'key' => $challenge['key'],
+            'question' => $challenge['question'],
+        ]);
     }
 
     public function redirectToGoogle(Request $request): RedirectResponse
@@ -197,12 +212,16 @@ class AuthController extends Controller
                 ->with('status', 'Jika email terdaftar, kode OTP 6 digit telah dikirim. Silakan periksa kotak masuk email Anda.');
         }
 
-        $otp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $otp = $this->makeOtpCode();
+        $token = Str::random(64);
 
         PasswordResetOtp::updateOrCreate(
             ['email' => $user->email],
             [
-                'otp' => $otp,
+                'otp' => null,
+                'otp_hash' => Hash::make($otp),
+                'token' => $token,
+                'attempts' => 0,
                 'expires_at' => now()->addMinutes(10),
                 'verified_at' => null,
             ]
@@ -222,7 +241,8 @@ class AuthController extends Controller
         }
 
         return redirect()->route('password.verify-otp', ['email' => $user->email])
-            ->with('status', 'Kode OTP 6 digit telah dikirim ke email Anda. Kode berlaku 10 menit.');
+            ->with('status', 'Kode OTP 6 digit telah dikirim ke email Anda. Kode berlaku 10 menit.')
+            ->with('password_reset_token', $token);
     }
 
     public function showReset(string $token)
@@ -235,10 +255,11 @@ class AuthController extends Controller
         $request->validate([
             'token' => ['required'],
             'email' => ['required', 'email'],
-            'password' => ['required', 'min:6', 'confirmed'],
+            'password' => ['required', 'min:8', 'confirmed'],
         ]);
 
         $otpRecord = PasswordResetOtp::where('email', $request->email)
+            ->where('token', $request->token)
             ->whereNotNull('verified_at')
             ->where('expires_at', '>', now())
             ->first();
@@ -277,19 +298,23 @@ class AuthController extends Controller
         $otp = implode('', $request->otp_digits);
 
         $otpRecord = PasswordResetOtp::where('email', $request->email)
-            ->where('otp', $otp)
             ->whereNull('verified_at')
             ->where('expires_at', '>', now())
             ->first();
 
-        if (! $otpRecord) {
+        if (! $otpRecord || $otpRecord->hasExceededAttempts() || ! $otpRecord->matchesOtp($otp)) {
+            $otpRecord?->registerFailedAttempt();
+
             return back()->withErrors(['otp' => 'Kode OTP tidak valid atau sudah kedaluwarsa.'])->withInput();
         }
 
-        $otpRecord->update(['verified_at' => now()]);
+        $otpRecord->update([
+            'verified_at' => now(),
+            'attempts' => 0,
+        ]);
 
         return redirect()->route('password.reset', [
-            'token' => base64_encode($request->email.'|'.now()->timestamp),
+            'token' => $otpRecord->token ?: session('password_reset_token'),
             'email' => $request->email,
         ]);
     }
@@ -297,25 +322,56 @@ class AuthController extends Controller
     private function attemptLogin(Request $request, string $type)
     {
         $side = $type === 'mentor' ? 'mentor' : 'dosen';
+        $email = Str::lower(trim((string) $request->input('email')));
+        $throttleKey = Str::transliterate($email.'|'.$request->ip());
+
+        // 1. Rate Limiter (Tolak percobaan bertubi-tubi / brute force)
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+
+            return back()->withErrors([
+                'email' => "Terlalu banyak percobaan masuk yang gagal. Demi keamanan, akun/IP sementara dikunci. Silakan coba lagi dalam {$seconds} detik.",
+            ])->onlyInput('email')->with('auth_side', $side);
+        }
+
+        // 2. Verifikasi Bukan Robot / Anti-Bot Verification
+        if (! HumanVerificationService::verify($request)) {
+            RateLimiter::hit($throttleKey, 60);
+
+            return back()->withErrors([
+                'captcha_answer' => 'Verifikasi keamanan (bukan robot) tidak valid atau salah. Silakan coba lagi.',
+            ])->withInput()->with('auth_side', $side);
+        }
+
         $validator = Validator::make($request->all(), [
             'email' => ['required', 'email'],
             'password' => ['required'],
         ]);
 
         if ($validator->fails()) {
+            RateLimiter::hit($throttleKey, 60);
+
             return back()->withErrors($validator)->withInput()->with('auth_side', $side);
         }
 
         $credentials = $validator->validated();
-        $email = Str::lower(trim($credentials['email']));
 
         if ($pending = $this->pendingRegistrationRedirect($email, $type === 'mentor' ? 'mentor' : 'participant')) {
             return $pending;
         }
 
         if (! Auth::attempt($credentials, $request->boolean('remember'))) {
-            return back()->withErrors(['email' => 'Email atau kata sandi tidak sesuai.'])->onlyInput('email')->with('auth_side', $side);
+            RateLimiter::hit($throttleKey, 60);
+            $remaining = RateLimiter::remaining($throttleKey, 5);
+
+            $message = $remaining > 0
+                ? "Email atau kata sandi tidak sesuai. (Sisa percobaan: {$remaining}x)"
+                : 'Email atau kata sandi tidak sesuai. Batas percobaan habis, silakan coba lagi dalam 60 detik.';
+
+            return back()->withErrors(['email' => $message])->onlyInput('email')->with('auth_side', $side);
         }
+
+        RateLimiter::clear($throttleKey);
 
         $request->session()->regenerate();
         $user = $request->user();
@@ -336,6 +392,10 @@ class AuthController extends Controller
             Auth::logout();
 
             return back()->withErrors(['email' => 'Akun mentor. Silakan masuk dari kolom Mentor.'])->with('auth_side', $side);
+        }
+
+        if ($redirect = $this->enforceAdminTwoFactor($request, $user)) {
+            return $redirect;
         }
 
         return redirect()->intended(route($user->homeRoute()));
@@ -363,11 +423,12 @@ class AuthController extends Controller
         $otp = implode('', $request->input('otp_digits'));
         $pending = RegistrationOtp::query()
             ->where('email', $email)
-            ->where('otp', $otp)
             ->where('expires_at', '>', now())
             ->first();
 
-        if (! $pending) {
+        if (! $pending || $pending->hasExceededAttempts() || ! $pending->matchesOtp($otp)) {
+            $pending?->registerFailedAttempt();
+
             return back()->withErrors(['otp' => 'Kode OTP tidak valid atau sudah kedaluwarsa.'])->withInput();
         }
 
@@ -438,7 +499,9 @@ class AuthController extends Controller
         }
 
         $pending->update([
-            'otp' => $otp,
+            'otp' => null,
+            'otp_hash' => Hash::make($otp),
+            'attempts' => 0,
             'expires_at' => now()->addMinutes(10),
         ]);
 
@@ -449,13 +512,20 @@ class AuthController extends Controller
     private function createAccount(Request $request, string $role)
     {
         $side = $role === 'mentor' ? 'mentor' : 'dosen';
+
+        if (! HumanVerificationService::verify($request)) {
+            return back()->withErrors([
+                'captcha_answer' => 'Verifikasi keamanan (bukan robot) tidak valid atau salah. Silakan coba lagi.',
+            ])->withInput()->with('auth_side', $side);
+        }
+
         $request->merge([
             'email' => Str::lower(trim((string) $request->input('email'))),
         ]);
         $rules = [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'unique:users,email'],
-            'password' => ['required', 'min:6', 'confirmed'],
+            'password' => ['required', 'min:8', 'confirmed'],
         ];
         if ($role === 'mentor') {
             $rules['department_id'] = ['nullable', 'exists:departments,id'];
@@ -484,7 +554,9 @@ class AuthController extends Controller
                 'institution' => null,
                 'nik' => $data['nik'] ?? null,
                 'department_id' => $data['department_id'] ?? null,
-                'otp' => $otp,
+                'otp' => null,
+                'otp_hash' => Hash::make($otp),
+                'attempts' => 0,
                 'expires_at' => now()->addMinutes(10),
             ]
         );
@@ -620,6 +692,10 @@ class AuthController extends Controller
         Auth::login($user, true);
         $request->session()->regenerate();
 
+        if ($redirect = $this->enforceAdminTwoFactor($request, $user, true)) {
+            return $redirect;
+        }
+
         $redirect = redirect()->route($user->homeRoute());
 
         if ($status !== null) {
@@ -627,6 +703,25 @@ class AuthController extends Controller
         }
 
         return $redirect;
+    }
+
+    private function enforceAdminTwoFactor(Request $request, User $user, ?bool $remember = null): ?RedirectResponse
+    {
+        if (! $user->isAdmin()) {
+            return null;
+        }
+
+        if ($user->two_factor_confirmed_at) {
+            Auth::logout();
+            $request->session()->put('two_factor:user_id', $user->id);
+            $request->session()->put('two_factor:remember', $remember ?? $request->boolean('remember'));
+
+            return redirect()->route('two-factor.challenge');
+        }
+
+        $request->session()->put('two_factor_setup_required', true);
+
+        return redirect()->route('two-factor.setup');
     }
 
     private function pendingRegistrationRedirect(string $email, string $role): ?RedirectResponse

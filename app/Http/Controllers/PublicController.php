@@ -14,15 +14,18 @@ use Illuminate\Support\Facades\Cache;
 
 class PublicController extends Controller
 {
-    public function home()
+    public const HOME_CACHE_KEY = 'public.home.v2';
+
+    public function home(Request $request)
     {
         // Homepage publik di-cache sebagai HTML untuk tamu: tanpa query DB sama sekali.
+        // URL di dalamnya dibuat relatif agar HTML cache tidak mengunci host/port petunjuk.
         // Dilewati bila ada flash session agar banner status tidak ikut ter-cache.
         if (auth()->user() === null && ! session()->has('status') && ! session()->has('errors')) {
-            $html = Cache::remember('public.home.html', now()->addMinutes(10), function () {
+            $html = Cache::remember(self::HOME_CACHE_KEY, now()->addMinutes(10), function () use ($request) {
                 [$departments, $featuredUnits, $latestNews, $heroRegistration] = $this->homeData();
 
-                return view('public.home', [
+                $rendered = view('public.home', [
                     'departments' => $departments,
                     'featuredUnits' => $featuredUnits,
                     'latestNews' => $latestNews,
@@ -31,9 +34,14 @@ class PublicController extends Controller
                     'homeHeroAlternateImage' => $this->homeHeroAlternateImageUrl(),
                     'nextStep' => null,
                 ])->render();
+
+                return $this->makeCachedUrlsRelative($rendered, $request);
             });
 
-            return response($html);
+            // Cegah browser memakai ulang HTML lama (misalnya dari halaman yang
+            // dirender sebelum URL dibuat relatif), termasuk lewat back/forward cache.
+            return response($html)
+                ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
         }
 
         [$departments, $featuredUnits, $latestNews, $heroRegistration] = $this->homeData();
@@ -254,5 +262,47 @@ class PublicController extends Controller
     public function programInfo()
     {
         return view('public.program-info');
+    }
+
+    /**
+     * HTML cache dipakai ulang untuk host/port apa pun, jadi semua URL absolut
+     * yang dibuat saat render pertama harus dikembalikan menjadi URL relatif.
+     */
+    private function makeCachedUrlsRelative(string $html, Request $request): string
+    {
+        $origins = array_unique(array_filter([
+            $request->getSchemeAndHttpHost(),
+            $this->originFromUrl((string) config('app.url')),
+            $this->originFromUrl((string) config('app.asset_url')),
+        ]));
+
+        usort($origins, fn (string $left, string $right): int => strlen($right) <=> strlen($left));
+
+        foreach ($origins as $origin) {
+            $html = str_replace(
+                [$origin.'/', $origin.'"', $origin."'", $origin],
+                ['/', '/"', "/'", ''],
+                $html,
+            );
+        }
+
+        return $html;
+    }
+
+    private function originFromUrl(string $url): ?string
+    {
+        if ($url === '') {
+            return null;
+        }
+
+        $parts = parse_url($url);
+
+        if (! isset($parts['scheme'], $parts['host'])) {
+            return null;
+        }
+
+        $port = isset($parts['port']) ? ':'.$parts['port'] : '';
+
+        return $parts['scheme'].'://'.$parts['host'].$port;
     }
 }
