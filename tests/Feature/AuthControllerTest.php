@@ -63,7 +63,7 @@ class AuthControllerTest extends TestCase
 
         $this->assertStringContainsString("'nonce-{$nonce}'", $policy);
         $this->assertStringContainsString("script-src-attr 'unsafe-inline'", $policy);
-        $this->assertStringNotContainsString("'unsafe-eval'", $policy);
+        $this->assertStringContainsString("'unsafe-eval'", $policy);
         $this->assertStringNotContainsString("script-src 'self' 'unsafe-inline'", $policy);
 
         $this->get('https://localhost/login')
@@ -93,9 +93,22 @@ class AuthControllerTest extends TestCase
 
             $this->assertStringContainsString('img-src \'self\' data: blob: https: http://localhost:5173 http://127.0.0.1:5173', $policy);
             $this->assertStringContainsString('font-src \'self\' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com http://localhost:5173 http://127.0.0.1:5173', $policy);
-            $this->assertStringContainsString('script-src \'self\' \'nonce-'.$this->cspNonce().'\' https://cdn.jsdelivr.net https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ http://localhost:5173 http://127.0.0.1:5173', $policy);
+            $this->assertStringContainsString('script-src \'self\' \'nonce-'.$this->cspNonce().'\' \'unsafe-eval\' https://cdn.jsdelivr.net https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ http://localhost:5173 http://127.0.0.1:5173', $policy);
             $this->assertStringContainsString('style-src \'self\' \'unsafe-inline\' https://fonts.googleapis.com https://cdnjs.cloudflare.com http://localhost:5173 http://127.0.0.1:5173', $policy);
             $this->assertStringContainsString('ws://127.0.0.1:5173', $policy);
+
+            $hotFile = public_path('hot');
+
+            if (is_file($hotFile)) {
+                $hotParts = parse_url(trim((string) file_get_contents($hotFile)));
+
+                if (is_array($hotParts) && isset($hotParts['scheme'], $hotParts['host'], $hotParts['port'])) {
+                    $activeOrigin = sprintf('%s://%s:%d', $hotParts['scheme'], $hotParts['host'], $hotParts['port']);
+
+                    $this->assertStringContainsString($activeOrigin, $policy);
+                    $this->assertStringContainsString(str_replace('http://', 'ws://', $activeOrigin), $policy);
+                }
+            }
         } finally {
             $this->app->detectEnvironment(fn (): string => $originalEnvironment);
         }

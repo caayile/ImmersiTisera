@@ -26,12 +26,13 @@ class SecurityHeaders
         // reCAPTCHA v2 memuat script dan iframe dari dua origin Google ini.
         $recaptchaSources = ['https://www.google.com/recaptcha/', 'https://www.gstatic.com/recaptcha/'];
 
-        $scriptSources = ["'self'", "'nonce-{$nonce}'", 'https://cdn.jsdelivr.net', ...$recaptchaSources];
+        // Alpine v3 mengevaluasi ekspresi directive (x-show, @click) saat runtime, jadi butuh unsafe-eval.
+        $scriptSources = ["'self'", "'nonce-{$nonce}'", "'unsafe-eval'", 'https://cdn.jsdelivr.net', ...$recaptchaSources];
         $styleSources = ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://cdnjs.cloudflare.com'];
         $connectSources = ["'self'", ...$recaptchaSources];
 
         if (app()->environment('local')) {
-            $viteOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173'];
+            $viteOrigins = $this->viteOrigins();
 
             foreach ($viteOrigins as $viteOrigin) {
                 $imageSources[] = $viteOrigin;
@@ -81,6 +82,41 @@ class SecurityHeaders
     private function cspNonce(): string
     {
         return base64_encode(hash_hmac('sha256', 'csp-nonce', (string) config('app.key'), true));
+    }
+
+    /**
+     * Vite origin bawaan plus origin aktif dari public/hot (port bisa berubah saat restart).
+     *
+     * @return array<int, string>
+     */
+    private function viteOrigins(): array
+    {
+        $origins = ['http://localhost:5173', 'http://127.0.0.1:5173'];
+        $hotFile = public_path('hot');
+
+        if (! is_file($hotFile)) {
+            return $origins;
+        }
+
+        $hotUrl = trim((string) file_get_contents($hotFile));
+
+        if ($hotUrl === '' || filter_var($hotUrl, FILTER_VALIDATE_URL) === false) {
+            return $origins;
+        }
+
+        $parts = parse_url($hotUrl);
+
+        if (! is_array($parts) || ! isset($parts['scheme'], $parts['host'], $parts['port'])) {
+            return $origins;
+        }
+
+        $origin = sprintf('%s://%s:%d', $parts['scheme'], $parts['host'], $parts['port']);
+
+        if (! in_array($origin, $origins, true)) {
+            $origins[] = $origin;
+        }
+
+        return $origins;
     }
 
     private function addNonceToInlineScripts(Response $response, string $nonce): void
