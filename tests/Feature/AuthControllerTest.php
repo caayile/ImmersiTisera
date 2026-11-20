@@ -93,7 +93,7 @@ class AuthControllerTest extends TestCase
 
             $this->assertStringContainsString('img-src \'self\' data: blob: https: http://localhost:5173 http://127.0.0.1:5173', $policy);
             $this->assertStringContainsString('font-src \'self\' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com http://localhost:5173 http://127.0.0.1:5173', $policy);
-            $this->assertStringContainsString('script-src \'self\' \'nonce-'.$this->cspNonce().'\' https://cdn.jsdelivr.net http://localhost:5173 http://127.0.0.1:5173', $policy);
+            $this->assertStringContainsString('script-src \'self\' \'nonce-'.$this->cspNonce().'\' https://cdn.jsdelivr.net https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ http://localhost:5173 http://127.0.0.1:5173', $policy);
             $this->assertStringContainsString('style-src \'self\' \'unsafe-inline\' https://fonts.googleapis.com https://cdnjs.cloudflare.com http://localhost:5173 http://127.0.0.1:5173', $policy);
             $this->assertStringContainsString('ws://127.0.0.1:5173', $policy);
         } finally {

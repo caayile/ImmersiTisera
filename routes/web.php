@@ -38,7 +38,6 @@ Route::post('/register/verify-otp', [AuthController::class, 'verifyRegisterOtp']
 Route::post('/register/verify-otp/resend', [AuthController::class, 'resendRegisterOtp'])->middleware('throttle:5,1')->name('register.verify-otp.resend');
 Route::get('/auth/google', [AuthController::class, 'redirectToGoogle'])->name('login.google');
 Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback'])->name('login.google.callback');
-Route::get('/auth/captcha-refresh', [AuthController::class, 'refreshCaptcha'])->name('auth.captcha.refresh');
 
 Route::middleware('guest')->group(function () {
     Route::get('/forgot-password', [AuthController::class, 'showForgot'])->name('password.request');

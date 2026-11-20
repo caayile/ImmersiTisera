@@ -22,9 +22,13 @@ class SecurityHeaders
 
         $imageSources = ["'self'", 'data:', 'blob:', 'https:'];
         $fontSources = ["'self'", 'data:', 'https://fonts.gstatic.com', 'https://cdnjs.cloudflare.com'];
-        $scriptSources = ["'self'", "'nonce-{$nonce}'", 'https://cdn.jsdelivr.net'];
+
+        // reCAPTCHA v2 memuat script dan iframe dari dua origin Google ini.
+        $recaptchaSources = ['https://www.google.com/recaptcha/', 'https://www.gstatic.com/recaptcha/'];
+
+        $scriptSources = ["'self'", "'nonce-{$nonce}'", 'https://cdn.jsdelivr.net', ...$recaptchaSources];
         $styleSources = ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://cdnjs.cloudflare.com'];
-        $connectSources = ["'self'"];
+        $connectSources = ["'self'", ...$recaptchaSources];
 
         if (app()->environment('local')) {
             $viteOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173'];
@@ -51,7 +55,7 @@ class SecurityHeaders
             'script-src '.implode(' ', $scriptSources),
             "script-src-attr 'unsafe-inline'",
             'connect-src '.implode(' ', $connectSources),
-            "frame-src 'self' https://www.google.com https://maps.google.com",
+            'frame-src '.implode(' ', ["'self'", 'https://www.google.com', 'https://maps.google.com', ...$recaptchaSources]),
         ];
 
         if (! app()->environment('local')) {

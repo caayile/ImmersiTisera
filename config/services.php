@@ -56,6 +56,11 @@ return [
         'redirect' => google_oauth_env('GOOGLE_REDIRECT_URI') ?: google_oauth_env('GOOGLE_REDIRECT_URL') ?: '/auth/google/callback',
     ],
 
+    'recaptcha' => [
+        'site_key' => env('RECAPTCHA_SITE_KEY'),
+        'secret_key' => env('RECAPTCHA_SECRET_KEY'),
+    ],
+
     'browsershot' => [
         'node_binary' => env('BROWSERSHOT_NODE_BINARY', 'node'),
         'chrome_path' => env('BROWSERSHOT_CHROME_PATH'),

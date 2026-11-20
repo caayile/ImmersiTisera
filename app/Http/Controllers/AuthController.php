@@ -15,7 +15,6 @@ use App\Notifications\ImersiAlert;
 use App\Services\HumanVerificationService;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -72,7 +71,7 @@ class AuthController extends Controller
     }
 
     /**
-     * @return array{initialTab: string, departments: Collection<int, Department>, heroImage: string, heroAlternateImage: string, captcha: array{key: string, question: string}}
+     * @return array{initialTab: string, departments: Collection<int, Department>, heroImage: string, heroAlternateImage: string, recaptchaSiteKey: string}
      */
     private function loginViewData(string $initialTab): array
     {
@@ -81,19 +80,8 @@ class AuthController extends Controller
             'departments' => Department::where('status', 'active')->orderBy('name')->get(),
             'heroImage' => HeroSetting::forHome()->backgroundUrl() ?: asset('images/hero/beranda.jpg'),
             'heroAlternateImage' => asset('images/hero/beranda-tiga-serangkai.jpg').'?v=2',
-            'captcha' => HumanVerificationService::generateChallenge(),
+            'recaptchaSiteKey' => (string) config('services.recaptcha.site_key'),
         ];
-    }
-
-    public function refreshCaptcha(): JsonResponse
-    {
-        $challenge = HumanVerificationService::generateChallenge();
-
-        return response()->json([
-            'success' => true,
-            'key' => $challenge['key'],
-            'question' => $challenge['question'],
-        ]);
     }
 
     public function redirectToGoogle(Request $request): RedirectResponse
