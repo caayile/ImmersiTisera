@@ -44,7 +44,7 @@ class HeroSetting extends Model
             ['page' => 'home'],
             [
                 'title' => 'Beranda',
-                'background_path' => 'images/hero/beranda-rotasi-1.jpg',
+                'background_path' => 'images/hero/beranda.jpg',
             ],
         );
     }

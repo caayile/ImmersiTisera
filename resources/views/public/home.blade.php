@@ -38,12 +38,6 @@
             loading="eager"
             fetchpriority="high"
         >
-        <img
-            src="{{ $homeHeroAlternateImage }}"
-            alt=""
-            class="home-hero__photo home-hero__photo--full home-hero__photo--swap"
-            loading="eager"
-        >
         <div class="home-hero__wash"></div>
     </div>
     <div class="home-hero__inner">

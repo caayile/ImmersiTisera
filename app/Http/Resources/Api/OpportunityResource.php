@@ -19,7 +19,7 @@ class OpportunityResource extends JsonResource
 
         if ($user && $user->participant) {
             $applied = $this->applications()
-                ->where('user_id', $user->id)
+                ->where('participant_id', $user->participant->id)
                 ->exists();
         }
 

@@ -2,9 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\PublicController;
 use App\Models\BusinessUnit;
+use App\Models\HeroSetting;
 use App\Models\News;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
 class PublicControllerTest extends TestCase
@@ -84,6 +87,31 @@ class PublicControllerTest extends TestCase
             ->assertSee('Berita')
             ->assertSee('Masuk')
             ->assertSee('sticky top-0', false);
+    }
+
+    public function test_home_hero_displays_the_selected_image_without_the_static_alternate(): void
+    {
+        $this->seed();
+        HeroSetting::forHome()->update([
+            'background_path' => 'images/hero/home-uploaded.jpg',
+        ]);
+        Cache::forget(PublicController::HOME_CACHE_KEY);
+
+        $response = $this->get('/');
+
+        $response->assertSee('images/hero/home-uploaded.jpg')
+            ->assertDontSee('images/hero/beranda-rotasi-2.png');
+        $this->assertSame(1, substr_count($response->getContent(), 'home-hero__photo home-hero__photo--full'));
+    }
+
+    public function test_home_hero_uses_the_campus_photo_as_its_default(): void
+    {
+        $this->seed();
+        Cache::forget(PublicController::HOME_CACHE_KEY);
+
+        $this->get('/')
+            ->assertSee('images/hero/beranda.jpg')
+            ->assertDontSee('images/hero/beranda-rotasi-2.png');
     }
 
     public function test_public_pages_share_the_reference_header_layout(): void
