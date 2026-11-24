@@ -36,6 +36,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -52,22 +53,34 @@ class AdminController extends Controller
 
     public function dashboard()
     {
-        $programs = Program::query();
+        $counts = DB::query()
+            ->selectRaw('(select count(*) from participants) as participants')
+            ->selectRaw('(select count(*) from mentors) as mentors')
+            ->selectRaw('(select count(*) from departments) as departments')
+            ->selectRaw('(select count(*) from business_units) as business_units')
+            ->selectRaw("(select count(*) from programs where status = 'active') as active_programs")
+            ->selectRaw("(select count(*) from programs where status = 'completed') as completed_programs")
+            ->selectRaw("(select count(*) from applications where status in ('submitted', 'waiting_admin')) + (select count(*) from agreements where status = 'submitted') as pending")
+            ->selectRaw('(select count(distinct program_id) from outputs) as programs_with_outputs')
+            ->selectRaw("(select count(*) from logbooks where status = 'approved') as approved_logbooks")
+            ->first();
+
+        $activePrograms = (int) ($counts->active_programs ?? 0);
 
         return view('admin.dashboard', [
             'stats' => [
-                'Peserta' => Participant::count(),
-                'Mentor' => Mentor::count(),
-                'Unit bisnis' => Department::count(),
-                'Departemen' => BusinessUnit::count(),
-                'Program aktif' => Program::where('status', 'active')->count(),
-                'Program selesai' => Program::where('status', 'completed')->count(),
-                'Menunggu persetujuan' => Application::whereIn('status', ['submitted', 'waiting_admin'])->count() + Agreement::where('status', 'submitted')->count(),
-                'Program dengan hasil' => Program::whereHas('outputs')->count(),
+                'Peserta' => (int) ($counts->participants ?? 0),
+                'Mentor' => (int) ($counts->mentors ?? 0),
+                'Unit bisnis' => (int) ($counts->departments ?? 0),
+                'Departemen' => (int) ($counts->business_units ?? 0),
+                'Program aktif' => $activePrograms,
+                'Program selesai' => (int) ($counts->completed_programs ?? 0),
+                'Menunggu persetujuan' => (int) ($counts->pending ?? 0),
+                'Program dengan hasil' => (int) ($counts->programs_with_outputs ?? 0),
             ],
             'statusCounts' => Program::selectRaw('status, count(*) as total')->groupBy('status')->pluck('total', 'status'),
-            'logbookCompliance' => Program::where('status', 'active')->count()
-                ? round(Logbook::where('status', 'approved')->count() / max(1, Program::where('status', 'active')->count()) * 10)
+            'logbookCompliance' => $activePrograms > 0
+                ? round((int) ($counts->approved_logbooks ?? 0) / max(1, $activePrograms) * 10)
                 : 0,
             'collab' => CollaborationPipeline::selectRaw('level, count(*) as total')->groupBy('level')->pluck('total', 'level'),
         ]);

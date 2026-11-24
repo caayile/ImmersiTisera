@@ -17,17 +17,17 @@ class HomeHeroTest extends TestCase
     public function test_home_shows_the_default_background_image(): void
     {
         $this->get('/')
-            ->assertSee('images/hero/beranda-rotasi-1.jpg', false)
-            ->assertSee('images/hero/beranda-rotasi-2.png', false)
-            ->assertSee('home-hero__photo--swap', false);
+            ->assertSee('images/hero/beranda.jpg', false)
+            ->assertSee('home-hero__photo--full', false)
+            ->assertDontSee('images/hero/beranda-rotasi-2.png', false);
     }
 
-    public function test_home_hero_rotates_between_images_every_three_and_a_half_seconds(): void
+    public function test_auth_hero_rotates_between_images_every_fourteen_seconds(): void
     {
         $css = file_get_contents(resource_path('css/app.css'));
 
         $this->assertIsString($css);
-        $this->assertStringContainsString('animation: home-hero-crossfade 7s ease-in-out infinite;', $css);
+        $this->assertStringContainsString('animation: home-hero-crossfade 14s ease-in-out infinite;', $css);
     }
 
     public function test_home_hero_wash_keeps_the_background_photo_visible(): void
@@ -35,8 +35,8 @@ class HomeHeroTest extends TestCase
         $css = file_get_contents(resource_path('css/app.css'));
 
         $this->assertIsString($css);
-        $this->assertStringContainsString('rgb(255 255 255 / 78%) 0%', $css);
-        $this->assertStringContainsString('rgb(255 255 255 / 10%) 100%', $css);
+        $this->assertStringContainsString('rgb(255 255 255 / 8%) 0%', $css);
+        $this->assertStringContainsString('rgb(255 255 255 / 4%) 40%', $css);
     }
 
     public function test_cached_homepage_stays_portable_across_hosts_and_ports(): void
@@ -64,7 +64,7 @@ class HomeHeroTest extends TestCase
         $this->assertIsString($secondHtml);
         $this->assertStringNotContainsString('dua.test', $secondHtml);
         $this->assertStringContainsString('href="/', $secondHtml);
-        $this->assertStringContainsString('images/hero/beranda-rotasi-1.jpg', $secondHtml);
+        $this->assertStringContainsString('images/hero/beranda.jpg', $secondHtml);
     }
 
     public function test_admin_can_replace_the_home_background_and_clears_the_public_cache(): void
@@ -88,8 +88,8 @@ class HomeHeroTest extends TestCase
 
         $this->get('/')
             ->assertSee(route('media.show', $mediaId), false)
-            ->assertSee('images/hero/beranda-rotasi-2.png', false)
-            ->assertDontSee('images/hero/beranda-rotasi-1.jpg', false);
+            ->assertDontSee('images/hero/beranda.jpg', false)
+            ->assertDontSee('images/hero/beranda-rotasi-2.png', false);
     }
 
     public function test_home_background_upload_requires_a_file(): void

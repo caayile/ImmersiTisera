@@ -29,7 +29,7 @@ class AuthControllerTest extends TestCase
     public function test_login_shows_the_faded_campus_background(): void
     {
         $this->get(route('login'))
-            ->assertSee('images/hero/beranda-rotasi-1.jpg', false)
+            ->assertSee('images/hero/beranda.jpg', false)
             ->assertSee('images/hero/beranda-tiga-serangkai.jpg', false)
             ->assertSee('auth-hero__wash', false);
     }

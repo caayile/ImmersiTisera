@@ -12,12 +12,22 @@ class OpportunityResource extends JsonResource
 {
     public function toArray($request): array
     {
-        $this->loadMissing(['department', 'mentors.user']);
-        $mentor = $this->mentors->first();
-        $user = optional($request->user());
-        $applied = false;
+        $usesInlineData = $this->resource->hasAttribute('department_name');
 
-        if ($user && $user->participant) {
+        if (! $usesInlineData) {
+            $this->loadMissing(['department', 'mentors.user']);
+        }
+
+        $mentor = $usesInlineData ? null : $this->mentors->first();
+        $departmentName = $usesInlineData
+            ? $this->department_name
+            : optional($this->department)->name;
+        $user = optional($request->user());
+        $hasAppliedFlag = $this->resource->hasAttribute('applied_by_user');
+        $applied = $hasAppliedFlag ? (bool) $this->applied_by_user : false;
+
+        // Fallback untuk endpoint show yang memuat satu unit tanpa preload.
+        if (! $hasAppliedFlag && $user && $user->participant) {
             $applied = $this->applications()
                 ->where('participant_id', $user->participant->id)
                 ->exists();
@@ -25,10 +35,26 @@ class OpportunityResource extends JsonResource
 
         $score = $this->calculateMatchScore($user);
 
+        if ($usesInlineData) {
+            $mentorData = $this->mentor_name === null
+                ? null
+                : [
+                    'id' => $this->mentor_user_id,
+                    'name' => $this->mentor_name,
+                    'company' => $departmentName,
+                ];
+        } else {
+            $mentorData = $mentor?->user ? [
+                'id' => $mentor->user->id,
+                'name' => $mentor->user->name,
+                'company' => $departmentName,
+            ] : null;
+        }
+
         return [
             'id' => $this->id,
             'title' => $this->name,
-            'field' => optional($this->department)->name,
+            'field' => $departmentName,
             'business_unit' => $this->name,
             'purpose' => $this->function ?: 'pembelajaran',
             'problem' => $this->description,
@@ -39,11 +65,7 @@ class OpportunityResource extends JsonResource
             'match_score' => $score,
             'match_label' => $this->matchLabel($score),
             'applied' => $applied,
-            'mentor' => $mentor?->user ? [
-                'id' => $mentor->user->id,
-                'name' => $mentor->user->name,
-                'company' => optional($this->department)->name,
-            ] : null,
+            'mentor' => $mentorData,
         ];
     }
 

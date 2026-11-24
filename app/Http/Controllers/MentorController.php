@@ -28,21 +28,33 @@ use App\Support\Status;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class MentorController extends Controller
 {
     public function dashboard(Request $request)
     {
         $mentor = $request->user()->mentor;
-        $programs = Program::with(['participant.user', 'businessUnit'])->where('mentor_id', $mentor?->id)->get();
+        $mentorId = $mentor?->id;
+        $programs = Program::with(['participant.user', 'businessUnit'])
+            ->where('mentor_id', $mentorId)
+            ->limit(100)
+            ->get();
+
+        $counts = DB::query()
+            ->selectRaw('(select count(*) from applications where mentor_id = ? and status = ?) as applications', [$mentorId, 'waiting_mentor'])
+            ->selectRaw("(select count(*) from agreements a join programs p on p.id = a.program_id where p.mentor_id = ? and a.status in ('submitted', 'revision')) as agreements", [$mentorId])
+            ->selectRaw('(select count(*) from logbooks l join programs p on p.id = l.program_id where p.mentor_id = ? and l.status = ?) as logbooks', [$mentorId, 'submitted'])
+            ->selectRaw('(select count(*) from outputs o join programs p on p.id = o.program_id where p.mentor_id = ? and o.status = ?) as outputs', [$mentorId, 'submitted'])
+            ->first();
 
         return view('mentor.dashboard', [
             'mentor' => $mentor,
             'programs' => $programs,
-            'pendingApplications' => Application::where('mentor_id', $mentor?->id)->where('status', 'waiting_mentor')->count(),
-            'pendingAgreements' => Agreement::whereHas('program', fn ($q) => $q->where('mentor_id', $mentor?->id))->whereIn('status', ['submitted', 'revision'])->count(),
-            'pendingLogbooks' => Logbook::whereHas('program', fn ($q) => $q->where('mentor_id', $mentor?->id))->where('status', 'submitted')->count(),
-            'pendingOutputs' => ProgramOutput::whereHas('program', fn ($q) => $q->where('mentor_id', $mentor?->id))->where('status', 'submitted')->count(),
+            'pendingApplications' => (int) ($counts->applications ?? 0),
+            'pendingAgreements' => (int) ($counts->agreements ?? 0),
+            'pendingLogbooks' => (int) ($counts->logbooks ?? 0),
+            'pendingOutputs' => (int) ($counts->outputs ?? 0),
         ]);
     }
 

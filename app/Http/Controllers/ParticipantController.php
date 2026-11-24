@@ -12,7 +12,6 @@ use App\Models\EvaluationQuestion;
 use App\Models\EvaluationScale;
 use App\Models\EvaluationSection;
 use App\Models\Logbook;
-use App\Models\MentorSession;
 use App\Models\Participant;
 use App\Models\Program;
 use App\Models\ProgramOutput;
@@ -30,6 +29,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -40,27 +40,62 @@ class ParticipantController extends Controller
 {
     public function dashboard(Request $request)
     {
+        $participantId = $request->user()->participant?->id;
         $program = $this->currentProgram($request);
-        $program?->refreshProgress();
+
+        if ($program !== null) {
+            $program->loadMissing([
+                'mentor.department', 'mentor.businessUnit', 'agreement', 'logbooks',
+                'timelines', 'mentorSessions', 'outputs', 'evaluations', 'collaboration',
+            ]);
+
+            // Hitung progres untuk tampilan tanpa menulis ke database setiap kali halaman dibuka.
+            if ($program->status === 'active') {
+                $program->current_week = $program->computedWeek();
+            }
+
+            $logCount = $program->logbooks->count();
+            $program->progress = $program->status === 'completed'
+                ? 100
+                : min(95, $logCount * 8);
+        }
+
         $application = Application::with(['department', 'businessUnit', 'mentor.user'])
-            ->where('participant_id', $request->user()->participant?->id)
+            ->where('participant_id', $participantId)
             ->latest()
             ->first();
 
-        $participantId = $request->user()->participant?->id;
-
         return view('participant.dashboard', [
             'participant' => $request->user()->participant,
-            'program' => $program?->fresh(['department', 'businessUnit', 'mentor.user', 'mentor.department', 'mentor.businessUnit', 'agreement', 'logbooks', 'timelines', 'mentorSessions', 'outputs', 'evaluations', 'collaboration']),
+            'program' => $program,
             'notifications' => $request->user()->unreadNotifications()->latest()->take(5)->get(),
             'application' => $application,
-            'stats' => [
-                'programs' => Program::where('participant_id', $participantId)->count(),
-                'logbooks' => Logbook::where('participant_id', $participantId)->count(),
-                'mentorings' => MentorSession::where('participant_id', $participantId)->count(),
-                'outputs' => ProgramOutput::where('participant_id', $participantId)->where('is_final_report', false)->count(),
-            ],
+            'stats' => $this->participantStats($participantId),
         ]);
+    }
+
+    /**
+     * @return array{programs: int, logbooks: int, mentorings: int, outputs: int}
+     */
+    private function participantStats(?int $participantId): array
+    {
+        if ($participantId === null) {
+            return ['programs' => 0, 'logbooks' => 0, 'mentorings' => 0, 'outputs' => 0];
+        }
+
+        $stats = DB::query()
+            ->selectRaw('(select count(*) from programs where participant_id = ?) as programs', [$participantId])
+            ->selectRaw('(select count(*) from logbooks where participant_id = ?) as logbooks', [$participantId])
+            ->selectRaw('(select count(*) from mentor_sessions where participant_id = ?) as mentorings', [$participantId])
+            ->selectRaw('(select count(*) from outputs where participant_id = ? and is_final_report is false) as outputs', [$participantId])
+            ->first();
+
+        return [
+            'programs' => (int) ($stats->programs ?? 0),
+            'logbooks' => (int) ($stats->logbooks ?? 0),
+            'mentorings' => (int) ($stats->mentorings ?? 0),
+            'outputs' => (int) ($stats->outputs ?? 0),
+        ];
     }
 
     public function profile(Request $request)

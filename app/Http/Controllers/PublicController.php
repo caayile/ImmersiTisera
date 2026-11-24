@@ -16,6 +16,8 @@ class PublicController extends Controller
 {
     public const HOME_CACHE_KEY = 'public.home.v2';
 
+    private const SEARCH_LIMIT = 10;
+
     public function home(Request $request)
     {
         // Homepage publik di-cache sebagai HTML untuk tamu: tanpa query DB sama sekali.
@@ -139,37 +141,41 @@ class PublicController extends Controller
             return response()->json([]);
         }
 
-        $departments = Department::query()
-            ->where('status', 'active')
-            ->where(function ($query) use ($search) {
-                $query->where('name', 'like', '%'.$search.'%')
-                    ->orWhere('description', 'like', '%'.$search.'%')
-                    ->orWhere('area', 'like', '%'.$search.'%');
-            })
-            ->get()
-            ->map(function ($dept) {
-                return [
-                    'id' => $dept->id,
-                    'type' => 'Departemen',
-                    'name' => $dept->name,
-                    'url' => route('departments.show', $dept),
-                ];
-            });
+        $cacheKey = 'api.search.v1:'.md5(mb_strtolower($search));
 
-        $units = BusinessUnit::query()
-            ->currentlyOpen()
-            ->where('name', 'like', '%'.$search.'%')
-            ->get()
-            ->map(function ($unit) {
-                return [
+        return response()->json(Cache::remember($cacheKey, now()->addSeconds(60), function () use ($search): array {
+            $departments = Department::query()
+                ->select(['id', 'name', 'slug', 'status'])
+                ->where('status', 'active')
+                ->where(function ($query) use ($search) {
+                    $query->where('name', 'like', '%'.$search.'%')
+                        ->orWhere('description', 'like', '%'.$search.'%')
+                        ->orWhere('area', 'like', '%'.$search.'%');
+                })
+                ->limit(self::SEARCH_LIMIT)
+                ->get()
+                ->map(fn (Department $department): array => [
+                    'id' => $department->id,
+                    'type' => 'Departemen',
+                    'name' => $department->name,
+                    'url' => route('departments.show', $department, false),
+                ]);
+
+            $units = BusinessUnit::query()
+                ->select(['id', 'name'])
+                ->currentlyOpen()
+                ->where('name', 'like', '%'.$search.'%')
+                ->limit(self::SEARCH_LIMIT)
+                ->get()
+                ->map(fn (BusinessUnit $unit): array => [
                     'id' => $unit->id,
                     'type' => 'Unit Bisnis',
                     'name' => $unit->name,
-                    'url' => route('units.show', $unit),
-                ];
-            });
+                    'url' => route('units.show', $unit, false),
+                ]);
 
-        return response()->json($departments->merge($units));
+            return array_merge($departments->all(), $units->all());
+        }));
     }
 
     public function departments(Request $request)

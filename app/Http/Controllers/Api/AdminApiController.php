@@ -6,13 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\DepartmentNeedResource;
 use App\Http\Resources\Api\ProgramResource;
 use App\Http\Resources\Api\UserResource;
-use App\Models\BusinessUnit;
 use App\Models\DepartmentNeed;
-use App\Models\Mentor;
-use App\Models\Participant;
 use App\Models\Program;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class AdminApiController extends Controller
 {
@@ -20,13 +18,23 @@ class AdminApiController extends Controller
     {
         abort_unless($request->user()->isAdmin(), 403);
 
+        $now = now()->toDateTimeString();
+        $counts = DB::query()
+            ->selectRaw('(select count(*) from users where verification_status = ?) as pending_verification', ['pending_verification'])
+            ->selectRaw('(select count(*) from participants) as dosen')
+            ->selectRaw('(select count(*) from mentors) as mentors')
+            ->selectRaw("(select count(*) from programs where status = 'active') as active_programs")
+            ->selectRaw('(select count(*) from business_units where status = ? and (registration_start is null or registration_start <= ?) and (registration_deadline is null or registration_deadline >= ?)) as opportunities', ['open', $now, $now])
+            ->selectRaw('(select count(*) from department_needs) as department_needs')
+            ->first();
+
         return response()->json([
-            'pending_verification' => User::query()->where('verification_status', 'pending_verification')->count(),
-            'dosen' => Participant::count(),
-            'mentors' => Mentor::count(),
-            'active_programs' => Program::query()->where('status', 'active')->count(),
-            'opportunities' => BusinessUnit::query()->currentlyOpen()->count(),
-            'department_needs' => DepartmentNeed::count(),
+            'pending_verification' => (int) ($counts->pending_verification ?? 0),
+            'dosen' => (int) ($counts->dosen ?? 0),
+            'mentors' => (int) ($counts->mentors ?? 0),
+            'active_programs' => (int) ($counts->active_programs ?? 0),
+            'opportunities' => (int) ($counts->opportunities ?? 0),
+            'department_needs' => (int) ($counts->department_needs ?? 0),
         ]);
     }
 
