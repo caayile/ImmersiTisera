@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Program;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -14,20 +15,28 @@ class BackendPerformanceTest extends TestCase
         $this->seed();
         $user = User::where('email', 'dosen@imersi.id')->firstOrFail();
 
+        Cache::forget('api.opportunities.list.v1:all');
+
         $this->actingAs($user);
         DB::flushQueryLog();
         DB::enableQueryLog();
 
         $response = $this->getJson('/api/opportunities');
+        $firstQueryCount = count(DB::getQueryLog());
 
-        $queries = DB::getQueryLog();
+        DB::flushQueryLog();
+        $cachedResponse = $this->getJson('/api/opportunities');
+        $secondQueryCount = count(DB::getQueryLog());
         DB::disableQueryLog();
 
         $response->assertOk()->assertJsonFragment([
             'title' => 'Digital Business',
         ]);
+        $cachedResponse->assertOk();
 
-        $this->assertLessThanOrEqual(12, count($queries));
+        $this->assertLessThanOrEqual(12, $firstQueryCount);
+        $this->assertSame($response->json(), $cachedResponse->json());
+        $this->assertLessThanOrEqual(2, $secondQueryCount);
     }
 
     public function test_search_api_serves_repeated_terms_from_cache(): void

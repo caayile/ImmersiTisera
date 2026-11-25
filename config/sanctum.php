@@ -54,6 +54,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Track Token Last Used At
+    |--------------------------------------------------------------------------
+    |
+    | Menonaktifkan penulisan last_used_at pada setiap request API. Token tetap
+    | divalidasi normal, hanya audit timestamp-nya yang tidak diperbarui.
+    |
+    */
+
+    'last_used_at' => false,
+
+    /*
+    |--------------------------------------------------------------------------
     | Token Prefix
     |--------------------------------------------------------------------------
     |

@@ -3,9 +3,11 @@
 namespace App\Providers;
 
 use App\Mail\SmtpCaMailManager;
+use App\Models\PersonalAccessToken;
 use App\Support\NeonMigrationConnection;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Sanctum\Sanctum;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -25,6 +27,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         JsonResource::withoutWrapping();
+        Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
 
         if (config('database.default') !== 'neon' || ! $this->app->runningInConsole()) {
             return;

@@ -6,13 +6,17 @@ use App\Http\Resources\Api\OpportunityResource;
 use App\Models\Application;
 use App\Models\BusinessUnit;
 use App\Models\Department;
+use App\Models\Participant;
 use App\Models\User;
 use App\Services\MatchingService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class OpportunityController extends Controller
 {
     private const MAX_RESULTS = 100;
+
+    private const LIST_CACHE_SECONDS = 30;
 
     public function __construct(private MatchingService $matching) {}
 
@@ -51,18 +55,50 @@ class OpportunityController extends Controller
             ->orderByDesc('id')
             ->limit(self::MAX_RESULTS);
 
+        $cacheScope = 'all';
         if ($user->isMentor()) {
             $mentor = $user->mentor;
             $query->where(function ($inner) use ($mentor) {
                 $inner->where('id', $mentor?->business_unit_id)
                     ->orWhere('department_id', $mentor?->department_id);
             });
+            $cacheScope = 'mentor:'.$user->id;
         }
 
-        $units = $query->get();
+        // Daftar statis di-cache sebagai atribut mentah agar tidak menyimpan model Eloquent.
+        // Flag applied dan skor tetap dihitung per user di bawah.
+        $cacheKey = 'api.opportunities.list.v1:'.$cacheScope;
+        $rows = Cache::remember($cacheKey, now()->addSeconds(self::LIST_CACHE_SECONDS), function () use ($query) {
+            return $query->get()
+                ->map(fn (BusinessUnit $unit): array => $unit->getAttributes())
+                ->all();
+        });
+
+        $units = collect($rows)->map(function (array $attributes): BusinessUnit {
+            $unit = new BusinessUnit();
+            $unit->exists = true;
+            $unit->forceFill($attributes);
+
+            return $unit;
+        });
+
+        // Profil peserta dipakai resource untuk skor kecocokan; cache singkat
+        // menghindari query per request saat daftar sudah di-cache.
+        $participantAttributes = Cache::remember(
+            'api.participant.v1:'.$user->id,
+            now()->addSeconds(self::LIST_CACHE_SECONDS),
+            fn () => $user->participant?->getAttributes(),
+        );
+
+        $participant = null;
+        if ($participantAttributes !== null) {
+            $participant = new Participant();
+            $participant->exists = true;
+            $participant->forceFill($participantAttributes);
+        }
+        $user->setRelation('participant', $participant);
 
         // Satu query untuk semua unit, bukan satu query per unit di resource.
-        $participant = $user->participant;
         if ($participant !== null && $units->isNotEmpty()) {
             $appliedUnitIds = Application::query()
                 ->where('participant_id', $participant->id)
