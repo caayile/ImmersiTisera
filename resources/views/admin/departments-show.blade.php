@@ -77,7 +77,7 @@
                 @endif
                 <div class="min-w-0 flex-1">
                     <h3 class="font-semibold text-ink">{{ $unit->name }}</h3>
-                    <p class="mt-0.5 truncate text-xs text-muted">{{ $unit->description ?: 'Belum ada deskripsi.' }}</p>
+                    <p class="mt-0.5 truncate text-xs text-muted">{{ $unit->description ? strip_tags($unit->description) : 'Belum ada deskripsi.' }}</p>
                 </div>
                 <span class="hidden shrink-0 rounded-full bg-[#f6fbf8] px-3 py-1 text-xs font-semibold text-muted sm:inline-block">{{ $unit->status }}</span>
             </div>

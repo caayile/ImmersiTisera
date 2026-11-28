@@ -215,7 +215,7 @@
                 </a>
                 <div class="p-5">
                     <h3 class="text-xl font-semibold">{{ $department->name }}</h3>
-                    <p class="mt-2 min-h-12 text-sm leading-6 text-muted">{{ \Illuminate\Support\Str::limit($department->description ?: $department->subtitle ?: 'Jelajahi unit bisnis mitra magang dosen.', 110) }}</p>
+                    <p class="mt-2 min-h-12 text-sm leading-6 text-muted">{{ \Illuminate\Support\Str::limit(htmlspecialchars_decode(strip_tags($department->description ?: $department->subtitle ?: 'Jelajahi unit bisnis mitra magang dosen.')), 110) }}</p>
                     <div class="mt-4 flex items-center justify-between gap-3 border-t border-line pt-4 text-xs font-medium text-muted">
                         <span class="inline-flex items-center gap-1.5">
                             <span class="material-symbols-outlined text-base" aria-hidden="true">storefront</span>

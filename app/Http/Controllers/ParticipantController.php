@@ -758,8 +758,10 @@ class ParticipantController extends Controller
             : EvaluationScale::defaultScales();
         $scaleMax = collect($scaleList)->max('value') ?? 5;
         $certificates = $this->participantCertificates($request);
-        $topCycle = $program;
         $allCycles = $this->allPrograms($request);
+        $topCycle = $program ?? $allCycles->first(fn ($c) => $c->archived_at !== null);
+        $mine = $topCycle?->evaluations()->where('evaluator_id', $request->user()->id)->first();
+        
         $history = $topCycle
             ? $allCycles->reject(fn ($cycle) => $cycle->id === $topCycle->id)->values()
             : $allCycles;

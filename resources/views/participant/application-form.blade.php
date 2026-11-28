@@ -192,9 +192,6 @@
                 <dd class="mt-1 font-medium">{{ $unit->name }}</dd>
             </div>
         </dl>
-        @if($unit->description)
-            <p class="mt-4 text-sm leading-6 text-muted">{{ $unit->description }}</p>
-        @endif
     </section>
 
     @if($canSubmit)
@@ -300,7 +297,7 @@
                     <label class="mt-3 block">
                         <span class="text-sm font-medium">Tujuan Bersama*</span>
                         <span class="mt-0.5 block text-xs text-muted">Tuliskan tujuan bersama dosen dan mentor secara spesifik dan terukur.</span>
-                        <textarea name="shared_goal" rows="3" placeholder="Template: Selama 2 bulan, kami akan [aktivitas] untuk menghasilkan [luaran] yang memberikan manfaat bagi [penerima manfaat].&#10;&#10;Contoh: Selama 2 bulan, kami akan memetakan alur kerja layanan digital untuk menghasilkan teaching case yang memberikan manfaat bagi mahasiswa Informatika." class="mt-2 w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/15" {{ $disabled }} required minlength="20">{{ old('shared_goal', $application?->shared_goal) }}</textarea>
+                        <textarea name="shared_goal" rows="3" placeholder="Selama 2 bulan, kami akan memetakan alur kerja layanan digital untuk menghasilkan teaching case yang memberikan manfaat bagi mahasiswa Informatika." class="mt-2 w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/15" {{ $disabled }} required minlength="20">{{ old('shared_goal', $application?->shared_goal) }}</textarea>
                     </label>
                 </div>
 

@@ -16,14 +16,17 @@
     <div class="relative mx-auto max-w-6xl pb-10 pt-8 text-white sm:pb-12">
         <p class="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">{{ $department->area ?: 'Mitra Magang Dosen' }}</p>
         <h1 class="mt-3 text-4xl font-semibold tracking-tight md:text-5xl">{{ $department->name }}</h1>
-        @if($department->subtitle)
-            <p class="mt-2 text-base text-white/80">{{ $department->subtitle }}</p>
-        @endif
     </div>
 </section>
 
 <div class="mx-auto max-w-6xl px-5 py-12">
-    <h2 class="text-2xl font-semibold">Departemen</h2>
+    <div class="flex flex-wrap items-center justify-between gap-4">
+        <h2 class="text-2xl font-semibold">Departemen</h2>
+        <a href="{{ route('departments.index') }}" class="inline-flex items-center gap-1.5 rounded-lg border border-line bg-white px-3.5 py-2 text-sm font-medium text-muted transition hover:border-primary hover:text-primary-dark">
+            <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+            Kembali ke unit bisnis
+        </a>
+    </div>
     <div class="mt-5 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
         @forelse($department->businessUnits as $unit)
             @php
@@ -38,7 +41,7 @@
                 </a>
                 <div class="flex flex-1 flex-col p-5">
                     <h3 class="text-lg font-semibold">{{ $unit->name }}</h3>
-                    <p class="mt-2 flex-1 text-sm leading-6 text-muted">{{ \Illuminate\Support\Str::limit($unit->description, 90) }}</p>
+                    <p class="mt-2 flex-1 text-sm leading-6 text-muted">{{ \Illuminate\Support\Str::limit(htmlspecialchars_decode(strip_tags($unit->description)), 90) }}</p>
                     <a href="{{ route('units.show', $unit) }}" class="mt-4 inline-flex items-center justify-center rounded-xl bg-[#eef4f1] px-4 py-2.5 text-sm font-semibold text-ink hover:bg-primary hover:text-white">Lihat Detail</a>
                 </div>
             </article>

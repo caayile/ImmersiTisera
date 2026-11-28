@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 #[Fillable([
-    'department_id', 'name', 'description', 'image_path', 'work_done', 'example_activities',
+    'department_id', 'name', 'description', 'image_path',
     'requirements', 'relevant_programs', 'period', 'batch', 'registration_deadline', 'registration_start', 'status',
 ])]
 class BusinessUnit extends Model
@@ -29,11 +29,16 @@ class BusinessUnit extends Model
             return false;
         }
 
+        // Must have a deadline set to be open
+        if (! $this->registration_deadline) {
+            return false;
+        }
+
         if ($this->registration_start && now()->lt($this->registration_start)) {
             return false;
         }
 
-        if ($this->registration_deadline && now()->gt($this->registration_deadline)) {
+        if (now()->gt($this->registration_deadline)) {
             return false;
         }
 

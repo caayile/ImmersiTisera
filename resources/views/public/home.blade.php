@@ -143,7 +143,7 @@
                     </div>
                     <div class="p-5">
                         <h3 class="text-xl font-semibold">{{ $unit->name }}</h3>
-                        <p class="mt-2 text-sm leading-6 text-muted">{{ $unit->description }}</p>
+                        <p class="mt-2 text-sm leading-6 text-muted">{{ htmlspecialchars_decode(strip_tags($unit->description)) }}</p>
                         <a href="{{ $detailUrl }}" class="mt-5 block rounded-xl bg-[#eef4f1] px-4 py-3 text-center text-sm font-semibold text-ink hover:bg-primary hover:text-white">{{ $detailLabel }}</a>
                     </div>
                 </article>

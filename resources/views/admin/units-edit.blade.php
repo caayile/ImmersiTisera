@@ -38,30 +38,20 @@
                 </div>
             </div>
             <div>
-                <label class="text-xs font-medium text-muted">Yang dikerjakan</label>
-                <div class="mt-1">
-                    <x-wysiwyg name="work_done" :value="$businessUnit->work_done" placeholder="Apa saja yang dikerjakan..." />
-                </div>
-            </div>
-            <div>
-                <label class="text-xs font-medium text-muted">Contoh aktivitas</label>
-                <div class="mt-1">
-                    <x-wysiwyg name="example_activities" :value="$businessUnit->example_activities" placeholder="Contoh aktivitas di unit ini..." />
-                </div>
-            </div>
-            <div>
                 <label class="text-xs font-medium text-muted">Persyaratan</label>
                 <div class="mt-1">
                     <x-wysiwyg name="requirements" :value="$businessUnit->requirements" placeholder="Persyaratan mengikuti unit ini..." />
                 </div>
             </div>
-            <div class="grid gap-3 md:grid-cols-3">
-                <input name="relevant_programs" value="{{ implode(', ', $businessUnit->relevant_programs ?? []) }}" placeholder="Prodi relevan, pisahkan dengan koma" class="rounded-lg border border-line px-3 py-2 text-sm">
-                <input type="file" name="image" accept="image/*" class="rounded-lg border border-line px-3 py-2 text-sm">
-                <select name="mentor_id" class="rounded-lg border border-line px-3 py-2 text-sm">
-                    <option value="">Tanpa perubahan mentor</option>
-                    @foreach($mentors as $mentor)<option value="{{ $mentor->id }}" @selected($businessUnit->mentors->contains('id', $mentor->id))>{{ $mentor->user->name }}</option>@endforeach
-                </select>
+            <div class="grid gap-4 md:grid-cols-2">
+                <div>
+                    <label class="text-xs font-medium text-muted">Prodi Relevan (pisahkan dengan koma)</label>
+                    <input name="relevant_programs" value="{{ implode(', ', $businessUnit->relevant_programs ?? []) }}" placeholder="Contoh: Manajemen, Akuntansi, IT" class="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm">
+                </div>
+                <div>
+                    <label class="text-xs font-medium text-muted">Ganti Foto Departemen</label>
+                    <input type="file" name="image" accept="image/*" class="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm">
+                </div>
             </div>
         </div>
     </section>

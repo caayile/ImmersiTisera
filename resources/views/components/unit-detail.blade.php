@@ -53,30 +53,6 @@
                     <div class="rich-content mt-4">{!! $businessUnit->description !!}</div>
                 </section>
 
-                @if($businessUnit->work_done)
-                    <section class="border-t border-gray-100 pt-6">
-                        <div class="flex items-center gap-2.5">
-                            <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/12 text-primary-dark">
-                                <span class="material-symbols-outlined text-[20px]">build</span>
-                            </span>
-                            <h2 class="text-xl font-bold tracking-tight">Yang Dikerjakan</h2>
-                        </div>
-                        <div class="rich-content mt-4">{!! $businessUnit->work_done !!}</div>
-                    </section>
-                @endif
-
-                @if($businessUnit->example_activities)
-                    <section class="border-t border-gray-100 pt-6">
-                        <div class="flex items-center gap-2.5">
-                            <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/12 text-primary-dark">
-                                <span class="material-symbols-outlined text-[20px]">assignment</span>
-                            </span>
-                            <h2 class="text-xl font-bold tracking-tight">Detail Aktivitas</h2>
-                        </div>
-                        <div class="rich-content mt-4">{!! $businessUnit->example_activities !!}</div>
-                    </section>
-                @endif
-
                 @if($businessUnit->requirements || !empty($businessUnit->relevant_programs))
                     <section class="border-t border-gray-100 pt-6">
                         <div class="flex items-center gap-2.5">

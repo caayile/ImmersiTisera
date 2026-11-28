@@ -56,28 +56,27 @@
 
                         <p class="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Informasi Program</p>
                         <textarea name="description" placeholder="Deskripsi" class="w-full rounded-lg border border-line px-3 py-2 text-sm"></textarea>
+                        <textarea name="requirements" placeholder="Persyaratan" class="w-full rounded-lg border border-line px-3 py-2 text-sm"></textarea>
+                        
                         <div class="grid gap-3 sm:grid-cols-2">
-                            <textarea name="work_done" placeholder="Yang dikerjakan" class="w-full rounded-lg border border-line px-3 py-2 text-sm"></textarea>
-                            <textarea name="example_activities" placeholder="Contoh aktivitas" class="w-full rounded-lg border border-line px-3 py-2 text-sm"></textarea>
-                            <textarea name="requirements" placeholder="Persyaratan" class="w-full rounded-lg border border-line px-3 py-2 text-sm"></textarea>
+                            <div>
+                                <label class="text-[10px] font-bold uppercase text-muted">Prodi Relevan (pisahkan dengan koma)</label>
+                                <input name="relevant_programs" placeholder="Contoh: Manajemen, IT, Akuntansi" class="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-bold uppercase text-muted">Foto Departemen</label>
+                                <input type="file" name="image" accept="image/*" class="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm">
+                            </div>
                         </div>
-                        <input name="relevant_programs" placeholder="Prodi relevan, pisahkan dengan koma" class="w-full rounded-lg border border-line px-3 py-2 text-sm">
 
-                        <p class="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Periode Pendaftaran</p>
+                        <p class="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Pengaturan Status & Periode</p>
                         <div class="grid gap-3 sm:grid-cols-3">
-                            <input type="datetime-local" name="registration_start" placeholder="Waktu dibuka" class="w-full rounded-lg border border-line px-3 py-2 text-sm">
-                            <input type="datetime-local" name="registration_deadline" placeholder="Waktu ditutup" class="w-full rounded-lg border border-line px-3 py-2 text-sm">
                             <select name="status" class="w-full rounded-lg border border-line px-3 py-2 text-sm">
                                 <option value="open">Lowongan dibuka</option>
                                 <option value="closed">Lowongan ditutup</option>
                             </select>
-                        </div>
-                        <div class="grid gap-3 sm:grid-cols-2">
-                            <input type="file" name="image" accept="image/*" class="w-full rounded-lg border border-line px-3 py-2 text-sm">
-                            <select name="mentor_id" class="w-full rounded-lg border border-line px-3 py-2 text-sm">
-                                <option value="">Pilih mentor</option>
-                                @foreach($mentors as $mentor)<option value="{{ $mentor->id }}">{{ $mentor->user->name }}</option>@endforeach
-                            </select>
+                            <input type="datetime-local" name="registration_start" placeholder="Waktu dibuka" class="w-full rounded-lg border border-line px-3 py-2 text-sm">
+                            <input type="datetime-local" name="registration_deadline" placeholder="Waktu ditutup" class="w-full rounded-lg border border-line px-3 py-2 text-sm">
                         </div>
                         <button class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white">Tambah departemen</button>
                     </form>
@@ -102,7 +101,7 @@
                         <p class="mt-0.5 text-xs font-medium {{ $unit->isOpen() ? 'text-primary-dark' : ($unit->isScheduled() ? 'text-red-500' : 'text-muted') }}">
                         {{ $unit->isOpen() ? 'Lowongan dibuka' : ($unit->isScheduled() ? 'Lowongan ditutup' : 'Belum dijadwalkan') }}
                     </p>
-                        <p class="mt-0.5 truncate text-xs text-muted">{{ $unit->description ?: 'Belum ada deskripsi.' }}</p>
+                        <p class="mt-0.5 truncate text-xs text-muted">{{ $unit->description ? strip_tags($unit->description) : 'Belum ada deskripsi.' }}</p>
                     </div>
                     <div class="flex shrink-0 items-center gap-1.5">
                         <a href="{{ route('units.show', $unit) }}" title="Lihat publik" class="flex h-9 w-9 items-center justify-center rounded-lg border border-line text-muted transition hover:border-primary hover:text-primary-dark">
